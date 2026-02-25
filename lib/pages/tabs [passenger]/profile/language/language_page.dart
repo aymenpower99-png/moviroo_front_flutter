@@ -1,0 +1,203 @@
+import 'package:flutter/material.dart';
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_text_styles.dart';
+import '../../../../main.dart';
+import '../../../../l10n/app_localizations.dart'; // ← ADD THIS
+
+class LanguagePage extends StatefulWidget {
+  const LanguagePage({super.key});
+
+  @override
+  State<LanguagePage> createState() => _LanguagePageState();
+}
+
+class _LanguagePageState extends State<LanguagePage> {
+  String _selectedLanguage = 'en';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedLanguage = localeProvider.locale.languageCode;
+  }
+
+  void _selectLanguage(String languageCode) {
+    setState(() => _selectedLanguage = languageCode);
+    localeProvider.setLocale(languageCode);
+    Navigator.pop(context, languageCode);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context); // ← GET TRANSLATIONS
+
+    return Scaffold(
+      backgroundColor: AppColors.bg(context),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+
+              // ── Top bar ──────────────────────────────────────────
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.maybePop(context),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface(context),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.border(context)),
+                      ),
+                      child: Icon(
+                        Icons.chevron_left_rounded,
+                        color: AppColors.text(context),
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      t.translate('language'), // ← WAS: 'Language'
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.pageTitle(context),
+                    ),
+                  ),
+                  const SizedBox(width: 36),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              // ── Section label ────────────────────────────────────
+              Text(
+                t.translate('selectLanguage'), // ← WAS: 'SELECT LANGUAGE'
+                style: AppTextStyles.sectionLabel(context),
+              ),
+              const SizedBox(height: 12),
+
+              // ── Language options ─────────────────────────────────
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface(context),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border(context)),
+                ),
+                child: Column(
+                  children: [
+                    _LanguageTile(
+                      flagEmoji: '🇺🇸',
+                      label: t.translate('english'),    // ← WAS: 'English'
+                      subtitle: t.translate('englishUS'), // ← WAS: 'English (US)'
+                      languageCode: 'en',
+                      selected: _selectedLanguage,
+                      onTap: () => _selectLanguage('en'),
+                    ),
+                    Divider(
+                      height: 1,
+                      indent: 54,
+                      color: AppColors.border(context),
+                    ),
+                    _LanguageTile(
+                      flagEmoji: '🇫🇷',
+                      label: t.translate('french'),  // ← WAS: 'Français'
+                      subtitle: 'Français',          // native name stays hardcoded
+                      languageCode: 'fr',
+                      selected: _selectedLanguage,
+                      onTap: () => _selectLanguage('fr'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Single language tile ──────────────────────────────────────────────────────
+
+class _LanguageTile extends StatelessWidget {
+  final String flagEmoji;
+  final String label;
+  final String subtitle;
+  final String languageCode;
+  final String selected;
+  final VoidCallback onTap;
+
+  const _LanguageTile({
+    required this.flagEmoji,
+    required this.label,
+    required this.subtitle,
+    required this.languageCode,
+    required this.selected,
+    required this.onTap,
+  });
+
+  bool get _isSelected => selected == languageCode;
+
+  @override
+  Widget build(BuildContext context) {
+    final radioBorderColor =
+        _isSelected ? AppColors.primaryPurple : AppColors.subtext(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        child: Row(
+          children: [
+            // Flag emoji
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: AppColors.surface(context),
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(
+                  color: AppColors.border(context).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Center(
+                child: Text(flagEmoji, style: const TextStyle(fontSize: 20)),
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // Labels
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: AppTextStyles.settingsItem(context)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: AppTextStyles.bodySmall(context)),
+                ],
+              ),
+            ),
+
+            // Radio circle
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: radioBorderColor, width: 2),
+                color: _isSelected ? AppColors.primaryPurple : Colors.transparent,
+              ),
+              child: _isSelected
+                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 13)
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,69 +1,91 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'pages/onboarding/onboarding_page.dart';
-// import 'pages/auth/auth_page.dart';
-// import 'pages/passenger/tabs/passenger_tabs_page.dart';
-// import 'pages/driver/tabs/driver_tabs_page.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'routing/router.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_provider.dart';
+import 'theme/locale_provider.dart';
+import 'l10n/app_localizations.dart';
+
+final themeProvider  = ThemeProvider();
+final localeProvider = LocaleProvider();   // ← ADD THIS
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF0B000F),
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
-
   runApp(const SmartWayApp());
 }
 
 class SmartWayApp extends StatefulWidget {
   const SmartWayApp({super.key});
 
-  /// Call this from anywhere to force a full app restart at runtime
-  /// (e.g. after logout to clear all state)
-  static void restartApp(BuildContext context) {
-    context.findAncestorStateOfType<_SmartWayAppState>()?.restartApp();
-  }
+  static void restartApp(BuildContext context) =>
+      context.findAncestorStateOfType<_SmartWayAppState>()?.restartApp();
 
   @override
   State<SmartWayApp> createState() => _SmartWayAppState();
 }
 
 class _SmartWayAppState extends State<SmartWayApp> {
-  // Incrementing int key — hot reload preserves state, restartApp() resets it
   int _restartCount = 0;
 
-  void restartApp() {
-    setState(() => _restartCount++);
+  void restartApp() => setState(() => _restartCount++);
+
+  void _applySystemUI(ThemeMode mode) {
+    final isDark = mode == ThemeMode.dark ||
+        (mode == ThemeMode.system &&
+            WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+                Brightness.dark);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor:
+          isDark ? const Color(0xFF0B0B0F) : const Color(0xFFF4F4F8),
+      systemNavigationBarIconBrightness:
+          isDark ? Brightness.light : Brightness.dark,
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     return KeyedSubtree(
-      // Only changes when restartApp() is called — hot reload leaves this intact
       key: ValueKey(_restartCount),
-      child: MaterialApp(
-        title: 'Smart Way To Travel',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.dark,
-        initialRoute: '/onboarding',
-        routes: {
-          '/onboarding': (context) => const OnboardingPage(),
-          // '/auth':        (context) => const AuthPage(),
-          // '/passenger':   (context) => const PassengerTabsPage(),
-          // '/driver':      (context) => const DriverTabsPage(),
+      child: ListenableBuilder(
+        listenable: Listenable.merge([themeProvider, localeProvider]), // ← MERGE
+        builder: (context, _) {
+          WidgetsBinding.instance.addPostFrameCallback(
+              (_) => _applySystemUI(themeProvider.mode));
+
+          return MaterialApp(
+            title: 'Moviroo',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.mode,
+            locale: localeProvider.locale,                        // ← ADD
+            supportedLocales: const [Locale('en'), Locale('fr')], // ← ADD
+            localizationsDelegates: const [                       // ← ADD
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            initialRoute: AppRouter.initialRoute,
+            onGenerateRoute: (settings) {
+              final builder = AppRouter.routes[settings.name];
+              if (builder == null) return null;
+              return PageRouteBuilder(
+                settings: settings,
+                pageBuilder: (context, _, __) => builder(context),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              );
+            },
+          );
         },
       ),
     );

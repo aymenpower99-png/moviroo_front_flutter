@@ -4,120 +4,103 @@ import 'app_colors.dart';
 class AppTextStyles {
   AppTextStyles._();
 
-  // ─── Font Family ───────────────────────────────────────────────
-  static const String _fontFamily = 'Inter';
+  static const String _font = 'Inter';
 
-  // ─── PAGE TITLES (e.g. "Ride details", "Settings") ─────────────
-  static const TextStyle pageTitle = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-    color: AppColors.darkText,
-    letterSpacing: 0,
-  );
+  // ─── PAGE TITLES ───────────────────────────────────────────────
+  static TextStyle pageTitle(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: AppColors.text(context),
+      );
 
-  static const TextStyle pageTitleLight = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-    color: AppColors.lightText,
-    letterSpacing: 0,
-  );
+  // ─── SECTION LABELS ────────────────────────────────────────────
+  static TextStyle sectionLabel(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: AppColors.subtext(context),
+        letterSpacing: 1.5,
+      );
 
-  // ─── SECTION LABELS (e.g. "PASSENGER", "VEHICLE CLASS", "ACCOUNT", "PREFERENCES") ──
-  static const TextStyle sectionLabel = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 11,
-    fontWeight: FontWeight.w600,
-    color: AppColors.gray7B,
-    letterSpacing: 1.2,
-  );
+  // ─── BOOKING ID ────────────────────────────────────────────────
+  static TextStyle bookingId(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: AppColors.text(context),
+        letterSpacing: 0.5,
+      );
 
-  // ─── BOOKING ID (e.g. "#78438620") ─────────────────────────────
-  static const TextStyle bookingId = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 22,
-    fontWeight: FontWeight.bold,
-    color: AppColors.darkText,
-    letterSpacing: 0.5,
-  );
+  // ─── BODY LARGE ────────────────────────────────────────────────
+  static TextStyle bodyLarge(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+        color: AppColors.text(context),
+      );
 
-  // ─── BODY LARGE (e.g. passenger name "Aymen Ben Nacer", place names) ──
-  static const TextStyle bodyLarge = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 15,
-    fontWeight: FontWeight.w500,
-    color: AppColors.darkText,
-  );
+  // ─── BODY MEDIUM ───────────────────────────────────────────────
+  static TextStyle bodyMedium(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        color: AppColors.text(context),
+      );
 
-  static const TextStyle bodyLargeLight = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 15,
-    fontWeight: FontWeight.w500,
-    color: AppColors.lightText,
-  );
+  // ─── BODY SMALL / SECONDARY ────────────────────────────────────
+  static TextStyle bodySmall(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: AppColors.subtext(context),
+      );
 
-  // ─── BODY MEDIUM (e.g. email, phone, address subtitles) ────────
-  static const TextStyle bodyMedium = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-    color: AppColors.darkText,
-  );
+  // ─── PRICE LARGE ───────────────────────────────────────────────
+  static TextStyle priceLarge(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: AppColors.text(context),
+        letterSpacing: 0.3,
+      );
 
-  // ─── BODY SMALL / SECONDARY (e.g. city names, field hints) ─────
-  static const TextStyle bodySmall = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
-    color: AppColors.gray7B,
-  );
+  // ─── PRICE MEDIUM ──────────────────────────────────────────────
+  static TextStyle priceMedium(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: AppColors.text(context),
+      );
 
-  // ─── PRICE LARGE (e.g. "EUR 142.26" total) ──────────────────────
-  static const TextStyle priceLarge = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 20,
-    fontWeight: FontWeight.bold,
-    color: AppColors.darkText,
-    letterSpacing: 0.3,
-  );
-
-  // ─── PRICE MEDIUM (e.g. "EUR 142.26" line item, "EUR 0.00" discount) ──
-  static const TextStyle priceMedium = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    color: AppColors.darkText,
-  );
-
-  // ─── PRICE DISCOUNT (green discount value) ──────────────────────
+  // ─── PRICE DISCOUNT ────────────────────────────────────────────
   static const TextStyle priceDiscount = TextStyle(
-    fontFamily: _fontFamily,
+    fontFamily: _font,
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.success,
   );
 
-  // ─── PRICE LABEL (e.g. "Price", "Discount", "Total") ───────────
-  static const TextStyle priceLabel = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-    color: AppColors.gray7B,
-  );
+  // ─── PRICE LABEL ───────────────────────────────────────────────
+  static TextStyle priceLabel(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        color: AppColors.subtext(context),
+      );
 
-  // ─── PRICE FOOTER (e.g. "(INCL. VAT, FEES & TOLLS)") ───────────
-  static const TextStyle priceFooter = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 10,
-    fontWeight: FontWeight.w400,
-    color: AppColors.gray7B,
-    letterSpacing: 0.5,
-  );
+  // ─── PRICE FOOTER ──────────────────────────────────────────────
+  static TextStyle priceFooter(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 10,
+        fontWeight: FontWeight.w400,
+        color: AppColors.subtext(context),
+        letterSpacing: 0.5,
+      );
 
-  // ─── BUTTON TEXT ─────────────────────────────────────────────────
+  // ─── BUTTON TEXT ───────────────────────────────────────────────
   static const TextStyle buttonPrimary = TextStyle(
-    fontFamily: _fontFamily,
+    fontFamily: _font,
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: Colors.white,
@@ -125,107 +108,107 @@ class AppTextStyles {
   );
 
   static const TextStyle buttonSecondary = TextStyle(
-    fontFamily: _fontFamily,
+    fontFamily: _font,
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.error,
     letterSpacing: 0.2,
   );
 
-  // ─── TAB BAR LABELS (e.g. "Accueil", "Trajets", "IA", "Support", "Profil") ──
-  static const TextStyle tabLabel = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 10,
-    fontWeight: FontWeight.w500,
-    color: AppColors.gray7B,
-  );
+  // ─── TAB BAR LABELS ────────────────────────────────────────────
+  static TextStyle tabLabel(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+        color: AppColors.subtext(context),
+      );
 
   static const TextStyle tabLabelActive = TextStyle(
-    fontFamily: _fontFamily,
+    fontFamily: _font,
     fontSize: 10,
     fontWeight: FontWeight.w600,
     color: AppColors.primaryPurple,
   );
 
-  // ─── STATUS BADGE (e.g. "Payment pending") ──────────────────────
+  // ─── STATUS BADGE ──────────────────────────────────────────────
   static const TextStyle statusBadge = TextStyle(
-    fontFamily: _fontFamily,
+    fontFamily: _font,
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.warning,
     letterSpacing: 0.2,
   );
 
-  // ─── DATE / TIME (e.g. "13 February 2026, 13:00") ───────────────
-  static const TextStyle dateTime = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
-    color: AppColors.gray7B,
-  );
+  // ─── DATE / TIME ───────────────────────────────────────────────
+  static TextStyle dateTime(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: AppColors.subtext(context),
+      );
 
-  // ─── PROFILE NAME (e.g. "hamza") ────────────────────────────────
-  static const TextStyle profileName = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 20,
-    fontWeight: FontWeight.bold,
-    color: AppColors.darkText,
-  );
+  // ─── PROFILE NAME ──────────────────────────────────────────────
+  static TextStyle profileName(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: AppColors.text(context),
+      );
 
-  // ─── PROFILE PHONE (e.g. "92969805") ────────────────────────────
-  static const TextStyle profilePhone = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-    color: AppColors.gray7B,
-  );
+  // ─── PROFILE PHONE ─────────────────────────────────────────────
+  static TextStyle profilePhone(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        color: AppColors.subtext(context),
+      );
 
-  // ─── PROFILE STAT VALUE (e.g. "4.9", "128", "Gold") ────────────
-  static const TextStyle profileStatValue = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-    color: AppColors.darkText,
-  );
+  // ─── PROFILE STAT VALUE ────────────────────────────────────────
+  static TextStyle profileStatValue(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: AppColors.text(context),
+      );
 
-  // ─── PROFILE STAT LABEL (e.g. "RATING", "RIDES", "MEMBER") ─────
-  static const TextStyle profileStatLabel = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 10,
-    fontWeight: FontWeight.w500,
-    color: AppColors.gray7B,
-    letterSpacing: 0.8,
-  );
+  // ─── PROFILE STAT LABEL ────────────────────────────────────────
+  static TextStyle profileStatLabel(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+        color: AppColors.subtext(context),
+        letterSpacing: 0.8,
+      );
 
-  // ─── SETTINGS ITEM (e.g. "Personal Data", "Payments", "Notifications") ──
-  static const TextStyle settingsItem = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 15,
-    fontWeight: FontWeight.w500,
-    color: AppColors.darkText,
-  );
+  // ─── SETTINGS ITEM ─────────────────────────────────────────────
+  static TextStyle settingsItem(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+        color: AppColors.text(context),
+      );
 
-  // ─── SETTINGS ITEM VALUE (e.g. "Visa ••42") ─────────────────────
-  static const TextStyle settingsItemValue = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-    color: AppColors.gray7B,
-  );
+  // ─── SETTINGS ITEM VALUE ───────────────────────────────────────
+  static TextStyle settingsItemValue(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        color: AppColors.subtext(context),
+      );
 
-  // ─── VEHICLE CLASS NAME (e.g. "Standard") ───────────────────────
-  static const TextStyle vehicleClassName = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 15,
-    fontWeight: FontWeight.w600,
-    color: AppColors.darkText,
-  );
+  // ─── VEHICLE CLASS NAME ────────────────────────────────────────
+  static TextStyle vehicleClassName(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: AppColors.text(context),
+      );
 
-  // ─── VEHICLE CLASS DESCRIPTION (e.g. "Mercedes E Class, BMW 5 or similar") ──
-  static const TextStyle vehicleClassDesc = TextStyle(
-    fontFamily: _fontFamily,
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
-    color: AppColors.gray7B,
-  );
+  // ─── VEHICLE CLASS DESCRIPTION ─────────────────────────────────
+  static TextStyle vehicleClassDesc(BuildContext context) => TextStyle(
+        fontFamily: _font,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: AppColors.subtext(context),
+      );
 }

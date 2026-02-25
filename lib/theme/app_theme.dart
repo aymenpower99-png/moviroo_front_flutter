@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Colors
-  static const Color primaryPurple = Color(0xFFB12CFF);
+  static const Color primaryPurple   = Color(0xFFB12CFF);
   static const Color secondaryPurple = Color(0xFF8D21B7);
-  static const Color darkBg = Color(0xFF0B000F);
-  static const Color darkSurface = Color(0xFF1A1A1A);
-  static const Color lightBg = Color(0xFFFFFFFF);
-  static const Color lightSurface = Color(0xFFF5F5F5);
-  static const Color grayText = Color(0xFF7B7B85);
+
+  // ─── Dark ───────────────────────────────────────────────────────
+  static const Color darkBg      = Color(0xFF0B0B0F);
+  static const Color darkSurface = Color(0xFF151519);
+
+  // ─── Light (Figma) ──────────────────────────────────────────────
+  static const Color lightBg      = Color(0xFFF4F4F8);
+  static const Color lightSurface = Color(0xFFFFFFFF);
 
   // Dark Theme
   static ThemeData darkTheme = ThemeData(
@@ -65,13 +67,13 @@ class AppTheme {
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: lightBg,
-      foregroundColor: Colors.black,
+      foregroundColor: Color(0xFF121214),
       elevation: 0,
       centerTitle: true,
     ),
     cardTheme: CardThemeData(
       color: lightSurface,
-      elevation: 2,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -80,7 +82,7 @@ class AppTheme {
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
+        elevation: 0,
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -94,6 +96,10 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: primaryPurple, width: 2),
       ),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFFE5E7EB),
+      thickness: 1,
     ),
   );
 }

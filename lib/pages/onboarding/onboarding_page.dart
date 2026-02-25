@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'onboarding_step_1.dart';
 import 'onboarding_step_2.dart';
 import 'onboarding_step_3.dart';
-import '../auth/LoginPage.dart';
+import '../auth/login_page.dart';
 
 /// Single AnimationController drives the car across all 3 steps:
 ///   Step 1 → carT animates 0.0 → 0.0   (car sits at origin, no trail)
