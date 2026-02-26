@@ -6,6 +6,8 @@ import '../../../../l10n/app_localizations.dart';
 import 'settings_data.dart';
 import 'settings_widgets.dart';
 import 'edit_profile/personal_data_page.dart';
+import 'notifiaction/notification_page.dart';
+import 'settings/settings_sub_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -25,10 +27,12 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final sections = buildSettingsSections(
       t: t,
-      onPersonalData: _goToPersonalData,
-      onPayments:     () {},
-      onSavedPlaces:  () {},
-      onLogout:       _handleLogout,
+      onPersonalData:   _goToPersonalData,
+      onPayments:       () {},
+      onSavedPlaces:    () {},
+      onLogout:         _handleLogout,
+      onNotifications:  _goToNotifications,
+      onSettings:       _goToSettings,
     );
 
     return Scaffold(
@@ -48,11 +52,21 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 24),
                     ProfileHeaderCard(name: _userName),
                     const SizedBox(height: 28),
+
+                    // Account
                     SettingsSectionWidget(section: sections[0]),
                     const SizedBox(height: 24),
+
+                    // Preferences (Appearance + Language — unchanged)
                     const PreferencesSection(),
                     const SizedBox(height: 24),
+
+                    // Account Management (Notifications + Settings)
                     SettingsSectionWidget(section: sections[1]),
+                    const SizedBox(height: 24),
+
+                    // Account Actions (Logout)
+                    SettingsSectionWidget(section: sections[2]),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -72,6 +86,20 @@ class _SettingsPageState extends State<SettingsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PersonalDataPage()),
+    );
+  }
+
+  void _goToNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationPage()),
+    );
+  }
+
+  void _goToSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SettingsSubPage()),
     );
   }
 

@@ -7,15 +7,18 @@ List<SettingsSection> buildSettingsSections({
   required VoidCallback onPayments,
   required VoidCallback onSavedPlaces,
   required VoidCallback onLogout,
+  required VoidCallback onNotifications,
+  required VoidCallback onSettings,
 }) {
   return [
+    // ── Account ───────────────────────────────────────────────────────────────
     SettingsSection(
       label: t('account'),
       items: [
         SettingsItem(
           icon: Icons.person_outline_rounded,
-          title: t('personal_data'),
-          subtitle: t('personal_data_subtitle'),
+          title: t('personal_details'),
+          subtitle: t('personal_details_subtitle'),
           onTap: onPersonalData,
         ),
         SettingsItem(
@@ -33,6 +36,25 @@ List<SettingsSection> buildSettingsSections({
         ),
       ],
     ),
+
+    // ── Account Management ────────────────────────────────────────────────────
+    SettingsSection(
+      label: t('ACCOUNT MANAGMENT'),
+      items: [
+        SettingsItem(
+          icon: Icons.notifications_none_rounded,
+          title: t('notifications'),
+          onTap: onNotifications,
+        ),
+        SettingsItem(
+          icon: Icons.settings_outlined,
+          title: t('Settings'),
+          onTap: onSettings,
+        ),
+      ],
+    ),
+
+    // ── Account Actions ───────────────────────────────────────────────────────
     SettingsSection(
       label: t('account_actions'),
       items: [

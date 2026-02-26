@@ -158,7 +158,7 @@ class SettingsRowTile extends StatelessWidget {
   }
 }
 
-// ── Preferences section ───────────────────────────────────────────────────────
+// ── Preferences section — Appearance + Language ONLY ─────────────────────────
 
 class PreferencesSection extends StatefulWidget {
   const PreferencesSection({super.key});
@@ -168,8 +168,6 @@ class PreferencesSection extends StatefulWidget {
 }
 
 class _PreferencesSectionState extends State<PreferencesSection> {
-  bool _notifications = true;
-
   String _themeLabel(BuildContext context) {
     final t = AppLocalizations.of(context);
     return switch (themeProvider.mode) {
@@ -189,45 +187,12 @@ class _PreferencesSectionState extends State<PreferencesSection> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionLabel(t.translate('preferences')),
         const SizedBox(height: 12),
-
-        // ── Notifications ──────────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: AppColors.surface(context),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border(context)),
-          ),
-          child: Row(
-            children: [
-              const _TileIcon(icon: Icons.notifications_none_rounded),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(t.translate('notifications'),
-                    style: AppTextStyles.settingsItem(context)),
-              ),
-              Switch(
-                value: _notifications,
-                onChanged: (v) => setState(() => _notifications = v),
-                activeColor: Colors.white,
-                activeTrackColor: AppColors.primaryPurple,
-                inactiveThumbColor: Colors.white,
-                inactiveTrackColor: isDark
-                    ? const Color(0xFF333340)
-                    : AppColors.lightBorder,
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 10),
 
         // ── Appearance ─────────────────────────────────────────────
         GestureDetector(
