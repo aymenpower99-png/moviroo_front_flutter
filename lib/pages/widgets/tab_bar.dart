@@ -20,7 +20,7 @@ class AppTabBar extends StatelessWidget {
 
   static const _items = [
     _TabItem(icon: Icons.home_rounded,           label: 'Accueil'),
-    _TabItem(icon: Icons.directions_car_rounded, label: 'Trajets'),
+    _TabItem(icon: Icons.directions_car_rounded, label: 'Bookings'),
     _TabItem(icon: Icons.auto_fix_high_rounded,  label: 'IA'),
     _TabItem(icon: Icons.headset_mic_rounded,    label: 'Support'),
     _TabItem(icon: Icons.person_outline_rounded, label: 'Profil'),
@@ -68,7 +68,7 @@ class AppTabBar extends StatelessWidget {
                     height: 32,
                     decoration: selected
                         ? BoxDecoration(
-                            color: const Color(0xFFB12CFF),
+                            color: const Color(0xFF7C3AED),
                             borderRadius: BorderRadius.circular(16),
                           )
                         : null,

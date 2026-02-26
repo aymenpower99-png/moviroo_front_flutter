@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'route_painter.dart';
+import '../../../../theme/app_theme.dart';
 
 class OnboardingStep1 extends StatelessWidget {
   final VoidCallback onNext;
@@ -10,7 +11,7 @@ class OnboardingStep1 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B000F),
+      backgroundColor: AppTheme.darkBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -24,7 +25,7 @@ class OnboardingStep1 extends StatelessWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Container(color: const Color(0xFF0B000F)),
+                        Container(color: AppTheme.darkBg),
 
                         Positioned(
                           bottom: 0,
@@ -32,14 +33,14 @@ class OnboardingStep1 extends StatelessWidget {
                           right: 0,
                           height: 300,
                           child: Container(
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               gradient: RadialGradient(
-                                center: Alignment(0.3, 1.0),
+                                center: const Alignment(0.3, 1.0),
                                 radius: 1.2,
                                 colors: [
-                                  Color(0x99B12CFF),
-                                  Color(0x4D6A0099),
-                                  Color(0x00000000),
+                                  AppTheme.primaryPurple.withValues(alpha: 0.6),
+                                  AppTheme.secondaryPurple.withValues(alpha: 0.3),
+                                  const Color(0x00000000),
                                 ],
                               ),
                             ),
@@ -52,14 +53,14 @@ class OnboardingStep1 extends StatelessWidget {
                           right: 0,
                           height: 200,
                           child: Container(
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: [
-                                  Color(0x00000000),
-                                  Color(0xFF1A0030),
-                                  Color(0xFF2D0050),
+                                  const Color(0x00000000),
+                                  AppTheme.secondaryPurple.withValues(alpha: 0.15),
+                                  AppTheme.secondaryPurple.withValues(alpha: 0.3),
                                 ],
                               ),
                             ),
@@ -76,7 +77,7 @@ class OnboardingStep1 extends StatelessWidget {
                               shape: BoxShape.circle,
                               gradient: RadialGradient(
                                 colors: [
-                                  const Color(0xFF6A0099).withValues(alpha: 0.25),
+                                  AppTheme.secondaryPurple.withValues(alpha: 0.25),
                                   Colors.transparent,
                                 ],
                               ),
@@ -107,13 +108,13 @@ class OnboardingStep1 extends StatelessWidget {
                   children: [
                     const SizedBox(height: 24),
 
-                    const Text(
+                    Text(
                       'SMART WAY TO TRAVEL',
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFFB12CFF),
+                        color: AppTheme.primaryPurple,
                         letterSpacing: 1.8,
                       ),
                     ),
@@ -121,9 +122,9 @@ class OnboardingStep1 extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     RichText(
-                      text: const TextSpan(
+                      text: TextSpan(
                         children: [
-                          TextSpan(
+                          const TextSpan(
                             text: 'Book Your ',
                             style: TextStyle(
                               fontFamily: 'Inter',
@@ -139,7 +140,7 @@ class OnboardingStep1 extends StatelessWidget {
                               fontFamily: 'Inter',
                               fontSize: 34,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFFB12CFF),
+                              color: AppTheme.primaryPurple,
                               height: 1.15,
                             ),
                           ),
@@ -168,7 +169,7 @@ class OnboardingStep1 extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: onNext,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFB12CFF),
+                          backgroundColor: AppTheme.primaryPurple,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -199,11 +200,12 @@ class OnboardingStep1 extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Step 1 active
                           Container(
                             width: 28,
                             height: 4,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFB12CFF),
+                              color: AppTheme.primaryPurple,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
