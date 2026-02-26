@@ -19,7 +19,7 @@ class _SplashPageState extends State<SplashPage> {
     // Adjust duration to match your GIF length
     await Future.delayed(const Duration(milliseconds: 2460));
     if (!mounted) return;
-    AppRouter.clearAndGo(context, AppRouter.home); // or login/home
+    AppRouter.clearAndGo(context, AppRouter.onboarding); // or login/home
   }
 
   @override

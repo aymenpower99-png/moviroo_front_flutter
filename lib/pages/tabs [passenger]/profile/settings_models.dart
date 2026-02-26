@@ -6,6 +6,7 @@ class SettingsItem {
   final String? subtitle;
   final String? trailing;
   final VoidCallback? onTap;
+  final bool isLogout;
 
   const SettingsItem({
     required this.icon,
@@ -13,6 +14,7 @@ class SettingsItem {
     this.subtitle,
     this.trailing,
     this.onTap,
+    this.isLogout = false,
   });
 }
 

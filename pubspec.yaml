@@ -59,4 +59,5 @@ flutter:
     - images/logo.gif
     - images/complete.gif
     - images/logob.png
-    - images/translations/
+    - images/translations/en.json
+    - images/translations/fr.json

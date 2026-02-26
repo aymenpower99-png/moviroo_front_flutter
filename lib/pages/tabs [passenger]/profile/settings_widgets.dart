@@ -3,8 +3,9 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import 'settings_models.dart';
 import 'appearance.dart';
-import '../../../../main.dart';
 import '../profile/language/language_page.dart';
+import '../../../../main.dart';
+import '../../../../l10n/app_localizations.dart';
 
 // ── Profile header card ───────────────────────────────────────────────────────
 
@@ -43,7 +44,11 @@ class _Avatar extends StatelessWidget {
       child: ClipOval(
         child: Container(
           color: const Color(0xFF2A1A3E),
-          child: const Icon(Icons.person, color: AppColors.primaryPurple, size: 40),
+          child: const Icon(
+            Icons.person,
+            color: AppColors.primaryPurple,
+            size: 40,
+          ),
         ),
       ),
     );
@@ -84,7 +89,7 @@ class SettingsRowTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLogout = item.title == 'Log Out';
+    final isLogout = item.isLogout;
 
     return GestureDetector(
       onTap: item.onTap,
@@ -165,20 +170,31 @@ class PreferencesSection extends StatefulWidget {
 class _PreferencesSectionState extends State<PreferencesSection> {
   bool _notifications = true;
 
-  String get _currentThemeLabel => switch (themeProvider.mode) {
-        ThemeMode.dark   => 'Dark',
-        ThemeMode.light  => 'Light',
-        ThemeMode.system => 'System',
-      };
+  String _themeLabel(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return switch (themeProvider.mode) {
+      ThemeMode.dark   => t.translate('dark'),
+      ThemeMode.light  => t.translate('light'),
+      ThemeMode.system => t.translate('system'),
+    };
+  }
+
+  String _languageLabel() {
+    return switch (localeProvider.locale.languageCode) {
+      'fr' => 'Français',
+      _    => 'English (US)',
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionLabel('PREFERENCES'),
+        _SectionLabel(t.translate('preferences')),
         const SizedBox(height: 12),
 
         // ── Notifications ──────────────────────────────────────────
@@ -191,10 +207,10 @@ class _PreferencesSectionState extends State<PreferencesSection> {
           ),
           child: Row(
             children: [
-              _TileIcon(icon: Icons.notifications_none_rounded),
+              const _TileIcon(icon: Icons.notifications_none_rounded),
               const SizedBox(width: 16),
               Expanded(
-                child: Text('Notifications',
+                child: Text(t.translate('notifications'),
                     style: AppTextStyles.settingsItem(context)),
               ),
               Switch(
@@ -232,13 +248,13 @@ class _PreferencesSectionState extends State<PreferencesSection> {
             ),
             child: Row(
               children: [
-                _TileIcon(icon: Icons.palette_outlined),
+                const _TileIcon(icon: Icons.palette_outlined),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text('Appearance',
+                  child: Text(t.translate('appearance'),
                       style: AppTextStyles.settingsItem(context)),
                 ),
-                Text(_currentThemeLabel,
+                Text(_themeLabel(context),
                     style: AppTextStyles.settingsItemValue(context)),
                 const SizedBox(width: 6),
                 Icon(Icons.chevron_right_rounded,
@@ -268,13 +284,13 @@ class _PreferencesSectionState extends State<PreferencesSection> {
             ),
             child: Row(
               children: [
-                _TileIcon(icon: Icons.language_rounded),
+                const _TileIcon(icon: Icons.language_rounded),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text('Language',
+                  child: Text(t.translate('language'),
                       style: AppTextStyles.settingsItem(context)),
                 ),
-                Text('English (US)',
+                Text(_languageLabel(),
                     style: AppTextStyles.settingsItemValue(context)),
                 const SizedBox(width: 6),
                 Icon(Icons.chevron_right_rounded,

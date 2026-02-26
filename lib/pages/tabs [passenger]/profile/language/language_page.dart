@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../main.dart';
-import '../../../../l10n/app_localizations.dart'; // ← ADD THIS
+import '../../../../l10n/app_localizations.dart';
 
 class LanguagePage extends StatefulWidget {
   const LanguagePage({super.key});
@@ -12,7 +12,7 @@ class LanguagePage extends StatefulWidget {
 }
 
 class _LanguagePageState extends State<LanguagePage> {
-  String _selectedLanguage = 'en';
+  late String _selectedLanguage;
 
   @override
   void initState() {
@@ -22,13 +22,12 @@ class _LanguagePageState extends State<LanguagePage> {
 
   void _selectLanguage(String languageCode) {
     setState(() => _selectedLanguage = languageCode);
-    localeProvider.setLocale(languageCode);
-    Navigator.pop(context, languageCode);
+    localeProvider.setLocaleByCode(languageCode);
   }
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context); // ← GET TRANSLATIONS
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -62,7 +61,7 @@ class _LanguagePageState extends State<LanguagePage> {
                   ),
                   Expanded(
                     child: Text(
-                      t.translate('language'), // ← WAS: 'Language'
+                      t.translate('language'),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.pageTitle(context),
                     ),
@@ -74,7 +73,7 @@ class _LanguagePageState extends State<LanguagePage> {
 
               // ── Section label ────────────────────────────────────
               Text(
-                t.translate('selectLanguage'), // ← WAS: 'SELECT LANGUAGE'
+                t.translate('selectLanguage'),
                 style: AppTextStyles.sectionLabel(context),
               ),
               const SizedBox(height: 12),
@@ -90,8 +89,8 @@ class _LanguagePageState extends State<LanguagePage> {
                   children: [
                     _LanguageTile(
                       flagEmoji: '🇺🇸',
-                      label: t.translate('english'),    // ← WAS: 'English'
-                      subtitle: t.translate('englishUS'), // ← WAS: 'English (US)'
+                      label: t.translate('english'),
+                      subtitle: t.translate('englishUS'),
                       languageCode: 'en',
                       selected: _selectedLanguage,
                       onTap: () => _selectLanguage('en'),
@@ -103,8 +102,8 @@ class _LanguagePageState extends State<LanguagePage> {
                     ),
                     _LanguageTile(
                       flagEmoji: '🇫🇷',
-                      label: t.translate('french'),  // ← WAS: 'Français'
-                      subtitle: 'Français',          // native name stays hardcoded
+                      label: t.translate('french'),
+                      subtitle: 'Français',
                       languageCode: 'fr',
                       selected: _selectedLanguage,
                       onTap: () => _selectLanguage('fr'),
@@ -189,10 +188,13 @@ class _LanguageTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: radioBorderColor, width: 2),
-                color: _isSelected ? AppColors.primaryPurple : Colors.transparent,
+                color: _isSelected
+                    ? AppColors.primaryPurple
+                    : Colors.transparent,
               ),
               child: _isSelected
-                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 13)
+                  ? const Icon(Icons.check_rounded,
+                      color: Colors.white, size: 13)
                   : null,
             ),
           ],

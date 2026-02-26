@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../routing/router.dart'; // adjust path as needed
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -155,7 +156,7 @@ class _LoginPageState extends State<LoginPage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () => AppRouter.clearAndGo(context, AppRouter.home),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPurple,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

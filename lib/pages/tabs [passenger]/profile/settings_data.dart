@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'settings_models.dart';
 
 List<SettingsSection> buildSettingsSections({
+  required String Function(String) t,
   required VoidCallback onPersonalData,
   required VoidCallback onPayments,
   required VoidCallback onSavedPlaces,
@@ -9,35 +10,36 @@ List<SettingsSection> buildSettingsSections({
 }) {
   return [
     SettingsSection(
-      label: 'ACCOUNT',
+      label: t('account'),
       items: [
         SettingsItem(
           icon: Icons.person_outline_rounded,
-          title: 'Personal data',
-          subtitle: 'Name, phone number, email',
+          title: t('personal_data'),
+          subtitle: t('personal_data_subtitle'),
           onTap: onPersonalData,
         ),
         SettingsItem(
           icon: Icons.credit_card_rounded,
-          title: 'Payments',
-          subtitle: 'Visa ••42 as default',
-          trailing: 'Manage',
+          title: t('payments'),
+          subtitle: t('payments_subtitle'),
+          trailing: t('manage'),
           onTap: onPayments,
         ),
         SettingsItem(
           icon: Icons.place_outlined,
-          title: 'Saved places',
-          subtitle: 'Home, Work and more',
+          title: t('saved_places'),
+          subtitle: t('saved_places_subtitle'),
           onTap: onSavedPlaces,
         ),
       ],
     ),
     SettingsSection(
-      label: 'ACCOUNT ACTIONS',
+      label: t('account_actions'),
       items: [
         SettingsItem(
           icon: Icons.logout_rounded,
-          title: 'Log Out',
+          title: t('log_out'),
+          isLogout: true,
           onTap: onLogout,
         ),
       ],
