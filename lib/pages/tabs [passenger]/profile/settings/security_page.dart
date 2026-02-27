@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_colors.dart';
-import '../../../../../theme/app_text_styles.dart';
-import '../../../../../l10n/app_localizations.dart';
-import 'security_page.dart';
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 
-// ── Settings sub page ─────────────────────────────────────────────────────────
-
-class SettingsSubPage extends StatelessWidget {
-  const SettingsSubPage({super.key});
+class SecurityPage extends StatelessWidget {
+  const SecurityPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +15,7 @@ class SettingsSubPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            _SubPageTopBar(title: t('settings')),
+            _SubPageTopBar(title: t('security')),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -27,42 +24,28 @@ class SettingsSubPage extends StatelessWidget {
                   children: [
                     const SizedBox(height: 8),
 
-                    // ── Security ───────────────────────────────────
-                    _SectionLabel(t('security')),
-                    const SizedBox(height: 12),
-
-                    _NavTile(
-                      title: t('security'),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SecurityPage(),
-                        ),
-                      ),
-                    ),
-                    _NavTile(
-                      title: t('currency'),
+                    _SecurityNavTile(
+                      title: t('Password'),
                       onTap: () {
-                        // TODO: navigate to CurrencyPage
+                        // TODO: Navigate to PasswordPage
                       },
                     ),
-
-                    const SizedBox(height: 24),
-
-                    // ── Legal ──────────────────────────────────────
-                    _SectionLabel(t('legal')),
-                    const SizedBox(height: 12),
-
-                    _NavTile(
-                      title: t('privacy_policy'),
+                    _SecurityNavTile(
+                      title: t('Authentication App'),
                       onTap: () {
-                        // TODO: navigate to PrivacyPolicyPage
+                        // TODO: Navigate to AuthAppPage
                       },
                     ),
-                    _NavTile(
-                      title: t('terms_of_use'),
+                    _SecurityNavTile(
+                      title: t('2-Step Verification'),
                       onTap: () {
-                        // TODO: navigate to TermsOfUsePage
+                        // TODO: Navigate to TwoStepPage
+                      },
+                    ),
+                    _SecurityNavTile(
+                      title: t('Payment Methods'),
+                      onTap: () {
+                        // TODO: Navigate to PaymentMethodPage
                       },
                     ),
 
@@ -78,13 +61,13 @@ class SettingsSubPage extends StatelessWidget {
   }
 }
 
-// ── Nav tile ──────────────────────────────────────────────────────────────────
+// ── Simple nav tile — title + chevron, no icon, no subtitle ──────────────────
 
-class _NavTile extends StatelessWidget {
+class _SecurityNavTile extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
 
-  const _NavTile({
+  const _SecurityNavTile({
     required this.title,
     required this.onTap,
   });
@@ -117,16 +100,7 @@ class _NavTile extends StatelessWidget {
   }
 }
 
-// ── Shared helpers ────────────────────────────────────────────────────────────
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) =>
-      Text(text, style: AppTextStyles.sectionLabel(context));
-}
+// ── Top bar ───────────────────────────────────────────────────────────────────
 
 class _SubPageTopBar extends StatelessWidget {
   final String title;

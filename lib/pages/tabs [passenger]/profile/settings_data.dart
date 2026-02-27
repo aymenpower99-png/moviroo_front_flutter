@@ -17,8 +17,8 @@ List<SettingsSection> buildSettingsSections({
       items: [
         SettingsItem(
           icon: Icons.person_outline_rounded,
-          title: t('personal_details'),
-          subtitle: t('personal_details_subtitle'),
+          title: t('Account '),
+          subtitle: t('Personal Details'),
           onTap: onPersonalData,
         ),
         SettingsItem(
