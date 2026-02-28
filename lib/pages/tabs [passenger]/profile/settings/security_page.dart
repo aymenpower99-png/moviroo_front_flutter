@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../tabs [passenger]/profile/settings/security/auth_app_page.dart';
+import '../../../tabs [passenger]/profile/settings/security/password_page.dart';
+import '../../../tabs [passenger]/profile/settings/security/two_step_verification_page.dart';
+import '../../../tabs [passenger]/profile/settings/security/payment_method_page.dart';
 
 class SecurityPage extends StatelessWidget {
   const SecurityPage({super.key});
@@ -26,27 +30,39 @@ class SecurityPage extends StatelessWidget {
 
                     _SecurityNavTile(
                       title: t('Password'),
-                      onTap: () {
-                        // TODO: Navigate to PasswordPage
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PasswordPage(),
+                        ),
+                      ),
                     ),
                     _SecurityNavTile(
                       title: t('Authentication App'),
-                      onTap: () {
-                        // TODO: Navigate to AuthAppPage
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AuthAppPage(),
+                        ),
+                      ),
                     ),
                     _SecurityNavTile(
                       title: t('2-Step Verification'),
-                      onTap: () {
-                        // TODO: Navigate to TwoStepPage
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TwoStepVerificationPage(),
+                        ),
+                      ),
                     ),
                     _SecurityNavTile(
                       title: t('Payment Methods'),
-                      onTap: () {
-                        // TODO: Navigate to PaymentMethodPage
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PaymentMethodPage(),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 24),

@@ -149,9 +149,9 @@ class _SubPageTopBar extends StatelessWidget {
                 border: Border.all(color: AppColors.border(context)),
               ),
               child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 16,
-                color: AppColors.subtext(context),
+                Icons.chevron_left_rounded,
+                size: 22,
+                color: AppColors.text(context),
               ),
             ),
           ),

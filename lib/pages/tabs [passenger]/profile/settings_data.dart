@@ -17,29 +17,20 @@ List<SettingsSection> buildSettingsSections({
       items: [
         SettingsItem(
           icon: Icons.person_outline_rounded,
-          title: t('Account '),
-          subtitle: t('Personal Details'),
+          title: t('Personal Info'),
           onTap: onPersonalData,
-        ),
-        SettingsItem(
-          icon: Icons.credit_card_rounded,
-          title: t('payments'),
-          subtitle: t('payments_subtitle'),
-          trailing: t('manage'),
-          onTap: onPayments,
         ),
         SettingsItem(
           icon: Icons.place_outlined,
           title: t('saved_places'),
-          subtitle: t('saved_places_subtitle'),
-          onTap: onSavedPlaces,
+          onTap: onSavedPlaces,  // ← wired up
         ),
       ],
     ),
 
     // ── Account Management ────────────────────────────────────────────────────
     SettingsSection(
-      label: t('ACCOUNT MANAGMENT'),
+      label: t('account_management'),
       items: [
         SettingsItem(
           icon: Icons.notifications_none_rounded,
@@ -48,7 +39,7 @@ List<SettingsSection> buildSettingsSections({
         ),
         SettingsItem(
           icon: Icons.settings_outlined,
-          title: t('Settings'),
+          title: t('settings'),
           onTap: onSettings,
         ),
       ],

@@ -88,7 +88,7 @@ class _LanguagePageState extends State<LanguagePage> {
                 child: Column(
                   children: [
                     _LanguageTile(
-                      flagEmoji: '🇺🇸',
+                      flagAsset: 'images/flags/usa.png',
                       label: t.translate('english'),
                       subtitle: t.translate('englishUS'),
                       languageCode: 'en',
@@ -101,7 +101,7 @@ class _LanguagePageState extends State<LanguagePage> {
                       color: AppColors.border(context),
                     ),
                     _LanguageTile(
-                      flagEmoji: '🇫🇷',
+                      flagAsset: 'images/flags/france.png',
                       label: t.translate('french'),
                       subtitle: 'Français',
                       languageCode: 'fr',
@@ -122,7 +122,7 @@ class _LanguagePageState extends State<LanguagePage> {
 // ── Single language tile ──────────────────────────────────────────────────────
 
 class _LanguageTile extends StatelessWidget {
-  final String flagEmoji;
+  final String flagAsset;
   final String label;
   final String subtitle;
   final String languageCode;
@@ -130,7 +130,7 @@ class _LanguageTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const _LanguageTile({
-    required this.flagEmoji,
+    required this.flagAsset,
     required this.label,
     required this.subtitle,
     required this.languageCode,
@@ -152,19 +152,13 @@ class _LanguageTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         child: Row(
           children: [
-            // Flag emoji
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: AppColors.surface(context),
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(
-                  color: AppColors.border(context).withValues(alpha: 0.3),
-                ),
-              ),
-              child: Center(
-                child: Text(flagEmoji, style: const TextStyle(fontSize: 20)),
+            // Flag image
+            ClipOval(
+              child: Image.asset(
+                flagAsset,
+                width: 34,
+                height: 34,
+                fit: BoxFit.cover,
               ),
             ),
             const SizedBox(width: 14),

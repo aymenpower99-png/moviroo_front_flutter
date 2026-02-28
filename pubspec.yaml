@@ -62,5 +62,7 @@ flutter:
     - images/translations/en.json
     - images/translations/fr.json
     - images/image.png
+    - images/flags/usa.png
+    - images/flags/france.png
     
 

@@ -34,6 +34,8 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: 82,
       height: 82,
@@ -43,7 +45,9 @@ class _Avatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: Container(
-          color: const Color(0xFF2A1A3E),
+          color: isDark
+              ? const Color(0xFF2A1A3E)  // dark mode — original deep purple
+              : const Color(0xFFEDE7F6), // light mode — soft lavender
           child: const Icon(
             Icons.person,
             color: AppColors.primaryPurple,
