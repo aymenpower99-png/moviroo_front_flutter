@@ -17,20 +17,20 @@ List<SettingsSection> buildSettingsSections({
       items: [
         SettingsItem(
           icon: Icons.person_outline_rounded,
-          title: t('Personal Info'),
+          title: t('personal_data'),
           onTap: onPersonalData,
         ),
         SettingsItem(
           icon: Icons.place_outlined,
           title: t('saved_places'),
-          onTap: onSavedPlaces,  // ← wired up
+          onTap: onSavedPlaces,
         ),
       ],
     ),
 
-    // ── Account Management ────────────────────────────────────────────────────
+    // ── Preferences ───────────────────────────────────────────────────────────
     SettingsSection(
-      label: t('account_management'),
+      label: t('preferences'),
       items: [
         SettingsItem(
           icon: Icons.notifications_none_rounded,

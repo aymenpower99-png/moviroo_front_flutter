@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../main.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class AppearancePage extends StatefulWidget {
   const AppearancePage({super.key});
@@ -20,6 +21,8 @@ class _AppearancePageState extends State<AppearancePage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
@@ -52,7 +55,7 @@ class _AppearancePageState extends State<AppearancePage> {
                   ),
                   Expanded(
                     child: Text(
-                      'Appearance',
+                      t('appearance'),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.pageTitle(context),
                     ),
@@ -63,7 +66,7 @@ class _AppearancePageState extends State<AppearancePage> {
               const SizedBox(height: 32),
 
               // ── Section label ────────────────────────────────────
-              Text('THEME', style: AppTextStyles.sectionLabel(context)),
+              Text(t('theme'), style: AppTextStyles.sectionLabel(context)),
               const SizedBox(height: 12),
 
               // ── Option tiles ─────────────────────────────────────
@@ -77,8 +80,8 @@ class _AppearancePageState extends State<AppearancePage> {
                   children: [
                     _ThemeTile(
                       icon: Icons.dark_mode_rounded,
-                      label: 'Dark',
-                      subtitle: 'Always use dark theme',
+                      label: t('dark'),
+                      subtitle: t('dark_subtitle'),
                       mode: ThemeMode.dark,
                       selected: _selected,
                       onTap: () => _select(ThemeMode.dark),
@@ -90,8 +93,8 @@ class _AppearancePageState extends State<AppearancePage> {
                     ),
                     _ThemeTile(
                       icon: Icons.light_mode_rounded,
-                      label: 'Light',
-                      subtitle: 'Always use light theme',
+                      label: t('light'),
+                      subtitle: t('light_subtitle'),
                       mode: ThemeMode.light,
                       selected: _selected,
                       onTap: () => _select(ThemeMode.light),
@@ -103,8 +106,8 @@ class _AppearancePageState extends State<AppearancePage> {
                     ),
                     _ThemeTile(
                       icon: Icons.settings_suggest_rounded,
-                      label: 'System',
-                      subtitle: 'Follow device settings',
+                      label: t('system'),
+                      subtitle: t('system_subtitle'),
                       mode: ThemeMode.system,
                       selected: _selected,
                       onTap: () => _select(ThemeMode.system),

@@ -7,6 +7,7 @@ import '../pages/tabs [passenger]/home/home_page.dart';
 import '../pages/tabs [passenger]/support/support_page.dart';
 import '../pages/tabs [passenger]/profile/settings_page.dart';
 import '../pages/tabs [passenger]/trajet/trajet_page.dart';
+import '../pages/tabs [passenger]/membre/membre_pass_screen.dart';
 import '../pages/splash/splash_page.dart';
 
 class AppRouter {
@@ -18,12 +19,12 @@ class AppRouter {
   static const String forgotPass  = '/forgot-password';
   static const String home        = '/home';
   static const String support     = '/support';
-  static const String ai          = '/ai';
+  static const String membre      = '/membre';
   static const String profile     = '/profile';
   static const String driverHome  = '/driver/home';
 
   // ── Initial route ──────────────────────────────────────────────────────────
-static const String initialRoute = splash; // was: home
+  static const String initialRoute = splash;
 
   // ── Route map ─────────────────────────────────────────────────────────────
   static Map<String, WidgetBuilder> get routes => {
@@ -34,11 +35,9 @@ static const String initialRoute = splash; // was: home
     forgotPass: (_) => const ForgotPasswordPage(),
     home:       (_) => const HomePage(),
     support:    (_) => const SupportPage(),
+    membre:     (_) => const MembrePassScreen(),
     profile:    (_) => const SettingsPage(),
-    driverHome: (_) => const TrajetPage(),   // ← Trajets tab
-
-    // ── Uncomment as you build the pages ──────────────────────────
-    // ai:      (_) => const AiPage(),
+    driverHome: (_) => const TrajetPage(),
   };
 
   /// Push a named route

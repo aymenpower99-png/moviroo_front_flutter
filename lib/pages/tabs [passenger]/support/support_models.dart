@@ -1,13 +1,13 @@
-class FaqEntry {
-  final String question;
-  final String answer;
+class FaqEntryData {
+  final String questionKey;
+  final String answerKey;
 
-  const FaqEntry({required this.question, required this.answer});
+  const FaqEntryData({required this.questionKey, required this.answerKey});
 }
 
-class FaqCategory {
-  final String title;
-  final List<FaqEntry> entries;
+class FaqCategoryData {
+  final String titleKey;
+  final List<FaqEntryData> entries;
 
-  const FaqCategory({required this.title, required this.entries});
+  const FaqCategoryData({required this.titleKey, required this.entries});
 }

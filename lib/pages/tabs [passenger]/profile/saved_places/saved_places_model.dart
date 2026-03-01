@@ -9,10 +9,11 @@ extension SavedPlaceTypeExt on SavedPlaceType {
         SavedPlaceType.favorite => Icons.favorite_border_rounded,
       };
 
-  String get defaultLabel => switch (this) {
-        SavedPlaceType.home     => 'Home',
-        SavedPlaceType.work     => 'Work',
-        SavedPlaceType.favorite => 'Favourite',
+  // Key to look up via t() at the call site
+  String get defaultLabelKey => switch (this) {
+        SavedPlaceType.home     => 'place_home',
+        SavedPlaceType.work     => 'place_work',
+        SavedPlaceType.favorite => 'place_favourite',
       };
 }
 

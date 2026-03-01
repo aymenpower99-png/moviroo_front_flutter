@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'support_models.dart';
 import 'faq_widgets.dart';
 
-/// The category header card that expands to show its Q&A entries.
 class FaqItem extends StatefulWidget {
-  final FaqCategory category;
+  final FaqCategoryData category;
   final IconData icon;
 
   const FaqItem({super.key, required this.category, required this.icon});
@@ -45,6 +45,8 @@ class _FaqItemState extends State<FaqItem>
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       decoration: BoxDecoration(
@@ -82,12 +84,14 @@ class _FaqItemState extends State<FaqItem>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.category.title,
+                          t(widget.category.titleKey),
                           style: AppTextStyles.vehicleClassName(context),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${widget.category.entries.length} questions',
+                          t('questions_count').replaceAll(
+                              '{count}',
+                              widget.category.entries.length.toString()),
                           style: AppTextStyles.bodySmall(context)
                               .copyWith(fontSize: 11),
                         ),

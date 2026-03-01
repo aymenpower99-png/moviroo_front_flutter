@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/tab_bar.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'support_data.dart';
 import 'faq_widgets.dart';
 import 'Sumbit Ticket/support_page.dart' as ticket;
@@ -19,6 +20,8 @@ class _SupportPageState extends State<SupportPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
@@ -31,60 +34,101 @@ class _SupportPageState extends State<SupportPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 20),
-                    const _SupportTopBar(),
-                    const SizedBox(height: 28),
-                    Text('QUICK ACTIONS',
-                        style: AppTextStyles.sectionLabel(context)),
-                    const SizedBox(height: 14),
-                    _AiBanner(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AiAgentPage(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 24),
+
+                    // ── Top bar with title ─────────────────────────
                     Row(
                       children: [
                         Expanded(
-                          child: _ActionCard(
-                            icon: Icons.confirmation_number_outlined,
-                            title: 'Submit Ticket',
-                            sub: 'REPORT ISSUE',
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    const ticket.SubmitTicketPage(),
-                              ),
+                          child: Text(
+                            t('help_support'),
+                            style: AppTextStyles.pageTitle(context).copyWith(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _ActionCard(
-                            icon: Icons.phone_outlined,
-                            title: 'Call Support',
-                            sub: 'URGENT NEEDS',
-                            onTap: () {},
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.iconBg(context),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.primaryPurple
+                                  .withValues(alpha: 0.35),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.notifications_none_rounded,
+                            color: AppColors.primaryPurple,
+                            size: 20,
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 28),
+
+                    // ── Quick Actions ──────────────────────────────
+                    Text(t('quick_actions'),
+                        style: AppTextStyles.sectionLabel(context)),
+                    const SizedBox(height: 14),
+
+                    _AiBanner(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const AiAgentPage()),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: _ActionCard(
+                              icon: Icons.confirmation_number_outlined,
+                              title: t('submit_ticket'),
+                              sub: t('submit_ticket_sub'),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const ticket.SubmitTicketPage(),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _ActionCard(
+                              icon: Icons.phone_outlined,
+                              title: t('call_support'),
+                              sub: t('call_support_sub'),
+                              onTap: () {},
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 32),
+
+                    // ── Frequently Asked ───────────────────────────
                     Row(
                       children: [
                         Expanded(
-                          child: Text('FREQUENTLY ASKED',
+                          child: Text(t('frequently_asked'),
                               style: AppTextStyles.sectionLabel(context)),
                         ),
                         GestureDetector(
                           onTap: () {},
                           child: Text(
-                            'View All',
-                            style: AppTextStyles.bodyMedium(context).copyWith(
+                            t('view_all'),
+                            style:
+                                AppTextStyles.bodyMedium(context).copyWith(
                               fontWeight: FontWeight.w600,
                               color: AppColors.primaryPurple,
                             ),
@@ -93,6 +137,7 @@ class _SupportPageState extends State<SupportPage> {
                       ],
                     ),
                     const SizedBox(height: 14),
+
                     ...List.generate(
                       kFaqCategories.length,
                       (i) => Padding(
@@ -103,6 +148,7 @@ class _SupportPageState extends State<SupportPage> {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -119,60 +165,22 @@ class _SupportPageState extends State<SupportPage> {
   }
 }
 
-// ── Top bar ───────────────────────────────────────────────────────────────────
-
-class _SupportTopBar extends StatelessWidget {
-  const _SupportTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'Help & Support',
-            style: AppTextStyles.pageTitle(context).copyWith(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.iconBg(context),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.primaryPurple.withValues(alpha: 0.35),
-              width: 1,
-            ),
-          ),
-          child: const Icon(
-            Icons.notifications_none_rounded,
-            color: AppColors.primaryPurple,
-            size: 20,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 // ── AI Assistant banner ───────────────────────────────────────────────────────
 
 class _AiBanner extends StatelessWidget {
   final VoidCallback onTap;
-
   const _AiBanner({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         decoration: BoxDecoration(
           gradient: AppColors.purpleGradient,
           borderRadius: BorderRadius.circular(16),
@@ -191,7 +199,7 @@ class _AiBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'AI Assistant',
+                    t('ai_assistant'),
                     style: AppTextStyles.pageTitle(context).copyWith(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -200,7 +208,7 @@ class _AiBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Instant answers for your ride',
+                    t('ai_assistant_sub'),
                     style: AppTextStyles.bodySmall(context).copyWith(
                       color: const Color(0xFFDDB8FF),
                     ),
@@ -248,6 +256,9 @@ class _ActionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        // ✅ FIX: replaced fixed height: 160 with minHeight constraint
+        // so cards grow with content and always match each other's height
+        constraints: const BoxConstraints(minHeight: 160),
         padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
         decoration: BoxDecoration(
           color: AppColors.surface(context),
@@ -255,6 +266,8 @@ class _ActionCard extends StatelessWidget {
           border: Border.all(color: AppColors.border(context)),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
           children: [
             Container(
               width: 48,
@@ -263,11 +276,13 @@ class _ActionCard extends StatelessWidget {
                 color: AppColors.iconBg(context),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: AppColors.primaryPurple, size: 24),
+              child:
+                  Icon(icon, color: AppColors.primaryPurple, size: 24),
             ),
             const SizedBox(height: 14),
             Text(
               title,
+              textAlign: TextAlign.center,
               style: AppTextStyles.bodyLarge(context).copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -275,6 +290,7 @@ class _ActionCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               sub,
+              textAlign: TextAlign.center,
               style: AppTextStyles.sectionLabel(context).copyWith(
                 fontSize: 10,
                 letterSpacing: 1.2,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'trajet_models.dart';
 import 'ride_route_column.dart';
 
@@ -44,16 +45,14 @@ class RideCard extends StatelessWidget {
                     children: [
                       Text(
                         ride.vehicleType,
-                        style: AppTextStyles.bodyLarge(
-                          context,
-                        ).copyWith(fontWeight: FontWeight.w700),
+                        style: AppTextStyles.bodyLarge(context)
+                            .copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${ride.date} • ${ride.vehicleName}',
-                        style: AppTextStyles.bodySmall(
-                          context,
-                        ).copyWith(fontSize: 12),
+                        style: AppTextStyles.bodySmall(context)
+                            .copyWith(fontSize: 12),
                       ),
                     ],
                   ),
@@ -70,13 +69,8 @@ class RideCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 16),
-
-            // ── Route ────────────────────────────────────────────
             RideRouteColumn(ride: ride),
-
             const SizedBox(height: 16),
-
-            // ── Action button ─────────────────────────────────────
             _ActionButton(ride: ride),
           ],
         ),
@@ -86,10 +80,8 @@ class RideCard extends StatelessWidget {
 
   IconData _vehicleIcon(String type) {
     switch (type) {
-      case 'economy':
-        return Icons.electric_bolt_rounded;
-      default:
-        return Icons.directions_car_rounded;
+      case 'economy': return Icons.electric_bolt_rounded;
+      default:        return Icons.directions_car_rounded;
     }
   }
 }
@@ -102,6 +94,8 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     switch (ride.status) {
       case RideStatus.upcoming:
         return Row(
@@ -115,16 +109,14 @@ class _ActionButton extends StatelessWidget {
                     color: AppColors.primaryPurple,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.near_me_rounded,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      SizedBox(width: 8),
-                      Text('Track Ride', style: AppTextStyles.buttonPrimary),
+                      const Icon(Icons.near_me_rounded,
+                          color: Colors.white, size: 16),
+                      const SizedBox(width: 8),
+                      Text(t('track_ride'),
+                          style: AppTextStyles.buttonPrimary),
                     ],
                   ),
                 ),
@@ -141,11 +133,8 @@ class _ActionButton extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.border(context)),
                 ),
-                child: Icon(
-                  Icons.more_horiz_rounded,
-                  color: AppColors.subtext(context),
-                  size: 22,
-                ),
+                child: Icon(Icons.more_horiz_rounded,
+                    color: AppColors.subtext(context), size: 22),
               ),
             ),
           ],
@@ -161,12 +150,11 @@ class _ActionButton extends StatelessWidget {
               color: AppColors.primaryPurple.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.primaryPurple.withValues(alpha: 0.35),
-              ),
+                  color: AppColors.primaryPurple.withValues(alpha: 0.35)),
             ),
             child: Center(
               child: Text(
-                'Book Again',
+                t('book_again'),
                 style: AppTextStyles.bodyLarge(context).copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.primaryPurple,
@@ -177,24 +165,20 @@ class _ActionButton extends StatelessWidget {
         );
 
       case RideStatus.cancelled:
-        return GestureDetector(
-          onTap: () {},
-          child: Container(
-            height: 46,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.error.withValues(alpha: 0.25),
-              ),
-            ),
-            child: Center(
-              child: Text(
-                'Cancelled',
-                style: AppTextStyles.bodyLarge(
-                  context,
-                ).copyWith(fontWeight: FontWeight.w600, color: AppColors.error),
+        return Container(
+          height: 46,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.error.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
+          ),
+          child: Center(
+            child: Text(
+              t('cancelled'),
+              style: AppTextStyles.bodyLarge(context).copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.error,
               ),
             ),
           ),

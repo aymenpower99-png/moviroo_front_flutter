@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'saved_places_model.dart';
 import 'add_place_page.dart';
 
@@ -40,6 +41,8 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
@@ -48,8 +51,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
           children: [
             // ── Top bar ──────────────────────────────────────────────
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
                   GestureDetector(
@@ -71,7 +73,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                   ),
                   Expanded(
                     child: Text(
-                      'Saved places',
+                      t('saved_places'),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.pageTitle(context),
                     ),
@@ -88,8 +90,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
                       itemCount: _places.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: 10),
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (_, i) => _PlaceTile(
                         place: _places[i],
                         onEdit: () => _goToEdit(_places[i]),
@@ -106,8 +107,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
           ? GestureDetector(
               onTap: _goToAdd,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
                   color: AppColors.primaryPurple,
                   borderRadius: BorderRadius.circular(28),
@@ -121,12 +121,12 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.add, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
+                  children: [
+                    const Icon(Icons.add, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
                     Text(
-                      'New address',
-                      style: TextStyle(
+                      t('new_address'),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
@@ -166,16 +166,14 @@ class _PlaceTile extends StatelessWidget {
           color: AppColors.error.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Icon(Icons.delete_outline_rounded,
-            color: AppColors.error, size: 22),
+        child: Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 22),
       ),
       onDismissed: (_) => onDelete(),
       child: GestureDetector(
         onTap: onEdit,
         behavior: HitTestBehavior.opaque,
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
             color: AppColors.surface(context),
             borderRadius: BorderRadius.circular(16),
@@ -183,7 +181,6 @@ class _PlaceTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // icon
               Container(
                 width: 42,
                 height: 42,
@@ -191,29 +188,27 @@ class _PlaceTile extends StatelessWidget {
                   color: AppColors.iconBg(context),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(place.type.icon,
-                    color: AppColors.primaryPurple, size: 20),
+                child: Icon(place.type.icon, color: AppColors.primaryPurple, size: 20),
               ),
               const SizedBox(width: 14),
-              // text
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(place.label,
-                        style: AppTextStyles.settingsItem(context)),
+                    Text(place.label, style: AppTextStyles.settingsItem(context)),
                     if (place.subtitle.isNotEmpty) ...[
                       const SizedBox(height: 2),
-                      Text(place.subtitle,
-                          style: AppTextStyles.bodySmall(context),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        place.subtitle,
+                        style: AppTextStyles.bodySmall(context),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded,
-                  color: AppColors.subtext(context), size: 20),
+              Icon(Icons.chevron_right_rounded, color: AppColors.subtext(context), size: 20),
             ],
           ),
         ),
@@ -230,6 +225,8 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -241,15 +238,13 @@ class _EmptyState extends StatelessWidget {
               color: AppColors.iconBg(context),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.location_off_outlined,
-                size: 40, color: AppColors.primaryPurple),
+            child: Icon(Icons.location_off_outlined, size: 40, color: AppColors.primaryPurple),
           ),
           const SizedBox(height: 18),
-          Text('No saved addresses',
-              style: AppTextStyles.bodyLarge(context)),
+          Text(t('no_saved_addresses'), style: AppTextStyles.bodyLarge(context)),
           const SizedBox(height: 6),
           Text(
-            'Add your home, work or favourite spots',
+            t('no_saved_addresses_subtitle'),
             style: AppTextStyles.bodySmall(context),
             textAlign: TextAlign.center,
           ),
@@ -257,23 +252,21 @@ class _EmptyState extends StatelessWidget {
           GestureDetector(
             onTap: onAdd,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 28, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
               decoration: BoxDecoration(
                 color: AppColors.primaryPurple,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        AppColors.primaryPurple.withValues(alpha: 0.3),
+                    color: AppColors.primaryPurple.withValues(alpha: 0.3),
                     blurRadius: 14,
                     offset: const Offset(0, 5),
                   ),
                 ],
               ),
-              child: const Text(
-                '+ New address',
-                style: TextStyle(
+              child: Text(
+                t('new_address'),
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 15,

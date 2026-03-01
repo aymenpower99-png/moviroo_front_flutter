@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../routing/router.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class AppTabBar extends StatelessWidget {
   final int currentIndex;
@@ -11,19 +13,27 @@ class AppTabBar extends StatelessWidget {
   });
 
   static const _routes = [
-    '/home',
-    '/driver/home',
-    '/ai',
-    '/support',
-    '/profile',
+    AppRouter.home,
+    AppRouter.driverHome,
+    AppRouter.membre,
+    AppRouter.support,
+    AppRouter.profile,
   ];
 
-  static const _items = [
-    _TabItem(icon: Icons.home_rounded,           label: 'Accueil'),
-    _TabItem(icon: Icons.directions_car_rounded, label: 'Bookings'),
-    _TabItem(icon: Icons.auto_fix_high_rounded,  label: 'IA'),
-    _TabItem(icon: Icons.headset_mic_rounded,    label: 'Support'),
-    _TabItem(icon: Icons.person_outline_rounded, label: 'Profil'),
+  static const _icons = [
+    Icons.home_rounded,
+    Icons.directions_car_rounded,
+    Icons.card_membership_rounded,
+    Icons.headset_mic_rounded,
+    Icons.person_outline_rounded,
+  ];
+
+  static const _labelKeys = [
+    'tab_home',
+    'tab_bookings',
+    'tab_membre',
+    'tab_support',
+    'tab_profile',
   ];
 
   void _handleTap(BuildContext context, int index) {
@@ -34,9 +44,10 @@ class AppTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final bgColor  = isDark ? const Color(0xFF0F0F12) : Colors.white;
+    final isDark    = Theme.of(context).brightness == Brightness.dark;
+    final bgColor   = isDark ? const Color(0xFF0F0F12) : Colors.white;
     final topBorder = isDark ? const Color(0xFF1E1E24) : const Color(0xFFE0E0E8);
+    final t         = AppLocalizations.of(context).translate;
 
     return Container(
       height: 72,
@@ -47,9 +58,8 @@ class AppTabBar extends StatelessWidget {
         ),
       ),
       child: Row(
-        children: List.generate(_items.length, (i) {
-          final item     = _items[i];
-          final selected = i == currentIndex;
+        children: List.generate(_icons.length, (i) {
+          final selected        = i == currentIndex;
           final unselectedColor = isDark
               ? const Color(0xFF6B6B75)
               : const Color(0xFF9B9BAA);
@@ -74,7 +84,7 @@ class AppTabBar extends StatelessWidget {
                         : null,
                     child: Center(
                       child: Icon(
-                        item.icon,
+                        _icons[i],
                         size: 22,
                         color: selected ? Colors.white : unselectedColor,
                       ),
@@ -82,14 +92,14 @@ class AppTabBar extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    item.label,
+                    t(_labelKeys[i]),
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 10,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                      color: selected ? 
-                        (isDark ? Colors.white : const Color(0xFF0B0B0F)) 
-                        : unselectedColor,
+                      color: selected
+                          ? (isDark ? Colors.white : const Color(0xFF0B0B0F))
+                          : unselectedColor,
                     ),
                   ),
                 ],
@@ -100,10 +110,4 @@ class AppTabBar extends StatelessWidget {
       ),
     );
   }
-}
-
-class _TabItem {
-  final IconData icon;
-  final String   label;
-  const _TabItem({required this.icon, required this.label});
 }

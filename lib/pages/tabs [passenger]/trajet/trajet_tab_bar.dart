@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'trajet_models.dart';
 
 class RideTabBar extends StatelessWidget {
@@ -9,8 +10,18 @@ class RideTabBar extends StatelessWidget {
 
   const RideTabBar({super.key, required this.selected, required this.onTap});
 
+  String _labelKey(RideTab tab) {
+    switch (tab) {
+      case RideTab.upcoming:  return 'upcoming';
+      case RideTab.completed: return 'completed';
+      case RideTab.cancelled: return 'cancelled';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Container(
       height: 44,
       padding: const EdgeInsets.all(4),
@@ -22,7 +33,6 @@ class RideTabBar extends StatelessWidget {
       child: Row(
         children: RideTab.values.map((tab) {
           final isSelected = tab == selected;
-          final label = tab.name[0].toUpperCase() + tab.name.substring(1);
           return Expanded(
             child: GestureDetector(
               onTap: () => onTap(tab),
@@ -37,12 +47,10 @@ class RideTabBar extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    label,
+                    t(_labelKey(tab)),
                     style: isSelected
                         ? AppTextStyles.tabLabelActive.copyWith(
-                            fontSize: 13,
-                            color: Colors.white,
-                          )
+                            fontSize: 13, color: Colors.white)
                         : AppTextStyles.tabLabel(context)
                             .copyWith(fontSize: 13),
                   ),

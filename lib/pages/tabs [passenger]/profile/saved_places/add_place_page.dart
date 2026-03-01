@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'saved_places_model.dart';
 
 class AddPlacePage extends StatefulWidget {
@@ -46,23 +47,27 @@ class _AddPlacePageState extends State<AddPlacePage> {
 
   void _save() {
     if (!_canSave) return;
+    final t = AppLocalizations.of(context).translate;
+    final type = widget.existing?.type ?? SavedPlaceType.favorite;
     final place = SavedPlace(
       id: widget.existing?.id ??
           DateTime.now().millisecondsSinceEpoch.toString(),
       label: _labelCtrl.text.trim().isEmpty
-          ? SavedPlaceType.favorite.defaultLabel
+          ? t(type.defaultLabelKey)
           : _labelCtrl.text.trim(),
       address: _addressCtrl.text.trim(),
       city: _cityCtrl.text.trim(),
       province: _provinceCtrl.text.trim(),
       zipCode: _zipCtrl.text.trim(),
-      type: widget.existing?.type ?? SavedPlaceType.favorite,
+      type: type,
     );
     Navigator.pop(context, place);
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
@@ -71,8 +76,7 @@ class _AddPlacePageState extends State<AddPlacePage> {
           children: [
             // ── Top bar ────────────────────────────────────────────
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
                   GestureDetector(
@@ -94,7 +98,7 @@ class _AddPlacePageState extends State<AddPlacePage> {
                   ),
                   Expanded(
                     child: Text(
-                      _isEdit ? 'Edit address' : 'New address',
+                      _isEdit ? t('edit_address') : t('new_address'),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.pageTitle(context),
                     ),
@@ -112,22 +116,22 @@ class _AddPlacePageState extends State<AddPlacePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── Label ──────────────────────────────────────
-                    _SectionLabel('Label (optional)'),
+                    _SectionLabel(t('label_optional')),
                     const SizedBox(height: 8),
                     _InputField(
                       controller: _labelCtrl,
-                      hint: 'e.g. Gym, Parents…',
+                      hint: t('label_hint'),
                       onChanged: (_) => setState(() {}),
                     ),
 
                     const SizedBox(height: 20),
 
                     // ── Address ────────────────────────────────────
-                    _SectionLabel('Address'),
+                    _SectionLabel(t('address')),
                     const SizedBox(height: 8),
                     _InputField(
                       controller: _addressCtrl,
-                      hint: 'Street address',
+                      hint: t('street_address'),
                       onChanged: (_) => setState(() {}),
                     ),
 
@@ -141,11 +145,11 @@ class _AddPlacePageState extends State<AddPlacePage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _SectionLabel('City'),
+                              _SectionLabel(t('city')),
                               const SizedBox(height: 8),
                               _InputField(
                                 controller: _cityCtrl,
-                                hint: 'City',
+                                hint: t('city'),
                               ),
                             ],
                           ),
@@ -155,11 +159,11 @@ class _AddPlacePageState extends State<AddPlacePage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _SectionLabel('Province / State'),
+                              _SectionLabel(t('province_state')),
                               const SizedBox(height: 8),
                               _InputField(
                                 controller: _provinceCtrl,
-                                hint: 'Province',
+                                hint: t('province_hint'),
                               ),
                             ],
                           ),
@@ -170,11 +174,11 @@ class _AddPlacePageState extends State<AddPlacePage> {
                     const SizedBox(height: 20),
 
                     // ── ZIP ────────────────────────────────────────
-                    _SectionLabel('ZIP / Postal code'),
+                    _SectionLabel(t('zip_postal')),
                     const SizedBox(height: 8),
                     _InputField(
                       controller: _zipCtrl,
-                      hint: 'Postal code',
+                      hint: t('postal_hint'),
                       keyboardType: TextInputType.number,
                     ),
 
@@ -187,34 +191,24 @@ class _AddPlacePageState extends State<AddPlacePage> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 24, vertical: 16),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryPurple,
+                          color: _canSave
+                              ? AppColors.primaryPurple
+                              : AppColors.primaryPurple.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                        
-                          ],
                         ),
                         alignment: Alignment.center,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                
-                            SizedBox(width: 8),
-                            Text(
-                              'Save',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          t('save'),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     ),
 
-                    // bottom safe area padding
-                    SizedBox(
-                        height: MediaQuery.of(context).padding.bottom + 16),
+                    SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
                   ],
                 ),
               ),

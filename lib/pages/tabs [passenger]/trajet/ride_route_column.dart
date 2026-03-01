@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'trajet_models.dart';
 
-/// Shared pickup → drop-off route indicator used by both
-/// [RideCard] and [PendingRideCard].
 class RideRouteColumn extends StatelessWidget {
   final RideModel ride;
   const RideRouteColumn({super.key, required this.ride});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -40,9 +41,7 @@ class RideRouteColumn extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.transparent,
                   border: Border.all(
-                    color: AppColors.primaryPurple,
-                    width: 2,
-                  ),
+                      color: AppColors.primaryPurple, width: 2),
                 ),
               ),
               const SizedBox(height: 2),
@@ -54,7 +53,7 @@ class RideRouteColumn extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Pickup',
+                  t('pickup'),
                   style: AppTextStyles.priceLabel(context).copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -62,15 +61,12 @@ class RideRouteColumn extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  ride.pickup,
-                  style: AppTextStyles.bodyMedium(context).copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(ride.pickup,
+                    style: AppTextStyles.bodyMedium(context)
+                        .copyWith(fontWeight: FontWeight.w500)),
                 const SizedBox(height: 12),
                 Text(
-                  'Drop-off',
+                  t('dropoff'),
                   style: AppTextStyles.priceLabel(context).copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -78,12 +74,9 @@ class RideRouteColumn extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  ride.dropoff,
-                  style: AppTextStyles.bodyMedium(context).copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(ride.dropoff,
+                    style: AppTextStyles.bodyMedium(context)
+                        .copyWith(fontWeight: FontWeight.w500)),
               ],
             ),
           ),

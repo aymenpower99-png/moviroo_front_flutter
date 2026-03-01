@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'trajet_models.dart';
 import 'ride_route_column.dart';
 
-/// A ride card variant that shows a "Pending Payment" button
-/// instead of "Track Ride". Use this when status == upcoming
-/// but payment is still pending.
 class PendingRideCard extends StatelessWidget {
   final RideModel ride;
   const PendingRideCard({super.key, required this.ride});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface(context),
@@ -24,7 +24,6 @@ class PendingRideCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──────────────────────────────────────────
             Row(
               children: [
                 Container(
@@ -44,16 +43,14 @@ class PendingRideCard extends StatelessWidget {
                     children: [
                       Text(
                         ride.vehicleType,
-                        style: AppTextStyles.bodyLarge(context).copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: AppTextStyles.bodyLarge(context)
+                            .copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${ride.date} • ${ride.vehicleName}',
-                        style: AppTextStyles.bodySmall(context).copyWith(
-                          fontSize: 12,
-                        ),
+                        style: AppTextStyles.bodySmall(context)
+                            .copyWith(fontSize: 12),
                       ),
                     ],
                   ),
@@ -70,13 +67,9 @@ class PendingRideCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 16),
-
-            // ── Route ────────────────────────────────────────────
             RideRouteColumn(ride: ride),
-
             const SizedBox(height: 16),
 
-            // ── Pending Payment button ────────────────────────────
             GestureDetector(
               onTap: () {},
               child: Container(
@@ -86,18 +79,17 @@ class PendingRideCard extends StatelessWidget {
                   color: AppColors.primaryPurple.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.primaryPurple.withValues(alpha: 0.35),
-                  ),
+                      color: AppColors.primaryPurple.withValues(alpha: 0.35)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.access_time_rounded,
+                    const Icon(Icons.access_time_rounded,
                         color: AppColors.primaryPurple, size: 16),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
-                      'Pending Payment',
-                      style: TextStyle(
+                      t('pending_payment'),
+                      style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 15,
                         fontWeight: FontWeight.w600,

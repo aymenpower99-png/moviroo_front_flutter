@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'personal_data_controller.dart';
 import 'personal_data_widgets.dart';
 import 'personal_data_actions.dart';
@@ -32,6 +33,7 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
     setState(() {});
     final success = await _ctrl.save();
     if (!mounted) return;
+    final t = AppLocalizations.of(context).translate;
     setState(() {});
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -44,7 +46,7 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
               const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
               const SizedBox(width: 10),
               Text(
-                'Profile updated successfully',
+                t('profile_updated'),
                 style: AppTextStyles.bodyMedium(context).copyWith(color: Colors.white),
               ),
             ],
@@ -56,6 +58,8 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
@@ -74,38 +78,38 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Avatar centered
                       const Center(child: AvatarSection()),
                       const SizedBox(height: 32),
 
-                      const SectionLabel('PERSONAL DETAILS'),
+                      SectionLabel(t('personal_details')),
                       const SizedBox(height: 12),
                       FieldCard(
                         children: [
                           FieldTile(
-                            label: 'First Name',
+                            label: t('first_name'),
                             controller: _ctrl.firstName,
-                            validator: (v) =>
-                                (v == null || v.trim().isEmpty) ? 'First name is required' : null,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? t('first_name_required')
+                                : null,
                           ),
                           FieldTile(
-                            label: 'Last Name',
+                            label: t('last_name'),
                             controller: _ctrl.lastName,
                           ),
                           FieldTile(
-                            label: 'Email Address',
+                            label: t('email_address'),
                             controller: _ctrl.email,
                             keyboardType: TextInputType.emailAddress,
                             validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'Email is required';
+                              if (v == null || v.trim().isEmpty) return t('email_required');
                               if (!RegExp(r'^[\w.]+@[\w]+\.[a-z]+$').hasMatch(v.trim())) {
-                                return 'Enter a valid email';
+                                return t('email_invalid');
                               }
                               return null;
                             },
                           ),
                           FieldTile(
-                            label: 'Phone Number',
+                            label: t('phone_number'),
                             controller: _ctrl.phone,
                             keyboardType: TextInputType.phone,
                             inputFormatters: [

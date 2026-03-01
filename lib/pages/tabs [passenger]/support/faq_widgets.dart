@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'support_models.dart';
 
 // ── Individual Q&A tile ───────────────────────────────────────────────────────
 
 class FaqEntryTile extends StatefulWidget {
-  final FaqEntry entry;
+  final FaqEntryData entry;
   const FaqEntryTile({super.key, required this.entry});
 
   @override
@@ -40,6 +41,8 @@ class _FaqEntryTileState extends State<FaqEntryTile>
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return GestureDetector(
       onTap: _toggle,
       child: Container(
@@ -62,7 +65,7 @@ class _FaqEntryTileState extends State<FaqEntryTile>
                 children: [
                   Expanded(
                     child: Text(
-                      widget.entry.question,
+                      t(widget.entry.questionKey),
                       style: AppTextStyles.bodyMedium(context).copyWith(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -77,11 +80,8 @@ class _FaqEntryTileState extends State<FaqEntryTile>
                   AnimatedRotation(
                     turns: _open ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: AppColors.primaryPurple,
-                      size: 18,
-                    ),
+                    child: const Icon(Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.primaryPurple, size: 18),
                   ),
                 ],
               ),
@@ -95,7 +95,7 @@ class _FaqEntryTileState extends State<FaqEntryTile>
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
                     child: Text(
-                      widget.entry.answer,
+                      t(widget.entry.answerKey),
                       style: AppTextStyles.bodySmall(context).copyWith(
                         fontSize: 13,
                         height: 1.6,
@@ -115,7 +115,7 @@ class _FaqEntryTileState extends State<FaqEntryTile>
 // ── FAQ category accordion ────────────────────────────────────────────────────
 
 class FaqItem extends StatefulWidget {
-  final FaqCategory category;
+  final FaqCategoryData category;
   final IconData icon;
   const FaqItem({super.key, required this.category, required this.icon});
 
@@ -150,6 +150,8 @@ class _FaqItemState extends State<FaqItem>
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       decoration: BoxDecoration(
@@ -167,8 +169,7 @@ class _FaqItemState extends State<FaqItem>
             onTap: _toggle,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
                 children: [
                   Container(
@@ -187,12 +188,14 @@ class _FaqItemState extends State<FaqItem>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.category.title,
+                          t(widget.category.titleKey),
                           style: AppTextStyles.vehicleClassName(context),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${widget.category.entries.length} questions',
+                          t('questions_count').replaceAll(
+                              '{count}',
+                              widget.category.entries.length.toString()),
                           style: AppTextStyles.bodySmall(context)
                               .copyWith(fontSize: 11),
                         ),
@@ -202,11 +205,8 @@ class _FaqItemState extends State<FaqItem>
                   AnimatedRotation(
                     turns: _expanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 220),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: AppColors.subtext(context),
-                      size: 22,
-                    ),
+                    child: Icon(Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.subtext(context), size: 22),
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/tab_bar.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'trajet_models.dart';
 import 'trajet_data.dart';
 import 'trajet_tab_bar.dart';
@@ -33,52 +34,51 @@ class _TrajetPageState extends State<TrajetPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 24),
+            // ── Sticky header + tab bar ──────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t('bookings'),
+                    style: AppTextStyles.pageTitle(context).copyWith(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  RideTabBar(
+                    selected: _rideTab,
+                    onTap: (tab) => setState(() => _rideTab = tab),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
 
-                    // ── Page title ─────────────────────────────────
-                    Text(
-                      'Rides',
-                      style: AppTextStyles.pageTitle(context).copyWith(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
+            // ── Scrollable ride cards ────────────────────────────
+            Expanded(
+              child: _filtered.isEmpty
+                  ? _EmptyState(tab: _rideTab)
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                      itemCount: _filtered.length,
+                      itemBuilder: (_, i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: _isPending(_filtered[i])
+                            ? PendingRideCard(ride: _filtered[i])
+                            : RideCard(ride: _filtered[i]),
                       ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // ── Tab selector ───────────────────────────────
-                    RideTabBar(
-                      selected: _rideTab,
-                      onTap: (t) => setState(() => _rideTab = t),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // ── Ride cards ─────────────────────────────────
-                    if (_filtered.isEmpty)
-                      _EmptyState(tab: _rideTab)
-                    else
-                      ..._filtered.map((ride) => Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: _isPending(ride)
-                                ? PendingRideCard(ride: ride)
-                                : RideCard(ride: ride),
-                          )),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
             ),
 
             AppTabBar(
@@ -98,38 +98,46 @@ class _EmptyState extends StatelessWidget {
   final RideTab tab;
   const _EmptyState({required this.tab});
 
+  String _emptyKey(RideTab tab) {
+    switch (tab) {
+      case RideTab.upcoming:  return 'no_upcoming_rides';
+      case RideTab.completed: return 'no_completed_rides';
+      case RideTab.cancelled: return 'no_cancelled_rides';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 60),
-      child: Center(
-        child: Column(
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.iconBg(context),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.directions_car_outlined,
-                  color: AppColors.primaryPurple, size: 30),
+    final t = AppLocalizations.of(context).translate;
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppColors.iconBg(context),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'No ${tab.name} rides',
-              style: AppTextStyles.bodyLarge(context).copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+            child: const Icon(Icons.directions_car_outlined,
+                color: AppColors.primaryPurple, size: 30),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            t(_emptyKey(tab)),
+            style: AppTextStyles.bodyLarge(context).copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Your ${tab.name} rides will appear here.',
-              style: AppTextStyles.bodySmall(context).copyWith(fontSize: 13),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            t('no_rides_subtitle'),
+            style: AppTextStyles.bodySmall(context).copyWith(fontSize: 13),
+          ),
+        ],
       ),
     );
   }
