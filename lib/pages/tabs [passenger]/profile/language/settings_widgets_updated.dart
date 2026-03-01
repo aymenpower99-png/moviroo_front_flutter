@@ -3,7 +3,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../settings_models.dart';
 import '../appearance.dart';
-import 'language_page.dart'; // ADD THIS IMPORT
+import 'language_page.dart';
 import '../../../../main.dart';
 
 // ── Profile header card ───────────────────────────────────────────────────────
@@ -164,17 +164,35 @@ class PreferencesSection extends StatefulWidget {
 
 class _PreferencesSectionState extends State<PreferencesSection> {
   bool _notifications = true;
-  String _selectedLanguage = 'en'; // Track selected language
 
+  // ── FIX 1: listen to providers so widget rebuilds automatically ───────────
+  @override
+  void initState() {
+    super.initState();
+    localeProvider.addListener(_onChanged);
+    themeProvider.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    localeProvider.removeListener(_onChanged);
+    themeProvider.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() => setState(() {});
+
+  // ── FIX 2: read directly from localeProvider, added 'ar' case ─────────────
   String get _currentThemeLabel => switch (themeProvider.mode) {
         ThemeMode.dark   => 'Dark',
         ThemeMode.light  => 'Light',
         ThemeMode.system => 'System',
       };
 
-  String get _currentLanguageLabel => switch (_selectedLanguage) {
-        'en' => 'English (US)',
+  String get _currentLanguageLabel =>
+      switch (localeProvider.locale.languageCode) {
         'fr' => 'Français',
+        'ar' => 'العربية',
         _    => 'English (US)',
       };
 
@@ -198,7 +216,7 @@ class _PreferencesSectionState extends State<PreferencesSection> {
           ),
           child: Row(
             children: [
-              _TileIcon(icon: Icons.notifications_none_rounded),
+              const _TileIcon(icon: Icons.notifications_none_rounded),
               const SizedBox(width: 16),
               Expanded(
                 child: Text('Notifications',
@@ -239,7 +257,7 @@ class _PreferencesSectionState extends State<PreferencesSection> {
             ),
             child: Row(
               children: [
-                _TileIcon(icon: Icons.palette_outlined),
+                const _TileIcon(icon: Icons.palette_outlined),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text('Appearance',
@@ -257,16 +275,14 @@ class _PreferencesSectionState extends State<PreferencesSection> {
 
         const SizedBox(height: 10),
 
-        // ── Language ─────────────────────────────────────────────── UPDATED
+        // ── Language ──────────────────────────────────────────────
         GestureDetector(
-          onTap: () async {
-            final result = await Navigator.push(
+          onTap: () {
+            // FIX 3: no need for await/result — listener handles the rebuild
+            Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const LanguagePage()),
             );
-            if (result != null) {
-              setState(() => _selectedLanguage = result);
-            }
           },
           behavior: HitTestBehavior.opaque,
           child: Container(
@@ -278,7 +294,7 @@ class _PreferencesSectionState extends State<PreferencesSection> {
             ),
             child: Row(
               children: [
-                _TileIcon(icon: Icons.language_rounded),
+                const _TileIcon(icon: Icons.language_rounded),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text('Language',

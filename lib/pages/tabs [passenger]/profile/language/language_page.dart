@@ -23,6 +23,7 @@ class _LanguagePageState extends State<LanguagePage> {
   void _selectLanguage(String languageCode) {
     setState(() => _selectedLanguage = languageCode);
     localeProvider.setLocaleByCode(languageCode);
+    Navigator.pop(context, languageCode); // ← KEY FIX: pop and return the code
   }
 
   @override
@@ -95,11 +96,7 @@ class _LanguagePageState extends State<LanguagePage> {
                       selected: _selectedLanguage,
                       onTap: () => _selectLanguage('en'),
                     ),
-                    Divider(
-                      height: 1,
-                      indent: 54,
-                      color: AppColors.border(context),
-                    ),
+                    Divider(height: 1, indent: 54, color: AppColors.border(context)),
                     _LanguageTile(
                       flagAsset: 'images/flags/france.png',
                       label: t.translate('french'),
@@ -107,6 +104,15 @@ class _LanguagePageState extends State<LanguagePage> {
                       languageCode: 'fr',
                       selected: _selectedLanguage,
                       onTap: () => _selectLanguage('fr'),
+                    ),
+                    Divider(height: 1, indent: 54, color: AppColors.border(context)),
+                    _LanguageTile(
+                      flagAsset: 'images/flags/saudi.png',
+                      label: t.translate('arabic'),
+                      subtitle: 'العربية',
+                      languageCode: 'ar',
+                      selected: _selectedLanguage,
+                      onTap: () => _selectLanguage('ar'),
                     ),
                   ],
                 ),
@@ -152,18 +158,10 @@ class _LanguageTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         child: Row(
           children: [
-            // Flag image
             ClipOval(
-              child: Image.asset(
-                flagAsset,
-                width: 34,
-                height: 34,
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset(flagAsset, width: 34, height: 34, fit: BoxFit.cover),
             ),
             const SizedBox(width: 14),
-
-            // Labels
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,21 +172,16 @@ class _LanguageTile extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Radio circle
             Container(
               width: 20,
               height: 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: radioBorderColor, width: 2),
-                color: _isSelected
-                    ? AppColors.primaryPurple
-                    : Colors.transparent,
+                color: _isSelected ? AppColors.primaryPurple : Colors.transparent,
               ),
               child: _isSelected
-                  ? const Icon(Icons.check_rounded,
-                      color: Colors.white, size: 13)
+                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 13)
                   : null,
             ),
           ],

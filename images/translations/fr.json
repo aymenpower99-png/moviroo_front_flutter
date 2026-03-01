@@ -148,5 +148,20 @@
   "pass_progress_label": "Progression vers le niveau suivant",
   "cta_title": "Débloquez plus de récompenses",
   "cta_subtitle": "Réservez plus de trajets pour gagner des points et monter en niveau.",
-  "cta_button": "Réserver un trajet"
+  "cta_button": "Réserver un trajet",
+
+  "ai_page_title": "Assistant IA",
+  "ai_online": "EN LIGNE",
+  "ai_hero_title": "Comment puis-je\nvous aider ?",
+  "ai_hero_subtitle": "Prix, itinéraires, horaires, traduction...\nJe suis votre assistant de voyage intelligent.",
+  "ai_input_hint": "Posez une question...",
+  "ai_card_price_title": "Estimer le prix CDG → centre de Paris",
+  "ai_card_price_query": "Estimez le prix du trajet de CDG vers le centre de Paris",
+  "ai_card_traffic_title": "Meilleur moment pour éviter les embouteillages ?",
+  "ai_card_traffic_query": "Quel est le meilleur moment pour éviter les embouteillages ?",
+  "ai_card_compare_title": "Comparer berline vs van pour 4 personnes",
+  "ai_card_compare_query": "Comparer berline vs van pour 4 personnes",
+  "ai_card_translate_title": "Traduire : J'ai besoin d'une prise en charge au terminal 2",
+  "ai_card_translate_query": "Traduire : J'ai besoin d'une prise en charge au terminal 2",
+  "search": "Rechercher"
 }

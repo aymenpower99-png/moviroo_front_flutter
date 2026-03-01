@@ -8,7 +8,7 @@ import 'theme/locale_provider.dart';
 import 'l10n/app_localizations.dart';
 
 final themeProvider  = ThemeProvider();
-final localeProvider = LocaleProvider();   // ← ADD THIS
+final localeProvider = LocaleProvider();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,7 +55,7 @@ class _SmartWayAppState extends State<SmartWayApp> {
     return KeyedSubtree(
       key: ValueKey(_restartCount),
       child: ListenableBuilder(
-        listenable: Listenable.merge([themeProvider, localeProvider]), // ← MERGE
+        listenable: Listenable.merge([themeProvider, localeProvider]),
         builder: (context, _) {
           WidgetsBinding.instance.addPostFrameCallback(
               (_) => _applySystemUI(themeProvider.mode));
@@ -66,14 +66,27 @@ class _SmartWayAppState extends State<SmartWayApp> {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.mode,
-            locale: localeProvider.locale,                        // ← ADD
-            supportedLocales: const [Locale('en'), Locale('fr')], // ← ADD
-            localizationsDelegates: const [                       // ← ADD
+            locale: localeProvider.locale,
+            supportedLocales: const [
+              Locale('en'),
+              Locale('fr'),
+              Locale('ar'), // Arabic (RTL)
+            ],
+            localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate, // handles RTL automatically
               GlobalCupertinoLocalizations.delegate,
             ],
+            localeResolutionCallback: (locale, supportedLocales) {
+              if (locale == null) return supportedLocales.first;
+              for (final supported in supportedLocales) {
+                if (supported.languageCode == locale.languageCode) {
+                  return supported;
+                }
+              }
+              return supportedLocales.first;
+            },
             initialRoute: AppRouter.initialRoute,
             onGenerateRoute: (settings) {
               final builder = AppRouter.routes[settings.name];

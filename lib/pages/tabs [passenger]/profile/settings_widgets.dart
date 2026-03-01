@@ -46,8 +46,8 @@ class _Avatar extends StatelessWidget {
       child: ClipOval(
         child: Container(
           color: isDark
-              ? const Color(0xFF2A1A3E)  // dark mode — original deep purple
-              : const Color(0xFFEDE7F6), // light mode — soft lavender
+              ? const Color(0xFF2A1A3E)
+              : const Color(0xFFEDE7F6),
           child: const Icon(
             Icons.person,
             color: AppColors.primaryPurple,
@@ -162,7 +162,7 @@ class SettingsRowTile extends StatelessWidget {
   }
 }
 
-// ── Preferences section — Appearance + Language ONLY ─────────────────────────
+// ── Preferences section ───────────────────────────────────────────────────────
 
 class PreferencesSection extends StatefulWidget {
   const PreferencesSection({super.key});
@@ -172,6 +172,23 @@ class PreferencesSection extends StatefulWidget {
 }
 
 class _PreferencesSectionState extends State<PreferencesSection> {
+  @override
+  void initState() {
+    super.initState();
+    // Listen to both providers so the UI rebuilds on any change
+    localeProvider.addListener(_onChanged);
+    themeProvider.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    localeProvider.removeListener(_onChanged);
+    themeProvider.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() => setState(() {});
+
   String _themeLabel(BuildContext context) {
     final t = AppLocalizations.of(context);
     return switch (themeProvider.mode) {
@@ -184,6 +201,7 @@ class _PreferencesSectionState extends State<PreferencesSection> {
   String _languageLabel() {
     return switch (localeProvider.locale.languageCode) {
       'fr' => 'Français',
+      'ar' => 'العربية',
       _    => 'English (US)',
     };
   }

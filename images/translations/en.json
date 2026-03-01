@@ -148,5 +148,20 @@
   "pass_progress_label": "Progress to next level",
   "cta_title": "Unlock more rewards",
   "cta_subtitle": "Book more rides to earn points and climb the membership tiers.",
-  "cta_button": "Book a Ride"
+  "cta_button": "Book a Ride",
+
+  "ai_page_title": "AI Assistant",
+  "ai_online": "ONLINE",
+  "ai_hero_title": "How can I help\nyou?",
+  "ai_hero_subtitle": "Prices, routes, schedules, translation...\nI am your intelligent travel assistant.",
+  "ai_input_hint": "Ask a question...",
+  "ai_card_price_title": "Estimate price CDG → Paris center",
+  "ai_card_price_query": "Estimate the price of the trip from CDG to Paris center",
+  "ai_card_traffic_title": "Best time to avoid traffic?",
+  "ai_card_traffic_query": "What is the best time to avoid traffic?",
+  "ai_card_compare_title": "Compare sedan vs van for 4 people",
+  "ai_card_compare_query": "Compare sedan vs van for 4 people",
+  "ai_card_translate_title": "Translate: I need a pickup at terminal 2",
+  "ai_card_translate_query": "Translate: I need a pickup at terminal 2",
+  "search": "Search"
 }

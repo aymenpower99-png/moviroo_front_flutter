@@ -3,6 +3,7 @@ import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
 import 'security_page.dart';
+import 'currency_page.dart';
 
 // ── Settings sub page ─────────────────────────────────────────────────────────
 
@@ -42,9 +43,12 @@ class SettingsSubPage extends StatelessWidget {
                     ),
                     _NavTile(
                       title: t('currency'),
-                      onTap: () {
-                        // TODO: navigate to CurrencyPage
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const CurrencyPage(),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 24),

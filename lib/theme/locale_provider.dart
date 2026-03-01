@@ -14,13 +14,16 @@ class LocaleProvider extends ChangeNotifier {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final code = prefs.getString(_key);
-    if (code != null) {
+    if (code != null && _isSupported(code)) {
       _locale = Locale(code);
       notifyListeners();
     }
   }
 
+  bool _isSupported(String code) => ['en', 'fr', 'ar'].contains(code);
+
   Future<void> setLocale(Locale locale) async {
+    if (!_isSupported(locale.languageCode)) return;
     _locale = locale;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();

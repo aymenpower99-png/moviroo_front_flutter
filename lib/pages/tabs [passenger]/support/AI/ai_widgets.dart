@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
+import '../../../../../l10n/app_localizations.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HEADER WIDGET
@@ -11,10 +12,33 @@ class AiHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Row(
         children: [
+          // Back button
+          GestureDetector(
+            onTap: () => Navigator.maybePop(context),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.surface(context),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.border(context)),
+              ),
+              child: Icon(
+                Icons.chevron_left_rounded,
+                size: 22,
+                color: AppColors.text(context),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
           // Avatar with gradient
           Container(
             width: 48,
@@ -30,14 +54,14 @@ class AiHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          
+
           // Title and status
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'AI Assistant',
+                  t('ai_page_title'),
                   style: AppTextStyles.bodyLarge(context).copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -55,7 +79,7 @@ class AiHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'ONLINE',
+                      t('ai_online'),
                       style: AppTextStyles.bodySmall(context).copyWith(
                         color: AppColors.success,
                         fontSize: 10,
@@ -83,11 +107,12 @@ class AiHeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Column(
       children: [
-        // Title
         Text(
-          'How can I help\nyou?',
+          t('ai_hero_title'),
           textAlign: TextAlign.center,
           style: AppTextStyles.pageTitle(context).copyWith(
             fontSize: 28,
@@ -95,14 +120,13 @@ class AiHeroSection extends StatelessWidget {
             height: 1.2,
           ),
         ),
-        
+
         const SizedBox(height: 12),
-        
-        // Subtitle
+
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 30),
           child: Text(
-            'Prices, routes, schedules, translation...\nI am your intelligent travel assistant.',
+            t('ai_hero_subtitle'),
             textAlign: TextAlign.center,
             style: AppTextStyles.bodySmall(context).copyWith(
               fontSize: 13,
@@ -129,37 +153,34 @@ class AiActionCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     final cards = [
       _ActionCard(
         icon: Icons.credit_card_outlined,
-        title: 'Estimate price CDG\n→ Paris center',
-        query: 'Estimate the price of the trip from CDG to Paris center',
+        title: t('ai_card_price_title'),
+        query: t('ai_card_price_query'),
       ),
       _ActionCard(
         icon: Icons.schedule_outlined,
-        title: 'Best time\nto avoid traffic\n?',
-        query: 'What is the best time to avoid traffic?',
+        title: t('ai_card_traffic_title'),
+        query: t('ai_card_traffic_query'),
       ),
       _ActionCard(
         icon: Icons.directions_car_outlined,
-        title: 'Compare sedan\nvs van for 4 people',
-        query: 'Compare sedan vs van for 4 people',
+        title: t('ai_card_compare_title'),
+        query: t('ai_card_compare_query'),
       ),
       _ActionCard(
         icon: Icons.translate_outlined,
-        title: 'Translate: I need a\npickup at terminal\n2',
-        query: 'Translate: I need a pickup at terminal 2',
+        title: t('ai_card_translate_title'),
+        query: t('ai_card_translate_query'),
       ),
     ];
 
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.05,
-      ),
+    return ListView.separated(
       itemCount: cards.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final card = cards[index];
         return _buildActionCard(
@@ -178,19 +199,18 @@ class AiActionCards extends StatelessWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: AppColors.border(context),
             width: 1,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
             // Icon
             Container(
@@ -206,17 +226,26 @@ class AiActionCards extends StatelessWidget {
                 size: 20,
               ),
             ),
-            
-            const Spacer(),
-            
+
+            const SizedBox(width: 14),
+
             // Title
-            Text(
-              card.title,
-              style: AppTextStyles.bodyMedium(context).copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                height: 1.3,
+            Expanded(
+              child: Text(
+                card.title,
+                style: AppTextStyles.bodyMedium(context).copyWith(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  height: 1.3,
+                ),
               ),
+            ),
+
+            // Arrow
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.subtext(context),
+              size: 20,
             ),
           ],
         ),
@@ -243,6 +272,8 @@ class AiInputSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       decoration: BoxDecoration(
@@ -268,8 +299,9 @@ class AiInputSection extends StatelessWidget {
                 controller: controller,
                 focusNode: focusNode,
                 style: AppTextStyles.bodyMedium(context),
+                cursorColor: AppColors.text(context),
                 decoration: InputDecoration(
-                  hintText: 'Ask a question...',
+                  hintText: t('ai_input_hint'),
                   hintStyle: AppTextStyles.bodyMedium(context).copyWith(
                     color: AppColors.subtext(context),
                   ),
@@ -284,9 +316,9 @@ class AiInputSection extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(width: 8),
-          
+
           // Send button
           InkWell(
             onTap: onSend,

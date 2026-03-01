@@ -23,7 +23,7 @@ class AppTabBar extends StatelessWidget {
   static const _icons = [
     Icons.home_rounded,
     Icons.directions_car_rounded,
-    Icons.card_membership_rounded,
+    Icons.workspace_premium_rounded,
     Icons.headset_mic_rounded,
     Icons.person_outline_rounded,
   ];
