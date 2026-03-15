@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '_SummaryCard.dart';
-import '_PickerChip.dart';
 
 class BookingSummaryCard extends StatelessWidget {
   final int pax;
   final int bags;
-  final VoidCallback onPaxTap;
-  final VoidCallback onBagsTap;
+  final String vehicleName;
+  final String carName;
 
   const BookingSummaryCard({
     super.key,
     required this.pax,
     required this.bags,
-    required this.onPaxTap,
-    required this.onBagsTap,
+    required this.vehicleName,
+    required this.carName,
   });
 
   @override
@@ -30,26 +29,77 @@ class BookingSummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Economy',
+                if (vehicleName.isNotEmpty)
+                  Text(
+                    vehicleName,
                     style: AppTextStyles.bodyLarge(context).copyWith(
-                        fontWeight: FontWeight.w800, fontSize: 18)),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                if (carName.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    carName,
+                    style: AppTextStyles.bodyMedium(context).copyWith(
+                      color: AppColors.subtext(context),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
-                Row(
+                // Wrap prevents overflow regardless of chip count or font scale
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
                   children: [
-                    PickerChip(
+                    _InfoChip(
                       icon: Icons.person_outline_rounded,
                       label: '$pax pax',
-                      onTap: onPaxTap,
                     ),
-                    const SizedBox(width: 8),
-                    PickerChip(
+                    _InfoChip(
                       icon: Icons.luggage_outlined,
                       label: '$bags lug',
-                      onTap: onBagsTap,
                     ),
                   ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _InfoChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primaryPurple.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primaryPurple.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.primaryPurple),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppTextStyles.bodySmall(context).copyWith(
+              color: AppColors.primaryPurple,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

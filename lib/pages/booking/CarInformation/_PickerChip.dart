@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_text_styles.dart';
 
 class PickerChip extends StatelessWidget {
   final IconData icon;
@@ -18,27 +19,35 @@ class PickerChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        // Intrinsic size — chip is exactly as wide as its content
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: AppColors.primaryPurple.withOpacity(0.10),
-          borderRadius: BorderRadius.circular(10),
+          color: AppColors.primaryPurple.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(30),
           border: Border.all(
-              color: AppColors.primaryPurple.withOpacity(0.25)),
+            color: AppColors.primaryPurple.withOpacity(0.30),
+            width: 1,
+          ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min, // KEY: never expand
           children: [
             Icon(icon, size: 14, color: AppColors.primaryPurple),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: AppTextStyles.bodySmall(context).copyWith(
+                color: AppColors.primaryPurple,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
             const SizedBox(width: 4),
-            Text(label,
-                style: TextStyle(
-                  color: AppColors.primaryPurple,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                )),
-            const SizedBox(width: 4),
-            Icon(Icons.keyboard_arrow_down_rounded,
-                size: 14, color: AppColors.primaryPurple),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 15,
+              color: AppColors.primaryPurple,
+            ),
           ],
         ),
       ),

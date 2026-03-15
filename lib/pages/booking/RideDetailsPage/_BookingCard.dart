@@ -11,6 +11,8 @@ class BookingCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+
+        // ── Booking number + status ──────────────────────────
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -18,8 +20,8 @@ class BookingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Booking',
-                    style: AppTextStyles.bodySmall(context).copyWith(
-                        color: AppColors.subtext(context))),
+                    style: AppTextStyles.bodySmall(context)
+                        .copyWith(color: AppColors.subtext(context))),
                 const SizedBox(height: 2),
                 Row(
                   children: [
@@ -47,8 +49,7 @@ class BookingCard extends StatelessWidget {
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.amber.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(20),
@@ -85,7 +86,6 @@ class BookingCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Date
               Row(
                 children: [
                   Icon(Icons.calendar_today_outlined,
@@ -97,7 +97,6 @@ class BookingCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Stop 1
               _RouteStop(
                 dot: _DotFilled(),
                 title: 'Tunis Carthage Airport (TUN)',
@@ -106,11 +105,11 @@ class BookingCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 6),
                 child: Container(
-                  width: 1.5, height: 28,
+                  width: 1.5,
+                  height: 28,
                   color: AppColors.primaryPurple.withOpacity(0.4),
                 ),
               ),
-              // Stop 2
               _RouteStop(
                 dot: _DotOutline(),
                 title: 'Enfidha Hammamet Airport (NBE)',
@@ -156,7 +155,8 @@ class _RouteStop extends StatelessWidget {
 class _DotFilled extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-        width: 13, height: 13,
+        width: 13,
+        height: 13,
         decoration: BoxDecoration(
           color: AppColors.primaryPurple,
           shape: BoxShape.circle,
@@ -167,11 +167,11 @@ class _DotFilled extends StatelessWidget {
 class _DotOutline extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-        width: 13, height: 13,
+        width: 13,
+        height: 13,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(
-              color: AppColors.primaryPurple, width: 2),
+          border: Border.all(color: AppColors.primaryPurple, width: 2),
         ),
       );
 }

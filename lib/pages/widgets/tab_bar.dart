@@ -20,12 +20,22 @@ class AppTabBar extends StatelessWidget {
     AppRouter.profile,
   ];
 
-  static const _icons = [
-    Icons.home_rounded,
-    Icons.directions_car_rounded,
-    Icons.workspace_premium_rounded,
-    Icons.headset_mic_rounded,
-    Icons.person_outline_rounded,
+  /// Outline icons (not selected)
+  static const _iconsOutline = [
+    Icons.home_outlined,
+    Icons.directions_car_outlined,
+    Icons.workspace_premium_outlined,
+    Icons.headset_mic_outlined,
+    Icons.person_outline,
+  ];
+
+  /// Filled icons (selected)
+  static const _iconsFilled = [
+    Icons.home,
+    Icons.directions_car,
+    Icons.workspace_premium,
+    Icons.headset_mic,
+    Icons.person,
   ];
 
   static const _labelKeys = [
@@ -44,10 +54,14 @@ class AppTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark    = Theme.of(context).brightness == Brightness.dark;
-    final bgColor   = isDark ? const Color(0xFF0F0F12) : Colors.white;
-    final topBorder = isDark ? const Color(0xFF1E1E24) : const Color(0xFFE0E0E8);
-    final t         = AppLocalizations.of(context).translate;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bgColor = isDark ? const Color(0xFF0F0F12) : Colors.white;
+
+    final topBorder =
+        isDark ? const Color(0xFF1E1E24) : const Color(0xFFE0E0E8);
+
+    final t = AppLocalizations.of(context).translate;
 
     return Container(
       height: 72,
@@ -58,11 +72,11 @@ class AppTabBar extends StatelessWidget {
         ),
       ),
       child: Row(
-        children: List.generate(_icons.length, (i) {
-          final selected        = i == currentIndex;
-          final unselectedColor = isDark
-              ? const Color(0xFF6B6B75)
-              : const Color(0xFF9B9BAA);
+        children: List.generate(_iconsOutline.length, (i) {
+          final selected = i == currentIndex;
+
+          final unselectedColor =
+              isDark ? const Color(0xFF6B6B75) : const Color(0xFF9B9BAA);
 
           return Expanded(
             child: GestureDetector(
@@ -74,7 +88,7 @@ class AppTabBar extends StatelessWidget {
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOut,
-                    width:  selected ? 48 : 28,
+                    width: selected ? 48 : 28,
                     height: 32,
                     decoration: selected
                         ? BoxDecoration(
@@ -84,9 +98,12 @@ class AppTabBar extends StatelessWidget {
                         : null,
                     child: Center(
                       child: Icon(
-                        _icons[i],
-                        size: 22,
-                        color: selected ? Colors.white : unselectedColor,
+                        selected
+                            ? _iconsFilled[i]
+                            : _iconsOutline[i], // switch icons
+                        size: 23,
+                        color:
+                            selected ? Colors.white : unselectedColor,
                       ),
                     ),
                   ),
@@ -96,9 +113,13 @@ class AppTabBar extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 10,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: selected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
                       color: selected
-                          ? (isDark ? Colors.white : const Color(0xFF0B0B0F))
+                          ? (isDark
+                              ? Colors.white
+                              : const Color(0xFF0B0B0F))
                           : unselectedColor,
                     ),
                   ),
