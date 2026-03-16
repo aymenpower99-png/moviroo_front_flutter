@@ -1,11 +1,12 @@
-enum RideStatus { upcoming, completed, cancelled }
+enum RideStatus { upcoming, completed, cancelled, pendingPayment }
 
 enum RideTab { upcoming, completed, cancelled }
 
 class RideModel {
   final String vehicleType;
-  final String vehicleIcon; // asset or we use IconData
-  final String date;
+  final String vehicleIcon;
+  final String date;   // e.g. 'Today' or 'Oct 26'
+  final String time;   // e.g. '18:30'
   final String vehicleName;
   final double price;
   final String pickup;
@@ -16,6 +17,7 @@ class RideModel {
     required this.vehicleType,
     required this.vehicleIcon,
     required this.date,
+    required this.time,
     required this.vehicleName,
     required this.price,
     required this.pickup,

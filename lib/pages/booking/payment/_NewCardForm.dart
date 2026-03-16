@@ -5,26 +5,39 @@ import '../../../../theme/app_text_styles.dart';
 
 class NewCardForm extends StatefulWidget {
   final VoidCallback? onSaved;
-  const NewCardForm({super.key, this.onSaved});
+  final VoidCallback? onBackToSaved;
+  const NewCardForm({super.key, this.onSaved, this.onBackToSaved});
 
   @override
-  State<NewCardForm> createState() => _NewCardFormState();
+  State<NewCardForm> createState() => NewCardFormState();
 }
 
-class _NewCardFormState extends State<NewCardForm> {
-  final _nameController = TextEditingController();
-  final _cardController = TextEditingController();
-  final _expiryController = TextEditingController();
-  final _cvvController = TextEditingController();
+class NewCardFormState extends State<NewCardForm> {
+  final nameController = TextEditingController();
+  final cardController = TextEditingController();
+  final expiryController = TextEditingController();
+
+  bool _nameError = false;
+  bool _cardError = false;
+  bool _expiryError = false;
   bool _saveCard = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _cardController.dispose();
-    _expiryController.dispose();
-    _cvvController.dispose();
+    nameController.dispose();
+    cardController.dispose();
+    expiryController.dispose();
     super.dispose();
+  }
+
+  /// Returns true if all fields are valid. Call before payment.
+  bool validate() {
+    setState(() {
+      _nameError = nameController.text.trim().isEmpty;
+      _cardError = cardController.text.replaceAll(' ', '').length < 16;
+      _expiryError = expiryController.text.trim().length < 5;
+    });
+    return !_nameError && !_cardError && !_expiryError;
   }
 
   @override
@@ -39,37 +52,62 @@ class _NewCardFormState extends State<NewCardForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Header ─────────────────────────────────────────
           Row(
             children: [
               Icon(Icons.credit_card_outlined,
                   color: AppColors.primaryPurple, size: 18),
               const SizedBox(width: 8),
-              Text('DÉTAILS DE LA CARTE',
-                  style: AppTextStyles.bodySmall(context).copyWith(
-                    color: AppColors.subtext(context),
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                    fontSize: 11,
-                  )),
+              Expanded(
+                child: Text('CARD DETAILS',
+                    style: AppTextStyles.bodySmall(context).copyWith(
+                      color: AppColors.subtext(context),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      fontSize: 11,
+                    )),
+              ),
+              if (widget.onBackToSaved != null)
+                GestureDetector(
+                  onTap: widget.onBackToSaved,
+                  child: Row(
+                    children: [
+                      Icon(Icons.arrow_back_ios_rounded,
+                          size: 12, color: AppColors.primaryPurple),
+                      const SizedBox(width: 2),
+                      Text('Saved card',
+                          style: AppTextStyles.bodySmall(context).copyWith(
+                            color: AppColors.primaryPurple,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          )),
+                    ],
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 16),
 
-          // Nom du titulaire
-          _FieldLabel(label: 'Nom du titulaire'),
+          // ── Cardholder name ────────────────────────────────
+          _FieldLabel(label: 'Cardholder name'),
           const SizedBox(height: 6),
           _CardField(
-            controller: _nameController,
+            controller: nameController,
             hint: 'John Doe',
             inputType: TextInputType.name,
+            hasError: _nameError,
+            errorText: 'Name is required',
+            onChanged: (_) {
+              if (_nameError) setState(() => _nameError = false);
+            },
           ),
           const SizedBox(height: 14),
 
-          // Numéro de carte
-          _FieldLabel(label: 'Numéro de carte'),
+          // ── Card number ────────────────────────────────────
+          _FieldLabel(label: 'Card number'),
           const SizedBox(height: 6),
           _CardField(
-            controller: _cardController,
+            controller: cardController,
             hint: '4242 4242 4242 4242',
             inputType: TextInputType.number,
             formatters: [
@@ -77,64 +115,52 @@ class _NewCardFormState extends State<NewCardForm> {
               _CardNumberFormatter(),
             ],
             maxLength: 19,
+            hasError: _cardError,
+            errorText: 'Enter a valid 16-digit card number',
+            onChanged: (_) {
+              if (_cardError) setState(() => _cardError = false);
+            },
           ),
           const SizedBox(height: 14),
 
-          // Expiration + CVV
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _FieldLabel(label: 'Expiration'),
-                    const SizedBox(height: 6),
-                    _CardField(
-                      controller: _expiryController,
-                      hint: 'MM/YY',
-                      inputType: TextInputType.number,
-                      formatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        _ExpiryFormatter(),
-                      ],
-                      maxLength: 5,
-                    ),
+          // ── Expiry (half width) ────────────────────────────
+          SizedBox(
+            width: 160,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _FieldLabel(label: 'Expiry date'),
+                const SizedBox(height: 6),
+                _CardField(
+                  controller: expiryController,
+                  hint: 'MM/YY',
+                  inputType: TextInputType.number,
+                  formatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    _ExpiryFormatter(),
                   ],
+                  maxLength: 5,
+                  hasError: _expiryError,
+                  errorText: 'Required',
+                  onChanged: (_) {
+                    if (_expiryError) setState(() => _expiryError = false);
+                  },
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _FieldLabel(label: 'CVV'),
-                    const SizedBox(height: 6),
-                    _CardField(
-                      controller: _cvvController,
-                      hint: '123',
-                      inputType: TextInputType.number,
-                      obscure: true,
-                      formatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      maxLength: 3,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           const SizedBox(height: 16),
 
-          // Enregistrer la carte
+          // ── Save card toggle ───────────────────────────────
           GestureDetector(
             onTap: () => setState(() => _saveCard = !_saveCard),
             child: Row(
               children: [
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  width: 20, height: 20,
+                  width: 20,
+                  height: 20,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
@@ -156,14 +182,14 @@ class _NewCardFormState extends State<NewCardForm> {
                 Icon(Icons.save_outlined,
                     size: 16, color: AppColors.subtext(context)),
                 const SizedBox(width: 6),
-                 Expanded(
-        child: Text(
-          'Enregistrer cette carte pour la prochaine fois',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.bodySmall(context),
-        ),
-      ),
+                Expanded(
+                  child: Text(
+                    'Save this card for next time',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodySmall(context),
+                  ),
+                ),
               ],
             ),
           ),
@@ -194,6 +220,9 @@ class _CardField extends StatelessWidget {
   final bool obscure;
   final List<TextInputFormatter>? formatters;
   final int? maxLength;
+  final bool hasError;
+  final String? errorText;
+  final ValueChanged<String>? onChanged;
 
   const _CardField({
     required this.controller,
@@ -202,40 +231,58 @@ class _CardField extends StatelessWidget {
     this.obscure = false,
     this.formatters,
     this.maxLength,
+    this.hasError = false,
+    this.errorText,
+    this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: inputType,
-      obscureText: obscure,
-      maxLength: maxLength,
-      inputFormatters: formatters,
-      style: AppTextStyles.bodyMedium(context),
-      decoration: InputDecoration(
-        hintText: hint,
-        counterText: '',
-        hintStyle: AppTextStyles.bodyMedium(context)
-            .copyWith(color: AppColors.subtext(context)),
-        filled: true,
-        fillColor: AppColors.bg(context),
-        contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border(context)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          keyboardType: inputType,
+          obscureText: obscure,
+          maxLength: maxLength,
+          inputFormatters: formatters,
+          onChanged: onChanged,
+          style: AppTextStyles.bodyMedium(context),
+          decoration: InputDecoration(
+            hintText: hint,
+            counterText: '',
+            hintStyle: AppTextStyles.bodyMedium(context)
+                .copyWith(color: AppColors.subtext(context)),
+            filled: true,
+            fillColor: AppColors.bg(context),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                  color: hasError ? Colors.red : AppColors.border(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                  color: hasError ? Colors.red : AppColors.border(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                  color: hasError ? Colors.red : AppColors.primaryPurple,
+                  width: 2),
+            ),
+          ),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border(context)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: AppColors.primaryPurple, width: 2),
-        ),
-      ),
+        if (hasError && errorText != null) ...[
+          const SizedBox(height: 4),
+          Text(errorText!,
+              style: AppTextStyles.bodySmall(context)
+                  .copyWith(color: Colors.red, fontSize: 11)),
+        ],
+      ],
     );
   }
 }

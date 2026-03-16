@@ -17,20 +17,27 @@ class TrajetPage extends StatefulWidget {
 }
 
 class _TrajetPageState extends State<TrajetPage> {
-  int _tabIndex    = 1;
-  RideTab _rideTab = RideTab.upcoming;
+  int     _tabIndex = 1;
+  RideTab _rideTab  = RideTab.upcoming;
 
-  List<RideModel> get _filtered =>
-      kRides.where((r) {
-        switch (_rideTab) {
-          case RideTab.upcoming:  return r.status == RideStatus.upcoming;
-          case RideTab.completed: return r.status == RideStatus.completed;
-          case RideTab.cancelled: return r.status == RideStatus.cancelled;
-        }
-      }).toList();
-
-  bool _isPending(RideModel ride) =>
-      ride.status == RideStatus.upcoming && ride.vehicleName == 'Tesla Model 3';
+  List<RideModel> get _filtered {
+    switch (_rideTab) {
+      case RideTab.upcoming:
+        return kRides
+            .where((r) =>
+                r.status == RideStatus.upcoming ||
+                r.status == RideStatus.pendingPayment)
+            .toList();
+      case RideTab.completed:
+        return kRides
+            .where((r) => r.status == RideStatus.completed)
+            .toList();
+      case RideTab.cancelled:
+        return kRides
+            .where((r) => r.status == RideStatus.cancelled)
+            .toList();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +49,7 @@ class _TrajetPageState extends State<TrajetPage> {
         bottom: false,
         child: Column(
           children: [
-            // ── Sticky header + tab bar ──────────────────────────
+            // ── Sticky header + tab bar ────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               child: Column(
@@ -65,19 +72,22 @@ class _TrajetPageState extends State<TrajetPage> {
               ),
             ),
 
-            // ── Scrollable ride cards ────────────────────────────
+            // ── Ride cards ─────────────────────────────────────
             Expanded(
               child: _filtered.isEmpty
                   ? _EmptyState(tab: _rideTab)
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                       itemCount: _filtered.length,
-                      itemBuilder: (_, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 14),
-                        child: _isPending(_filtered[i])
-                            ? PendingRideCard(ride: _filtered[i])
-                            : RideCard(ride: _filtered[i]),
-                      ),
+                      itemBuilder: (_, i) {
+                        final ride = _filtered[i];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: ride.status == RideStatus.pendingPayment
+                              ? PendingRideCard(ride: ride)
+                              : RideCard(ride: ride),
+                        );
+                      },
                     ),
             ),
 

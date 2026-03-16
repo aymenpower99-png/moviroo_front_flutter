@@ -17,13 +17,30 @@ class _PaymentPageState extends State<PaymentPage> {
   bool _hasSavedCard = true;
   bool _useNewCard = false;
 
-  // ✅ Méthode retour propre
+  // GlobalKeys to access child state for validation
+  final _savedCardKey = GlobalKey<SavedCardSectionState>();
+  final _newCardKey = GlobalKey<NewCardFormState>();
+
   void _goBack() {
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     } else {
       Navigator.pushReplacementNamed(context, AppRouter.booking);
     }
+  }
+
+  void _onPay() {
+    bool valid = false;
+
+    if (_hasSavedCard && !_useNewCard) {
+      valid = _savedCardKey.currentState?.validate() ?? false;
+    } else {
+      valid = _newCardKey.currentState?.validate() ?? false;
+    }
+
+    if (!valid) return;
+
+    AppRouter.push(context, AppRouter.paymentSuccess);
   }
 
   @override
@@ -34,7 +51,7 @@ class _PaymentPageState extends State<PaymentPage> {
         child: Column(
           children: [
 
-            // ── TopBar ─────────────────────────────────────────
+            // ── Top bar ────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
               child: Row(
@@ -45,16 +62,16 @@ class _PaymentPageState extends State<PaymentPage> {
                       color: AppColors.text(context),
                       size: 20,
                     ),
-                    onPressed: _goBack, // ✅ appel direct
+                    onPressed: _goBack,
                   ),
                   const SizedBox(width: 4),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Paiement',
+                      Text('Payment',
                           style: AppTextStyles.bodyLarge(context).copyWith(
                               fontWeight: FontWeight.w800, fontSize: 18)),
-                      Text('Réservation #78438620',
+                      Text('Booking #78438620',
                           style: AppTextStyles.bodySmall(context).copyWith(
                               color: AppColors.subtext(context))),
                     ],
@@ -63,23 +80,27 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
             ),
 
-            // ── Scrollable ─────────────────────────────────────
+            // ── Scrollable content ─────────────────────────────
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                 child: Column(
                   children: [
-
                     const PaymentSummaryCard(),
                     const SizedBox(height: 16),
 
                     if (_hasSavedCard && !_useNewCard) ...[
                       SavedCardSection(
+                        key: _savedCardKey,
                         onUseNewCard: () =>
                             setState(() => _useNewCard = true),
                       ),
                     ] else ...[
                       NewCardForm(
+                        key: _newCardKey,
+                        onBackToSaved: _hasSavedCard
+                            ? () => setState(() => _useNewCard = false)
+                            : null,
                         onSaved: () => setState(() {
                           _hasSavedCard = true;
                           _useNewCard = false;
@@ -87,16 +108,16 @@ class _PaymentPageState extends State<PaymentPage> {
                       ),
                     ],
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
+                    // ── Security note ──────────────────────────
                     Row(
                       children: [
                         Icon(Icons.lock_outline_rounded,
-                            size: 14,
-                            color: AppColors.subtext(context)),
+                            size: 14, color: AppColors.subtext(context)),
                         const SizedBox(width: 6),
                         Text(
-                          'Paiement sécurisé avec chiffrement 256-bit',
+                          'Secured with 256-bit encryption',
                           style: AppTextStyles.bodySmall(context).copyWith(
                               color: AppColors.subtext(context)),
                         ),
@@ -107,17 +128,16 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
             ),
 
-            // ── Bouton payer ───────────────────────────────────
+            // ── Pay button — always visible, never overflowed ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton.icon(
-                  onPressed: () =>
-                      AppRouter.push(context, AppRouter.paymentSuccess),
+                  onPressed: _onPay,
                   icon: const Icon(Icons.credit_card_outlined, size: 20),
-                  label: const Text('Payer 85.00 TND',
+                  label: const Text('Pay 85.00 TND',
                       style: TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 16)),
                   style: ElevatedButton.styleFrom(

@@ -26,7 +26,7 @@ class EtaSheet extends StatelessWidget {
       builder: (context, scrollController) {
         return Container(
           decoration: BoxDecoration(
-            color:AppColors.bg(context).withOpacity(0.55),
+            color: AppColors.bg(context).withValues(alpha: 0.55),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: CustomScrollView(
@@ -39,7 +39,7 @@ class EtaSheet extends StatelessWidget {
                     margin: const EdgeInsets.only(top: 10, bottom: 4),
                     width: 36, height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white24,
+                      color: Colors.white.withValues(alpha: 0.24),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -68,7 +68,7 @@ class EtaSheet extends StatelessWidget {
                             Text(
                               'Arriving at ${route['arrival']} • ${route['left']} left',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.55),
+                                color: Colors.white.withValues(alpha: 0.55),
                                 fontSize: 13,
                               ),
                             ),
@@ -107,7 +107,7 @@ class EtaSheet extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: selectedRoute == 0 ? 0.82 : 0.65,
                       minHeight: 5,
-                      backgroundColor: Colors.white12,
+                      backgroundColor: Colors.white.withValues(alpha: 0.12),
                       valueColor: const AlwaysStoppedAnimation<Color>(
                           Color(0xFF7C3AED)),
                     ),
@@ -167,9 +167,9 @@ class EtaSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Text('Continue',
                               style: TextStyle(
                                   fontWeight: FontWeight.w700,
@@ -197,31 +197,26 @@ class _DriverRow extends StatelessWidget {
     return Row(
       children: [
         // Avatar
-        Stack(
-          children: [
-            CircleAvatar(
-              radius: 26,
-              backgroundColor: const Color(0xFF7C3AED).withOpacity(0.2),
-              backgroundImage:
-                  const AssetImage('images/driver_avatar.png'),
-              onBackgroundImageError: (_, __) {},
-              child: ClipOval(
-                child: Image.asset(
-                  'images/driver_avatar.png',
-                  width: 52, height: 52,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
-                      Icons.person_rounded,
-                      color: Color(0xFF7C3AED),
-                      size: 26),
-                ),
-              ),
+        CircleAvatar(
+          radius: 26,
+          backgroundColor: const Color(0xFF7C3AED).withValues(alpha: 0.20),
+          backgroundImage: const AssetImage('images/driver_avatar.png'),
+          onBackgroundImageError: (_, __) {},
+          child: ClipOval(
+            child: Image.asset(
+              'images/driver_avatar.png',
+              width: 52, height: 52,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const Icon(
+                  Icons.person_rounded,
+                  color: Color(0xFF7C3AED),
+                  size: 26),
             ),
-          ],
+          ),
         ),
         const SizedBox(width: 12),
 
-        // Nom + voiture
+        // Name + car
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,8 +229,7 @@ class _DriverRow extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                           fontSize: 15)),
                   const SizedBox(width: 6),
-                  const Text('⭐',
-                      style: TextStyle(fontSize: 13)),
+                  const Text('⭐', style: TextStyle(fontSize: 13)),
                   const SizedBox(width: 3),
                   Text('4.9',
                       style: TextStyle(
@@ -247,7 +241,7 @@ class _DriverRow extends StatelessWidget {
               const SizedBox(height: 3),
               Text('Tesla Model S  •  White  •  KRE 9042',
                   style: TextStyle(
-                      color: Colors.white.withOpacity(0.55),
+                      color: Colors.white.withValues(alpha: 0.55),
                       fontSize: 12)),
             ],
           ),
@@ -259,10 +253,10 @@ class _DriverRow extends StatelessWidget {
           child: Container(
             width: 42, height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFF7C3AED).withOpacity(0.15),
+              color: const Color(0xFF7C3AED).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: const Color(0xFF7C3AED).withOpacity(0.30)),
+                  color: const Color(0xFF7C3AED).withValues(alpha: 0.30)),
             ),
             child: const Icon(Icons.chat_bubble_outline_rounded,
                 color: Color(0xFF7C3AED), size: 20),
@@ -288,10 +282,10 @@ class _ActionBtn extends StatelessWidget {
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          color: const Color(0xFF7C3AED).withOpacity(0.12),
+          color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-              color: const Color(0xFF7C3AED).withOpacity(0.25)),
+              color: const Color(0xFF7C3AED).withValues(alpha: 0.25)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

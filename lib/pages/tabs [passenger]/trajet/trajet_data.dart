@@ -1,56 +1,51 @@
 import 'trajet_models.dart';
 
 const List<RideModel> kRides = [
-  // ── Upcoming ────────────────────────────────────────────────────
+  // ── Upcoming ──────────────────────────────────────────────────────
   RideModel(
     vehicleType: 'Premium Sedan',
     vehicleIcon: 'sedan',
-    date: 'Today, 18:30',
+    date: '15 Mar 2026',
+    time: '18:30',
     vehicleName: 'Toyota Camry',
     price: 42.50,
     pickup: '124 Grand Central Terminal, NY',
     dropoff: 'JFK International Airport, Terminal 4',
     status: RideStatus.upcoming,
   ),
+
+  // ── Pending Payment ───────────────────────────────────────────────
   RideModel(
     vehicleType: 'Economy Plus',
     vehicleIcon: 'economy',
-    date: 'Oct 26, 09:15',
+    date: '26 Oct 2026',
+    time: '09:15',
     vehicleName: 'Tesla Model 3',
     price: 28.00,
     pickup: '88 Wall Street, Financial District',
     dropoff: 'Times Square 42nd St.',
-    status: RideStatus.upcoming,
+    status: RideStatus.pendingPayment,
   ),
-   RideModel(
+
+  // ── Completed ─────────────────────────────────────────────────────
+  RideModel(
     vehicleType: 'Economy Plus',
     vehicleIcon: 'economy',
-    date: 'Oct 26, 09:15',
-    vehicleName: 'Tesla Model 3',
-    price: 28.00,
-    pickup: '88 Wall Street, Financial District',
-    dropoff: 'Times Square 42nd St.',
-    status: RideStatus.upcoming,
-  ),
-   RideModel(
-    vehicleType: 'Economy Plus',
-    vehicleIcon: 'economy',
-    date: 'Oct 26, 09:15',
-    vehicleName: 'Tesla Model 3',
-    price: 28.00,
-    pickup: '88 Wall Street, Financial District',
-    dropoff: 'Times Square 42nd St.',
-    status: RideStatus.upcoming,
+    date: '10 Feb 2026',
+    time: '14:00',
+    vehicleName: 'Honda Civic',
+    price: 22.00,
+    pickup: 'Times Square 42nd St.',
+    dropoff: 'Brooklyn Bridge, NY',
+    status: RideStatus.completed,
   ),
 
-  // ── Completed ────────────────────────────────────────────────────
-
-
-  // ── Cancelled ─────────────────────────────────────────────────
+  // ── Cancelled ─────────────────────────────────────────────────────
   RideModel(
     vehicleType: 'Premium Sedan',
     vehicleIcon: 'sedan',
-    date: 'Oct 15, 11:00',
+    date: '15 Oct 2026',
+    time: '11:00',
     vehicleName: 'BMW 5 Series',
     price: 55.00,
     pickup: 'JFK International Airport',

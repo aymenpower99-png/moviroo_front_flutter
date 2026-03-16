@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../routing/router.dart';
 import 'trajet_models.dart';
 import 'ride_route_column.dart';
 
@@ -22,23 +23,10 @@ class RideCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header row ──────────────────────────────────────
+            // ── Header row ─────────────────────────────────────
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: AppColors.iconBg(context),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _vehicleIcon(ride.vehicleIcon),
-                    color: AppColors.primaryPurple,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,22 +36,33 @@ class RideCard extends StatelessWidget {
                         style: AppTextStyles.bodyLarge(context)
                             .copyWith(fontWeight: FontWeight.w700),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
-                        '${ride.date} • ${ride.vehicleName}',
+                        ride.vehicleName,
                         style: AppTextStyles.bodySmall(context)
                             .copyWith(fontSize: 12),
                       ),
                     ],
                   ),
                 ),
-                Text(
-                  '\$${ride.price.toStringAsFixed(2)}',
-                  style: AppTextStyles.priceMedium(context).copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryPurple,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '\$${ride.price.toStringAsFixed(2)}',
+                      style: AppTextStyles.priceMedium(context).copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryPurple,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _IconLabel(
+                        icon: Icons.calendar_today_rounded, label: ride.date),
+                    const SizedBox(height: 4),
+                    _IconLabel(
+                        icon: Icons.access_time_rounded, label: ride.time),
+                  ],
                 ),
               ],
             ),
@@ -77,16 +76,30 @@ class RideCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  IconData _vehicleIcon(String type) {
-    switch (type) {
-      case 'economy': return Icons.electric_bolt_rounded;
-      default:        return Icons.directions_car_rounded;
-    }
+// ── Small icon + label ────────────────────────────────────────────────────────
+
+class _IconLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _IconLabel({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: AppColors.subtext(context)),
+        const SizedBox(width: 4),
+        Text(label,
+            style: AppTextStyles.bodySmall(context).copyWith(fontSize: 12)),
+      ],
+    );
   }
 }
 
-// ── Action button per status ──────────────────────────────────────────────────
+// ── Action buttons per status ─────────────────────────────────────────────────
 
 class _ActionButton extends StatelessWidget {
   final RideModel ride;
@@ -97,12 +110,14 @@ class _ActionButton extends StatelessWidget {
     final t = AppLocalizations.of(context).translate;
 
     switch (ride.status) {
+
+      // ── Upcoming: Track + Chat ─────────────────────────────
       case RideStatus.upcoming:
         return Row(
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () {},
+                onTap: () => AppRouter.push(context, AppRouter.trackRide),
                 child: Container(
                   height: 46,
                   decoration: BoxDecoration(
@@ -123,6 +138,7 @@ class _ActionButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
+            // Chat button
             GestureDetector(
               onTap: () {},
               child: Container(
@@ -133,13 +149,19 @@ class _ActionButton extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.border(context)),
                 ),
-                child: Icon(Icons.more_horiz_rounded,
-                    color: AppColors.subtext(context), size: 22),
+                child: Center(
+                  child: ImageIcon(
+                    const AssetImage('images/icons/chat.png'),
+                    size: 22,
+                    color: AppColors.primaryPurple,
+                  ),
+                ),
               ),
             ),
           ],
         );
 
+      // ── Completed: Book again ──────────────────────────────
       case RideStatus.completed:
         return GestureDetector(
           onTap: () {},
@@ -164,6 +186,7 @@ class _ActionButton extends StatelessWidget {
           ),
         );
 
+      // ── Cancelled ──────────────────────────────────────────
       case RideStatus.cancelled:
         return Container(
           height: 46,
@@ -180,6 +203,37 @@ class _ActionButton extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: AppColors.error,
               ),
+            ),
+          ),
+        );
+
+      // ── Pending payment ────────────────────────────────────
+      case RideStatus.pendingPayment:
+        return GestureDetector(
+          onTap: () => AppRouter.push(context, AppRouter.rideDetails),
+          child: Container(
+            height: 46,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6B00).withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: const Color(0xFFFF6B00).withValues(alpha: 0.45)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.payment_rounded,
+                    color: Color(0xFFFF6B00), size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  t('complete_payment'),
+                  style: AppTextStyles.bodyLarge(context).copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFFF6B00),
+                  ),
+                ),
+              ],
             ),
           ),
         );

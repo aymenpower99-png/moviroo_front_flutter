@@ -8,10 +8,15 @@ import '_PassengerCard.dart';
 import '_RideDetailsCard.dart';
 import '_PriceSummaryCard.dart';
 
-class RideDetailsPage extends StatelessWidget {
+class RideDetailsPage extends StatefulWidget {
   final VoidCallback? onBack;
   const RideDetailsPage({super.key, this.onBack});
 
+  @override
+  State<RideDetailsPage> createState() => _RideDetailsPageState();
+}
+
+class _RideDetailsPageState extends State<RideDetailsPage> {
   void _showCancelDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -54,19 +59,20 @@ class RideDetailsPage extends StatelessWidget {
         child: Column(
           children: [
 
-            // ── App bar ──────────────────────────────────────
+            // ── App bar ────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               child: Row(
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: onBack ??
+                    onPressed: widget.onBack ??
                         () {
                           if (Navigator.canPop(context)) {
                             Navigator.pop(context);
                           } else {
-                            Navigator.pushReplacementNamed(context, '/booking');
+                            Navigator.pushReplacementNamed(
+                                context, '/booking');
                           }
                         },
                   ),
@@ -81,10 +87,10 @@ class RideDetailsPage extends StatelessWidget {
               ),
             ),
 
-            // ── Scrollable cards — takes all remaining space ──
+            // ── Scrollable content (all cards + buttons) ───────
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                padding: EdgeInsets.fromLTRB(16, 4, 16, 16 + bottomPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -95,79 +101,63 @@ class RideDetailsPage extends StatelessWidget {
                     const VehicleCard(),
                     const SizedBox(height: 12),
                     const PassengerCard(),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
+                    const PriceSummaryCard(),
+                    const SizedBox(height: 16),
+
+                    // ── Payment button ─────────────────────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton.icon(
+                        onPressed: () => AppRouter.clearAndGo(
+                            context, AppRouter.payment),
+                        icon: Icon(Icons.credit_card_outlined,
+                            size: 20, color: AppColors.primaryPurple),
+                        label: Text('Payment',
+                            style: AppTextStyles.bodyLarge(context).copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: AppColors.primaryPurple)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.surface(context),
+                          foregroundColor: AppColors.primaryPurple,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(color: AppColors.border(context)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // ── Cancel button ──────────────────────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: TextButton.icon(
+                        onPressed: () => _showCancelDialog(context),
+                        icon: Icon(Icons.close_rounded,
+                            color: Colors.red.shade400, size: 18),
+                        label: Text('Cancel Booking',
+                            style: AppTextStyles.bodyLarge(context).copyWith(
+                                color: Colors.red.shade400,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16)),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.red.withOpacity(0.08),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                                color: Colors.red.withOpacity(0.25)),
+                          ),
+                        ),
+                      ),
+                    ),
+
                   ],
                 ),
-              ),
-            ),
-
-            // ── Fixed bottom — always visible, never scrolls ──
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.bg(context),
-                border: Border(
-                  top: BorderSide(color: AppColors.border(context)),
-                ),
-              ),
-              padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + bottomPadding),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-
-                  const PriceSummaryCard(),
-                  const SizedBox(height: 12),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: () =>
-                          AppRouter.clearAndGo(context, AppRouter.payment),
-                      icon: Icon(Icons.credit_card_outlined,
-                          size: 20, color: AppColors.primaryPurple),
-                      label: Text('Payment',
-                          style: AppTextStyles.bodyLarge(context).copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: AppColors.primaryPurple)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.surface(context),
-                        foregroundColor: AppColors.primaryPurple,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: AppColors.border(context)),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: TextButton.icon(
-                      onPressed: () => _showCancelDialog(context),
-                      icon: Icon(Icons.close_rounded,
-                          color: Colors.red.shade400, size: 18),
-                      label: Text('Cancel Booking',
-                          style: AppTextStyles.bodyLarge(context).copyWith(
-                              color: Colors.red.shade400,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16)),
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.red.withOpacity(0.08),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                              color: Colors.red.withOpacity(0.25)),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                ],
               ),
             ),
 

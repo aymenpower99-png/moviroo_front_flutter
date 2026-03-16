@@ -18,7 +18,7 @@ class PaymentSummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('RÉSUMÉ',
+          Text('SUMMARY',
               style: AppTextStyles.bodySmall(context).copyWith(
                 color: AppColors.subtext(context),
                 fontWeight: FontWeight.w700,
@@ -26,9 +26,9 @@ class PaymentSummaryCard extends StatelessWidget {
                 fontSize: 11,
               )),
           const SizedBox(height: 14),
-          _PriceRow(label: 'Transfert Standard', value: '75.00 TND'),
+          _PriceRow(label: 'Standard Transfer', value: '75.00 TND'),
           const SizedBox(height: 8),
-          _PriceRow(label: 'Frais de service', value: '10.00 TND'),
+          _PriceRow(label: 'Service fee', value: '10.00 TND'),
           const SizedBox(height: 14),
           const Divider(height: 1),
           const SizedBox(height: 14),
