@@ -57,28 +57,35 @@ class _DateTimeRowState extends State<DateTimeRow> {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
   }
 
-  // ── Date — calendar only, no edit/pin icon ────────────────────────
   Future<void> _pickDate() async {
     final now = DateTime.now();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final picked = await showDatePicker(
       context: context,
       initialDate: _pickedDate,
       firstDate: now,
       lastDate: now.add(const Duration(days: 90)),
-      initialEntryMode: DatePickerEntryMode.calendarOnly, // ← removes pencil
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.light(
-            primary: AppColors.primaryPurple,
-            onPrimary: Colors.white,
-            onSurface: AppColors.text(context),
-          ),
-          // Hide the "Select date" header text
+          colorScheme: isDark
+              ? ColorScheme.dark(
+                  primary: AppColors.primaryPurple,
+                  onPrimary: Colors.white,
+                  surface: AppColors.surface(context),
+                  onSurface: AppColors.text(context),
+                )
+              : ColorScheme.light(
+                  primary: AppColors.primaryPurple,
+                  onPrimary: Colors.white,
+                  onSurface: AppColors.text(context),
+                ),
+          dialogBackgroundColor: AppColors.surface(context),
           textTheme: Theme.of(context).textTheme.copyWith(
                 headlineMedium: const TextStyle(
                   fontSize: 0,
@@ -104,7 +111,6 @@ class _DateTimeRowState extends State<DateTimeRow> {
     }
   }
 
-  // ── Time — drum-roll bottom sheet: 00–23 | 00/15/30/45 ───────────
   Future<void> _pickTime() async {
     final minuteSlots = [0, 15, 30, 45];
     int initMinuteIndex =
@@ -120,7 +126,7 @@ class _DateTimeRowState extends State<DateTimeRow> {
 
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -131,15 +137,18 @@ class _DateTimeRowState extends State<DateTimeRow> {
               height: 340,
               child: Column(
                 children: [
+                  // Drag handle
                   Container(
                     width: 40,
                     height: 4,
                     margin: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: AppColors.border(context),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
+
+                  // Header row
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
@@ -150,16 +159,17 @@ class _DateTimeRowState extends State<DateTimeRow> {
                             'Cancel',
                             style: TextStyle(
                               fontSize: 15,
-                              color: Colors.grey.shade500,
+                              color: AppColors.subtext(context),
                             ),
                           ),
                         ),
                         const Spacer(),
-                        const Text(
+                        Text(
                           'Time',
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
+                            color: AppColors.text(context),
                           ),
                         ),
                         const Spacer(),
@@ -185,7 +195,10 @@ class _DateTimeRowState extends State<DateTimeRow> {
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 8),
+
+                  // Drum-roll pickers
                   Expanded(
                     child: Stack(
                       alignment: Alignment.center,
@@ -193,11 +206,9 @@ class _DateTimeRowState extends State<DateTimeRow> {
                         Center(
                           child: Container(
                             height: 48,
-                            margin:
-                                const EdgeInsets.symmetric(horizontal: 40),
+                            margin: const EdgeInsets.symmetric(horizontal: 40),
                             decoration: BoxDecoration(
-                              color:
-                                  AppColors.primaryPurple.withOpacity(0.08),
+                              color: AppColors.primaryPurple.withOpacity(0.08),
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
@@ -211,26 +222,27 @@ class _DateTimeRowState extends State<DateTimeRow> {
                                 diameterRatio: 1.4,
                                 physics: const FixedExtentScrollPhysics(),
                                 onSelectedItemChanged: (i) => tempHour = i,
-                                childDelegate:
-                                    ListWheelChildBuilderDelegate(
+                                childDelegate: ListWheelChildBuilderDelegate(
                                   childCount: 24,
                                   builder: (_, i) => Center(
                                     child: Text(
                                       i.toString().padLeft(2, '0'),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.w400,
+                                        color: AppColors.text(context),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                            const Text(
+                            Text(
                               ':',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w500,
+                                color: AppColors.text(context),
                               ),
                             ),
                             Expanded(
@@ -241,17 +253,17 @@ class _DateTimeRowState extends State<DateTimeRow> {
                                 physics: const FixedExtentScrollPhysics(),
                                 onSelectedItemChanged: (i) =>
                                     tempMinuteIndex = i,
-                                childDelegate:
-                                    ListWheelChildBuilderDelegate(
+                                childDelegate: ListWheelChildBuilderDelegate(
                                   childCount: 4,
                                   builder: (_, i) => Center(
                                     child: Text(
                                       minuteSlots[i]
                                           .toString()
                                           .padLeft(2, '0'),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.w400,
+                                        color: AppColors.text(context),
                                       ),
                                     ),
                                   ),
@@ -281,6 +293,7 @@ class _DateTimeRowState extends State<DateTimeRow> {
       children: [
         Expanded(
           child: _PillChip(
+            icon: Icons.calendar_today_rounded,
             label: _dateLabel,
             showChevron: true,
             onTap: _pickDate,

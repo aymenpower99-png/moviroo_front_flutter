@@ -61,33 +61,50 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
 
             // ── App bar ────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: widget.onBack ??
-                        () {
-                          if (Navigator.canPop(context)) {
-                            Navigator.pop(context);
-                          } else {
-                            Navigator.pushReplacementNamed(
-                                context, '/booking');
-                          }
-                        },
+                  GestureDetector(
+                    onTap: widget.onBack ?? () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacementNamed(context, '/booking');
+                      }
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface(context),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 17, color: AppColors.text(context)),
+                    ),
                   ),
                   Expanded(
-                    child: Text('Ride details',
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.bodyLarge(context).copyWith(
-                            fontWeight: FontWeight.w700, fontSize: 17)),
+                    child: Text(
+                      'Ride details',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.bodyLarge(context).copyWith(
+                          fontWeight: FontWeight.w700, fontSize: 17),
+                    ),
                   ),
-                  const SizedBox(width: 48),
+                  // Balance the back button width
+                  const SizedBox(width: 40),
                 ],
               ),
             ),
 
-            // ── Scrollable content (all cards + buttons) ───────
+            // ── Scrollable content ─────────────────────────────
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(16, 4, 16, 16 + bottomPadding),
@@ -114,11 +131,13 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                             context, AppRouter.payment),
                         icon: Icon(Icons.credit_card_outlined,
                             size: 20, color: AppColors.primaryPurple),
-                        label: Text('Payment',
-                            style: AppTextStyles.bodyLarge(context).copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                                color: AppColors.primaryPurple)),
+                        label: Text(
+                          'Payment',
+                          style: AppTextStyles.bodyLarge(context).copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: AppColors.primaryPurple),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.surface(context),
                           foregroundColor: AppColors.primaryPurple,
@@ -140,11 +159,13 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                         onPressed: () => _showCancelDialog(context),
                         icon: Icon(Icons.close_rounded,
                             color: Colors.red.shade400, size: 18),
-                        label: Text('Cancel Booking',
-                            style: AppTextStyles.bodyLarge(context).copyWith(
-                                color: Colors.red.shade400,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16)),
+                        label: Text(
+                          'Cancel Booking',
+                          style: AppTextStyles.bodyLarge(context).copyWith(
+                              color: Colors.red.shade400,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16),
+                        ),
                         style: TextButton.styleFrom(
                           backgroundColor: Colors.red.withOpacity(0.08),
                           shape: RoundedRectangleBorder(
@@ -155,12 +176,10 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                         ),
                       ),
                     ),
-
                   ],
                 ),
               ),
             ),
-
           ],
         ),
       ),

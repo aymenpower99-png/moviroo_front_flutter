@@ -124,8 +124,6 @@ class _VehicleSelectionPageState extends State<VehicleSelectionPage> {
 }
 
 // ── Map Background ────────────────────────────────────────────────────────────
-// Uses a gradient + grid lines to simulate a map style.
-// Replace with GoogleMap widget in production.
 class _MapBackground extends StatelessWidget {
   final bool isDark;
   const _MapBackground({required this.isDark});
@@ -234,7 +232,7 @@ class _BackButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: AppColors.surface(context),
-          shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.14),
@@ -338,7 +336,7 @@ class _ConfirmBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SizedBox(width: 24), // balance
+              const SizedBox(width: 24),
               Text(
                 'Confirm ${car.name}',
                 style: AppTextStyles.buttonPrimary,

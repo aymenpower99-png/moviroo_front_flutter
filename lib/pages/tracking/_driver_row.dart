@@ -55,26 +55,56 @@ class DriverRow extends StatelessWidget {
           ),
         ),
 
-        // Chat button with custom PNG
-        GestureDetector(
-          onTap: () {},
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.darkBorder,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: AppColors.primaryPurple.withOpacity(0.3)),
-            ),
-            child: Center(
-              child: ImageIcon(
-                const AssetImage('images/icons/chat.png'),
-                size: 20,
-                color: AppColors.primaryPurple,
+        // Action buttons — grouped outside Expanded
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Phone button
+            GestureDetector(
+              onTap: () {},
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.darkBorder,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: AppColors.primaryPurple.withOpacity(0.3)),
+                ),
+                child: Center(
+                  child: ImageIcon(
+                    const AssetImage('images/icons/phone-call.png'),
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
-          ),
+
+            const SizedBox(width: 10),
+
+            // Chat button
+            GestureDetector(
+              onTap: () {},
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.darkBorder,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: AppColors.primaryPurple.withOpacity(0.3)),
+                ),
+                child: Center(
+                  child: ImageIcon(
+                    const AssetImage('images/icons/chat.png'),
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -4,7 +4,8 @@ import 'LocationCard.dart';
 import 'nextdestinationsearch.dart';
 import 'RecentSearchItem.dart';
 import './DateTimeRow.dart';
-import './RiderSheet.dart';
+import 'modal/RiderSheet.dart';
+import 'modal/PassengerSheet.dart';
 
 class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key});
@@ -15,28 +16,27 @@ class LocationScreen extends StatefulWidget {
 
 class _LocationScreenState extends State<LocationScreen>
     with SingleTickerProviderStateMixin {
-  final TextEditingController _fromController = TextEditingController();
-  final TextEditingController _toController = TextEditingController();
-  final FocusNode _fromFocus = FocusNode();
-  final FocusNode _toFocus = FocusNode();
+  final _fromController = TextEditingController();
+  final _toController = TextEditingController();
+  final _fromFocus = FocusNode();
+  final _toFocus = FocusNode();
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
 
   int? _selectedRider;
+  int _passengerCount = 1;
   List<SuggestionItem> _suggestions = [];
-
   bool _fromConfirmed = false;
   bool _toConfirmed = false;
-
   DateTime _pickedDate = DateTime.now();
   TimeOfDay? _pickedTime;
 
-  final List<Map<String, String>> _riders = [
+  final _riders = [
     {'name': 'Me', 'subtitle': 'Book this ride for yourself'},
     {'name': 'Youssef', 'subtitle': '+216 22 333 444'},
   ];
 
-  final List<RecentSearchItem> _recentSearches = [
+  final _recentSearches = [
     const RecentSearchItem(title: 'Sousse', subtitle: 'Sousse, Tunisia'),
     const RecentSearchItem(
       title: 'The Ferry Building',
@@ -45,7 +45,7 @@ class _LocationScreenState extends State<LocationScreen>
     const RecentSearchItem(title: 'Central Park', subtitle: 'New York, NY'),
   ];
 
-  final List<SuggestionItem> _allPlaces = [
+  final _allPlaces = [
     const SuggestionItem(title: 'Sousse', subtitle: 'Sousse, Tunisia'),
     const SuggestionItem(title: 'Tunis Centre', subtitle: 'Tunis, Tunisia'),
     const SuggestionItem(title: 'Sfax', subtitle: 'Sfax, Tunisia'),
@@ -67,7 +67,6 @@ class _LocationScreenState extends State<LocationScreen>
   @override
   void initState() {
     super.initState();
-
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -82,8 +81,8 @@ class _LocationScreenState extends State<LocationScreen>
 
     _fromController.addListener(_onQueryChanged);
     _toController.addListener(_onQueryChanged);
-    _fromFocus.addListener(_onFromFocusChanged);
-    _toFocus.addListener(_onToFocusChanged);
+    _fromFocus.addListener(_onFocusChanged);
+    _toFocus.addListener(_onFocusChanged);
   }
 
   @override
@@ -91,8 +90,8 @@ class _LocationScreenState extends State<LocationScreen>
     _pulseController.dispose();
     _fromController.removeListener(_onQueryChanged);
     _toController.removeListener(_onQueryChanged);
-    _fromFocus.removeListener(_onFromFocusChanged);
-    _toFocus.removeListener(_onToFocusChanged);
+    _fromFocus.removeListener(_onFocusChanged);
+    _toFocus.removeListener(_onFocusChanged);
     _fromController.dispose();
     _toController.dispose();
     _fromFocus.dispose();
@@ -100,26 +99,13 @@ class _LocationScreenState extends State<LocationScreen>
     super.dispose();
   }
 
-  void _onFromFocusChanged() {
-    if (!_fromFocus.hasFocus && !_fromConfirmed) {
-      final text = _fromController.text.trim();
-      if (text.isNotEmpty) {
-        _fromController.clear();
-        setState(() => _suggestions = []);
-      }
+  void _onFocusChanged() {
+    if (!_fromFocus.hasFocus &&
+        !_fromConfirmed &&
+        _fromController.text.trim().isNotEmpty) {
+      _fromController.clear();
     }
-    if (!_fromFocus.hasFocus) {
-      setState(() => _suggestions = []);
-    }
-  }
-
-  void _onToFocusChanged() {
-    if (_toFocus.hasFocus) {
-      if (!_fromConfirmed && _fromController.text.trim().isNotEmpty) {
-        _fromController.clear();
-      }
-    }
-    if (!_toFocus.hasFocus) {
+    if (!_fromFocus.hasFocus && !_toFocus.hasFocus) {
       setState(() => _suggestions = []);
     }
   }
@@ -140,14 +126,11 @@ class _LocationScreenState extends State<LocationScreen>
             'dropOff': dropOff,
             'date': _pickedDate,
             'time': _pickedTime,
+            'passengerCount': _passengerCount,
           },
         );
       });
     }
-  }
-
-  void _onTimePicked(TimeOfDay time) {
-    setState(() => _pickedTime = time);
   }
 
   void _onQueryChanged() {
@@ -156,13 +139,10 @@ class _LocationScreenState extends State<LocationScreen>
       return;
     }
 
-    final String query;
-    if (_toFocus.hasFocus) {
-      query = _toController.text.trim();
-    } else {
-      _fromConfirmed = false;
-      query = _fromController.text.trim();
-    }
+    final query = _toFocus.hasFocus
+        ? _toController.text.trim()
+        : _fromController.text.trim();
+    if (!_toFocus.hasFocus) _fromConfirmed = false;
 
     if (query.isEmpty) {
       setState(() => _suggestions = []);
@@ -200,10 +180,6 @@ class _LocationScreenState extends State<LocationScreen>
     }
   }
 
-  void _onRecentTap(RecentSearchItem item) {
-    _fillSmartField(item.title);
-  }
-
   void _fillSmartField(String locationName) {
     final fromEmpty = _fromController.text.trim().isEmpty;
     setState(() => _suggestions = []);
@@ -229,11 +205,7 @@ class _LocationScreenState extends State<LocationScreen>
     _toConfirmed = _toController.text.trim().isNotEmpty;
   }
 
-  void _clearRecent() => setState(() => _recentSearches.clear());
-
   Future<void> _showRiderSheet() async {
-    // Explicitly unfocus both nodes before AND after the sheet
-    // so the keyboard never reopens and no field gets re-focused.
     _fromFocus.unfocus();
     _toFocus.unfocus();
     await Future.delayed(const Duration(milliseconds: 80));
@@ -250,28 +222,39 @@ class _LocationScreenState extends State<LocationScreen>
       }),
     );
 
-    // Guard against focus being restored after sheet dismissal
     _fromFocus.unfocus();
     _toFocus.unfocus();
-
     if (selected != null && mounted) {
       setState(() => _selectedRider = selected);
     }
   }
 
+  Future<void> _showPassengerPicker() async {
+    _fromFocus.unfocus();
+    _toFocus.unfocus();
+    await Future.delayed(const Duration(milliseconds: 80));
+    if (!mounted) return;
+
+    final selected = await PassengerSheet.show(
+      context,
+      initialCount: _passengerCount,
+    );
+
+    _fromFocus.unfocus();
+    _toFocus.unfocus();
+    if (selected != null && mounted) {
+      setState(() => _passengerCount = selected);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Label: "For me" by default, rider name once selected
-    final String pillLabel =
+    final pillLabel =
         (_selectedRider != null && _selectedRider! < _riders.length)
-            ? _riders[_selectedRider!]['name']!
-            : 'For me';
+        ? _riders[_selectedRider!]['name']!
+        : 'For me';
 
-    // Text black, icon + chevron purple
-    final Color pillTextColor = AppColors.text(context);
-    const Color pillIconColor = AppColors.primaryPurple;
-
-    final bool showRecent =
+    final showRecent =
         _suggestions.isEmpty &&
         _recentSearches.isNotEmpty &&
         !(_fromFocus.hasFocus && _fromController.text.trim().isNotEmpty) &&
@@ -282,9 +265,8 @@ class _LocationScreenState extends State<LocationScreen>
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top bar ──────────────────────────────────────────
+            // Top bar
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
               child: Stack(
@@ -305,9 +287,10 @@ class _LocationScreenState extends State<LocationScreen>
                       child: Container(
                         width: 42,
                         height: 42,
+                        // AFTER
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                          color: AppColors.surface(context),
+                          borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.08),
@@ -330,58 +313,33 @@ class _LocationScreenState extends State<LocationScreen>
 
             const SizedBox(height: 12),
 
-            // ── Rider pill ───────────────────────────────────────
-            Center(
-              child: GestureDetector(
-                onTap: _showRiderSheet,
-                child: Container(
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: AppColors.border(context)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+            // Rider & Passenger pills
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _Pill(
+                      icon: Icons.person_outline_rounded,
+                      label: pillLabel,
+                      onTap: _showRiderSheet,
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.person_outline_rounded,
-                        size: 17,
-                        color: pillIconColor,
-                      ),
-                      const SizedBox(width: 7),
-                      Text(
-                        pillLabel,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: pillTextColor,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 17,
-                        color: pillIconColor,
-                      ),
-                    ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _Pill(
+                      icon: Icons.people_outline_rounded,
+                      label: '$_passengerCount',
+                      onTap: _showPassengerPicker,
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
 
             const SizedBox(height: 12),
 
-            // ── Scrollable body ──────────────────────────────────
+            // Scrollable body
             Expanded(
               child: SingleChildScrollView(
                 keyboardDismissBehavior:
@@ -400,35 +358,31 @@ class _LocationScreenState extends State<LocationScreen>
                       onUseCurrentLocation: () {},
                     ),
                     const SizedBox(height: 10),
-
                     DateTimeRow(
                       initialDate: _pickedDate,
                       onDateChanged: (d) => setState(() => _pickedDate = d),
-                      onTimeChanged: _onTimePicked,
+                      onTimeChanged: (t) => setState(() => _pickedTime = t),
                     ),
-
                     const SizedBox(height: 14),
-
                     NextDestinationSearch(
                       suggestions: _suggestions,
                       onSuggestionTap: _onSuggestionTap,
                       onSelectOnMap: () {},
                       onSavedPlaces: () {},
                     ),
-
                     if (showRecent) ...[
                       const SizedBox(height: 2),
                       ..._recentSearches.map(
                         (item) => RecentSearchTile(
                           item: item,
-                          onTap: () => _onRecentTap(item),
+                          onTap: () => _fillSmartField(item.title),
                         ),
                       ),
                       const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerRight,
                         child: GestureDetector(
-                          onTap: _clearRecent,
+                          onTap: () => setState(() => _recentSearches.clear()),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -455,6 +409,63 @@ class _LocationScreenState extends State<LocationScreen>
                   ],
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Extracted pill widget to reduce duplication
+class _Pill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _Pill({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          // AFTER
+color: AppColors.surface(context),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: AppColors.border(context)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 17, color: AppColors.primaryPurple),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text(context),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 17,
+              color: AppColors.primaryPurple,
             ),
           ],
         ),

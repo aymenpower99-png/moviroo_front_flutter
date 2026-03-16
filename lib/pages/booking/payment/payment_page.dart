@@ -17,7 +17,6 @@ class _PaymentPageState extends State<PaymentPage> {
   bool _hasSavedCard = true;
   bool _useNewCard = false;
 
-  // GlobalKeys to access child state for validation
   final _savedCardKey = GlobalKey<SavedCardSectionState>();
   final _newCardKey = GlobalKey<NewCardFormState>();
 
@@ -53,27 +52,43 @@ class _PaymentPageState extends State<PaymentPage> {
 
             // ── Top bar ────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: AppColors.text(context),
-                      size: 20,
+                  GestureDetector(
+                    onTap: _goBack,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface(context),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 17, color: AppColors.text(context)),
                     ),
-                    onPressed: _goBack,
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Payment',
-                          style: AppTextStyles.bodyLarge(context).copyWith(
-                              fontWeight: FontWeight.w800, fontSize: 18)),
-                      Text('Booking #78438620',
-                          style: AppTextStyles.bodySmall(context).copyWith(
-                              color: AppColors.subtext(context))),
+                      Text(
+                        'Payment',
+                        style: AppTextStyles.bodyLarge(context).copyWith(
+                            fontWeight: FontWeight.w800, fontSize: 18),
+                      ),
+                      Text(
+                        'Booking #78438620',
+                        style: AppTextStyles.bodySmall(context).copyWith(
+                            color: AppColors.subtext(context)),
+                      ),
                     ],
                   ),
                 ],
@@ -128,7 +143,7 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
             ),
 
-            // ── Pay button — always visible, never overflowed ──
+            // ── Pay button ─────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: SizedBox(
@@ -137,9 +152,11 @@ class _PaymentPageState extends State<PaymentPage> {
                 child: ElevatedButton.icon(
                   onPressed: _onPay,
                   icon: const Icon(Icons.credit_card_outlined, size: 20),
-                  label: const Text('Pay 85.00 TND',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 16)),
+                  label: const Text(
+                    'Pay 85.00 TND',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 16),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPurple,
                     foregroundColor: Colors.white,

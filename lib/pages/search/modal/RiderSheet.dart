@@ -1,23 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_colors.dart';
-import './NewPassengerModal.dart';
+import '../../../../../theme/app_colors.dart';
+import 'NewPassengerModal.dart';
 
-// ── Public entry-point ────────────────────────────────────────────────────────
-//
-// Returns the selected index (int) or null if dismissed.
-// The pill in LocationScreen reads _riders[selected]['name'] to update label.
-//
-// Usage:
-//   final selected = await RiderSheet.show(
-//     context,
-//     riders: _riders,
-//     initialSelected: _selectedRider,
-//     onRidersChanged: (updated) => setState(() {
-//       _riders..clear()..addAll(updated);
-//     }),
-//   );
-//   if (selected != null) setState(() => _selectedRider = selected);
-//
 class RiderSheet {
   static Future<int?> show(
     BuildContext context, {
@@ -30,7 +14,7 @@ class RiderSheet {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       isScrollControlled: true,
       builder: (_) => _RiderSheetBody(
         initialSelected: initialSelected,
@@ -41,7 +25,6 @@ class RiderSheet {
   }
 }
 
-// ── Sheet body ────────────────────────────────────────────────────────────────
 class _RiderSheetBody extends StatefulWidget {
   final int? initialSelected;
   final List<Map<String, String>> riders;
@@ -68,7 +51,6 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
     _riders = widget.riders.map((r) => Map<String, String>.from(r)).toList();
   }
 
-  // ── Open NewPassengerModal (add or edit) ──────────────────────
   void _openPassengerForm({int? editIndex}) async {
     final result = await NewPassengerModal.show(
       context,
@@ -86,21 +68,32 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
     }
   }
 
-  // ── Delete ───────────────────────────────────────────────────
   void _deleteRider(int index) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface(context),
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Remove contact',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        content:
-            Text('Remove "${_riders[index]['name']}" from your contacts?'),
+        title: Text(
+          'Remove contact',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.text(context),
+          ),
+        ),
+        content: Text(
+          'Remove "${_riders[index]['name']}" from your contacts?',
+          style: TextStyle(color: AppColors.text(context)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.subtext(context)),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -127,10 +120,8 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
     }
   }
 
-  // ── 3-dot popup menu ─────────────────────────────────────────
   void _showMenu(BuildContext btnCtx, int index) async {
-    final RenderBox button =
-        btnCtx.findRenderObject() as RenderBox;
+    final RenderBox button = btnCtx.findRenderObject() as RenderBox;
     final RenderBox overlay = Navigator.of(btnCtx)
         .overlay!
         .context
@@ -147,6 +138,7 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
     final choice = await showMenu<String>(
       context: btnCtx,
       position: position,
+      color: AppColors.surface(context),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       items: [
         PopupMenuItem(
@@ -155,8 +147,14 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
             Icon(Icons.edit_outlined,
                 size: 16, color: AppColors.primaryPurple),
             const SizedBox(width: 10),
-            const Text('Edit',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+            Text(
+              'Edit',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.text(context),
+              ),
+            ),
           ]),
         ),
         PopupMenuItem(
@@ -165,11 +163,14 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
             Icon(Icons.delete_outline_rounded,
                 size: 16, color: Colors.red.shade400),
             const SizedBox(width: 10),
-            Text('Delete',
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.red.shade400)),
+            Text(
+              'Delete',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.red.shade400,
+              ),
+            ),
           ]),
         ),
       ],
@@ -189,15 +190,15 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
         children: [
           // Drag handle
           Container(
-            width: 36, height: 4,
+            width: 36,
+            height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
+              color: AppColors.border(context),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(height: 16),
 
-          // Title — centred
           Text(
             "Who's riding?",
             textAlign: TextAlign.center,
@@ -209,7 +210,6 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
           ),
           const SizedBox(height: 8),
 
-          // Rider tiles
           ..._riders.asMap().entries.map((e) => Column(
                 children: [
                   _RiderTile(
@@ -220,17 +220,26 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
                     onMenuTap: (ctx) => _showMenu(ctx, e.key),
                   ),
                   if (e.key < _riders.length - 1)
-                    const Divider(height: 1, thickness: 0.5),
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: AppColors.border(context),
+                    ),
                 ],
               )),
 
-          const Divider(height: 1, thickness: 0.5),
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: AppColors.border(context),
+          ),
 
           // Add new contact
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: AppColors.primaryPurple.withOpacity(0.1),
                 shape: BoxShape.circle,
@@ -241,16 +250,16 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
             title: const Text(
               'Add New Contact',
               style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.primaryPurple),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.primaryPurple,
+              ),
             ),
             onTap: () => _openPassengerForm(),
           ),
 
           const SizedBox(height: 4),
 
-          // Confirm — pops with the selected index
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -260,7 +269,7 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
                   : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryPurple,
-                disabledBackgroundColor: Colors.grey.shade200,
+                disabledBackgroundColor: AppColors.border(context),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
@@ -272,7 +281,7 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
                   fontWeight: FontWeight.w600,
                   color: _selected != null
                       ? Colors.white
-                      : Colors.grey.shade400,
+                      : AppColors.subtext(context),
                 ),
               ),
             ),
@@ -283,7 +292,6 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
   }
 }
 
-// ── Rider tile ────────────────────────────────────────────────────────────────
 class _RiderTile extends StatelessWidget {
   final String name;
   final String subtitle;
@@ -305,7 +313,8 @@ class _RiderTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       onTap: onTap,
       leading: Container(
-        width: 40, height: 40,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
           color: AppColors.primaryPurple.withOpacity(0.1),
           shape: BoxShape.circle,
@@ -332,7 +341,7 @@ class _RiderTile extends StatelessWidget {
               ? const Icon(Icons.check_circle_rounded,
                   color: AppColors.primaryPurple, size: 21)
               : Icon(Icons.radio_button_unchecked_rounded,
-                  color: Colors.grey.shade300, size: 21),
+                  color: AppColors.border(context), size: 21),
           const SizedBox(width: 4),
           Builder(
             builder: (btnCtx) => GestureDetector(

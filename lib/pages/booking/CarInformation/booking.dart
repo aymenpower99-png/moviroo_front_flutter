@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:moviroo/pages/booking/CarInformation/_TopBar.dart';
 import 'package:moviroo/routing/router.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
@@ -17,11 +16,9 @@ class BookingSummaryPage extends StatefulWidget {
 }
 
 class _BookingSummaryPageState extends State<BookingSummaryPage> {
-  // pax/bags still drive RouteSection's PASSENGER stat
   int _pax  = 2;
   int _bags = 3;
 
-  // Key to call validateAndProceed() on the billing section before confirming
   final _billingKey = GlobalKey<BillingAddressSectionState>();
 
   @override
@@ -31,39 +28,71 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
       body: SafeArea(
         child: Column(
           children: [
-            TopBar(),
 
+            // ── Top bar ────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacementNamed(
+                            context, AppRouter.booking);
+                      }
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface(context),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 17, color: AppColors.text(context)),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Booking summary',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.bodyLarge(context).copyWith(
+                          fontWeight: FontWeight.w700, fontSize: 17),
+                    ),
+                  ),
+                  const SizedBox(width: 40),
+                ],
+              ),
+            ),
+
+            // ── Scrollable content ─────────────────────────────
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 child: Column(
                   children: [
-                    // ── Card 1: vehicle info ───────────────────
                     BookingSummaryCard(
                       pax: _pax,
                       bags: _bags,
                       vehicleName: 'Economy',
                       carName: 'BMW 3 Series or similar',
                     ),
-
                     const SizedBox(height: 12),
-
-                    // ── Card 2: route details ──────────────────
                     RouteSection(pax: _pax),
-
                     const SizedBox(height: 12),
-
-                    // ── Card 3: discount code ──────────────────
                     const DiscountSection(),
-
                     const SizedBox(height: 12),
-
-                    // ── Card 4: billing address ────────────────
                     BillingAddressSection(key: _billingKey),
-
                     const SizedBox(height: 12),
-
-                    // ── Card 5: price summary ──────────────────
                     const PriceSummarySection(),
                   ],
                 ),
@@ -78,7 +107,6 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Validate billing address before proceeding
                     final billingOk =
                         _billingKey.currentState?.validateAndProceed() ?? true;
                     if (!billingOk) return;

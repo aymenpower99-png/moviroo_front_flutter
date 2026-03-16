@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../theme/app_colors.dart';
+import '../../../../../theme/app_colors.dart';
 
-// ── Country model ─────────────────────────────────────────────────────────────
 class _Country {
   final String flag;
   final String code;
@@ -35,35 +34,13 @@ const List<_Country> _kCountries = [
 ];
 
 const Map<String, String> _kCountryNames = {
-  'TN': 'Tunisia',
-  'DZ': 'Algeria',
-  'MA': 'Morocco',
-  'LY': 'Libya',
-  'EG': 'Egypt',
-  'FR': 'France',
-  'DE': 'Germany',
-  'GB': 'United Kingdom',
-  'US': 'United States',
-  'SA': 'Saudi Arabia',
-  'AE': 'UAE',
-  'TR': 'Turkey',
-  'IT': 'Italy',
-  'ES': 'Spain',
+  'TN': 'Tunisia',  'DZ': 'Algeria',        'MA': 'Morocco',
+  'LY': 'Libya',    'EG': 'Egypt',           'FR': 'France',
+  'DE': 'Germany',  'GB': 'United Kingdom',  'US': 'United States',
+  'SA': 'Saudi Arabia', 'AE': 'UAE',         'TR': 'Turkey',
+  'IT': 'Italy',    'ES': 'Spain',
 };
 
-// ── Public entry-point ────────────────────────────────────────────────────────
-//
-// Returns Map<String, String> with keys 'name' and 'subtitle', or null.
-//
-// Add mode:
-//   final result = await NewPassengerModal.show(context);
-//
-// Edit mode:
-//   final result = await NewPassengerModal.show(
-//     context,
-//     initial: {'name': 'Youssef', 'subtitle': '+216 22333444'},
-//   );
-//
 class NewPassengerModal {
   static Future<Map<String, String>?> show(
     BuildContext context, {
@@ -72,7 +49,7 @@ class NewPassengerModal {
     return showModalBottomSheet<Map<String, String>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -81,7 +58,6 @@ class NewPassengerModal {
   }
 }
 
-// ── Form widget ───────────────────────────────────────────────────────────────
 class _NewPassengerForm extends StatefulWidget {
   final Map<String, String>? initial;
   const _NewPassengerForm({this.initial});
@@ -95,7 +71,7 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
   final _lastCtrl  = TextEditingController();
   final _phoneCtrl = TextEditingController();
 
-  _Country _country = _kCountries.first; // TN default
+  _Country _country = _kCountries.first;
 
   bool get _isEdit  => widget.initial != null;
   bool get _canSave =>
@@ -138,7 +114,7 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
   void _pickCountry() async {
     final picked = await showModalBottomSheet<_Country>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface(context),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -176,18 +152,19 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
 
           // Drag handle
           Container(
-            width: 36, height: 4,
+            width: 36,
+            height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
+              color: AppColors.border(context),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(height: 16),
 
-          // Header: back | title | close
+          // Header
           Row(
             children: [
-              _CircleBtn(
+              _RoundedBtn(
                 icon: Icons.arrow_back_ios_new_rounded,
                 size: 16,
                 onTap: () => Navigator.pop(context),
@@ -203,7 +180,7 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
                   ),
                 ),
               ),
-              _CircleBtn(
+              _RoundedBtn(
                 icon: Icons.close_rounded,
                 size: 18,
                 onTap: () => Navigator.pop(context),
@@ -244,7 +221,6 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
           ),
           const SizedBox(height: 20),
 
-          // First name
           _LabeledField(
             label: 'First name',
             hint: 'Ex. Ahmed',
@@ -253,7 +229,6 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
           ),
           const SizedBox(height: 14),
 
-          // Last name
           _LabeledField(
             label: 'Last name',
             hint: 'Ex. Ben Ali',
@@ -262,7 +237,7 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
           ),
           const SizedBox(height: 14),
 
-          // Phone with flag picker
+          // Phone field
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -277,19 +252,19 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
               const SizedBox(height: 6),
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: AppColors.border(context)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
-                    // Country selector tap area
+                    // Country selector
                     GestureDetector(
                       onTap: _pickCountry,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 14),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: AppColors.bg(context),
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(11),
                             bottomLeft: Radius.circular(11),
@@ -319,15 +294,15 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
                         ),
                       ),
                     ),
-                    // Divider
                     Container(
-                        width: 1, height: 46,
-                        color: Colors.grey.shade300),
-                    // Digits field
+                        width: 1,
+                        height: 46,
+                        color: AppColors.border(context)),
                     Expanded(
                       child: TextField(
                         controller: _phoneCtrl,
                         keyboardType: TextInputType.phone,
+                        style: TextStyle(color: AppColors.text(context)),
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                           LengthLimitingTextInputFormatter(
@@ -336,7 +311,8 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
                         decoration: InputDecoration(
                           hintText: 'XX XXX XXX',
                           hintStyle: TextStyle(
-                              color: Colors.grey.shade400, fontSize: 14),
+                              color: AppColors.subtext(context),
+                              fontSize: 14),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 14),
@@ -400,7 +376,6 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
   }
 }
 
-// ── Country picker sheet ──────────────────────────────────────────────────────
 class _CountryPickerSheet extends StatefulWidget {
   final _Country selected;
   const _CountryPickerSheet({required this.selected});
@@ -429,15 +404,16 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
       expand: false,
       builder: (_, scrollCtrl) => Column(
         children: [
-          // Handle + title + search
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
             child: Column(
               children: [
+                // Drag handle
                 Container(
-                  width: 36, height: 4,
+                  width: 36,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: AppColors.border(context),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -453,22 +429,23 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                 const SizedBox(height: 12),
                 TextField(
                   onChanged: (v) => setState(() => _query = v),
+                  style: TextStyle(color: AppColors.text(context)),
                   decoration: InputDecoration(
                     hintText: 'Search country or dial code…',
                     hintStyle: TextStyle(
-                        color: Colors.grey.shade400, fontSize: 14),
+                        color: AppColors.subtext(context), fontSize: 14),
                     prefixIcon: Icon(Icons.search_rounded,
-                        color: Colors.grey.shade400, size: 20),
+                        color: AppColors.subtext(context), size: 20),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 12),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          BorderSide(color: Colors.grey.shade300),
+                          BorderSide(color: AppColors.border(context)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
+                      borderSide: const BorderSide(
                           color: AppColors.primaryPurple, width: 1.5),
                     ),
                   ),
@@ -478,15 +455,17 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
             ),
           ),
 
-          // List
           Expanded(
             child: ListView.separated(
               controller: scrollCtrl,
               padding: const EdgeInsets.symmetric(
                   horizontal: 20, vertical: 8),
               itemCount: _filtered.length,
-              separatorBuilder: (_, __) =>
-                  const Divider(height: 1, thickness: 0.5),
+              separatorBuilder: (_, __) => Divider(
+                height: 1,
+                thickness: 0.5,
+                color: AppColors.border(context),
+              ),
               itemBuilder: (_, i) {
                 final c          = _filtered[i];
                 final isSelected = c.code == widget.selected.code;
@@ -515,7 +494,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                       ),
                       if (isSelected) ...[
                         const SizedBox(width: 8),
-                        Icon(Icons.check_circle_rounded,
+                        const Icon(Icons.check_circle_rounded,
                             color: AppColors.primaryPurple, size: 18),
                       ],
                     ],
@@ -531,22 +510,26 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
-class _CircleBtn extends StatelessWidget {
+
+// Renamed from _CircleBtn to _RoundedBtn — matches the rounded rectangle style
+class _RoundedBtn extends StatelessWidget {
   final IconData icon;
   final double size;
   final VoidCallback onTap;
-  const _CircleBtn({required this.icon, required this.size, required this.onTap});
+  const _RoundedBtn(
+      {required this.icon, required this.size, required this.onTap});
 
   @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 36, height: 36,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            shape: BoxShape.circle,
+            color: AppColors.border(context),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: size),
+          child: Icon(icon, size: size, color: AppColors.text(context)),
         ),
       );
 }
@@ -579,19 +562,20 @@ class _LabeledField extends StatelessWidget {
           TextField(
             controller: controller,
             textCapitalization: capitalization,
+            style: TextStyle(color: AppColors.text(context)),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle:
-                  TextStyle(color: Colors.grey.shade400, fontSize: 14),
+              hintStyle: TextStyle(
+                  color: AppColors.subtext(context), fontSize: 14),
               contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14, vertical: 14),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderSide: BorderSide(color: AppColors.border(context)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                     color: AppColors.primaryPurple, width: 1.5),
               ),
             ),

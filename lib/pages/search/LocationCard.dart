@@ -24,30 +24,31 @@ class LocationCard extends StatelessWidget {
   InputDecoration _inputDec(
     BuildContext context, {
     required String hint,
-    EdgeInsetsGeometry contentPadding =
-        const EdgeInsets.symmetric(vertical: 14),
-  }) =>
-      InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(
-          color: AppColors.subtext(context),
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-        ),
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        filled: false,
-        isDense: false,
-        contentPadding: contentPadding,
-      );
+    EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(
+      vertical: 14,
+    ),
+  }) => InputDecoration(
+    hintText: hint,
+    hintStyle: TextStyle(
+      color: AppColors.subtext(context),
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+    ),
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    filled: false,
+    isDense: false,
+    contentPadding: contentPadding,
+  );
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 14, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        // AFTER
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -82,8 +83,9 @@ class LocationCard extends StatelessWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryPurple
-                                .withOpacity(0.25 * pulseAnim.value),
+                            color: AppColors.primaryPurple.withOpacity(
+                              0.25 * pulseAnim.value,
+                            ),
                             blurRadius: 6,
                             spreadRadius: 1,
                           ),
@@ -137,10 +139,7 @@ class LocationCard extends StatelessWidget {
                               fontWeight: FontWeight.w400,
                             ),
                             textAlignVertical: TextAlignVertical.center,
-                            decoration: _inputDec(
-                              context,
-                              hint: 'Pick-up',
-                            ),
+                            decoration: _inputDec(context, hint: 'Pick-up'),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -172,7 +171,8 @@ class LocationCard extends StatelessWidget {
                   Divider(
                     height: 1,
                     thickness: 0.8,
-                    color: Colors.grey.shade200,
+                    // AFTER
+                    color: AppColors.border(context),
                   ),
                   // ── Drop-off row ──
                   SizedBox(
@@ -193,8 +193,10 @@ class LocationCard extends StatelessWidget {
                             decoration: _inputDec(
                               context,
                               hint: 'Drop-off',
-                              contentPadding:
-                                  const EdgeInsets.only(top: 7, bottom: 7),
+                              contentPadding: const EdgeInsets.only(
+                                top: 7,
+                                bottom: 7,
+                              ),
                             ),
                           ),
                         ),
