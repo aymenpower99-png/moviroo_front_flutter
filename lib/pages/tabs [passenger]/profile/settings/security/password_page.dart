@@ -13,23 +13,18 @@ class PasswordPage extends StatefulWidget {
 class _PasswordPageState extends State<PasswordPage> {
   final _formKey = GlobalKey<FormState>();
 
-  final _newPasswordController = TextEditingController();
+  final _newPasswordController     = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  bool _newObscure = true;
+  bool _newObscure     = true;
   bool _confirmObscure = true;
-  bool _isLoading = false;
+  bool _isLoading      = false;
 
-  // ── Validation rule states ──
   bool get _hasMinLength => _newPasswordController.text.length >= 8;
-  bool get _hasUppercase =>
-      _newPasswordController.text.contains(RegExp(r'[A-Z]'));
-  bool get _hasLowercase =>
-      _newPasswordController.text.contains(RegExp(r'[a-z]'));
-  bool get _hasNumber =>
-      _newPasswordController.text.contains(RegExp(r'[0-9]'));
-  bool get _hasSpecial => _newPasswordController.text
-      .contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+  bool get _hasUppercase => _newPasswordController.text.contains(RegExp(r'[A-Z]'));
+  bool get _hasLowercase => _newPasswordController.text.contains(RegExp(r'[a-z]'));
+  bool get _hasNumber    => _newPasswordController.text.contains(RegExp(r'[0-9]'));
+  bool get _hasSpecial   => _newPasswordController.text.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
 
   bool get _allRulesMet =>
       _hasMinLength && _hasUppercase && _hasLowercase && _hasNumber && _hasSpecial;
@@ -55,7 +50,7 @@ class _PasswordPageState extends State<PasswordPage> {
   Future<void> _handleSave() async {
     if (!_allRulesMet || !_passwordsMatch) return;
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2)); // TODO: real API call
+    await Future.delayed(const Duration(seconds: 2));
     if (mounted) setState(() => _isLoading = false);
   }
 
@@ -69,7 +64,7 @@ class _PasswordPageState extends State<PasswordPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _SubPageTopBar(title: t('Password')),
+            _SubPageTopBar(title: t('password_page_title')),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -80,7 +75,7 @@ class _PasswordPageState extends State<PasswordPage> {
 
                     // ── Section label ──
                     Text(
-                      t('CHANGE PASSWORD').toUpperCase(),
+                      t('change_password'),
                       style: AppTextStyles.sectionLabel(context),
                     ),
                     const SizedBox(height: 16),
@@ -88,18 +83,16 @@ class _PasswordPageState extends State<PasswordPage> {
                     // ── New Password ──
                     _PasswordField(
                       controller: _newPasswordController,
-                      label: t('New Password'),
+                      label: t('new_password'),
                       obscure: _newObscure,
-                      onToggle: () =>
-                          setState(() => _newObscure = !_newObscure),
+                      onToggle: () => setState(() => _newObscure = !_newObscure),
                       hasError: newHasText && !_allRulesMet,
                     ),
 
-                    // ── Validation error message ──
                     if (newHasText && !_allRulesMet) ...[
                       const SizedBox(height: 6),
                       Text(
-                        t('Please add all necessary characters to create a safe password.'),
+                        t('password_rules_error'),
                         style: AppTextStyles.bodySmall(context)
                             .copyWith(color: AppColors.error),
                       ),
@@ -121,7 +114,7 @@ class _PasswordPageState extends State<PasswordPage> {
                     // ── Confirm New Password ──
                     _PasswordField(
                       controller: _confirmPasswordController,
-                      label: t('Confirm New Password'),
+                      label: t('confirm_new_password'),
                       obscure: _confirmObscure,
                       onToggle: () =>
                           setState(() => _confirmObscure = !_confirmObscure),
@@ -133,7 +126,7 @@ class _PasswordPageState extends State<PasswordPage> {
                         !_passwordsMatch) ...[
                       const SizedBox(height: 6),
                       Text(
-                        t('Passwords do not match.'),
+                        t('passwords_no_match'),
                         style: AppTextStyles.bodySmall(context)
                             .copyWith(color: AppColors.error),
                       ),
@@ -143,14 +136,11 @@ class _PasswordPageState extends State<PasswordPage> {
 
                     // ── Save Button ──
                     _PrimaryButton(
-                      label: t('Change Password'),
+                      label: t('change_password_btn'),
                       isLoading: _isLoading,
                       enabled: _allRulesMet && _passwordsMatch,
                       onTap: _handleSave,
                     ),
-
-                    const SizedBox(height: 16),
-
 
                     const SizedBox(height: 24),
                   ],
@@ -194,15 +184,15 @@ class _PasswordRules extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _RuleRow(met: hasMinLength, label: t('Minimum 8 characters')),
+          _RuleRow(met: hasMinLength, label: t('rule_min_length')),
           const SizedBox(height: 6),
-          _RuleRow(met: hasUppercase, label: t('One uppercase character')),
+          _RuleRow(met: hasUppercase, label: t('rule_uppercase')),
           const SizedBox(height: 6),
-          _RuleRow(met: hasLowercase, label: t('One lowercase character')),
+          _RuleRow(met: hasLowercase, label: t('rule_lowercase')),
           const SizedBox(height: 6),
-          _RuleRow(met: hasSpecial, label: t('One special character')),
+          _RuleRow(met: hasSpecial,   label: t('rule_special')),
           const SizedBox(height: 6),
-          _RuleRow(met: hasNumber, label: t('One number')),
+          _RuleRow(met: hasNumber,    label: t('rule_number')),
         ],
       ),
     );

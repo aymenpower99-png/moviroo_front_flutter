@@ -29,10 +29,8 @@ class _ChatPageState extends State<ChatPage> {
     ChatMessage(
       id: '2',
       text: "Great, thanks! I'm waiting near the main entrance.",
-      translatedText: null,
       isMe: true,
       time: '2:43 PM',
-      isArabic: false,
     ),
     ChatMessage(
       id: '3',
@@ -50,39 +48,65 @@ class _ChatPageState extends State<ChatPage> {
       time: '2:45 PM',
       isArabic: true,
     ),
-    // Sample voice message to preview the bubble
-    ChatMessage(
-      id: '5',
-      text: '🎤 Voice message',
-      translatedText: null,
-      isMe: false,
-      time: '2:46 PM',
-      isArabic: false,
-      isVoice: true,
-    ),
   ];
 
+  // ── Delete ──────────────────────────────────────────────
+  void _deleteMessage(String id) {
+    setState(() => _messages.removeWhere((m) => m.id == id));
+  }
+
+  // ── Edit ────────────────────────────────────────────────
+  void _editMessage(String id, String newText) {
+    setState(() {
+      final index = _messages.indexWhere((m) => m.id == id);
+      if (index != -1) {
+        _messages[index] = _messages[index].copyWith(
+          text: newText,
+          isEdited: true,
+        );
+      }
+    });
+  }
+
+  // ── Send text ───────────────────────────────────────────
   void _sendMessage(String text) {
     if (text.trim().isEmpty) return;
-    final isVoice = text == '🎤 Voice message';
     setState(() {
       _messages.add(ChatMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         text: text,
-        translatedText: null,
         isMe: true,
         time: _formatTime(DateTime.now()),
-        isArabic: false,
-        isVoice: isVoice,
       ));
     });
     _input.clear();
+    _scrollToBottom();
+  }
+
+  // ── Send voice ──────────────────────────────────────────
+  void _sendVoice(String audioPath) {
+    setState(() {
+      _messages.add(ChatMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: '🎤 Voice message',
+        isMe: true,
+        time: _formatTime(DateTime.now()),
+        isVoice: true,
+        audioPath: audioPath, // real file path
+      ));
+    });
+    _scrollToBottom();
+  }
+
+  void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
-      _scroll.animateTo(
-        _scroll.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (_scroll.hasClients) {
+        _scroll.animateTo(
+          _scroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
@@ -108,17 +132,11 @@ class _ChatPageState extends State<ChatPage> {
       body: SafeArea(
         child: Column(
           children: [
-
-            // ── TopBar ─────────────────────────────────────────
             _ChatTopBar(),
-
-            // ── Translation banner ─────────────────────────────
             TranslationBanner(
               enabled: _autoTranslate,
               onToggle: (v) => setState(() => _autoTranslate = v),
             ),
-
-            // ── Date separator ─────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
@@ -129,24 +147,34 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ),
             ),
-
-            // ── Messages ───────────────────────────────────────
             Expanded(
-              child: ListView.builder(
-                controller: _scroll,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _messages.length,
-                itemBuilder: (context, i) => ChatBubble(
-                  message: _messages[i],
-                  showTranslation: _autoTranslate,
-                ),
-              ),
+              child: _messages.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No messages',
+                        style: AppTextStyles.bodySmall(context)
+                            .copyWith(color: AppColors.subtext(context)),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scroll,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, i) {
+                        final msg = _messages[i];
+                        return ChatBubble(
+                          message: msg,
+                          showTranslation: _autoTranslate,
+                          onDelete: () => _deleteMessage(msg.id),
+                          onEdit: (newText) => _editMessage(msg.id, newText),
+                        );
+                      },
+                    ),
             ),
-
-            // ── Input ──────────────────────────────────────────
             ChatInputBar(
               controller: _input,
               onSend: _sendMessage,
+              onVoiceSend: _sendVoice, // <-- wired here
             ),
           ],
         ),
@@ -166,7 +194,6 @@ class _ChatTopBar extends StatelessWidget {
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
           ),
-          // Avatar
           CircleAvatar(
             radius: 18,
             backgroundColor: AppColors.primaryPurple.withOpacity(0.15),
@@ -181,7 +208,7 @@ class _ChatTopBar extends StatelessWidget {
                 Text('Ahmed H.',
                     style: AppTextStyles.bodyMedium(context)
                         .copyWith(fontWeight: FontWeight.w700)),
-                Text('Toyota Camry b7 · 4.9 b7 b7',
+                Text('Toyota Camry · 4.9 ★',
                     style: AppTextStyles.bodySmall(context)
                         .copyWith(color: AppColors.subtext(context))),
               ],

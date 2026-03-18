@@ -142,7 +142,6 @@ class _CurrencyPageState extends State<CurrencyPage> {
                   return GestureDetector(
                     onTap: () {
                       setState(() => _selectedCode = currency.code);
-                      // TODO: persist selected currency via your state management
                     },
                     behavior: HitTestBehavior.opaque,
                     child: Padding(
@@ -156,8 +155,7 @@ class _CurrencyPageState extends State<CurrencyPage> {
                             decoration: BoxDecoration(
                               color: AppColors.surface(context),
                               borderRadius: BorderRadius.circular(10),
-                              border:
-                                  Border.all(color: AppColors.border(context)),
+                              border: Border.all(color: AppColors.border(context)),
                             ),
                             alignment: Alignment.center,
                             child: Text(

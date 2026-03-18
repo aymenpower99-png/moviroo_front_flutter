@@ -1,4 +1,3 @@
-// TODO Implement this library.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../../theme/app_colors.dart';
@@ -17,8 +16,8 @@ class _AddCardPageState extends State<AddCardPage> {
   final _holderController = TextEditingController();
   final _numberController = TextEditingController();
   final _expiryController = TextEditingController();
-  final _cvvController = TextEditingController();
-  bool _saveCard = true;
+  final _cvvController    = TextEditingController();
+  bool _saveCard  = true;
   bool _isLoading = false;
 
   @override
@@ -43,7 +42,7 @@ class _AddCardPageState extends State<AddCardPage> {
     if (number.length < 4) return;
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 800)); // TODO: real API
+    await Future.delayed(const Duration(milliseconds: 800));
 
     final card = PaymentCard(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -65,7 +64,7 @@ class _AddCardPageState extends State<AddCardPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _SubPageTopBar(title: t('Add New Card')),
+            _SubPageTopBar(title: t('add_new_card')),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -76,7 +75,7 @@ class _AddCardPageState extends State<AddCardPage> {
 
                     // ── Section label ──
                     Text(
-                      t('CARD DETAILS').toUpperCase(),
+                      t('card_details'),
                       style: AppTextStyles.sectionLabel(context),
                     ),
                     const SizedBox(height: 16),
@@ -84,8 +83,8 @@ class _AddCardPageState extends State<AddCardPage> {
                     // ── Card holder ──
                     _CardField(
                       controller: _holderController,
-                      label: t('Card Holder Name'),
-                      hint: t('John Doe'),
+                      label: t('cardholder_name'),
+                      hint: 'John Doe',
                       keyboardType: TextInputType.name,
                     ),
                     const SizedBox(height: 14),
@@ -93,7 +92,7 @@ class _AddCardPageState extends State<AddCardPage> {
                     // ── Card number ──
                     _CardField(
                       controller: _numberController,
-                      label: t('Card Number'),
+                      label: t('card_number'),
                       hint: '0000 0000 0000 0000',
                       keyboardType: TextInputType.number,
                       inputFormatters: [
@@ -110,7 +109,7 @@ class _AddCardPageState extends State<AddCardPage> {
                         Expanded(
                           child: _CardField(
                             controller: _expiryController,
-                            label: t('Expiry'),
+                            label: t('expiry_date'),
                             hint: 'MM/YY',
                             keyboardType: TextInputType.number,
                             inputFormatters: [
@@ -124,7 +123,7 @@ class _AddCardPageState extends State<AddCardPage> {
                         Expanded(
                           child: _CardField(
                             controller: _cvvController,
-                            label: t('CVV'),
+                            label: t('cvv'),
                             hint: '•••',
                             keyboardType: TextInputType.number,
                             inputFormatters: [
@@ -166,7 +165,7 @@ class _AddCardPageState extends State<AddCardPage> {
                           ),
                           const SizedBox(width: 10),
                           Text(
-                            t('Save card for future payments'),
+                            t('save_card_future_payments'),
                             style: AppTextStyles.bodyMedium(context),
                           ),
                         ],
@@ -195,7 +194,7 @@ class _AddCardPageState extends State<AddCardPage> {
                                   color: Colors.white,
                                 ),
                               )
-                            : Text(t('Add Card'),
+                            : Text(t('add_card'),
                                 style: AppTextStyles.buttonPrimary),
                       ),
                     ),

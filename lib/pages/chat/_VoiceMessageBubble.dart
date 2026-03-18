@@ -1,31 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 
 class VoiceMessageBubble extends StatefulWidget {
   final bool isMe;
   final String time;
-  final Duration duration;
+  final String? audioPath;
 
   const VoiceMessageBubble({
     super.key,
     required this.isMe,
     required this.time,
-    this.duration = const Duration(seconds: 12),
+    this.audioPath,
   });
 
   @override
   State<VoiceMessageBubble> createState() => _VoiceMessageBubbleState();
 }
 
-class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
-    with SingleTickerProviderStateMixin {
+class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
+  late final AudioPlayer _player;
   bool _isPlaying = false;
-  double _progress = 0.0;
-  late AnimationController _waveController;
+  Duration _total = Duration.zero;
+  Duration _position = Duration.zero;
+  bool _ready = false;
+  bool _completed = false; // track if finished playing
 
-  // Fake waveform bar heights
-  final List<double> _bars = const [
+  static const List<double> _bars = [
     0.3, 0.6, 0.4, 0.9, 0.5, 0.7, 0.3, 1.0, 0.6, 0.4,
     0.8, 0.5, 0.3, 0.7, 0.9, 0.4, 0.6, 0.3, 0.8, 0.5,
     0.7, 0.4, 0.6, 0.9, 0.3, 0.5, 0.8, 0.4, 0.7, 0.6,
@@ -34,70 +36,90 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
   @override
   void initState() {
     super.initState();
-    _waveController = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    )..addListener(() {
-        setState(() => _progress = _waveController.value);
-      })
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
+    _player = AudioPlayer();
+    _initAudio();
+  }
+
+  Future<void> _initAudio() async {
+    if (widget.audioPath == null) return;
+    try {
+      // Explicitly no loop
+      await _player.setLoopMode(LoopMode.off);
+      final duration = await _player.setFilePath(widget.audioPath!);
+      if (mounted) setState(() {
+        _total = duration ?? Duration.zero;
+        _ready = true;
+      });
+
+      _player.positionStream.listen((pos) {
+        if (mounted) setState(() => _position = pos);
+      });
+
+      _player.playerStateStream.listen((state) {
+        if (!mounted) return;
+        if (state.processingState == ProcessingState.completed) {
+          // Stop here — do NOT seek, do NOT play again
+          _player.stop();
           setState(() {
             _isPlaying = false;
-            _progress = 0.0;
+            _completed = true;
+            _position = Duration.zero;
           });
-          _waveController.reset();
+        } else {
+          setState(() => _isPlaying = state.playing);
         }
       });
+    } catch (_) {}
   }
 
   @override
   void dispose() {
-    _waveController.dispose();
+    _player.dispose();
     super.dispose();
   }
 
-  void _togglePlay() {
-    setState(() => _isPlaying = !_isPlaying);
+  Future<void> _togglePlay() async {
+    if (!_ready) return;
     if (_isPlaying) {
-      _waveController.forward(from: _progress);
-      // TODO: play actual audio file
+      await _player.pause();
     } else {
-      _waveController.stop();
-      // TODO: pause audio
+      // If completed, reload file before playing again
+      if (_completed) {
+        await _player.setFilePath(widget.audioPath!);
+        setState(() => _completed = false);
+      }
+      await _player.play();
     }
   }
 
-  String _formatDuration(Duration d) {
+  String _fmt(Duration d) {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$m:$s';
   }
 
-  String get _currentTime {
-    final elapsed = Duration(
-      milliseconds:
-          (widget.duration.inMilliseconds * _progress).round(),
-    );
-    return _isPlaying || _progress > 0
-        ? _formatDuration(elapsed)
-        : _formatDuration(widget.duration);
-  }
+  double get _progress => _total.inMilliseconds > 0
+      ? (_position.inMilliseconds / _total.inMilliseconds).clamp(0.0, 1.0)
+      : 0.0;
 
   @override
   Widget build(BuildContext context) {
-    final bubbleColor = widget.isMe
-        ? AppColors.primaryPurple
-        : AppColors.surface(context);
-    final contentColor = widget.isMe ? Colors.white : AppColors.text(context);
-    final activeColor = widget.isMe ? Colors.white : AppColors.primaryPurple;
+    final bubbleColor =
+        widget.isMe ? AppColors.primaryPurple : AppColors.surface(context);
+    final contentColor =
+        widget.isMe ? Colors.white : AppColors.text(context);
+    final activeColor =
+        widget.isMe ? Colors.white : AppColors.primaryPurple;
     final inactiveColor = widget.isMe
-        ? Colors.white.withOpacity(0.35)
-        : AppColors.subtext(context).withOpacity(0.4);
+        ? Colors.white.withValues(alpha: 0.35)
+        : AppColors.subtext(context).withValues(alpha: 0.4);
+
+    final displayTime = _ready && (_isPlaying || _position > Duration.zero)
+        ? _fmt(_position)
+        : (_ready ? _fmt(_total) : '--:--');
 
     return Align(
-      alignment:
-          widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -111,7 +133,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -120,8 +142,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-
-            // ── Play / Pause button ──────────────────────────
             GestureDetector(
               onTap: _togglePlay,
               child: Container(
@@ -130,38 +150,46 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: widget.isMe
-                      ? Colors.white.withOpacity(0.2)
-                      : AppColors.primaryPurple.withOpacity(0.12),
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : AppColors.primaryPurple.withValues(alpha: 0.12),
                 ),
-                child: Icon(
-                  _isPlaying
-                      ? Icons.pause_rounded
-                      : Icons.play_arrow_rounded,
-                  color: widget.isMe ? Colors.white : AppColors.primaryPurple,
-                  size: 22,
-                ),
+                child: _ready
+                    ? Icon(
+                        _isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        color: widget.isMe
+                            ? Colors.white
+                            : AppColors.primaryPurple,
+                        size: 22,
+                      )
+                    : SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: widget.isMe
+                              ? Colors.white
+                              : AppColors.primaryPurple,
+                        ),
+                      ),
               ),
             ),
-
             const SizedBox(width: 10),
-
-            // ── Waveform + timer ─────────────────────────────
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Waveform bars
                 SizedBox(
                   width: 140,
                   height: 28,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: List.generate(_bars.length, (i) {
-                      final barProgress = i / _bars.length;
-                      final isActive = barProgress <= _progress;
+                      final isActive = (i / _bars.length) <= _progress;
                       return Expanded(
                         child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 80),
+                          duration: const Duration(milliseconds: 60),
                           margin: const EdgeInsets.symmetric(horizontal: 1.5),
                           height: _bars[i] * 22,
                           decoration: BoxDecoration(
@@ -173,17 +201,14 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
                     }),
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
-                // Duration + time
                 Row(
                   children: [
                     Text(
-                      _currentTime,
+                      displayTime,
                       style: AppTextStyles.bodySmall(context).copyWith(
                         fontSize: 11,
-                        color: contentColor.withOpacity(0.7),
+                        color: contentColor.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(width: 40),
@@ -191,7 +216,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
                       widget.time,
                       style: AppTextStyles.bodySmall(context).copyWith(
                         fontSize: 11,
-                        color: contentColor.withOpacity(0.5),
+                        color: contentColor.withValues(alpha: 0.5),
                       ),
                     ),
                   ],

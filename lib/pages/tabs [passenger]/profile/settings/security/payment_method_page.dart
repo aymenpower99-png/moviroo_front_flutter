@@ -76,7 +76,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _SubPageTopBar(title: t('Payment Methods')),
+            _SubPageTopBar(title: t('payment_methods')),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -87,7 +87,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
                     if (_cards.isNotEmpty) ...[
                       Text(
-                        t('SAVED CARDS').toUpperCase(),
+                        t('saved_cards'),
                         style: AppTextStyles.sectionLabel(context),
                       ),
                       const SizedBox(height: 16),
@@ -115,11 +115,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                     const SizedBox(height: 24),
 
                     // ── Security note ──
-                    _InfoNote(
-                      text: t(
-                        'Your card details are encrypted and stored securely. We never store your full card number.',
-                      ),
-                    ),
+                    _InfoNote(text: t('card_security_note')),
 
                     const SizedBox(height: 24),
                   ],
@@ -139,21 +135,20 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(t('Remove Card?'), style: AppTextStyles.bodyLarge(context)),
+        title: Text(t('remove_card_title'), style: AppTextStyles.bodyLarge(context)),
         content: Text(
-          '${t('Remove card ending in')} ${card.last4}?',
+          '${t('remove_card_ending')} ${card.last4}?',
           style: AppTextStyles.bodySmall(context),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(t('Cancel'),
+            child: Text(t('cancel'),
                 style: TextStyle(color: AppColors.subtext(context))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child:
-                const Text('Remove', style: TextStyle(color: AppColors.error)),
+            child: Text(t('remove'), style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -184,8 +179,7 @@ class _CardTile extends StatelessWidget {
         color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color:
-              card.isDefault ? AppColors.primaryPurple : AppColors.border(context),
+          color: card.isDefault ? AppColors.primaryPurple : AppColors.border(context),
           width: card.isDefault ? 1.5 : 1,
         ),
       ),
@@ -214,7 +208,7 @@ class _CardTile extends StatelessWidget {
                           style: AppTextStyles.bodyLarge(context)),
                       const SizedBox(height: 2),
                       Text(
-                        '${card.holder}  •  ${t('Expires')} ${card.expiry}',
+                        '${card.holder}  •  ${t('expires')} ${card.expiry}',
                         style: AppTextStyles.bodySmall(context),
                       ),
                     ],
@@ -222,14 +216,13 @@ class _CardTile extends StatelessWidget {
                 ),
                 if (card.isDefault)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.primaryPurple.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      t('Default'),
+                      t('default_label'),
                       style: AppTextStyles.bodySmall(context).copyWith(
                         color: AppColors.primaryPurple,
                         fontWeight: FontWeight.w600,
@@ -247,7 +240,7 @@ class _CardTile extends StatelessWidget {
                 Expanded(
                   child: _TileAction(
                     icon: Icons.check_circle_outline_rounded,
-                    label: t('Set as Default'),
+                    label: t('set_as_default'),
                     color: AppColors.primaryPurple,
                     onTap: onSetDefault,
                   ),
@@ -257,7 +250,7 @@ class _CardTile extends StatelessWidget {
               Expanded(
                 child: _TileAction(
                   icon: Icons.delete_outline_rounded,
-                  label: t('Remove'),
+                  label: t('remove'),
                   color: AppColors.error,
                   onTap: onDelete,
                 ),
@@ -393,7 +386,7 @@ class _AddCardButton extends StatelessWidget {
               child: const Icon(Icons.add, color: Colors.white, size: 14),
             ),
             const SizedBox(width: 10),
-            Text(t('Add New Card'),
+            Text(t('add_new_card'),
                 style: AppTextStyles.bodyLarge(context)
                     .copyWith(fontWeight: FontWeight.w600)),
           ],
@@ -424,10 +417,9 @@ class _EmptyState extends StatelessWidget {
                 color: AppColors.primaryPurple, size: 30),
           ),
           const SizedBox(height: 14),
-          Text(t('No cards saved yet'), style: AppTextStyles.bodyLarge(context)),
+          Text(t('no_cards_saved'), style: AppTextStyles.bodyLarge(context)),
           const SizedBox(height: 4),
-          Text(t('Add a card to pay faster'),
-              style: AppTextStyles.bodySmall(context)),
+          Text(t('add_card_faster'), style: AppTextStyles.bodySmall(context)),
         ],
       ),
     );
