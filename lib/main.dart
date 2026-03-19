@@ -70,7 +70,15 @@ class _SmartWayAppState extends State<SmartWayApp> {
             supportedLocales: const [
               Locale('en'),
               Locale('fr'),
-              Locale('ar'),   // ← Arabic added
+              Locale('ar'),
+              Locale('de'),
+              Locale('es'),
+              Locale('it'),
+              Locale('pt'),
+              Locale('tr'),
+              Locale('zh'),
+              Locale('ru'),
+              Locale('ja'),
             ],
             localizationsDelegates: const [
               AppLocalizations.delegate,

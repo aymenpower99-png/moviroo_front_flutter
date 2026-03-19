@@ -4,14 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeProvider extends ChangeNotifier {
   static const _key = 'theme_mode';
 
-  ThemeMode _mode = ThemeMode.light; // ← default changed: system → light
+  ThemeMode _mode = ThemeMode.dark; // ← default: dark
 
   ThemeMode get mode => _mode;
 
-  /// Resolves ThemeMode.system as light so MaterialApp always gets
+  /// Resolves ThemeMode.system as dark so MaterialApp always gets
   /// an explicit light/dark value.
   ThemeMode get resolvedMode =>
-      _mode == ThemeMode.system ? ThemeMode.light : _mode;
+      _mode == ThemeMode.system ? ThemeMode.dark : _mode;
 
   ThemeProvider() {
     _load();
@@ -46,6 +46,6 @@ class ThemeProvider extends ChangeNotifier {
         'dark'   => ThemeMode.dark,
         'light'  => ThemeMode.light,
         'system' => ThemeMode.system,
-        _        => ThemeMode.light, // ← default changed: system → light
+        _        => ThemeMode.dark, // ← default: dark
       };
 }

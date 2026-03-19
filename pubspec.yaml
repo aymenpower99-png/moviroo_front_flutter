@@ -71,11 +71,43 @@ flutter:
     - images/bmw.png
     - images/car.png
     - images/agency_logo.png
-    - images/translations/en.json
-    - images/translations/fr.json
-    - images/translations/ar.json
+    - data/translations/en.json
+    - data/translations/fr.json
+    - data/translations/ar.json
+    - data/translations/de.json
+    - data/translations/es.json
+    - data/translations/it.json
+    - data/translations/pt.json
+    - data/translations/tr.json
+    - data/translations/zh.json
+    - data/translations/ru.json
+    - data/translations/ja.json
     - images/flags/usa.png
     - images/flags/france.png
     - images/flags/saudi.png
+    - images/flags/pt.png
+    - images/flags/spain.png
+    - images/flags/german.png
+    - images/flags/italy.png
+    - images/flags/turkey.png
+    - images/flags/china.png
+    - images/flags/japan.png
+    - images/flags/russia.png
     - images/icons/chat.png
     - images/icons/phone-call.png
+    - data/privacy/privacy_patch_en.json
+    - data/privacy/privacy_patch_fr.json
+    - data/privacy/privacy_patch_ar.json
+    - data/privacy/privacy_patch_de.json
+    - data/privacy/privacy_patch_es.json
+    - data/privacy/privacy_patch_it.json
+    - data/privacy/privacy_patch_pt.json
+    - data/privacy/privacy_patch_tr.json
+    - data/terms/terms_patch_en.json
+    - data/terms/terms_patch_fr.json
+    - data/terms/terms_patch_ar.json
+    - data/terms/terms_patch_de.json
+    - data/terms/terms_patch_es.json
+    - data/terms/terms_patch_it.json
+    - data/terms/terms_patch_pt.json
+    - data/terms/terms_patch_tr.json

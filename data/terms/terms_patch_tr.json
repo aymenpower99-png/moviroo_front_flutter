@@ -1,0 +1,341 @@
+{
+  "terms": {
+    "meta": {
+      "title": "Kullanım Koşulları",
+      "subtitle": "Moviroo platformunu kullanmadan önce lütfen bu Kullanım Koşullarını dikkatlice okuyun. Hizmetlerimize erişerek veya bunları kullanarak bu koşullarla bağlı olmayı kabul edersiniz.",
+      "company": "Moviroo"
+    },
+    "sections": [
+      {
+        "id": "definitions",
+        "title": "Tanımlar",
+        "description": "Bu Kullanım Koşulları kapsamında aşağıdaki terimler belirtilen anlamlara gelir.",
+        "subsections": [
+          {
+            "heading": "Temel terimler",
+            "items": [
+              "Kullanıcı — Moviroo uygulamasına veya web sitesine kaydolan ve hizmet talep eden kişi.",
+              "Acente — Moviroo ile ortaklık anlaşması imzalamış lisanslı ulaşım şirketi.",
+              "Sürücü — Bir ortak acente tarafından istihdam edilen lisanslı profesyonel.",
+              "Platform — Moviroo mobil uygulaması, web sitesi ve ilgili teknolojik altyapı.",
+              "Rezervasyon — Kullanıcı tarafından Platform aracılığıyla gönderilen ve Acente tarafından kabul edilen onaylı yolculuk talebi."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "platform_role",
+        "title": "Platformun Rolü",
+        "description": "Bu bölüm hukuki açıdan kritik öneme sahiptir. Moviroo yalnızca teknolojik aracı platform olarak faaliyet gösterir.",
+        "subsections": [
+          {
+            "heading": "Moviroo'nun olmadığı şeyler",
+            "items": [
+              "Moviroo bir ulaşım şirketi DEĞİLDİR.",
+              "Moviroo sürücü istihdam ETMEZ.",
+              "Moviroo herhangi bir sürücü veya acentenin eylemlerinden SORUMLU DEĞİLDİR.",
+              "Moviroo belirli bir zamanda sürücü mevcudiyetini GARANTİLEMEZ."
+            ]
+          },
+          {
+            "heading": "Moviroo'nun olduğu şeyler",
+            "items": [
+              "Kullanıcıları lisanslı ulaşım acenteleriyle buluşturan teknoloji platformu.",
+              "Kullanıcılar ve Acenteler arasındaki rezervasyon, ödeme ve iletişimi kolaylaştıran aracı.",
+              "Platformun işlevselliği ve kullanılabilirliğinden sorumlu hizmet sağlayıcı."
+            ]
+          }
+        ],
+        "note": "Ortak Acenteler, sürücüleri, araçları, sigortaları ve sunulan hizmetlerin kalitesi için tam yasal sorumluluğu üstlenir."
+      },
+      {
+        "id": "account_registration",
+        "title": "Hesap Kaydı",
+        "description": "Moviroo Platformunun tüm özelliklerine erişmek için bir hesap oluşturmanız gerekmektedir.",
+        "subsections": [
+          {
+            "heading": "Yükümlülükleriniz",
+            "items": [
+              "Kayıt sırasında doğru, eksiksiz ve güncel bilgi sağlamalısınız.",
+              "Hesap oluşturmak için en az 18 yaşında olmanız gerekmektedir.",
+              "Giriş bilgilerinizin gizliliğini korumaktan siz sorumlusunuz.",
+              "Yetkisiz erişimden şüpheleniyorsanız hemen support@moviroo.com adresine bildirin.",
+              "Birden fazla kişisel hesap oluşturamazsınız."
+            ]
+          },
+          {
+            "heading": "Askıya alma veya fesih nedenleri",
+            "items": [
+              "Yanlış kayıt bilgisi sağlamak.",
+              "Sahte faaliyetlerde bulunmak.",
+              "Diğer kullanıcıları veya personeli taciz etmek veya tehdit etmek.",
+              "Birden fazla hesap oluşturmak veya başka birinin kimliğine bürünmek."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "booking_flow",
+        "title": "Rezervasyon Akışı",
+        "description": "Aşağıdakiler Moviroo Platformundaki yolculuk rezervasyon sürecini açıklar.",
+        "subsections": [
+          {
+            "heading": "Yolculuk nasıl rezerve edilir",
+            "items": [
+              "Adım 1 — Kullanıcı alış noktası, hedef ve tercih edilen saati belirterek yolculuk talebi gönderir.",
+              "Adım 2 — Ödeme rezervasyon sırasında yetkilendirilir. Tüm ödemeler kartla yapılır.",
+              "Adım 3 — Rezervasyon talebi müsaitliğe göre ilgili ortak Acenteye iletilir.",
+              "Adım 4 — Acente uygun bir Sürücü atar.",
+              "Adım 5 — Atanan Sürücü rezervasyonu kabul eder veya reddeder.",
+              "Adım 6 — Sürücü reddederse otomatik yeniden atama başlatılır.",
+              "Adım 7 — Kullanıcı gerçek zamanlı olarak Sürücü bilgileri ve tahmini varış süresi hakkında bilgilendirilir."
+            ]
+          }
+        ],
+        "note": "Moviroo rezervasyonlar için maksimum yanıt süresi garantisi vermez."
+      },
+      {
+        "id": "pricing",
+        "title": "Fiyatlandırma",
+        "description": "Moviroo fiyat şeffaflığına bağlıdır. Geçerli tüm maliyetler rezervasyon onayından önce kullanıcıya bildirilir.",
+        "subsections": [
+          {
+            "heading": "Fiyatlandırma nasıl çalışır",
+            "items": [
+              "Tahmini toplam ücret rezervasyon öncesinde gösterilir.",
+              "Ücretler mesafe, tahmini süre, araç sınıfı ve talebe göre hesaplanır.",
+              "Fiyatlar trafik koşullarına veya yoğun saatlere göre değişebilir.",
+              "Geçerli vergiler ve hizmet ücretleri ödeme sırasında listelenir.",
+              "Son ücret tahminden biraz farklı olabilir."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "payments",
+        "title": "Ödemeler",
+        "description": "Moviroo Platformundaki tüm işlemler elektronik olarak gerçekleştirilir. Nakit ödeme kabul edilmez.",
+        "subsections": [
+          {
+            "heading": "Ödeme koşulları",
+            "items": [
+              "Tüm ödemeler nakit dışıdır ve yalnızca Platform aracılığıyla işlenir.",
+              "Başlıca kredi ve banka kartları kabul edilir.",
+              "Ödemeler PCI-DSS uyumlu üçüncü taraf sağlayıcılar aracılığıyla işlenir.",
+              "Kullanıcı her zaman geçerli bir ödeme yöntemine sahip olmaktan sorumludur.",
+              "Ödeme başarısız olursa rezervasyon onaylanmaz.",
+              "Her tamamlanan işlemden sonra elektronik makbuz gönderilir."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cancellation",
+        "title": "İptal Politikası",
+        "description": "Kullanıcılar aşağıdaki koşullara tabi olarak rezervasyonu iptal edebilir.",
+        "subsections": [
+          {
+            "heading": "İptal koşulları",
+            "items": [
+              "Ücretsiz iptal, rezervasyon onayından sonra belirli bir süre içinde yapılabilir.",
+              "Ücretsiz süre sonrasındaki iptallar iptal ücretine tabi olabilir.",
+              "Sürücü yola çıktıktan sonra yapılan iptaller daha yüksek ücret doğurabilir.",
+              "Moviroo makul sürede sürücü atamazsa ücretsiz olarak iptal edebilir."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "no_show",
+        "title": "Gelmeme Politikası",
+        "description": "Gelmeme, Kullanıcının Sürücünün varışından sonraki bekleme süresi içinde alış noktasında bulunmaması durumunda gerçekleşir.",
+        "subsections": [
+          {
+            "heading": "Sonuçlar",
+            "items": [
+              "Kullanıcı bekleme süresi içinde gelmezse yolculuk gelmeme olarak işaretlenebilir.",
+              "Tahmini ücretin bir kısmına eşdeğer gelmeme ücreti alınabilir.",
+              "Tekrarlanan gelmemeler hesabın askıya alınmasıyla sonuçlanabilir.",
+              "Sürücü bekleme süresi dolunca cezasız ayrılabilir."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "user_conduct",
+        "title": "Kullanıcı Davranışı",
+        "description": "Tüm Kullanıcıların saygılı ve yasal davranması beklenir. Aşağıdaki davranışlar kesinlikle yasaktır.",
+        "subsections": [
+          {
+            "heading": "Yasak davranışlar",
+            "items": [
+              "Sürücüleri, Acente personelini veya Moviroo çalışanlarını taciz etmek veya tehdit etmek.",
+              "Sahte veya hileli rezervasyon göndermek.",
+              "Sistemi veya Sürücüyü yanıltmak için yanlış bilgi vermek.",
+              "Platformu yasadışı amaçlarla kullanmak.",
+              "Moviroo dışında Sürücülerle doğrudan ödeme düzenlemek.",
+              "Araçlara zarar vermek veya kirletmek."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "driver_agency_responsibility",
+        "title": "Sürücü ve Acente Sorumluluğu",
+        "description": "Ortak Acenteler ve Sürücüleri Moviroo'dan bağımsız olarak faaliyet gösterir.",
+        "subsections": [
+          {
+            "heading": "Acente yükümlülükleri",
+            "items": [
+              "Acenteler sürücülerini işe almak, doğrulamak, lisanslamak ve eğitmekten sorumludur.",
+              "Tüm araçların sigortalı ve yasal standartları karşılar nitelikte olması gerekir.",
+              "Sürücülerin tüm trafik kanunlarına uyması sağlanmalıdır."
+            ]
+          },
+          {
+            "heading": "Sürücü yükümlülükleri",
+            "items": [
+              "Alış noktasına zamanında varmak.",
+              "Güvenli, profesyonel ve kibar hizmet sunmak.",
+              "Kullanıcılardan nakit ödeme talep etmemek veya kabul etmemek.",
+              "Kararlaştırılan güzergahı takip etmek."
+            ]
+          }
+        ],
+        "note": "Moviroo sürücü davranışından, araç durumundan, yolculuk sırasında yaşanan kaza veya kayıplardan sorumlu değildir."
+      },
+      {
+        "id": "liability",
+        "title": "Sorumluluk Sınırlaması",
+        "description": "Geçerli yasaların izin verdiği azami ölçüde Moviroo'nun sorumluluğu aşağıdaki şekilde sınırlıdır.",
+        "subsections": [
+          {
+            "heading": "Moviroo aşağıdakilerden sorumlu değildir",
+            "items": [
+              "Gecikmeler, kaçırılan alışlar veya Sürücünün gelmemesi.",
+              "Yolculuk sırasında yaşanan kazalar, yaralanmalar veya mülk hasarları.",
+              "Kişisel eşyaların kaybolması, çalınması veya hasar görmesi.",
+              "Dolaylı veya sonuç olarak ortaya çıkan zararlar.",
+              "Üçüncü taraf sağlayıcılar veya ağ kesintileri kaynaklı hizmet kesintileri.",
+              "Herhangi bir Acente veya Sürücünün davranışı veya performansı."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "refunds",
+        "title": "İadeler",
+        "description": "İade talepleri her vaka bazında değerlendirilir.",
+        "subsections": [
+          {
+            "heading": "Uygun iade senaryoları",
+            "items": [
+              "Yolculuk, Sürücünün iptali nedeniyle tamamlanmadı.",
+              "Ödeme işleme hatası yanlış ücrete yol açtı.",
+              "Kullanıcı ücretsiz iptal süresi içinde iptal edilen yolculuk için ücretlendirildi.",
+              "Platform teknik hatası istem dışı rezervasyona neden oldu."
+            ]
+          },
+          {
+            "heading": "İade süreci",
+            "items": [
+              "Talepler, ilgili işlemden itibaren 7 gün içinde support@moviroo.com adresine iletilmelidir.",
+              "Onaylanan iadeler 5-10 iş günü içinde orijinal ödeme yöntemine yansıtılır.",
+              "Moviroo uygunluk kriterlerini karşılamayan talepleri reddedebilir."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "suspension",
+        "title": "Askıya Alma ve Fesih",
+        "description": "Moviroo herhangi bir Kullanıcı hesabını askıya alma veya kalıcı olarak feshetme hakkını saklı tutar.",
+        "subsections": [
+          {
+            "heading": "Askıya alma veya fesih nedenleri",
+            "items": [
+              "Hileli işlemlere katılmak.",
+              "Bu Kullanım Koşullarının tekrarlanan ihlalleri.",
+              "Sahte kimlik veya ödeme bilgisi sağlamak.",
+              "Sürücüleri, Acente personelini veya diğer Kullanıcıları tehdit etmek.",
+              "Moviroo'yu hukuki riske maruz bırakan herhangi bir faaliyet."
+            ]
+          }
+        ],
+        "note": "Ciddi ihlallerde Moviroo önceden bildirimde bulunmaksızın harekete geçebilir. Kullanıcılar 14 gün içinde itiraz edebilir."
+      },
+      {
+        "id": "intellectual_property",
+        "title": "Fikri Mülkiyet",
+        "description": "Moviroo Platformuna ilişkin tüm fikri mülkiyet hakları münhasıran Moviroo'ya aittir.",
+        "subsections": [
+          {
+            "heading": "Korunan varlıklar",
+            "items": [
+              "Moviroo adı, logosu ve ilgili tüm marka unsurları.",
+              "Mobil uygulama ve web sitesinin tasarımı, düzeni ve kullanıcı arayüzü.",
+              "Platformun temelindeki tüm yazılım, algoritmalar ve kaynak kodu.",
+              "Moviroo tarafından üretilen tüm yazılı içerik ve belgeler."
+            ]
+          }
+        ],
+        "note": "Kullanıcılar önceden yazılı izin almadan Moviroo içeriğini kopyalayamaz veya dağıtamaz."
+      },
+      {
+        "id": "force_majeure",
+        "title": "Mücbir Sebep",
+        "description": "Moviroo, makul kontrolü dışındaki koşullardan kaynaklanan herhangi bir başarısızlık veya gecikme için sorumlu tutulamaz.",
+        "subsections": [
+          {
+            "heading": "Kapsanan olaylar",
+            "items": [
+              "Doğal afetler.",
+              "Hükümet eylemleri veya seyahat kısıtlamaları.",
+              "Ulusal veya bölgesel ağ kesintileri veya siber saldırılar.",
+              "Salgınlar veya halk sağlığı acil durumları.",
+              "Moviroo'nun operasyonel kontrolü dışındaki grevler veya diğer olaylar."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "governing_law",
+        "title": "Geçerli Hukuk",
+        "description": "Bu Kullanım Koşulları Tunus Cumhuriyeti yasalarına tabidir. Bu Koşullardan doğan anlaşmazlıklar Tunus'un yetkili mahkemelerinin münhasır yargı yetkisine tabi olacaktır.\n\nHerhangi bir hükmün geçersiz olduğu tespit edilirse kalan hükümler tam olarak yürürlükte kalacaktır.",
+        "subsections": []
+      },
+      {
+        "id": "changes",
+        "title": "Koşul Değişiklikleri",
+        "description": "Moviroo bu Kullanım Koşullarını istediği zaman değiştirme hakkını saklı tutar.",
+        "subsections": [
+          {
+            "heading": "Sizi nasıl bilgilendiririz",
+            "items": [
+              "Küçük değişiklikler — revize edilmiş tarihle sessizce güncellenir.",
+              "Önemli değişiklikler — en az 14 gün öncesinden uygulama bildirimi ile duyurulur.",
+              "Değişiklikler yürürlüğe girdikten sonra Platformu kullanmaya devam etmek güncellenmiş Koşulları kabul ettiğiniz anlamına gelir."
+            ]
+          }
+        ],
+        "note": "Güncellenmiş Koşulları kabul etmiyorsanız Platformu kullanmayı bırakmalısınız."
+      },
+      {
+        "id": "contact",
+        "title": "İletişim",
+        "description": "Bu Kullanım Koşulları hakkında sorularınız varsa destek ekibimiz size yardımcı olmaktan memnuniyet duyar.",
+        "subsections": [
+          {
+            "heading": "Bize nasıl ulaşılır",
+            "items": [
+              "E-posta: support@moviroo.com",
+              "Hukuki sorgular: legal@moviroo.com",
+              "Şirket: Moviroo",
+              "Adres: Tunus"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

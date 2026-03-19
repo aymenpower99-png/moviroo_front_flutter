@@ -12,10 +12,7 @@ import '../../../../l10n/app_localizations.dart';
 class ProfileHeaderCard extends StatelessWidget {
   final String name;
 
-  const ProfileHeaderCard({
-    super.key,
-    required this.name,
-  });
+  const ProfileHeaderCard({super.key, required this.name});
 
   @override
   Widget build(BuildContext context) {
@@ -45,9 +42,7 @@ class _Avatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: Container(
-          color: isDark
-              ? const Color(0xFF2A1A3E)
-              : const Color(0xFFEDE7F6),
+          color: isDark ? const Color(0xFF2A1A3E) : const Color(0xFFEDE7F6),
           child: const Icon(
             Icons.person,
             color: AppColors.primaryPurple,
@@ -133,14 +128,16 @@ class SettingsRowTile extends StatelessWidget {
                 children: [
                   Text(
                     item.title,
-                    style: AppTextStyles.settingsItem(context).copyWith(
-                      color: isLogout ? AppColors.error : null,
-                    ),
+                    style: AppTextStyles.settingsItem(
+                      context,
+                    ).copyWith(color: isLogout ? AppColors.error : null),
                   ),
                   if (item.subtitle != null) ...[
                     const SizedBox(height: 2),
-                    Text(item.subtitle!,
-                        style: AppTextStyles.bodySmall(context)),
+                    Text(
+                      item.subtitle!,
+                      style: AppTextStyles.bodySmall(context),
+                    ),
                   ],
                 ],
               ),
@@ -148,13 +145,18 @@ class SettingsRowTile extends StatelessWidget {
 
             // ── Trailing ──────────────────────────────────────────
             if (item.trailing != null) ...[
-              Text(item.trailing!,
-                  style: AppTextStyles.settingsItemValue(context)),
+              Text(
+                item.trailing!,
+                style: AppTextStyles.settingsItemValue(context),
+              ),
               const SizedBox(width: 6),
             ],
             if (!isLogout)
-              Icon(Icons.chevron_right_rounded,
-                  color: AppColors.subtext(context), size: 20),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.subtext(context),
+                size: 20,
+              ),
           ],
         ),
       ),
@@ -192,8 +194,8 @@ class _PreferencesSectionState extends State<PreferencesSection> {
   String _themeLabel(BuildContext context) {
     final t = AppLocalizations.of(context);
     return switch (themeProvider.mode) {
-      ThemeMode.dark   => t.translate('dark'),
-      ThemeMode.light  => t.translate('light'),
+      ThemeMode.dark => t.translate('dark'),
+      ThemeMode.light => t.translate('light'),
       ThemeMode.system => t.translate('system'),
     };
   }
@@ -202,7 +204,15 @@ class _PreferencesSectionState extends State<PreferencesSection> {
     return switch (localeProvider.locale.languageCode) {
       'fr' => 'Français',
       'ar' => 'العربية',
-      _    => 'English (US)',
+      'de' => 'Deutsch',
+      'es' => 'Español',
+      'it' => 'Italiano',
+      'pt' => 'Português',
+      'tr' => 'Türkçe',
+      'zh' => '中文',
+      'ru' => 'Русский',
+      'ja' => '日本語',
+      _ => 'English (US)',
     };
   }
 
@@ -238,14 +248,21 @@ class _PreferencesSectionState extends State<PreferencesSection> {
                 const _TileIcon(icon: Icons.palette_outlined),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text(t.translate('appearance'),
-                      style: AppTextStyles.settingsItem(context)),
+                  child: Text(
+                    t.translate('appearance'),
+                    style: AppTextStyles.settingsItem(context),
+                  ),
                 ),
-                Text(_themeLabel(context),
-                    style: AppTextStyles.settingsItemValue(context)),
+                Text(
+                  _themeLabel(context),
+                  style: AppTextStyles.settingsItemValue(context),
+                ),
                 const SizedBox(width: 6),
-                Icon(Icons.chevron_right_rounded,
-                    color: AppColors.subtext(context), size: 20),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.subtext(context),
+                  size: 20,
+                ),
               ],
             ),
           ),
@@ -274,14 +291,21 @@ class _PreferencesSectionState extends State<PreferencesSection> {
                 const _TileIcon(icon: Icons.language_rounded),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text(t.translate('language'),
-                      style: AppTextStyles.settingsItem(context)),
+                  child: Text(
+                    t.translate('language'),
+                    style: AppTextStyles.settingsItem(context),
+                  ),
                 ),
-                Text(_languageLabel(),
-                    style: AppTextStyles.settingsItemValue(context)),
+                Text(
+                  _languageLabel(),
+                  style: AppTextStyles.settingsItemValue(context),
+                ),
                 const SizedBox(width: 6),
-                Icon(Icons.chevron_right_rounded,
-                    color: AppColors.subtext(context), size: 20),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.subtext(context),
+                  size: 20,
+                ),
               ],
             ),
           ),

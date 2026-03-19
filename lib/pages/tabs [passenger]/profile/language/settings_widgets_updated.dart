@@ -165,7 +165,6 @@ class PreferencesSection extends StatefulWidget {
 class _PreferencesSectionState extends State<PreferencesSection> {
   bool _notifications = true;
 
-  // ── FIX 1: listen to providers so widget rebuilds automatically ───────────
   @override
   void initState() {
     super.initState();
@@ -182,19 +181,28 @@ class _PreferencesSectionState extends State<PreferencesSection> {
 
   void _onChanged() => setState(() {});
 
-  // ── FIX 2: read directly from localeProvider, added 'ar' case ─────────────
   String get _currentThemeLabel => switch (themeProvider.mode) {
         ThemeMode.dark   => 'Dark',
         ThemeMode.light  => 'Light',
         ThemeMode.system => 'System',
       };
 
-  String get _currentLanguageLabel =>
-      switch (localeProvider.locale.languageCode) {
-        'fr' => 'Français',
-        'ar' => 'العربية',
-        _    => 'English (US)',
-      };
+  /// Native name shown in the profile row — always in the target language
+  /// so the user can recognise it regardless of the active UI language.
+ String get _currentLanguageLabel =>
+    switch (localeProvider.locale.languageCode) {
+      'fr' => 'Français',
+      'ar' => 'العربية',
+      'de' => 'Deutsch',
+      'es' => 'Español',
+      'it' => 'Italiano',
+      'pt' => 'Português',
+      'tr' => 'Türkçe',
+      'zh' => '中文',       // ← added
+      'ru' => 'Русский',   // ← added
+      'ja' => '日本語',     // ← added
+      _    => 'English (US)',
+    };
 
   @override
   Widget build(BuildContext context) {
@@ -278,7 +286,6 @@ class _PreferencesSectionState extends State<PreferencesSection> {
         // ── Language ──────────────────────────────────────────────
         GestureDetector(
           onTap: () {
-            // FIX 3: no need for await/result — listener handles the rebuild
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const LanguagePage()),

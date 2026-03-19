@@ -4,6 +4,8 @@ import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
 import 'security_page.dart';
 import 'currency_page.dart';
+import '../../profile/settings/privacy_terms/privacy_policy_page.dart';
+import '../../profile/settings/privacy_terms/TermsOfUsePage.dart';
 
 // ── Settings sub page ─────────────────────────────────────────────────────────
 
@@ -36,18 +38,14 @@ class SettingsSubPage extends StatelessWidget {
                       title: t('security'),
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const SecurityPage(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const SecurityPage()),
                       ),
                     ),
                     _NavTile(
                       title: t('currency'),
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const CurrencyPage(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const CurrencyPage()),
                       ),
                     ),
 
@@ -57,17 +55,23 @@ class SettingsSubPage extends StatelessWidget {
                     _SectionLabel(t('legal')),
                     const SizedBox(height: 12),
 
-                    _NavTile(
+                     _NavTile(
                       title: t('privacy_policy'),
-                      onTap: () {
-                        // TODO: navigate to PrivacyPolicyPage
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PrivacyPolicyPage(),
+                        ),
+                      ),
                     ),
                     _NavTile(
                       title: t('terms_of_use'),
-                      onTap: () {
-                        // TODO: navigate to TermsOfUsePage
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TermsOfUsePage(),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 24),
@@ -88,10 +92,7 @@ class _NavTile extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
 
-  const _NavTile({
-    required this.title,
-    required this.onTap,
-  });
+  const _NavTile({required this.title, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

@@ -1,0 +1,330 @@
+{
+  "privacy": {
+    "meta": {
+      "title": "Gizlilik Politikası",
+      "subtitle": "Gizliliğiniz bizim için önemlidir. Bu politika, platformumuzu kullandığınızda Moviroo'nun kişisel bilgilerinizi nasıl topladığını, kullandığını ve koruduğunu açıklar.",
+      "company": "Moviroo"
+    },
+    "sections": [
+      {
+        "id": "who_we_are",
+        "title": "Biz Kimiz",
+        "description": "Moviroo, Tunus merkezli, yolcuları ulaşım acenteleriyle buluşturan dijital bir araç çağırma platformudur. Bu acenteler, adımıza taşımacılık hizmetleri sunan profesyonel, lisanslı sürücüleri istihdam eder ve yönetir. Teknolojik aracı platform olarak faaliyet gösteriyoruz — sürücüleri doğrudan istihdam etmiyoruz, ancak platformumuzdaki her etkileşimde verilerinizin nasıl işlendiğinden tamamen sorumluyuz.\n\nŞeffaflık, hesap verebilirlik ve kişisel verilerinizi geçerli gizlilik kanunlarına uygun olarak koruma konusunda kararlıyız.",
+        "subsections": []
+      },
+      {
+        "id": "scope",
+        "title": "Bu Politikanın Kapsamı",
+        "description": "Bu Gizlilik Politikası, Moviroo tarafından işletilen tüm hizmetler için geçerlidir ve tüm dijital temas noktalarımızda kişisel verileri nasıl topladığımızı, işlediğimizi ve sakladığımızı düzenler.",
+        "subsections": [
+          {
+            "heading": "Bu politika şunları kapsar",
+            "items": [
+              "Moviroo mobil uygulaması (iOS ve Android)",
+              "Moviroo web sitesi ve web tabanlı arayüzler",
+              "İlgili tüm arka uç hizmetleri, API'ler ve entegrasyonlar",
+              "Moviroo markası altında başlatacağımız gelecekteki hizmetler"
+            ]
+          },
+          {
+            "heading": "Bu politikanın kapsamadıkları",
+            "items": [
+              "Platformumuzdan bağlantı verilen üçüncü taraf web siteleri veya uygulamalar",
+              "Ortak acentelerimiz tarafından yönetilen sürücü uygulamaları",
+              "Ödeme veya harita ortaklarımızın kendi politikaları kapsamındaki hizmetleri"
+            ]
+          }
+        ],
+        "note": "Hesap oluşturarak veya Moviroo'yu kullanarak bu Gizlilik Politikasını okuduğunuzu, anladığınızı ve kabul ettiğinizi onaylarsınız."
+      },
+      {
+        "id": "data_we_collect",
+        "title": "Topladığımız Veriler",
+        "description": "Yalnızca hizmetlerimizi işletmek ve geliştirmek için gerekli verileri toplarız.",
+        "subsections": [
+          {
+            "heading": "Doğrudan sağladığınız bilgiler",
+            "items": [
+              "Ad soyad ve e-posta adresi",
+              "Telefon numarası",
+              "Profil fotoğrafı (isteğe bağlı)",
+              "Ödeme bilgileri — Stripe gibi üçüncü taraf sağlayıcılar aracılığıyla güvenli şekilde işlenir",
+              "Uygulama içi mesajlar veya destek talepleri"
+            ]
+          },
+          {
+            "heading": "Otomatik olarak toplanan bilgiler",
+            "items": [
+              "Cihaz türü, işletim sistemi ve tarayıcı sürümü",
+              "IP adresi ve yaklaşık ağ konumu",
+              "Uygulama sürümü ve oturum etkinlik günlükleri",
+              "Kilitlenme raporları ve tanılama verileri",
+              "Ziyaret edilen sayfalar ve harcanan süre"
+            ]
+          },
+          {
+            "heading": "Konum verileri",
+            "items": [
+              "Aktif yolculuklar sırasında gerçek zamanlı GPS koordinatları",
+              "Rezervasyon sırasında girdiğiniz alış ve bırakış adresleri",
+              "Yakındaki hizmetleri göstermek için uygulamayı açtığınızda yaklaşık konum",
+              "Yalnızca cihaz ayarlarınızda açıkça etkinleştirdiyseniz arka plan konumu"
+            ]
+          },
+          {
+            "heading": "İşlem ve yolculuk verileri",
+            "items": [
+              "Rezervasyon yapılan, iptal edilen veya tamamlanan yolculukların tam geçmişi",
+              "Ücret tutarları, uygulanan indirimler ve kullanılan ödeme yöntemi",
+              "Her yolculuğa atanan sürücü ve acente",
+              "Yolculuk sonrası verdiğiniz puanlar ve yorumlar",
+              "Tüm rezervasyon olaylarının zaman damgaları"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "legal_basis",
+        "title": "İşlemenin Hukuki Dayanağı",
+        "description": "Kişisel verilerinizi yalnızca geçerli bir hukuki dayana olduğunda işleriz.",
+        "subsections": [
+          {
+            "heading": "Sözleşmenin ifası",
+            "items": [
+              "İşleme, siz ve Moviroo arasındaki yolculuk rezervasyon sözleşmesini yerine getirmek için gereklidir",
+              "Hesap oluşturma, yolculuk gönderimi, ödeme işleme ve müşteri desteği dahildir"
+            ]
+          },
+          {
+            "heading": "Rızanız",
+            "items": [
+              "Pazarlama iletişimleri veya arka plan konum takibi gibi isteğe bağlı özellikler için",
+              "Önceki işlemleri etkilemeden istediğiniz zaman rızanızı geri çekebilirsiniz"
+            ]
+          },
+          {
+            "heading": "Yasal yükümlülük",
+            "items": [
+              "Belirli verileri saklamamız veya ifşa etmemiz yasal olarak zorunlu olduğunda",
+              "Muhasebe veya vergi hukuku kapsamındaki finansal kayıtlar gibi"
+            ]
+          },
+          {
+            "heading": "Meşru çıkarlar",
+            "items": [
+              "Uygulama performansını iyileştirmek, dolandırıcılığı tespit etmek ve platform güvenliğini sağlamak",
+              "Yalnızca bu çıkarların temel gizlilik haklarınızı geçersiz kılmadığı durumlarda"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "how_we_use",
+        "title": "Verilerinizi Nasıl Kullanırız",
+        "description": "Topladığımız veriler yalnızca Moviroo deneyimini sunmak, geliştirmek ve güvence altına almak için kullanılır.",
+        "subsections": [
+          {
+            "heading": "Hizmet sunumu",
+            "items": [
+              "Moviroo hesabınızı oluşturmak ve yönetmek",
+              "Yolculuk rezervasyonlarını işlemek ve onaylamak",
+              "Acente ortaklarımız aracılığıyla uygun sürücülerle eşleştirmek",
+              "Canlı yolculuk takibi ve uygulama içi navigasyonu etkinleştirmek",
+              "Ödemeleri kolaylaştırmak ve makbuz düzenlemek"
+            ]
+          },
+          {
+            "heading": "Güvenlik ve dolandırıcılık önleme",
+            "items": [
+              "Yetkisiz hesap kullanımını önlemek için kimlik doğrulama",
+              "Olağandışı etkinlik veya dolandırıcılık işlemlerini tespit etme",
+              "Hizmet Koşulları ihlallerini izleme",
+              "Anlaşmazlık çözümü için kayıt tutma"
+            ]
+          },
+          {
+            "heading": "Platform geliştirme",
+            "items": [
+              "Hataları belirlemek için uygulama kullanımını analiz etme",
+              "Geliştirme önceliklerini belirlemek için özellik benimsemesini anlama",
+              "Güzergah önerileri ve fiyatlandırma algoritmalarını optimize etme",
+              "Dahili araştırma ve analitik (toplanmış ve anonimleştirilmiş)"
+            ]
+          },
+          {
+            "heading": "İletişim",
+            "items": [
+              "Gerçek zamanlı yolculuk durum bildirimleri",
+              "Makbuz ve işlem onayları",
+              "Destek sorularına ve şikayetlere yanıt verme",
+              "Hizmet güncellemeleri ve kritik uyarılar"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "data_sharing",
+        "title": "Veri Paylaşımı",
+        "description": "Kişisel verilerinizi hiçbir üçüncü tarafa satmıyor, kiralamıyor veya takas etmiyoruz.",
+        "subsections": [
+          {
+            "heading": "Ortak ulaşım acenteleri",
+            "items": [
+              "Adınız ve yolculuk ayrıntıları (alış konumu, varış noktası, rezervasyon saati)",
+              "Yalnızca yolculuğunuzu koordine etmek amacıyla paylaşılır"
+            ]
+          },
+          {
+            "heading": "Atanan sürücüler",
+            "items": [
+              "Yalnızca adınız — tam ad asla paylaşılmaz",
+              "Onaylı alış ve bırakış konumlarınız",
+              "Operasyonel olarak gerekli olması ve onayınızın bulunması halinde iletişim numaranız"
+            ]
+          },
+          {
+            "heading": "Ödeme işlemcileri",
+            "items": [
+              "Stripe gibi sağlayıcılara doğrudan iletilen şifreli ödeme verileri",
+              "Ham kart verilerini saklamıyor, kaydetmiyor veya bunlara erişmiyoruz",
+              "İşlemciler kendi gizlilik politikaları ve PCI-DSS standartları kapsamında faaliyet gösterir"
+            ]
+          },
+          {
+            "heading": "Hukuki ve düzenleyici makamlar",
+            "items": [
+              "Yalnızca geçerli bir mahkeme kararı veya yasal yükümlülük tarafından zorlandığında",
+              "Yasal olarak izin verilen durumlarda ifşadan önce size bildirimde bulunuruz",
+              "Yasal olarak zorunlu olanın ötesinde kamu kurumlarıyla proaktif olarak veri paylaşmayız"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "data_security",
+        "title": "Veri Güvenliği",
+        "description": "Verilerinizin güvenliği en yüksek önceliğimizdir.",
+        "subsections": [
+          {
+            "heading": "Teknik önlemler",
+            "items": [
+              "Aktarım sırasındaki tüm veriler HTTPS / TLS protokolleri kullanılarak şifrelenir",
+              "Bekleyen hassas veriler AES-256 veya eşdeğer standartlarla şifrelenir",
+              "Ödeme işlemleri PCI-DSS uyumlu işlemciler aracılığıyla gerçekleştirilir",
+              "Veritabanları güvenli, erişim kontrollü bulut altyapısında barındırılır"
+            ]
+          },
+          {
+            "heading": "Organizasyonel önlemler",
+            "items": [
+              "Kişisel verilere erişim yalnızca yetkili personelle sınırlıdır",
+              "Kullanıcı verilerini işleyen personel veri koruma konusunda eğitim alır",
+              "Güvenlik uygulamalarımızı düzenli olarak dahili olarak gözden geçiririz",
+              "Üçüncü taraf ortaklar eşdeğer güvenlik standartlarını korumak için sözleşmeyle yükümlüdür"
+            ]
+          }
+        ],
+        "note": "Sektör standardı korumalar uygulasak da hiçbir sistem tamamen bağışık değildir. Güçlü bir şifre kullanın ve şüpheli etkinlikleri privacy@moviroo.com adresine bildirin."
+      },
+      {
+        "id": "data_retention",
+        "title": "Veri Saklama",
+        "description": "Kişisel verilerinizi yalnızca toplandıkları amacı yerine getirmek için gerekli olduğu sürece saklarız.",
+        "subsections": [
+          {
+            "heading": "Saklama takvimi",
+            "items": [
+              "Hesap profil verileri — hesabınızın süresi boyunca saklanır",
+              "Yolculuk geçmişi — hukuki ve muhasebe amaçları için 5 yıla kadar saklanır",
+              "Ödeme kayıtları — geçerli finansal ve vergi düzenlemelerine göre saklanır (genellikle 7 yıl)",
+              "Destek yazışmaları — bilet çözümünden itibaren 3 yıla kadar saklanır",
+              "Kullanım ve analitik günlükleri — 12 aydan sonra anonimleştirilir"
+            ]
+          }
+        ],
+        "note": "Verilerinizin erken silinmesini istediğiniz zaman talep edebilirsiniz."
+      },
+      {
+        "id": "your_rights",
+        "title": "Haklarınız",
+        "description": "Konumunuza ve geçerli hukuka bağlı olarak kişisel verilerinizle ilgili çeşitli haklarınız bulunmaktadır.",
+        "subsections": [
+          {
+            "heading": "Sahip olduğunuz haklar",
+            "items": [
+              "Erişim Hakkı — hakkınızda tuttuğumuz tüm kişisel verilerin kopyasını talep etme",
+              "Düzeltme Hakkı — yanlış veya eksik verileri düzeltmemizi isteme",
+              "Silme Hakkı — hesabınızın ve ilgili verilerin silinmesini talep etme",
+              "Kısıtlama Hakkı — belirli durumlarda verilerinizin işlenmesini sınırlamamızı isteme",
+              "Veri Taşınabilirliği Hakkı — yapılandırılmış, makine tarafından okunabilir biçimde veri alma",
+              "İtiraz Hakkı — meşru çıkarlara dayalı işlemeye veya doğrudan pazarlamaya itiraz etme",
+              "Rızayı Geri Çekme Hakkı — daha önce verilen rızayı istediğiniz zaman iptal etme"
+            ]
+          }
+        ],
+        "note": "Bu haklardan herhangi birini kullanmak için privacy@moviroo.com adresinden gizlilik ekibimizle iletişime geçin. 30 gün içinde yanıt vereceğiz."
+      },
+      {
+        "id": "international_transfers",
+        "title": "Uluslararası Aktarımlar",
+        "description": "Moviroo Tunus'ta faaliyet göstermektedir. Başka ülkelerdeki sunuculara sahip bulut altyapısı veya üçüncü taraf hizmetleri kullanırsak, kişisel verileriniz uluslararası düzeyde aktarılabilir.\n\nKorumalar standart sözleşme maddelerini veya GDPR yeterliliği kararları kapsamındaki sağlayıcıları içerebilir.",
+        "subsections": []
+      },
+      {
+        "id": "childrens_privacy",
+        "title": "Çocukların Gizliliği",
+        "description": "Moviroo yalnızca 18 yaş ve üzeri yetişkinler için tasarlanmıştır. 18 yaşın altındaki bireylerden bilerek kişisel veri toplamıyoruz.\n\nÇocuğunuzun kayıt olduğuna inanıyorsanız hemen privacy@moviroo.com adresinden iletişime geçin.",
+        "subsections": []
+      },
+      {
+        "id": "third_party_services",
+        "title": "Üçüncü Taraf Hizmetleri",
+        "description": "Moviroo, güvenilir üçüncü taraf sağlayıcılarla entegre olur. Her biri kendi gizlilik politikası kapsamında faaliyet gösterir.",
+        "subsections": [
+          {
+            "heading": "Entegre olduğumuz hizmetler",
+            "items": [
+              "Ödeme Ağ Geçitleri (ör. Stripe)",
+              "Google Maps Platformu",
+              "Analitik Araçlar",
+              "Bulut Barındırma Sağlayıcıları",
+              "Müşteri Destek Platformları"
+            ]
+          }
+        ],
+        "note": "Tüm üçüncü taraf ortakları dikkatle değerlendiriyoruz. Ancak platformumuzu terk ettiğinizde harici hizmetlerin gizlilik uygulamalarından sorumlu değiliz."
+      },
+      {
+        "id": "policy_changes",
+        "title": "Politika Değişiklikleri",
+        "description": "Bu Gizlilik Politikasını zaman zaman güncelleyebiliriz.",
+        "subsections": [
+          {
+            "heading": "Sizi nasıl bilgilendiririz",
+            "items": [
+              "Küçük değişiklikler — revize edilmiş tarihle sessizce güncellenir",
+              "Önemli değişiklikler — uygulama içi banner veya push bildirimi ile en az 14 gün önceden bildirilir",
+              "Haklarınızı etkileyen önemli değişiklikler — hizmeti kullanmaya devam etmeden önce yeniden onay gerektirebilir"
+            ]
+          }
+        ],
+        "note": "Değişiklikler yürürlüğe girdikten sonra Moviroo'yu kullanmaya devam etmek güncellenmiş politikayı kabul ettiğiniz anlamına gelir."
+      },
+      {
+        "id": "contact_us",
+        "title": "Bize Ulaşın",
+        "description": "Bu Gizlilik Politikasıyla ilgili sorularınız veya talepleriniz varsa gizlilik ekibimiz yardımcı olmaktan memnuniyet duyar.",
+        "subsections": [
+          {
+            "heading": "Nasıl ulaşılır",
+            "items": [
+              "E-posta: privacy@moviroo.com",
+              "Şirket: Moviroo",
+              "Adres: Tunus"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,341 @@
+{
+  "terms": {
+    "meta": {
+      "title": "Termini di Utilizzo",
+      "subtitle": "Ti preghiamo di leggere attentamente questi Termini di Utilizzo prima di usare la piattaforma Moviroo. Accedendo o usando i nostri servizi, accetti di essere vincolato da questi termini.",
+      "company": "Moviroo"
+    },
+    "sections": [
+      {
+        "id": "definitions",
+        "title": "Definizioni",
+        "description": "Ai fini dei presenti Termini di Utilizzo, i seguenti termini hanno i significati definiti di seguito.",
+        "subsections": [
+          {
+            "heading": "Termini chiave",
+            "items": [
+              "Utente — Qualsiasi individuo che si registra sull'app mobile o sul sito web Moviroo.",
+              "Agenzia — Società di trasporto autorizzata con accordo di partnership con Moviroo.",
+              "Autista — Professionista con licenza impiegato o incaricato da un'Agenzia partner.",
+              "Piattaforma — L'app mobile Moviroo, il sito web e tutta l'infrastruttura tecnologica associata.",
+              "Prenotazione — Richiesta di corsa confermata inviata da un Utente e accettata da un'Agenzia."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "platform_role",
+        "title": "Ruolo della Piattaforma",
+        "description": "Questa sezione è di importanza legale critica. Moviroo opera esclusivamente come piattaforma tecnologica intermediaria.",
+        "subsections": [
+          {
+            "heading": "Cosa Moviroo NON È",
+            "items": [
+              "Moviroo NON È una società di trasporti.",
+              "Moviroo NON assume autisti.",
+              "Moviroo NON è responsabile per le azioni o le prestazioni di autisti o agenzie.",
+              "Moviroo NON garantisce la disponibilità di autisti."
+            ]
+          },
+          {
+            "heading": "Cosa Moviroo È",
+            "items": [
+              "Una piattaforma tecnologica che mette in contatto gli Utenti con Agenzie di trasporto autorizzate.",
+              "Un intermediario che facilita prenotazioni, pagamenti e comunicazioni.",
+              "Un fornitore di servizi responsabile della funzionalità della Piattaforma."
+            ]
+          }
+        ],
+        "note": "Le Agenzie partner assumono piena responsabilità legale per i loro autisti, veicoli, assicurazioni e qualità dei servizi forniti."
+      },
+      {
+        "id": "account_registration",
+        "title": "Registrazione dell'Account",
+        "description": "Per accedere a tutte le funzionalità della Piattaforma Moviroo, devi creare un account.",
+        "subsections": [
+          {
+            "heading": "I tuoi obblighi",
+            "items": [
+              "Devi fornire informazioni accurate, complete e aggiornate durante la registrazione.",
+              "Devi avere almeno 18 anni per creare un account.",
+              "Sei responsabile della riservatezza delle tue credenziali.",
+              "Devi notificarci immediatamente a support@moviroo.com in caso di accesso non autorizzato.",
+              "Non puoi creare più di un account personale."
+            ]
+          },
+          {
+            "heading": "Motivi di sospensione o risoluzione",
+            "items": [
+              "Fornire false informazioni di registrazione.",
+              "Svolgere attività fraudolente.",
+              "Molestare o minacciare altri utenti o personale.",
+              "Creare account multipli o impersonare altri."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "booking_flow",
+        "title": "Flusso di Prenotazione",
+        "description": "Di seguito è descritto il processo completo di prenotazione di una corsa sulla Piattaforma Moviroo.",
+        "subsections": [
+          {
+            "heading": "Come viene prenotata una corsa",
+            "items": [
+              "Passo 1 — L'Utente invia una richiesta di corsa con luogo di partenza, destinazione e orario.",
+              "Passo 2 — Il pagamento viene autorizzato al momento della prenotazione. Solo pagamenti con carta.",
+              "Passo 3 — La richiesta viene trasmessa all'Agenzia partner disponibile.",
+              "Passo 4 — L'Agenzia assegna un Autista disponibile.",
+              "Passo 5 — L'Autista accetta o rifiuta.",
+              "Passo 6 — In caso di rifiuto, viene avviata una riassegnazione automatica.",
+              "Passo 7 — L'Utente viene notificato in tempo reale sui dettagli dell'Autista."
+            ]
+          }
+        ],
+        "note": "Moviroo non garantisce un tempo massimo di risposta per le prenotazioni."
+      },
+      {
+        "id": "pricing",
+        "title": "Prezzi",
+        "description": "Moviroo è impegnata nella trasparenza dei prezzi. Tutti i costi applicabili sono comunicati prima della conferma della prenotazione.",
+        "subsections": [
+          {
+            "heading": "Come funzionano i prezzi",
+            "items": [
+              "La tariffa stimata totale viene mostrata prima di confermare la prenotazione.",
+              "Le tariffe sono calcolate in base a distanza, durata stimata, classe del veicolo e domanda.",
+              "I prezzi possono variare in base alle condizioni del traffico o alle maggiorazioni.",
+              "Tasse e commissioni di servizio dettagliate al momento del pagamento.",
+              "La tariffa finale potrebbe differire leggermente dalla stima."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "payments",
+        "title": "Pagamenti",
+        "description": "Tutte le transazioni finanziarie sulla Piattaforma Moviroo vengono effettuate elettronicamente. I pagamenti in contanti non sono accettati.",
+        "subsections": [
+          {
+            "heading": "Condizioni di pagamento",
+            "items": [
+              "Tutti i pagamenti sono senza contanti ed elaborati esclusivamente tramite la Piattaforma.",
+              "Accettate le principali carte di credito e debito.",
+              "Pagamenti elaborati tramite provider conformi PCI-DSS.",
+              "L'Utente è responsabile di avere sempre un metodo di pagamento valido.",
+              "In caso di pagamento non riuscito, la prenotazione non sarà confermata.",
+              "Emessa ricevuta elettronica dopo ogni transazione completata."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cancellation",
+        "title": "Politica di Cancellazione",
+        "description": "Gli Utenti possono cancellare una prenotazione alle seguenti condizioni.",
+        "subsections": [
+          {
+            "heading": "Condizioni di cancellazione",
+            "items": [
+              "Cancellazione gratuita consentita entro una finestra definita dopo la conferma.",
+              "Le cancellazioni successive alla finestra gratuita possono essere soggette a commissione.",
+              "Le cancellazioni dopo il dispaccio dell'Autista possono comportare commissioni più elevate.",
+              "Moviroo può cancellare senza costi se non riesce ad assegnare un autista."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "no_show",
+        "title": "Politica di Non Presentazione",
+        "description": "Una mancata presentazione si verifica quando l'Utente non è presente nel luogo di ritiro entro il periodo di attesa.",
+        "subsections": [
+          {
+            "heading": "Conseguenze",
+            "items": [
+              "La corsa può essere contrassegnata come mancata presentazione.",
+              "Può essere addebitata una commissione di mancata presentazione.",
+              "Mancate presentazioni ripetute possono comportare la sospensione dell'account.",
+              "L'Autista può partire dopo il periodo di attesa senza penalità."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "user_conduct",
+        "title": "Comportamento dell'Utente",
+        "description": "Tutti gli Utenti devono comportarsi in modo rispettoso e legale. I seguenti comportamenti sono severamente vietati.",
+        "subsections": [
+          {
+            "heading": "Comportamenti vietati",
+            "items": [
+              "Molestare, minacciare o maltrattare Autisti o personale.",
+              "Inviare prenotazioni false o fraudolente.",
+              "Fornire informazioni errate di ritiro o destinazione.",
+              "Utilizzare la Piattaforma per scopi illegali.",
+              "Tentare di aggirare la Piattaforma con pagamenti diretti agli Autisti.",
+              "Danneggiare o sporcare un veicolo."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "driver_agency_responsibility",
+        "title": "Responsabilità Autisti e Agenzie",
+        "description": "Le Agenzie partner e i loro Autisti operano indipendentemente da Moviroo.",
+        "subsections": [
+          {
+            "heading": "Obblighi delle Agenzie",
+            "items": [
+              "Responsabili dell'assunzione, verifica, licenza e formazione dei loro autisti.",
+              "Garantire che tutti i veicoli siano assicurati e conformi agli standard legali.",
+              "Garantire che gli autisti rispettino le leggi sul traffico."
+            ]
+          },
+          {
+            "heading": "Obblighi degli Autisti",
+            "items": [
+              "Arrivare al luogo di ritiro in orario.",
+              "Fornire un servizio sicuro, professionale e cortese.",
+              "Non richiedere o accettare pagamenti in contanti.",
+              "Seguire il percorso concordato."
+            ]
+          }
+        ],
+        "note": "Moviroo non è responsabile per il comportamento dell'autista, le condizioni del veicolo, incidenti o perdite durante una corsa."
+      },
+      {
+        "id": "liability",
+        "title": "Limitazione di Responsabilità",
+        "description": "Nella misura massima consentita dalla legge, la responsabilità di Moviroo è limitata come descritto di seguito.",
+        "subsections": [
+          {
+            "heading": "Moviroo non è responsabile per",
+            "items": [
+              "Ritardi, mancati ritiri o mancata presentazione dell'Autista.",
+              "Incidenti, lesioni o danni materiali durante una corsa.",
+              "Perdita, furto o danno di oggetti personali.",
+              "Danni indiretti o consequenziali.",
+              "Interruzioni del servizio da parte di fornitori terzi.",
+              "Condotta o prestazioni di Agenzie o Autisti."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "refunds",
+        "title": "Rimborsi",
+        "description": "Le richieste di rimborso vengono valutate caso per caso.",
+        "subsections": [
+          {
+            "heading": "Scenari di rimborso ammissibili",
+            "items": [
+              "La corsa non è stata completata a causa di cancellazione o mancata presentazione dell'Autista.",
+              "Un errore di elaborazione del pagamento ha portato a un addebito errato.",
+              "L'Utente è stato addebitato per una corsa cancellata entro la finestra gratuita.",
+              "Un errore tecnico ha causato una prenotazione o un pagamento non intenzionale."
+            ]
+          },
+          {
+            "heading": "Processo di rimborso",
+            "items": [
+              "Le richieste devono essere inviate entro 7 giorni a support@moviroo.com.",
+              "I rimborsi approvati saranno accreditati entro 5-10 giorni lavorativi.",
+              "Moviroo si riserva il diritto di rifiutare richieste non ammissibili."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "suspension",
+        "title": "Sospensione e Risoluzione",
+        "description": "Moviroo si riserva il diritto di sospendere o risolvere permanentemente qualsiasi account Utente.",
+        "subsections": [
+          {
+            "heading": "Motivi di sospensione o risoluzione",
+            "items": [
+              "Svolgimento di transazioni fraudolente.",
+              "Violazioni ripetute dei Termini di Utilizzo.",
+              "Fornire false informazioni di identità o pagamento.",
+              "Minacciare o molestare altri.",
+              "Attività che espone Moviroo a rischi legali."
+            ]
+          }
+        ],
+        "note": "In caso di violazioni gravi, Moviroo può agire immediatamente. Gli Utenti possono fare ricorso entro 14 giorni."
+      },
+      {
+        "id": "intellectual_property",
+        "title": "Proprietà Intellettuale",
+        "description": "Tutti i diritti di proprietà intellettuale relativi alla Piattaforma Moviroo sono di proprietà esclusiva di Moviroo.",
+        "subsections": [
+          {
+            "heading": "Beni protetti",
+            "items": [
+              "Nome Moviroo, logo e tutti gli elementi del marchio associati.",
+              "Design, layout e interfaccia utente dell'app e del sito web.",
+              "Tutto il software, gli algoritmi, il codice sorgente e l'infrastruttura tecnica.",
+              "Tutti i contenuti scritti, i materiali di marketing e la documentazione."
+            ]
+          }
+        ],
+        "note": "Gli Utenti non possono copiare o distribuire contenuti di Moviroo senza previo consenso scritto."
+      },
+      {
+        "id": "force_majeure",
+        "title": "Forza Maggiore",
+        "description": "Moviroo non sarà ritenuta responsabile per guasti derivanti da circostanze al di fuori del suo ragionevole controllo.",
+        "subsections": [
+          {
+            "heading": "Eventi coperti",
+            "items": [
+              "Catastrofi naturali.",
+              "Azioni governative o restrizioni di viaggio.",
+              "Interruzioni di rete nazionali o attacchi informatici.",
+              "Pandemie o emergenze di salute pubblica.",
+              "Scioperi o altri eventi al di fuori del controllo operativo di Moviroo."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "governing_law",
+        "title": "Legge Applicabile",
+        "description": "I presenti Termini di Utilizzo sono regolati dalle leggi della Repubblica di Tunisia. Qualsiasi controversia sarà soggetta alla giurisdizione esclusiva dei tribunali competenti della Tunisia.\n\nSe una disposizione è ritenuta invalida, le disposizioni rimanenti continueranno ad avere piena efficacia.",
+        "subsections": []
+      },
+      {
+        "id": "changes",
+        "title": "Modifiche ai Termini",
+        "description": "Moviroo si riserva il diritto di modificare i presenti Termini di Utilizzo in qualsiasi momento.",
+        "subsections": [
+          {
+            "heading": "Come ti informiamo",
+            "items": [
+              "Modifiche minori — aggiornate con data rivista.",
+              "Modifiche sostanziali — notificate con almeno 14 giorni di anticipo.",
+              "L'uso continuato costituisce accettazione dei Termini aggiornati."
+            ]
+          }
+        ],
+        "note": "Se non accetti i Termini aggiornati, devi smettere di usare la Piattaforma."
+      },
+      {
+        "id": "contact",
+        "title": "Contatti",
+        "description": "Se hai domande sui presenti Termini di Utilizzo, il nostro team di supporto è a tua disposizione.",
+        "subsections": [
+          {
+            "heading": "Come contattarci",
+            "items": [
+              "E-mail: support@moviroo.com",
+              "Richieste legali: legal@moviroo.com",
+              "Azienda: Moviroo",
+              "Indirizzo: Tunisia"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

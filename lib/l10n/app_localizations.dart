@@ -17,7 +17,7 @@ class AppLocalizations {
 
   Future<void> load() async {
     final jsonStr = await rootBundle.loadString(
-      'images/translations/${locale.languageCode}.json',
+      'data/translations/${locale.languageCode}.json',
     );
     final Map<String, dynamic> data = json.decode(jsonStr);
     _strings = data.map((k, v) => MapEntry(k, v.toString()));
@@ -32,7 +32,8 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      ['en', 'fr', 'ar'].contains(locale.languageCode);
+      ['en', 'fr', 'ar', 'de', 'es', 'it', 'pt', 'tr',
+       'zh', 'ru', 'ja'].contains(locale.languageCode); // ← added
 
   @override
   Future<AppLocalizations> load(Locale locale) async {

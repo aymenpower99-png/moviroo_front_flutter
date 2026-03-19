@@ -1,0 +1,343 @@
+{
+  "terms": {
+    "meta": {
+      "title": "Terms of Use",
+      "subtitle": "Please read these Terms of Use carefully before using the Moviroo platform. By accessing or using our services, you agree to be bound by these terms.",
+      "lastUpdated": "",
+      "effectiveDate": "",
+      "company": "Moviroo"
+    },
+    "sections": [
+      {
+        "id": "definitions",
+        "title": "Definitions",
+        "description": "For the purposes of these Terms of Use, the following terms shall have the meanings set out below. These definitions apply throughout this document and any related agreements.",
+        "subsections": [
+          {
+            "heading": "Key terms",
+            "items": [
+              "User — Any individual who registers on and uses the Moviroo mobile application or website to request ride services.",
+              "Agency — A licensed transportation company that has entered into a partnership agreement with Moviroo and is responsible for managing and dispatching drivers.",
+              "Driver — A licensed professional employed or contracted by a partner Agency to perform ride services for Users.",
+              "Platform — The Moviroo mobile application, website, and all associated technology infrastructure and services.",
+              "Booking — A confirmed ride request submitted by a User through the Platform and accepted by an Agency."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "platform_role",
+        "title": "Platform Role",
+        "description": "This section is of critical legal importance. Moviroo operates exclusively as a technology intermediary platform. Understanding this distinction is essential for all Users.",
+        "subsections": [
+          {
+            "heading": "What Moviroo is NOT",
+            "items": [
+              "Moviroo is NOT a transportation company and does not provide transport services directly.",
+              "Moviroo does NOT employ drivers. All drivers are employed or contracted by partner Agencies.",
+              "Moviroo is NOT responsible for the actions, conduct, or performance of any driver or agency.",
+              "Moviroo does NOT guarantee the availability of drivers at any given time or location."
+            ]
+          },
+          {
+            "heading": "What Moviroo IS",
+            "items": [
+              "A technology platform that connects Users with licensed transportation Agencies.",
+              "An intermediary that facilitates bookings, payments, and communications between Users and Agencies.",
+              "A service provider responsible for the functionality and availability of the Platform itself."
+            ]
+          }
+        ],
+        "note": "Partner Agencies bear full legal responsibility for their drivers, vehicles, insurance, and the quality of transport services delivered."
+      },
+      {
+        "id": "account_registration",
+        "title": "Account Registration",
+        "description": "To access the full features of the Moviroo Platform, you must create an account. By registering, you make the following commitments to us.",
+        "subsections": [
+          {
+            "heading": "Your obligations",
+            "items": [
+              "You must provide accurate, complete, and up-to-date information during registration.",
+              "You must be at least 18 years of age to create an account.",
+              "You are responsible for maintaining the confidentiality of your login credentials.",
+              "You must notify us immediately at support@moviroo.com if you suspect unauthorized access to your account.",
+              "You may not create more than one personal account or share your account with others."
+            ]
+          },
+          {
+            "heading": "Account suspension or termination",
+            "items": [
+              "Providing false, inaccurate, or misleading registration information.",
+              "Engaging in fraudulent activity or attempting to defraud Moviroo, Agencies, or Drivers.",
+              "Abusing, harassing, or threatening other users, drivers, or Moviroo staff.",
+              "Creating multiple accounts or impersonating another person."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "booking_flow",
+        "title": "Booking Flow",
+        "description": "The following outlines the complete ride booking process on the Moviroo Platform. Each step is an integral part of the service delivery chain.",
+        "subsections": [
+          {
+            "heading": "How a ride is booked",
+            "items": [
+              "Step 1 — User submits a ride request via the Platform, specifying pickup location, destination, and preferred time.",
+              "Step 2 — Payment is authorized at the time of booking. All payments are card-based; no cash transactions are supported.",
+              "Step 3 — The booking request is transmitted to the relevant partner Agency based on availability and location.",
+              "Step 4 — The Agency reviews and assigns an available Driver to the booking.",
+              "Step 5 — The assigned Driver receives the booking and accepts or rejects it based on availability.",
+              "Step 6 — If the Driver rejects the booking, the Agency is notified and a reassignment is initiated automatically.",
+              "Step 7 — The User is notified in real time of the Driver's details and estimated arrival time."
+            ]
+          }
+        ],
+        "note": "Moviroo does not guarantee a maximum response time for bookings. Availability depends on partner Agencies and their active driver pool at the time of the request."
+      },
+      {
+        "id": "pricing",
+        "title": "Pricing",
+        "description": "Moviroo is committed to pricing transparency. All applicable costs are disclosed to the User prior to booking confirmation.",
+        "subsections": [
+          {
+            "heading": "How pricing works",
+            "items": [
+              "The total estimated fare is displayed to the User before confirming any booking.",
+              "Fares are calculated based on factors including distance, estimated travel time, vehicle class, and demand.",
+              "Prices may vary and are subject to change depending on traffic conditions, route adjustments, or peak-hour surcharges.",
+              "Applicable taxes, platform fees, or service charges will be itemized and displayed at checkout.",
+              "The final fare charged may differ slightly from the estimate if the actual route or duration deviates from the original."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "payments",
+        "title": "Payments",
+        "description": "All financial transactions on the Moviroo Platform are conducted electronically through secure, certified payment processors. Cash payments are not accepted under any circumstances.",
+        "subsections": [
+          {
+            "heading": "Payment terms",
+            "items": [
+              "All payments are cashless and processed exclusively via the Platform at the time of booking.",
+              "Accepted payment methods include major credit and debit cards. Additional methods may be added over time.",
+              "Payments are processed through PCI-DSS compliant third-party providers. Moviroo does not store raw card data.",
+              "The User is responsible for ensuring that a valid and funded payment method is on file at all times.",
+              "In the event of a payment failure, the booking will not be confirmed until payment is successfully processed.",
+              "A receipt will be issued electronically to the User's registered email address following each completed transaction."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cancellation",
+        "title": "Cancellation Policy",
+        "description": "Users may cancel a booking subject to the following conditions. Moviroo reserves the right to update cancellation windows and fee structures with prior notice.",
+        "subsections": [
+          {
+            "heading": "Cancellation terms",
+            "items": [
+              "Free cancellation is permitted within a defined window after booking confirmation (as specified in the app at the time of booking).",
+              "Cancellations made after the free window may be subject to a cancellation fee, which will be disclosed prior to cancellation confirmation.",
+              "Cancellations made after a Driver has been dispatched and is en route may incur higher fees.",
+              "Moviroo reserves the right to cancel a booking on behalf of the User if no driver can be assigned within a reasonable time, in which case no charge will be applied."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "no_show",
+        "title": "No-Show Policy",
+        "description": "A no-show occurs when a User fails to be present at the designated pickup location within the waiting period after the Driver arrives.",
+        "subsections": [
+          {
+            "heading": "No-show consequences",
+            "items": [
+              "If the User does not appear within the designated waiting period after the Driver's arrival, the ride may be marked as a no-show.",
+              "A no-show fee equivalent to a portion of the estimated fare may be charged to the User's payment method.",
+              "Repeated no-shows may result in temporary or permanent suspension of the User's account.",
+              "The Driver is entitled to leave after the waiting period expires without penalty."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "user_conduct",
+        "title": "User Conduct",
+        "description": "All Users are expected to behave respectfully and lawfully while using the Moviroo Platform and during any ride service. The following conduct is strictly prohibited.",
+        "subsections": [
+          {
+            "heading": "Prohibited behavior",
+            "items": [
+              "Harassing, threatening, or abusing Drivers, Agency staff, or Moviroo personnel in any form.",
+              "Submitting false, duplicate, or fraudulent bookings with no intention of using the service.",
+              "Providing incorrect pickup or drop-off information to mislead the system or Driver.",
+              "Using the Platform for any unlawful purpose or in violation of applicable laws.",
+              "Attempting to circumvent the Platform by arranging direct payments with Drivers outside of Moviroo.",
+              "Damaging or soiling a vehicle, for which the User may be liable for cleaning or repair costs."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "driver_agency_responsibility",
+        "title": "Driver & Agency Responsibility",
+        "description": "Partner Agencies and their Drivers operate independently of Moviroo and carry their own legal responsibilities toward Users.",
+        "subsections": [
+          {
+            "heading": "Agency obligations",
+            "items": [
+              "Agencies are solely responsible for the hiring, vetting, licensing, and training of their drivers.",
+              "Agencies must ensure that all vehicles used are properly insured, roadworthy, and meet applicable legal standards.",
+              "Agencies are responsible for ensuring drivers comply with all applicable traffic laws and safety regulations."
+            ]
+          },
+          {
+            "heading": "Driver obligations",
+            "items": [
+              "Drivers must arrive at the pickup location on time and within the estimated arrival window.",
+              "Drivers must provide safe, professional, and courteous service throughout the ride.",
+              "Drivers must not request or accept cash payments from Users.",
+              "Drivers must follow the route as provided or agreed with the User."
+            ]
+          }
+        ],
+        "note": "Moviroo is not liable for any driver behavior, vehicle condition, accident, injury, or loss occurring during or in connection with a ride. All such matters are the sole responsibility of the Agency."
+      },
+      {
+        "id": "liability",
+        "title": "Liability Limitation",
+        "description": "To the maximum extent permitted by applicable law, Moviroo's liability is limited as described below. These limitations reflect the nature of Moviroo as an intermediary technology platform.",
+        "subsections": [
+          {
+            "heading": "Moviroo is not liable for",
+            "items": [
+              "Any delays, missed pickups, or failure of a Driver to arrive.",
+              "Accidents, injuries, or property damage occurring during a ride.",
+              "Loss, theft, or damage to personal belongings during or after a ride.",
+              "Any indirect, incidental, or consequential damages arising from use of the Platform.",
+              "Service interruptions caused by third-party providers, network outages, or technical failures beyond our control.",
+              "The conduct, performance, or representations of any Agency or Driver."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "refunds",
+        "title": "Refunds",
+        "description": "Refund requests are evaluated on a case-by-case basis. Moviroo aims to resolve all legitimate refund claims promptly and fairly.",
+        "subsections": [
+          {
+            "heading": "Eligible refund scenarios",
+            "items": [
+              "The ride was not completed due to a Driver cancellation or no-show on the Driver's part.",
+              "A payment processing error resulted in a duplicate or incorrect charge.",
+              "The User was charged for a ride that was cancelled within the free cancellation window.",
+              "A technical error on the Platform caused an unintended booking or payment."
+            ]
+          },
+          {
+            "heading": "Refund process",
+            "items": [
+              "Refund requests must be submitted within 7 days of the relevant transaction via support@moviroo.com.",
+              "Approved refunds will be credited to the original payment method within 5–10 business days.",
+              "Moviroo reserves the right to decline refund requests that do not meet the eligibility criteria."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "suspension",
+        "title": "Suspension & Termination",
+        "description": "Moviroo reserves the right to suspend or permanently terminate any User account at its discretion, particularly in cases of policy violations.",
+        "subsections": [
+          {
+            "heading": "Grounds for suspension or termination",
+            "items": [
+              "Engaging in fraudulent transactions or attempting to manipulate the Platform.",
+              "Repeated violations of these Terms of Use or the platform's community guidelines.",
+              "Providing false identity or payment information.",
+              "Threatening, harassing, or endangering Drivers, Agency staff, or other Users.",
+              "Any activity that exposes Moviroo, Agencies, or Drivers to legal or reputational risk."
+            ]
+          }
+        ],
+        "note": "In cases of severe violations, Moviroo may take immediate action without prior notice. Users may appeal a suspension by contacting support@moviroo.com within 14 days."
+      },
+      {
+        "id": "intellectual_property",
+        "title": "Intellectual Property",
+        "description": "All intellectual property rights related to the Moviroo Platform are the exclusive property of Moviroo or its licensors.",
+        "subsections": [
+          {
+            "heading": "Protected assets",
+            "items": [
+              "The Moviroo name, logo, and all associated brand elements.",
+              "The design, layout, and user interface of the mobile application and website.",
+              "All software, algorithms, source code, and technical infrastructure underlying the Platform.",
+              "All written content, marketing materials, and documentation produced by Moviroo."
+            ]
+          }
+        ],
+        "note": "Users may not copy, reproduce, distribute, or create derivative works from any Moviroo content without prior written permission."
+      },
+      {
+        "id": "force_majeure",
+        "title": "Force Majeure",
+        "description": "Moviroo shall not be held liable for any failure or delay in performing its obligations where such failure or delay results from circumstances beyond its reasonable control.",
+        "subsections": [
+          {
+            "heading": "Covered events",
+            "items": [
+              "Natural disasters, including earthquakes, floods, fires, or extreme weather events.",
+              "Government actions, regulations, travel restrictions, or declared states of emergency.",
+              "Nationwide or regional network outages, internet infrastructure failures, or cyberattacks.",
+              "Pandemics, epidemics, or public health emergencies that prevent normal operations.",
+              "Labor strikes, civil unrest, or other events outside Moviroo's operational control."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "governing_law",
+        "title": "Governing Law",
+        "description": "These Terms of Use are governed by and construed in accordance with the laws of the Republic of Tunisia. Any disputes arising from or in connection with these Terms shall be subject to the exclusive jurisdiction of the competent courts of Tunisia.\n\nIf any provision of these Terms is found to be invalid or unenforceable under applicable law, the remaining provisions shall continue in full force and effect.",
+        "subsections": []
+      },
+      {
+        "id": "changes",
+        "title": "Changes to Terms",
+        "description": "Moviroo reserves the right to modify or update these Terms of Use at any time to reflect changes in our services, legal requirements, or business practices.",
+        "subsections": [
+          {
+            "heading": "How we notify you",
+            "items": [
+              "Minor updates — the Terms will be updated with a revised effective date.",
+              "Material changes — Users will be notified via in-app notification or email at least 14 days before the changes take effect.",
+              "Continued use of the Platform after changes become effective constitutes acceptance of the updated Terms."
+            ]
+          }
+        ],
+        "note": "We encourage you to review these Terms periodically. If you do not agree with any updated Terms, you must discontinue use of the Platform."
+      },
+      {
+        "id": "contact",
+        "title": "Contact",
+        "description": "If you have any questions, concerns, or complaints regarding these Terms of Use or the Moviroo Platform, our support team is available to assist you.",
+        "subsections": [
+          {
+            "heading": "How to reach us",
+            "items": [
+              "Email: support@moviroo.com",
+              "Legal inquiries: legal@moviroo.com",
+              "Company: Moviroo",
+              "Address: Tunisia"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

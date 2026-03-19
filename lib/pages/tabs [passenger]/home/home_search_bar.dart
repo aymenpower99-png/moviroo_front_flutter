@@ -6,7 +6,13 @@ import '../../../../l10n/app_localizations.dart';
 
 class HomeSearchBar extends StatelessWidget {
   final double height;
-  const HomeSearchBar({super.key, this.height = 50});
+  final double borderRadius;
+
+  const HomeSearchBar({
+    super.key,
+    this.height = 60,
+    this.borderRadius = 14,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,19 +20,18 @@ class HomeSearchBar extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => AppRouter.push(context, AppRouter.nextDestinationSearchRoute),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
+      child: Container(
         height: height,
         decoration: BoxDecoration(
           color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(color: AppColors.border(context)),
         ),
         child: Row(
           children: [
             const SizedBox(width: 14),
-            Icon(Icons.search_rounded, color: AppColors.subtext(context), size: 20),
+            Icon(Icons.search_rounded,
+                color: AppColors.subtext(context), size: 25),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -37,14 +42,15 @@ class HomeSearchBar extends StatelessWidget {
               ),
             ),
             Container(
-              width: 36,
-              height: 36,
+              width: 41,
+              height: 41,
               margin: const EdgeInsets.only(right: 7),
               decoration: BoxDecoration(
                 color: AppColors.primaryPurple,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.mic_rounded, color: Colors.white, size: 18),
+              child: const Icon(Icons.mic_rounded,
+                  color: Colors.white, size: 18),
             ),
           ],
         ),

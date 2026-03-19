@@ -1,0 +1,330 @@
+{
+  "privacy": {
+    "meta": {
+      "title": "Datenschutzerklärung",
+      "subtitle": "Deine Privatsphäre ist uns wichtig. Diese Richtlinie erklärt, wie Moviroo deine persönlichen Daten erfasst, verwendet und schützt, wenn du unsere Plattform nutzt.",
+      "company": "Moviroo"
+    },
+    "sections": [
+      {
+        "id": "who_we_are",
+        "title": "Wer wir sind",
+        "description": "Moviroo ist eine digitale Fahrdienstvermittlungsplattform mit Sitz in Tunesien, die Fahrgäste mit Transportunternehmen verbindet. Diese Unternehmen beschäftigen und verwalten professionelle, lizenzierte Fahrer, die die Fahrdienste in unserem Auftrag erbringen. Wir agieren als technologische Vermittlungsplattform — wir beschäftigen keine Fahrer direkt, sind jedoch vollständig dafür verantwortlich, wie deine Daten bei jeder Interaktion auf unserer Plattform verarbeitet werden.\n\nWir sind der Transparenz, Rechenschaftspflicht und dem Schutz deiner persönlichen Daten gemäß den geltenden Datenschutzgesetzen verpflichtet.",
+        "subsections": []
+      },
+      {
+        "id": "scope",
+        "title": "Anwendungsbereich",
+        "description": "Diese Datenschutzerklärung gilt für alle von Moviroo betriebenen Dienste und regelt, wie wir personenbezogene Daten erfassen, verarbeiten und speichern.",
+        "subsections": [
+          {
+            "heading": "Diese Richtlinie gilt für",
+            "items": [
+              "Die mobile Moviroo-App (iOS und Android)",
+              "Die Moviroo-Website und webbasierte Schnittstellen",
+              "Alle zugehörigen Backend-Dienste, APIs und Integrationen",
+              "Zukünftige Dienste unter der Marke Moviroo"
+            ]
+          },
+          {
+            "heading": "Was nicht abgedeckt ist",
+            "items": [
+              "Websites oder Apps von Drittanbietern, die von unserer Plattform verlinkt sind",
+              "Fahrerseitige Anwendungen unserer Partneragenturen",
+              "Dienste unserer Zahlungs- oder Kartenpartner unter deren eigenen Richtlinien"
+            ]
+          }
+        ],
+        "note": "Mit der Nutzung von Moviroo bestätigst du, dass du diese Datenschutzerklärung gelesen, verstanden und akzeptiert hast."
+      },
+      {
+        "id": "data_we_collect",
+        "title": "Erhobene Daten",
+        "description": "Wir erheben nur die Daten, die für den Betrieb und die Verbesserung unserer Dienste erforderlich sind.",
+        "subsections": [
+          {
+            "heading": "Von dir bereitgestellte Informationen",
+            "items": [
+              "Vollständiger Name und E-Mail-Adresse",
+              "Telefonnummer",
+              "Profilfoto (optional)",
+              "Zahlungsdaten — sicher verarbeitet über Drittanbieter wie Stripe",
+              "In-App-Nachrichten oder Support-Anfragen"
+            ]
+          },
+          {
+            "heading": "Automatisch erfasste Informationen",
+            "items": [
+              "Gerätetyp, Betriebssystem und Browserversion",
+              "IP-Adresse und ungefährer Netzwerkstandort",
+              "App-Version und Sitzungsaktivitätsprotokolle",
+              "Absturzberichte und Diagnosedaten",
+              "Besuchte Seiten und Verweildauer"
+            ]
+          },
+          {
+            "heading": "Standortdaten",
+            "items": [
+              "GPS-Koordinaten in Echtzeit während aktiver Fahrten",
+              "Abholung- und Zieladressen beim Buchen",
+              "Ungefährer Standort beim Öffnen der App",
+              "Hintergrundstandort nur wenn explizit aktiviert"
+            ]
+          },
+          {
+            "heading": "Transaktions- und Fahrdaten",
+            "items": [
+              "Vollständiger Fahrverlauf",
+              "Fahrpreisbeträge, angewandte Rabatte und Zahlungsmethode",
+              "Zugewiesener Fahrer und Agentur",
+              "Bewertungen und Rezensionen nach der Fahrt",
+              "Zeitstempel aller Buchungsereignisse"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "legal_basis",
+        "title": "Rechtsgrundlage",
+        "description": "Wir verarbeiten deine personenbezogenen Daten nur auf Basis gültiger Rechtsgrundlagen.",
+        "subsections": [
+          {
+            "heading": "Vertragserfüllung",
+            "items": [
+              "Die Verarbeitung ist zur Erfüllung des Buchungsvertrags erforderlich",
+              "Dazu gehören Kontoerstellung, Fahrtversand, Zahlungsabwicklung und Support"
+            ]
+          },
+          {
+            "heading": "Einwilligung",
+            "items": [
+              "Für optionale Funktionen wie Marketingkommunikation",
+              "Du kannst die Einwilligung jederzeit widerrufen"
+            ]
+          },
+          {
+            "heading": "Rechtliche Verpflichtung",
+            "items": [
+              "Wenn wir gesetzlich zur Aufbewahrung oder Offenlegung verpflichtet sind",
+              "Zum Beispiel Finanzunterlagen nach Steuer- oder Buchhaltungsrecht"
+            ]
+          },
+          {
+            "heading": "Berechtigte Interessen",
+            "items": [
+              "Zur Verbesserung der App-Leistung, Betrugserkennung und Plattformsicherheit",
+              "Nur wenn diese Interessen deine Grundrechte nicht überwiegen"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "how_we_use",
+        "title": "Verwendung deiner Daten",
+        "description": "Die erfassten Daten werden ausschließlich zur Bereitstellung, Verbesserung und Sicherung des Moviroo-Erlebnisses verwendet.",
+        "subsections": [
+          {
+            "heading": "Leistungserbringung",
+            "items": [
+              "Erstellen und Verwalten deines Moviroo-Kontos",
+              "Verarbeiten und Bestätigen von Fahrtbuchungen",
+              "Vermittlung verfügbarer Fahrer über Partneragenturen",
+              "Live-Fahrverfolgung und Navigation in der App",
+              "Zahlungsabwicklung und Ausgabe von Belegen"
+            ]
+          },
+          {
+            "heading": "Sicherheit und Betrugsprävention",
+            "items": [
+              "Identitätsverifizierung",
+              "Erkennung ungewöhnlicher Aktivitäten",
+              "Überwachung von Verstößen gegen unsere Nutzungsbedingungen",
+              "Aufzeichnungen zur Streitbeilegung"
+            ]
+          },
+          {
+            "heading": "Plattformverbesserung",
+            "items": [
+              "App-Nutzung analysieren",
+              "Funktionsnutzung verstehen",
+              "Routenvorschläge und Preisalgorithmen optimieren",
+              "Interne Forschung (aggregiert und anonymisiert)"
+            ]
+          },
+          {
+            "heading": "Kommunikation",
+            "items": [
+              "Echtzeit-Fahrstatusbenachrichtigungen",
+              "Belege und Transaktionsbestätigungen",
+              "Beantwortung von Supportanfragen",
+              "Dienst-Updates und wichtige Benachrichtigungen"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "data_sharing",
+        "title": "Datenweitergabe",
+        "description": "Wir verkaufen, vermieten oder handeln deine personenbezogenen Daten nicht an Dritte. Wir teilen deine Daten nur mit Parteien, die direkt an der Leistungserbringung beteiligt sind.",
+        "subsections": [
+          {
+            "heading": "Partnertransportunternehmen",
+            "items": [
+              "Dein Vorname und Fahrtdetails (Abholort, Ziel, Buchungszeit)",
+              "Ausschließlich zur Koordination deiner Fahrt"
+            ]
+          },
+          {
+            "heading": "Zugewiesene Fahrer",
+            "items": [
+              "Nur dein Vorname — vollständiger Name wird nie geteilt",
+              "Bestätigte Abhol- und Zielorte",
+              "Kontaktnummer nur wenn betrieblich erforderlich und mit deiner Zustimmung"
+            ]
+          },
+          {
+            "heading": "Zahlungsdienstleister",
+            "items": [
+              "Verschlüsselte Zahlungsdaten an Anbieter wie Stripe",
+              "Kein Zugriff auf rohe Kartendaten",
+              "Betrieb unter eigenen Datenschutzrichtlinien und PCI-DSS"
+            ]
+          },
+          {
+            "heading": "Behörden",
+            "items": [
+              "Nur bei gültiger Gerichtsverfügung oder gesetzlicher Verpflichtung",
+              "Benachrichtigung wo gesetzlich erlaubt",
+              "Keine proaktive Weitergabe"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "data_security",
+        "title": "Datensicherheit",
+        "description": "Die Sicherheit deiner Daten hat höchste Priorität. Wir wenden einen mehrschichtigen Sicherheitsansatz an.",
+        "subsections": [
+          {
+            "heading": "Technische Maßnahmen",
+            "items": [
+              "Alle Daten im Transit sind mit HTTPS / TLS verschlüsselt",
+              "Ruhende sensible Daten mit AES-256 verschlüsselt",
+              "Zahlungen über PCI-DSS-konforme Anbieter",
+              "Datenbanken auf gesicherter Cloud-Infrastruktur"
+            ]
+          },
+          {
+            "heading": "Organisatorische Maßnahmen",
+            "items": [
+              "Zugriff auf personenbezogene Daten auf autorisiertes Personal beschränkt",
+              "Schulung der Mitarbeiter im Datenschutz",
+              "Regelmäßige interne Sicherheitsüberprüfungen",
+              "Vertragliche Sicherheitsanforderungen für Drittpartner"
+            ]
+          }
+        ],
+        "note": "Obwohl wir branchenübliche Schutzmaßnahmen anwenden, ist kein System vollständig immun gegen Risiken. Bitte verwende ein starkes, einzigartiges Passwort und melde verdächtige Aktivitäten sofort an privacy@moviroo.com."
+      },
+      {
+        "id": "data_retention",
+        "title": "Datenspeicherung",
+        "description": "Wir speichern deine personenbezogenen Daten nur so lange wie nötig oder gesetzlich vorgeschrieben.",
+        "subsections": [
+          {
+            "heading": "Aufbewahrungsfristen",
+            "items": [
+              "Kontoprofilsdaten — bis zur Kontolöschung",
+              "Fahrverlauf — bis zu 5 Jahre für rechtliche Zwecke",
+              "Zahlungsunterlagen — gemäß geltenden Finanz- und Steuervorschriften (typisch 7 Jahre)",
+              "Support-Korrespondenz — bis zu 3 Jahre nach Ticketauflösung",
+              "Nutzungs- und Analyseprotokolle — nach 12 Monaten anonymisiert"
+            ]
+          }
+        ],
+        "note": "Du kannst jederzeit eine vorzeitige Löschung deiner Daten beantragen."
+      },
+      {
+        "id": "your_rights",
+        "title": "Deine Rechte",
+        "description": "Je nach deinem Standort und geltendem Recht hast du verschiedene Rechte bezüglich deiner personenbezogenen Daten.",
+        "subsections": [
+          {
+            "heading": "Deine Rechte",
+            "items": [
+              "Auskunftsrecht — Kopie aller über dich gespeicherten Daten",
+              "Berichtigungsrecht — Korrektur unrichtiger Daten",
+              "Löschungsrecht — Löschung deines Kontos und zugehöriger Daten",
+              "Einschränkungsrecht — Einschränkung der Verarbeitung",
+              "Datenübertragbarkeit — Erhalt deiner Daten in maschinenlesbarem Format",
+              "Widerspruchsrecht — Widerspruch gegen berechtigte Interessen oder Direktmarketing",
+              "Recht auf Widerruf der Einwilligung — jederzeit"
+            ]
+          }
+        ],
+        "note": "Zur Ausübung dieser Rechte kontaktiere uns unter privacy@moviroo.com. Wir antworten innerhalb von 30 Tagen."
+      },
+      {
+        "id": "international_transfers",
+        "title": "Internationale Übermittlungen",
+        "description": "Moviroo hat seinen Sitz in Tunesien. Wenn wir Cloud-Infrastruktur oder Drittanbieter mit Servern in anderen Ländern nutzen, können deine Daten international übertragen werden.\n\nWir stellen angemessene Schutzmaßnahmen sicher, z. B. Standardvertragsklauseln oder Anbieter unter GDPR-Angemessenheitsentscheidungen.",
+        "subsections": []
+      },
+      {
+        "id": "childrens_privacy",
+        "title": "Datenschutz für Minderjährige",
+        "description": "Moviroo ist ausschließlich für Personen ab 18 Jahren. Wir erfassen wissentlich keine Daten von Minderjährigen.\n\nWenn du glaubst, dass dein Kind sich registriert hat, kontaktiere uns sofort unter privacy@moviroo.com.",
+        "subsections": []
+      },
+      {
+        "id": "third_party_services",
+        "title": "Drittanbieterdienste",
+        "description": "Moviroo integriert sich mit vertrauenswürdigen Drittanbietern. Jeder betreibt seine eigene Datenschutzrichtlinie.",
+        "subsections": [
+          {
+            "heading": "Integrierte Dienste",
+            "items": [
+              "Zahlungs-Gateways (z. B. Stripe)",
+              "Google Maps Platform",
+              "Analysetools",
+              "Cloud-Hosting-Anbieter",
+              "Kundensupportplattformen"
+            ]
+          }
+        ],
+        "note": "Wir überprüfen alle Drittpartner sorgfältig. Wir sind jedoch nicht für die Datenschutzpraktiken externer Dienste verantwortlich."
+      },
+      {
+        "id": "policy_changes",
+        "title": "Änderungen der Richtlinie",
+        "description": "Wir können diese Datenschutzerklärung regelmäßig aktualisieren.",
+        "subsections": [
+          {
+            "heading": "Wie wir dich benachrichtigen",
+            "items": [
+              "Geringfügige Änderungen — mit überarbeitetem Datum aktualisiert",
+              "Wesentliche Änderungen — über In-App-Banner oder Push-Benachrichtigung mindestens 14 Tage im Voraus",
+              "Bedeutende Änderungen — erfordern möglicherweise erneute Bestätigung"
+            ]
+          }
+        ],
+        "note": "Die weitere Nutzung von Moviroo nach Inkrafttreten der Änderungen gilt als Zustimmung."
+      },
+      {
+        "id": "contact_us",
+        "title": "Kontakt",
+        "description": "Bei Fragen oder Anfragen zu dieser Datenschutzerklärung steht dir unser Datenschutzteam zur Verfügung.",
+        "subsections": [
+          {
+            "heading": "So erreichst du uns",
+            "items": [
+              "E-Mail: privacy@moviroo.com",
+              "Unternehmen: Moviroo",
+              "Adresse: Tunesien"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
