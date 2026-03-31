@@ -11,9 +11,9 @@ class CarOption {
   final int bags;
   final String price;
   final String classCategory;
-  final String? eta;       // e.g. '19:57'
-  final String? duration;  // e.g. '4 min'
-  final String? badge;     // e.g. 'FASTER'
+  final String? eta;       
+  final String? duration;  
+  final String? badge;     
 
   const CarOption({
     required this.name,

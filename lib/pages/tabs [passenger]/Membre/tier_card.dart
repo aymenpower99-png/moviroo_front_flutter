@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
-import '../../../../l10n/app_localizations.dart';
 import 'membership_tier.dart';
+import 'tier_card_panel.dart';
 
-const int kUserPoints = 2450;
+export 'membership_tier.dart' show TierClaimState;
+
 const double kTierCardHeight = 72.0;
 
 class TierCard extends StatefulWidget {
   final MembershipTier tier;
   final bool isExpanded;
   final VoidCallback onTap;
+  final TierClaimState claimState;
+  final VoidCallback onUnlockTap;
 
   const TierCard({
     super.key,
     required this.tier,
     required this.isExpanded,
     required this.onTap,
+    required this.claimState,
+    required this.onUnlockTap,
   });
 
   @override
@@ -25,7 +30,6 @@ class TierCard extends StatefulWidget {
 
 class _TierCardState extends State<TierCard>
     with SingleTickerProviderStateMixin {
-
   late final AnimationController _ctrl;
   late final Animation<double> _expandAnim;
   late final Animation<double> _fadeAnim;
@@ -37,14 +41,15 @@ class _TierCardState extends State<TierCard>
       vsync: this,
       duration: const Duration(milliseconds: 280),
     );
-    _expandAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
-    _fadeAnim   = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
+    _expandAnim =
+        CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
+    _fadeAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
   }
 
   @override
-  void didUpdateWidget(TierCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isExpanded != oldWidget.isExpanded) {
+  void didUpdateWidget(TierCard old) {
+    super.didUpdateWidget(old);
+    if (widget.isExpanded != old.isExpanded) {
       widget.isExpanded ? _ctrl.forward() : _ctrl.reverse();
     }
   }
@@ -57,9 +62,8 @@ class _TierCardState extends State<TierCard>
 
   @override
   Widget build(BuildContext context) {
-    final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final tier     = widget.tier;
-    final isLocked = tier.status == TierStatus.locked;
+    final isDark  = Theme.of(context).brightness == Brightness.dark;
+    final tier    = widget.tier;
 
     final borderColor = widget.isExpanded
         ? tier.accentColor.withValues(alpha: 0.6)
@@ -68,16 +72,6 @@ class _TierCardState extends State<TierCard>
     final bgColor = widget.isExpanded
         ? tier.accentColor.withValues(alpha: isDark ? 0.07 : 0.04)
         : AppColors.surface(context);
-
-    final shadows = widget.isExpanded && isDark
-        ? [
-            BoxShadow(
-              color: tier.accentColor.withValues(alpha: 0.14),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ]
-        : null;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -91,53 +85,40 @@ class _TierCardState extends State<TierCard>
             color: borderColor,
             width: widget.isExpanded ? 1.5 : 1,
           ),
-          boxShadow: shadows,
+          boxShadow: widget.isExpanded && isDark
+              ? [
+                  BoxShadow(
+                    color: tier.accentColor.withValues(alpha: 0.14),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Collapsed row ────────────────────────────────────
+            // ── Collapsed row ──────────────────────────────
             SizedBox(
               height: kTierCardHeight,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: tier.accentColor
-                            .withValues(alpha: isDark ? 0.15 : 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          _tierIcon(tier.status),
-                          color: isLocked
-                              ? AppColors.subtext(context)
-                              : tier.accentColor,
-                          size: 20,
-                        ),
-                      ),
-                    ),
+                    _TierIconBubble(tier: tier, isDark: isDark),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            tier.name,
-                            style: AppTextStyles.bodyLarge(context),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          Text(tier.name,
+                              style: AppTextStyles.bodyLarge(context),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
                           const SizedBox(height: 3),
-                          Text(
-                            '${tier.pointsRequired} pts',
-                            style: AppTextStyles.bodySmall(context),
-                          ),
+                          Text('${tier.pointsRequired} pts',
+                              style: AppTextStyles.bodySmall(context)),
                         ],
                       ),
                     ),
@@ -159,12 +140,17 @@ class _TierCardState extends State<TierCard>
               ),
             ),
 
-            // ── Expanded panel ───────────────────────────────────
+            // ── Expanded panel ─────────────────────────────
             SizeTransition(
               sizeFactor: _expandAnim,
               child: FadeTransition(
                 opacity: _fadeAnim,
-                child: _ExpandedPanel(tier: tier, isDark: isDark),
+                child: TierExpandedPanel(
+                  tier: tier,
+                  isDark: isDark,
+                  claimState: widget.claimState,
+                  onUnlockTap: widget.onUnlockTap,
+                ),
               ),
             ),
           ],
@@ -172,8 +158,19 @@ class _TierCardState extends State<TierCard>
       ),
     );
   }
+}
 
-  IconData _tierIcon(TierStatus s) {
+// ─────────────────────────────────────────────────────────────────────────────
+// ICON BUBBLE
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _TierIconBubble extends StatelessWidget {
+  final MembershipTier tier;
+  final bool isDark;
+
+  const _TierIconBubble({required this.tier, required this.isDark});
+
+  IconData _icon(TierStatus s) {
     switch (s) {
       case TierStatus.locked:   return Icons.lock_outline_rounded;
       case TierStatus.unlocked: return Icons.lock_open_rounded;
@@ -181,217 +178,24 @@ class _TierCardState extends State<TierCard>
       case TierStatus.used:     return Icons.check_circle_outline_rounded;
     }
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// EXPANDED PANEL
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ExpandedPanel extends StatelessWidget {
-  final MembershipTier tier;
-  final bool isDark;
-
-  const _ExpandedPanel({required this.tier, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    final t          = AppLocalizations.of(context).translate;
-    final isLocked   = tier.status == TierStatus.locked;
-    final isUnlocked = tier.status == TierStatus.unlocked;
-    final isCurrent  = tier.status == TierStatus.current;
-    final int missingPts =
-        isLocked ? (tier.pointsRequired - kUserPoints).clamp(0, 99999) : 0;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Divider(color: tier.accentColor.withValues(alpha: 0.25), height: 1),
-          const SizedBox(height: 14),
-
-          // Discount pill
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isLocked
-                  ? AppColors.border(context).withValues(alpha: 0.5)
-                  : tier.accentColor.withValues(alpha: isDark ? 0.18 : 0.12),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.local_offer_rounded,
-                  color: isLocked
-                      ? AppColors.subtext(context)
-                      : tier.accentColor,
-                  size: 14,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  tier.discount,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isLocked
-                        ? AppColors.subtext(context)
-                        : tier.accentColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          // Action button
-          SizedBox(
-            width: double.infinity,
-            child: _ActionButton(
-              tier: tier,
-              isLocked: isLocked,
-              isUnlocked: isUnlocked,
-              isCurrent: isCurrent,
-              missingPts: missingPts,
-              isDark: isDark,
-              t: t,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ACTION BUTTON
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ActionButton extends StatelessWidget {
-  final MembershipTier tier;
-  final bool isLocked;
-  final bool isUnlocked;
-  final bool isCurrent;
-  final int missingPts;
-  final bool isDark;
-  final String Function(String) t;
-
-  const _ActionButton({
-    required this.tier,
-    required this.isLocked,
-    required this.isUnlocked,
-    required this.isCurrent,
-    required this.missingPts,
-    required this.isDark,
-    required this.t,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Locked — disabled, shows missing points
-    if (isLocked) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isDark
-              ? const Color(0xFF1A1A20)
-              : const Color(0xFFF0F0F4),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.border(context)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.lock_outline_rounded,
-                size: 15, color: AppColors.subtext(context)),
-            const SizedBox(width: 8),
-            Text(
-              t('tier_need_pts').replaceAll('{pts}', '$missingPts'),
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.subtext(context),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Unlocked
-    if (isUnlocked) {
-      return ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: tier.accentColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)),
-          elevation: 0,
-        ),
-        child: Text(
-          t('tier_claim_reward'),
-          style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w600),
-        ),
-      );
-    }
-
-    // Current
-    if (isCurrent) {
-      return ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: tier.accentColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)),
-          elevation: 0,
-        ),
-        child: Text(
-          t('tier_active'),
-          style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w600),
-        ),
-      );
-    }
-
-    // Used
+    final isLocked = tier.status == TierStatus.locked;
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1A1A20)
-            : const Color(0xFFF0F0F4),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border(context)),
+        color: tier.accentColor.withValues(alpha: isDark ? 0.15 : 0.1),
+        shape: BoxShape.circle,
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.check_circle_outline_rounded,
-              size: 15, color: AppColors.subtext(context)),
-          const SizedBox(width: 8),
-          Text(
-            t('tier_reward_used'),
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.subtext(context),
-            ),
-          ),
-        ],
+      child: Center(
+        child: Icon(
+          _icon(tier.status),
+          color:
+              isLocked ? AppColors.subtext(context) : tier.accentColor,
+          size: 20,
+        ),
       ),
     );
   }

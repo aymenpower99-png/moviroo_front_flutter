@@ -7,12 +7,14 @@ class PassHeaderCard extends StatelessWidget {
   final int userPoints;
   final int nextLevel;
   final int pointsToNext;
+  final int currentLevelNumber;
 
   const PassHeaderCard({
     super.key,
     required this.userPoints,
     required this.nextLevel,
     required this.pointsToNext,
+    this.currentLevelNumber = 1,
   });
 
   @override
@@ -83,6 +85,7 @@ class PassHeaderCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 3),
+                  // ✅ "Level 1" pill — replaces "Member" badge
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -91,7 +94,7 @@ class PassHeaderCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      t('pass_member_badge'),
+                      'Level $currentLevelNumber',
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 11,
@@ -107,43 +110,7 @@ class PassHeaderCard extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // ── Progress label ──────────────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                t('pass_progress_label'),
-                style: AppTextStyles.bodySmall(context),
-              ),
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: '$userPoints ',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.text(context),
-                      ),
-                    ),
-                    TextSpan(
-                      text: '/ $nextLevel',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        color: AppColors.subtext(context),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          // ── Progress bar ────────────────────────────────────
+          // ✅ No label above progress bar — just the bar
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
@@ -157,7 +124,15 @@ class PassHeaderCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+
+          // ✅ Small hint below bar: X pts to next level
+          Text(
+            '$pointsToNext ${t('pass_pts_to_next')}',
+            style: AppTextStyles.bodySmall(context),
+          ),
+
+          const SizedBox(height: 4),
         ],
       ),
     );
