@@ -117,7 +117,21 @@ class _ActionButton extends StatelessWidget {
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () => AppRouter.push(context, AppRouter.trackRide),
+                onTap: () => AppRouter.push(context, AppRouter.trackRide,
+                    args: {
+                      'rideId':         ride.rideId         ?? '',
+                      'pickupLat':      ride.pickupLat      ?? 36.8189,
+                      'pickupLon':      ride.pickupLon      ?? 10.1658,
+                      'dropoffLat':     ride.dropoffLat     ?? 36.8300,
+                      'dropoffLon':     ride.dropoffLon     ?? 10.1750,
+                      'pickupAddress':  ride.pickup,
+                      'dropoffAddress': ride.dropoff,
+                      'driverName':     ride.driverName     ?? 'Driver',
+                      'vehicleName':    ride.vehicleName,
+                      'vehicleColor':   ride.vehicleColor   ?? '',
+                      'plateNumber':    ride.plateNumber    ?? '',
+                      'etaMins':        ride.etaMins,
+                    }),
                 child: Container(
                   height: 46,
                   decoration: BoxDecoration(

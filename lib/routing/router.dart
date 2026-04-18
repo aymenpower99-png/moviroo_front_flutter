@@ -63,7 +63,24 @@ class AppRouter {
         mapEtaPage:                 (_) => const MapEtaPage(),
         trajet:                     (_) => const TrajetPage(),
         membre:                     (_) => const MembrePassScreen(),
-        trackRide:                  (_) => const TrackRidePage(),
+        trackRide: (ctx) {
+          final args = ModalRoute.of(ctx)?.settings.arguments
+              as Map<String, dynamic>?;
+          return TrackRidePage(
+            rideId:         args?['rideId']         as String? ?? '',
+            pickupLat:      (args?['pickupLat']      as num?)?.toDouble() ?? 36.8189,
+            pickupLon:      (args?['pickupLon']      as num?)?.toDouble() ?? 10.1658,
+            dropoffLat:     (args?['dropoffLat']     as num?)?.toDouble() ?? 36.8300,
+            dropoffLon:     (args?['dropoffLon']     as num?)?.toDouble() ?? 10.1750,
+            pickupAddress:  args?['pickupAddress']   as String? ?? 'Pickup',
+            dropoffAddress: args?['dropoffAddress']  as String? ?? 'Drop-off',
+            driverName:     args?['driverName']      as String? ?? 'Driver',
+            vehicleName:    args?['vehicleName']     as String? ?? 'Vehicle',
+            vehicleColor:   args?['vehicleColor']    as String? ?? '',
+            plateNumber:    args?['plateNumber']     as String? ?? '',
+            etaMins:        args?['etaMins']         as int?,
+          );
+        },
       };
 
   static Future<T?> push<T>(BuildContext context, String routeName,

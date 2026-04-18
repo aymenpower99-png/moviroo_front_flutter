@@ -23,6 +23,11 @@ dependencies:
   permission_handler: ^11.3.1 # needed for mic permission with flutter_sound
   flutter_map: ^7.0.2 # OpenStreetMap tile rendering
   latlong2: ^0.9.1 # LatLng type for flutter_map
+  maplibre_gl: ^0.25.0 # MapLibre GL for real map rendering
+  socket_io_client: ^2.0.3+1 # WebSocket for live driver tracking
+  flutter_secure_storage: ^9.2.2 # JWT token storage
+  url_launcher: ^6.3.1 # Phone dialer
+  http: ^1.2.0 # HTTP client for API calls
 
 dev_dependencies:
   flutter_test:

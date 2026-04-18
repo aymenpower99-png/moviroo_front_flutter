@@ -12,6 +12,15 @@ const List<RideModel> kRides = [
     pickup: '124 Grand Central Terminal, NY',
     dropoff: 'JFK International Airport, Terminal 4',
     status: RideStatus.upcoming,
+    rideId:       '',
+    pickupLat:    36.8189,
+    pickupLon:    10.1658,
+    dropoffLat:   36.8450,
+    dropoffLon:   10.2050,
+    driverName:   'Ali Ben Salem',
+    vehicleColor: 'White',
+    plateNumber:  '123 TUN 4',
+    etaMins:      7,
   ),
 
   // ── Pending Payment ───────────────────────────────────────────────
