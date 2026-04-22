@@ -165,11 +165,14 @@ class AuthService {
     );
   }
 
-  Future<Map<String, dynamic>> toggleEmail2fa(bool enabled) async {
-    final result = await SecurityApi.toggleEmail2fa(enabled);
+  Future<Map<String, dynamic>> toggleEmail2fa(bool enabled, {String? otp}) async {
+    final result = await SecurityApi.toggleEmail2fa(enabled, otp: otp);
     _cachedUser = null;
     return result;
   }
+
+  Future<void> requestEmail2faEnableOtp() =>
+      SecurityApi.requestEmail2faEnableOtp();
 
   Future<Map<String, dynamic>> setupTotp() => SecurityApi.setupTotp();
 

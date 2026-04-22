@@ -38,12 +38,23 @@ class SecurityApi {
   // ─── Email 2FA ────────────────────────────────────────────────────────────
 
   /// PATCH /auth/2fa — toggles email 2FA on/off.
-  static Future<Map<String, dynamic>> toggleEmail2fa(bool enabled) async {
-    final response = await AuthHTTP.authenticatedPatch('/auth/2fa', {
-      'enabled': enabled,
-    });
+  /// When enabling, pass the OTP received by email for verification.
+  static Future<Map<String, dynamic>> toggleEmail2fa(bool enabled, {String? otp}) async {
+    final body = <String, dynamic>{'enabled': enabled};
+    if (otp != null) body['otp'] = otp;
+    final response = await AuthHTTP.authenticatedPatch('/auth/2fa', body);
     _ensureOk(response, 'Failed to update 2FA');
     return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// POST /auth/2fa/email/request-otp — sends an OTP to the user's email
+  /// so they can prove ownership before enabling email 2FA.
+  static Future<void> requestEmail2faEnableOtp() async {
+    final response = await AuthHTTP.authenticatedPost(
+      '/auth/2fa/email/request-otp',
+      const {},
+    );
+    _ensureOk(response, 'Failed to send verification code');
   }
 
   // ─── TOTP (authenticator app) ─────────────────────────────────────────────

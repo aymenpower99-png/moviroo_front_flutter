@@ -4,6 +4,7 @@ import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../services/auth_service.dart';
 import 'auth_app_page.dart';
+import '2_step_ver_modal/email_send_modal.dart';
 
 class TwoStepVerificationPage extends StatefulWidget {
   const TwoStepVerificationPage({super.key});
@@ -63,23 +64,53 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
 
   Future<void> _toggleEmail(bool val) async {
     if (_busyEmail) return;
-    setState(() {
-      _busyEmail = true;
-      _errorMessage = null;
-    });
-    try {
-      final result = await _authService.toggleEmail2fa(val);
-      if (!mounted) return;
+
+    if (val) {
+      // Show the two-step email OTP modal; pops with the verified code or null.
+      final code = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const EmailSendModal(),
+      );
+      if (code == null || !mounted) return; // user cancelled
+
       setState(() {
-        _emailEnabled = (result['is2faEnabled'] as bool?) ?? val;
-        _primary = twoFactorMethodFromString(
-          result['primary2faMethod'] as String?,
-        );
+        _busyEmail = true;
+        _errorMessage = null;
       });
-    } catch (e) {
-      _showError(e.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => _busyEmail = false);
+      try {
+        final result = await _authService.toggleEmail2fa(true, otp: code);
+        if (!mounted) return;
+        setState(() {
+          _emailEnabled = (result['is2faEnabled'] as bool?) ?? true;
+          _primary = twoFactorMethodFromString(
+            result['primary2faMethod'] as String?,
+          );
+        });
+      } catch (e) {
+        _showError(e.toString().replaceFirst('Exception: ', ''));
+      } finally {
+        if (mounted) setState(() => _busyEmail = false);
+      }
+    } else {
+      setState(() {
+        _busyEmail = true;
+        _errorMessage = null;
+      });
+      try {
+        final result = await _authService.toggleEmail2fa(false);
+        if (!mounted) return;
+        setState(() {
+          _emailEnabled = (result['is2faEnabled'] as bool?) ?? false;
+          _primary = twoFactorMethodFromString(
+            result['primary2faMethod'] as String?,
+          );
+        });
+      } catch (e) {
+        _showError(e.toString().replaceFirst('Exception: ', ''));
+      } finally {
+        if (mounted) setState(() => _busyEmail = false);
+      }
     }
   }
 

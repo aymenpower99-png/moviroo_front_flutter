@@ -24,6 +24,9 @@ class AuthHTTP {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $accessToken',
       },
+    ).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw Exception('Request timed out. Check your connection.'),
     );
 
     if (response.statusCode == 401) {
@@ -60,6 +63,9 @@ class AuthHTTP {
         'Authorization': 'Bearer $accessToken',
       },
       body: jsonEncode(body),
+    ).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw Exception('Request timed out. Check your connection.'),
     );
 
     if (response.statusCode == 401) {
@@ -95,6 +101,9 @@ class AuthHTTP {
         'Authorization': 'Bearer $accessToken',
       },
       body: jsonEncode(body),
+    ).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw Exception('Request timed out. Check your connection.'),
     );
 
     if (response.statusCode == 401) {
@@ -130,6 +139,9 @@ class AuthHTTP {
         'Authorization': 'Bearer $accessToken',
       },
       body: body != null ? jsonEncode(body) : null,
+    ).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw Exception('Request timed out. Check your connection.'),
     );
 
     if (response.statusCode == 401) {
@@ -153,6 +165,9 @@ class AuthHTTP {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $refreshToken',
       },
+    ).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw Exception('Request timed out. Check your connection.'),
     );
 
     if (response.statusCode == 200) {

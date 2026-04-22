@@ -82,9 +82,10 @@ class _AuthAppPageState extends State<AuthAppPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _isLoading = false;
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
       });
+    } finally {
+      if (mounted && _isLoading) setState(() => _isLoading = false);
     }
   }
 
