@@ -54,5 +54,7 @@
 			<key>NSAllowsArbitraryLoads</key>
 			<true/>
 		</dict>
+		<key>NSFaceIDUsageDescription</key>
+		<string>Moviroo uses Face ID to protect sensitive actions like disabling 2FA, changing security settings, and deleting your account.</string>
 	</dict>
 </plist>

@@ -364,9 +364,11 @@
   "add_card": "Add Card",
   "password_page_title": "Password",
   "change_password": "CHANGE PASSWORD",
+  "current_password": "Current Password",
   "new_password": "New Password",
   "confirm_new_password": "Confirm New Password",
   "change_password_btn": "Change Password",
+  "password_updated_success": "Password updated successfully.",
   "password_rules_error": "Please add all necessary characters to create a safe password.",
   "passwords_no_match": "Passwords do not match.",
   "rule_min_length": "Minimum 8 characters",
@@ -452,5 +454,15 @@
   "about": "ABOUT",
   "app_version": "App Version",
   "app_info": "App Info",
-  "passkeys": "Passkeys"
+  "passkeys": "Passkeys",
+  "create_a_passkey": "Create a Passkey",
+  "passkey_subtitle": "Passkeys are more secure and easier than passwords. Sign in with your face, fingerprint or screen lock.",
+  "passkey_face_unlock": "Face Unlock",
+  "passkey_face_unlock_sub": "Use your face to sign in instantly.",
+  "passkey_fingerprint_unlock": "Fingerprint Unlock",
+  "passkey_fingerprint_unlock_sub": "Sign in with your fingerprint.",
+  "passkey_device_pin": "Device PIN or Pattern",
+  "passkey_device_pin_sub": "Fallback to your device lock screen.",
+  "create_passkey": "Create Passkey",
+  "not_now": "Not now"
 }

@@ -108,6 +108,41 @@ class AuthHTTP {
     return response;
   }
 
+  static Future<http.Response> authenticatedDelete(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    String? accessToken = await AuthStorage.getAccessToken();
+
+    if (accessToken != null && AuthHelpers.isTokenExpired(accessToken)) {
+      await _refreshTokens();
+      accessToken = await AuthStorage.getAccessToken();
+    }
+
+    if (accessToken == null) {
+      throw Exception('Not authenticated');
+    }
+
+    final response = await http.delete(
+      Uri.parse('${_getBaseUrl()}$path'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: body != null ? jsonEncode(body) : null,
+    );
+
+    if (response.statusCode == 401) {
+      final refreshed = await _refreshTokens();
+      if (refreshed != null) {
+        return authenticatedDelete(path, body: body);
+      }
+      throw Exception('Authentication failed');
+    }
+
+    return response;
+  }
+
   static Future<Map<String, dynamic>?> _refreshTokens() async {
     final refreshToken = await AuthStorage.getRefreshToken();
     if (refreshToken == null) return null;

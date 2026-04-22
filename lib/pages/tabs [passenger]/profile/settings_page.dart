@@ -23,34 +23,18 @@ class _SettingsPageState extends State<SettingsPage> {
   int _tabIndex = 4;
   final AuthService _authService = AuthService();
 
-  String _firstName = '';
-  String _lastName = '';
-  String _phone = '';
-  bool _isLoadingUser = true;
-
   @override
   void initState() {
     super.initState();
-    _loadUser();
+    // User data is already cached by AuthService from splash screen
+    // No need to fetch again
   }
 
-  Future<void> _loadUser() async {
-    try {
-      final user = await _authService.getCurrentUser();
-      if (user != null && mounted) {
-        setState(() {
-          _firstName = user['firstName'] ?? '';
-          _lastName = user['lastName'] ?? '';
-          _phone = user['phone'] ?? '';
-          _isLoadingUser = false;
-        });
-      } else {
-        if (mounted) setState(() => _isLoadingUser = false);
-      }
-    } catch (_) {
-      if (mounted) setState(() => _isLoadingUser = false);
-    }
-  }
+  Map<String, dynamic>? get _cachedUser => _authService.getCachedUser();
+
+  String get _firstName => _cachedUser?['firstName'] ?? '';
+  String get _lastName => _cachedUser?['lastName'] ?? '';
+  String get _phone => _cachedUser?['phone'] ?? '';
 
   String get _fullName {
     final name = '$_firstName $_lastName'.trim();
@@ -94,7 +78,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       letter: _avatarLetter,
                       fullName: _fullName,
                       phone: _phone,
-                      isLoading: _isLoadingUser,
                     ),
                     const SizedBox(height: 28),
 
@@ -229,25 +212,16 @@ class _ProfileHeader extends StatelessWidget {
   final String letter;
   final String fullName;
   final String phone;
-  final bool isLoading;
 
   const _ProfileHeader({
     required this.letter,
     required this.fullName,
     required this.phone,
-    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    if (isLoading) {
-      return const SizedBox(
-        height: 160,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
 
     return Column(
       children: [

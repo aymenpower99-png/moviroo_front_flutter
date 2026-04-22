@@ -48,7 +48,7 @@ class AppRouter {
   static const String trajet = '/trajet';
   static const String membre = '/membre';
 
-  static const String initialRoute = login;
+  static const String initialRoute = splash;
 
   static Map<String, WidgetBuilder> get routes => {
     splash: (_) => const SplashPage(),

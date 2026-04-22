@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../theme/app_colors.dart';
+import '../../../../../services/auth_service.dart';
 import '2_step_ver_modal/auth_app_confirm_modal.dart'; // ← import the extracted modal
 
 class AuthAppPage extends StatefulWidget {
@@ -13,21 +15,77 @@ class AuthAppPage extends StatefulWidget {
 }
 
 class _AuthAppPageState extends State<AuthAppPage> {
+  final _authService = AuthService();
+
   bool _isLinked = false;
+  bool _isBootstrapping = true;
   bool _isLoading = false;
+  String? _errorMessage;
 
-  static const String _setupSecret = 'JBSWY3DPEHPK3PXP';
-  static const String _qrPlaceholder =
-      'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=otpauth://totp/MyApp:user@example.com?secret=$_setupSecret';
+  // Populated by POST /auth/2fa/totp/setup
+  String? _setupSecret;
+  String? _qrDataUrl; // data:image/png;base64,...
 
-  Future<void> _handleLink() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2)); // TODO: real API call
-    if (mounted)
+  @override
+  void initState() {
+    super.initState();
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    try {
+      // Read cached user to know if TOTP already linked
+      final cached = _authService.getCachedUser();
+      final alreadyLinked = (cached?['totpEnabled'] as bool?) ?? false;
+
+      if (alreadyLinked) {
+        if (!mounted) return;
+        setState(() {
+          _isLinked = true;
+          _isBootstrapping = false;
+        });
+        return;
+      }
+
+      // Not linked yet → fetch fresh QR + secret
+      final data = await _authService.setupTotp();
+      if (!mounted) return;
+      setState(() {
+        _setupSecret = data['secret'] as String?;
+        _qrDataUrl = data['qrCodeUrl'] as String?;
+        _isBootstrapping = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _isBootstrapping = false;
+      });
+    }
+  }
+
+  Future<void> _handleLink(String code) async {
+    if (code.length != 6) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await _authService.confirmTotp(code);
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _isLinked = true;
       });
+      // Pop with `true` so callers (two-step page) can flip their toggle.
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
   }
 
   Future<void> _handleUnlink() async {
@@ -39,13 +97,31 @@ class _AuthAppPageState extends State<AuthAppPage> {
         false;
 
     if (!confirmed || !mounted) return;
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2)); // TODO: real API call
-    if (mounted)
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await _authService.disableTotp();
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _isLinked = false;
       });
+      // Fetch a fresh secret for re-link
+      final data = await _authService.setupTotp();
+      if (!mounted) return;
+      setState(() {
+        _setupSecret = data['secret'] as String?;
+        _qrDataUrl = data['qrCodeUrl'] as String?;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
   }
 
   @override
@@ -59,20 +135,27 @@ class _AuthAppPageState extends State<AuthAppPage> {
           children: [
             _SubPageTopBar(title: t('Authentication App')),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _isLinked
-                    ? _LinkedView(
-                        isLoading: _isLoading,
-                        onUnlink: _handleUnlink,
-                      )
-                    : _SetupView(
-                        secret: _setupSecret,
-                        qrUrl: _qrPlaceholder,
-                        isLoading: _isLoading,
-                        onLink: _handleLink,
+              child: _isBootstrapping
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryPurple,
                       ),
-              ),
+                    )
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _isLinked
+                          ? _LinkedView(
+                              isLoading: _isLoading,
+                              onUnlink: _handleUnlink,
+                            )
+                          : _SetupView(
+                              secret: _setupSecret ?? '',
+                              qrDataUrl: _qrDataUrl,
+                              isLoading: _isLoading,
+                              errorMessage: _errorMessage,
+                              onLink: _handleLink,
+                            ),
+                    ),
             ),
           ],
         ),
@@ -85,14 +168,16 @@ class _AuthAppPageState extends State<AuthAppPage> {
 
 class _SetupView extends StatefulWidget {
   final String secret;
-  final String qrUrl;
+  final String? qrDataUrl;
   final bool isLoading;
-  final VoidCallback onLink;
+  final String? errorMessage;
+  final ValueChanged<String> onLink;
 
   const _SetupView({
     required this.secret,
-    required this.qrUrl,
+    required this.qrDataUrl,
     required this.isLoading,
+    required this.errorMessage,
     required this.onLink,
   });
 
@@ -140,23 +225,7 @@ class _SetupViewState extends State<_SetupView> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                widget.qrUrl,
-                width: 160,
-                height: 160,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 160,
-                  height: 160,
-                  color: AppColors.border(context),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.qr_code_2_rounded,
-                    size: 80,
-                    color: AppColors.subtext(context),
-                  ),
-                ),
-              ),
+              child: _QrView(dataUrl: widget.qrDataUrl),
             ),
           ),
         ),
@@ -214,17 +283,86 @@ class _SetupViewState extends State<_SetupView> {
 
         _OtpCodeField(controller: _codeController),
 
+        if (widget.errorMessage != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.error.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: AppColors.error,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.errorMessage!,
+                    style: AppTextStyles.bodySmall(
+                      context,
+                    ).copyWith(color: AppColors.error),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
         const SizedBox(height: 32),
 
         _PrimaryButton(
           label: t('Verify & Link'),
           isLoading: widget.isLoading,
-          onTap: widget.onLink,
+          onTap: () => widget.onLink(_codeController.text),
         ),
 
         const SizedBox(height: 24),
       ],
     );
+  }
+}
+
+// ── QR view: renders a data:image/png;base64,... URL from the backend ──────
+
+class _QrView extends StatelessWidget {
+  final String? dataUrl;
+  const _QrView({required this.dataUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final placeholder = Container(
+      width: 160,
+      height: 160,
+      color: AppColors.border(context),
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.qr_code_2_rounded,
+        size: 80,
+        color: AppColors.subtext(context),
+      ),
+    );
+
+    if (dataUrl == null) return placeholder;
+
+    // Backend returns 'data:image/png;base64,<...>'
+    final comma = dataUrl!.indexOf(',');
+    if (comma < 0) return placeholder;
+    try {
+      final bytes = base64Decode(dataUrl!.substring(comma + 1));
+      return Image.memory(
+        bytes,
+        width: 180,
+        height: 180,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => placeholder,
+      );
+    } catch (_) {
+      return placeholder;
+    }
   }
 }
 

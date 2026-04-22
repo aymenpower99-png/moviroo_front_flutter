@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../../widgets/password_strength_indicator.dart';
+import '../../../../../services/auth_service.dart';
 
 class PasswordPage extends StatefulWidget {
   const PasswordPage({super.key});
@@ -11,14 +13,17 @@ class PasswordPage extends StatefulWidget {
 }
 
 class _PasswordPageState extends State<PasswordPage> {
-  final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
 
+  final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  bool _currentObscure = true;
   bool _newObscure = true;
   bool _confirmObscure = true;
   bool _isLoading = false;
+  String? _serverError;
 
   bool get _hasMinLength => _newPasswordController.text.length >= 8;
   bool get _hasUppercase =>
@@ -43,22 +48,55 @@ class _PasswordPageState extends State<PasswordPage> {
   @override
   void initState() {
     super.initState();
+    _currentPasswordController.addListener(() => setState(() {}));
     _newPasswordController.addListener(() => setState(() {}));
     _confirmPasswordController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
+    _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
+  bool get _canSubmit =>
+      _currentPasswordController.text.isNotEmpty &&
+      _allRulesMet &&
+      _passwordsMatch;
+
   Future<void> _handleSave() async {
-    if (!_allRulesMet || !_passwordsMatch) return;
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) setState(() => _isLoading = false);
+    if (!_canSubmit) return;
+    setState(() {
+      _isLoading = true;
+      _serverError = null;
+    });
+    try {
+      await _authService.updatePassword(
+        currentPassword: _currentPasswordController.text,
+        newPassword: _newPasswordController.text,
+      );
+      if (!mounted) return;
+      _currentPasswordController.clear();
+      _newPasswordController.clear();
+      _confirmPasswordController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).translate('password_updated_success'),
+          ),
+        ),
+      );
+      Navigator.of(context).maybePop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(
+        () => _serverError = e.toString().replaceFirst('Exception: ', ''),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -87,6 +125,17 @@ class _PasswordPageState extends State<PasswordPage> {
                     ),
                     const SizedBox(height: 16),
 
+                    // ── Current Password ──
+                    _PasswordField(
+                      controller: _currentPasswordController,
+                      label: t('current_password'),
+                      obscure: _currentObscure,
+                      onToggle: () =>
+                          setState(() => _currentObscure = !_currentObscure),
+                      hasError: _serverError != null,
+                    ),
+                    const SizedBox(height: 16),
+
                     // ── New Password ──
                     _PasswordField(
                       controller: _newPasswordController,
@@ -96,6 +145,8 @@ class _PasswordPageState extends State<PasswordPage> {
                           setState(() => _newObscure = !_newObscure),
                       hasError: newHasText && !_allRulesMet,
                     ),
+
+                    PasswordStrengthBar(password: _newPasswordController.text),
 
                     if (newHasText && !_allRulesMet) ...[
                       const SizedBox(height: 6),
@@ -143,13 +194,42 @@ class _PasswordPageState extends State<PasswordPage> {
                       ),
                     ],
 
+                    if (_serverError != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: AppColors.error,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _serverError!,
+                                style: AppTextStyles.bodySmall(
+                                  context,
+                                ).copyWith(color: AppColors.error),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     const SizedBox(height: 32),
 
                     // ── Save Button ──
                     _PrimaryButton(
                       label: t('change_password_btn'),
                       isLoading: _isLoading,
-                      enabled: _allRulesMet && _passwordsMatch,
+                      enabled: _canSubmit,
                       onTap: _handleSave,
                     ),
 
@@ -295,7 +375,7 @@ class _PasswordField extends StatelessWidget {
             suffixIcon: GestureDetector(
               onTap: onToggle,
               child: Icon(
-                Icons.chevron_left_rounded,
+                obscure ? Icons.visibility_off : Icons.visibility,
                 size: 22,
                 color: AppColors.text(context),
               ),

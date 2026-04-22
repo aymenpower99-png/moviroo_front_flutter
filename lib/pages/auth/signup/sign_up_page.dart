@@ -4,6 +4,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth_service.dart';
+import '../../../../widgets/password_strength_indicator.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -25,7 +26,18 @@ class _SignUpPageState extends State<SignUpPage> {
   final AuthService _authService = AuthService();
 
   @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _passwordController.removeListener(_onPasswordChanged);
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
@@ -373,6 +385,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Widget _buildPasswordField(BuildContext context, AppLocalizations t) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _label(context, t.translate('label_password')),
         const SizedBox(height: 8),
@@ -403,6 +416,8 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
           ),
         ),
+        PasswordStrengthBar(password: _passwordController.text),
+        PasswordRequirementsChecklist(password: _passwordController.text),
       ],
     );
   }

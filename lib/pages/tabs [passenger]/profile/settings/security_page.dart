@@ -3,12 +3,43 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth_service.dart';
-import '../../../../routing/router.dart';
 import '../../../tabs [passenger]/profile/settings/security/password_page.dart';
 import '../../../tabs [passenger]/profile/settings/security/two_step_verification_page.dart';
+import '../../../tabs [passenger]/profile/settings/security/passkey_page.dart';
+import 'delete_account_page.dart';
 
-class SecurityPage extends StatelessWidget {
+class SecurityPage extends StatefulWidget {
   const SecurityPage({super.key});
+
+  @override
+  State<SecurityPage> createState() => _SecurityPageState();
+}
+
+class _SecurityPageState extends State<SecurityPage> {
+  final AuthService _authService = AuthService();
+  String? _authProvider;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    try {
+      final user = await _authService.getCurrentUser();
+      if (!mounted) return;
+      setState(() {
+        _authProvider = (user?['authProvider'] as String?)?.toLowerCase();
+        _loading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  bool get _isGoogleUser => _authProvider == 'google';
 
   @override
   Widget build(BuildContext context) {
@@ -21,46 +52,60 @@ class SecurityPage extends StatelessWidget {
           children: [
             _SubPageTopBar(title: t('security')),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
 
-                    // ── Security ───────────────────────────────────
-                    _SecurityNavTile(
-                      title: t('Password'),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const PasswordPage()),
+                          // ── Password (email users only) ────────────
+                          if (!_isGoogleUser)
+                            _SecurityNavTile(
+                              title: t('Password'),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PasswordPage(),
+                                ),
+                              ),
+                            ),
+
+                          // ── Two-Factor Authentication (all users) ──
+                          _SecurityNavTile(
+                            title: t('two_factor_authentication'),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const TwoStepVerificationPage(),
+                              ),
+                            ),
+                          ),
+
+                          // ── Passkeys (all users) ────────────────────
+                          _SecurityNavTile(
+                            title: t('passkeys'),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PasskeyPage(),
+                              ),
+                            ),
+                          ),
+
+                          // ── Delete account (all users) ──────────────
+                          _SecurityNavTile(
+                            title: t('delete_account'),
+                            isDestructive: true,
+                            onTap: () => _confirmDeleteAccount(context),
+                          ),
+
+                          const SizedBox(height: 24),
+                        ],
                       ),
                     ),
-                    _SecurityNavTile(
-                      title: t('two_factor_authentication'),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const TwoStepVerificationPage(),
-                        ),
-                      ),
-                    ),
-                    _SecurityNavTile(
-                      title: t('passkeys'),
-                      onTap: () {
-                        // TODO: navigate to passkeys page
-                      },
-                    ),
-                    _SecurityNavTile(
-                      title: t('delete_account'),
-                      isDestructive: true,
-                      onTap: () => _confirmDeleteAccount(context),
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
@@ -69,47 +114,9 @@ class SecurityPage extends StatelessWidget {
   }
 
   void _confirmDeleteAccount(BuildContext context) {
-    final t = AppLocalizations.of(context).translate;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          t('delete_account'),
-          style: AppTextStyles.bodyLarge(
-            context,
-          ).copyWith(color: AppColors.error),
-        ),
-        content: Text(
-          t('delete_account_confirm'),
-          style: AppTextStyles.bodySmall(context),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              t('cancel'),
-              style: TextStyle(color: AppColors.subtext(context)),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              // TODO: Call delete account API
-              await AuthService().logout();
-              if (context.mounted) {
-                AppRouter.clearAndGo(context, AppRouter.login);
-              }
-            },
-            child: Text(
-              t('delete'),
-              style: const TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const DeleteAccountPage()));
   }
 }
 

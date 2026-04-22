@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../routing/router.dart';
+import '../../services/auth_service.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -9,28 +10,38 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  final AuthService _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
-    _navigateAfterSplash();
+    _initApp();
   }
 
-  Future<void> _navigateAfterSplash() async {
-    // Adjust duration to match your GIF length
-    await Future.delayed(const Duration(milliseconds: 2460));
+  Future<void> _initApp() async {
+    // Run session check in parallel with minimum splash duration
+    final results = await Future.wait([
+      _authService.tryRestoreSession(),
+      Future.delayed(const Duration(seconds: 2), () => null),
+    ]);
+
     if (!mounted) return;
-    AppRouter.clearAndGo(context, AppRouter.home);
+
+    final bool sessionRestored = results[0] as bool;
+
+    if (sessionRestored) {
+      AppRouter.clearAndGo(context, AppRouter.home);
+    } else {
+      AppRouter.clearAndGo(context, AppRouter.login);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // match your GIF background
+      backgroundColor: Colors.white,
       body: SizedBox.expand(
-        child: Image.asset(
-          'images/complete.gif',
-          fit: BoxFit.cover, // or BoxFit.contain
-        ),
+        child: Image.asset('images/complete.gif', fit: BoxFit.cover),
       ),
     );
   }

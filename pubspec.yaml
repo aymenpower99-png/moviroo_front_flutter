@@ -32,6 +32,10 @@ dependencies:
   http: ^1.2.0 # HTTP client for API calls
   firebase_core: ^4.7.0
   app_links: ^6.3.3 # Deep link handling
+  lottie: ^3.1.2 # Splash animation
+  local_auth: ^2.3.0 # Device biometric (Face ID / Fingerprint / PIN)
+  local_auth_android: ^1.0.47
+  local_auth_darwin: ^1.4.2
 
 dev_dependencies:
   flutter_test:
@@ -71,8 +75,7 @@ flutter:
     - images/trip.png
     - images/bgstart.jpg
     - images/img.png
-    - images/splash.mov
-    - images/remake.mp4
+    - images/Intro.mp4
     - images/remake.gif
     - images/lsnn.png
     - images/logo.gif
