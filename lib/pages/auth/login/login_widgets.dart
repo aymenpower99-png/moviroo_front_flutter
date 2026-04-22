@@ -9,31 +9,25 @@ InputDecoration fieldDecoration(
   required IconData prefixIcon,
   Widget? suffix,
 }) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
   return InputDecoration(
     hintText: hint,
     hintStyle: AppTextStyles.bodyMedium(
       context,
     ).copyWith(color: AppColors.subtext(context)),
-    prefixIcon: Icon(prefixIcon, color: AppColors.text(context), size: 20),
+    prefixIcon: Icon(prefixIcon, color: AppColors.primaryPurple, size: 20),
     suffixIcon: suffix,
     filled: true,
     fillColor: AppColors.surface(context),
-    isDense: true,
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: isDark
-          ? BorderSide.none
-          : BorderSide(color: AppColors.border(context)),
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: AppColors.primaryPurple),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: isDark
-          ? BorderSide.none
-          : BorderSide(color: AppColors.border(context)),
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: AppColors.primaryPurple),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide(color: AppColors.primaryPurple, width: 1.5),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

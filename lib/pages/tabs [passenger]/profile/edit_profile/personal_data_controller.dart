@@ -34,7 +34,11 @@ class PersonalDataController {
         firstName.text = user['firstName'] ?? '';
         lastName.text = user['lastName'] ?? '';
         email.text = user['email'] ?? '';
-        phone.text = user['phone'] ?? '';
+        // Strip +216 prefix if present (backend stores full international format)
+        final rawPhone = user['phone'] ?? '';
+        phone.text = rawPhone.startsWith('+216')
+            ? rawPhone.substring(4)
+            : rawPhone;
       }
     } catch (_) {
       // Keep empty fields on error
@@ -51,7 +55,7 @@ class PersonalDataController {
       await _authService.updateProfile(
         firstName: firstName.text.trim(),
         lastName: lastName.text.trim(),
-        phone: phone.text.trim(),
+        phone: '+216${phone.text.trim()}',
       );
       hasChanges = false;
       return true;

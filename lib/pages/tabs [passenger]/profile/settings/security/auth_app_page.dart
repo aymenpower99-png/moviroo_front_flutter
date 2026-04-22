@@ -65,26 +65,30 @@ class _AuthAppPageState extends State<AuthAppPage> {
   }
 
   Future<void> _handleLink(String code) async {
+    // Guard against double-tap: the state rebuild hasn't happened yet when a
+    // second finger event fires, so we check _isLoading directly here.
+    if (_isLoading) return;
     if (code.length != 6) return;
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
+
     try {
       await _authService.confirmTotp(code);
       if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _isLinked = true;
-      });
-      // Pop with `true` so callers (two-step page) can flip their toggle.
+      // Pop immediately — don't flash the LinkedView before leaving.
+      // The caller's _bootstrap() will fetch fresh state and flip the toggle.
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       setState(() {
+        _isLoading = false;
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
       });
     } finally {
+      // Fallback: ensure loading is reset if still true (e.g. unmounted mid-call)
       if (mounted && _isLoading) setState(() => _isLoading = false);
     }
   }
