@@ -24,11 +24,58 @@ class AuthAPI {
       if (data['requiresVerification'] == true) {
         return data;
       }
-      await AuthStorage.saveTokens(data['accessToken'], data['refreshToken']);
+      // If 2FA OTP required, no tokens to save
+      if (data['requiresOtp'] == true) {
+        return data;
+      }
+      final accessToken = data['accessToken'] as String?;
+      final refreshToken = data['refreshToken'] as String?;
+      if (accessToken == null || refreshToken == null) {
+        throw Exception('Invalid login response from server.');
+      }
+      await AuthStorage.saveTokens(accessToken, refreshToken);
       return data;
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['message'] ?? 'Login failed');
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyLoginOtp({
+    required String preAuthToken,
+    required String code,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/login/verify-otp'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'preAuthToken': preAuthToken, 'code': code}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final accessToken = data['accessToken'] as String?;
+      final refreshToken = data['refreshToken'] as String?;
+      if (accessToken == null || refreshToken == null) {
+        throw Exception('Invalid response from server.');
+      }
+      await AuthStorage.saveTokens(accessToken, refreshToken);
+      return data;
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'OTP verification failed');
+    }
+  }
+
+  static Future<void> resendLoginOtp(String userId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/resend-otp?purpose=login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'userId': userId}),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to resend code');
     }
   }
 

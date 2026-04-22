@@ -31,7 +31,8 @@ class _PasskeyPageState extends State<PasskeyPage> {
   Future<void> _bootstrap() async {
     final supported = await _passkey.isSupported();
     final label = await _passkey.availableMethodLabel();
-    final user = _auth.getCachedUser();
+    // Always fetch fresh user data so passkeyEnabled is accurate
+    final user = await _auth.getCurrentUser(forceRefresh: true);
     final alreadyEnabled = (user?['passkeyEnabled'] as bool?) ?? false;
     if (!mounted) return;
     setState(() {
@@ -52,11 +53,20 @@ class _PasskeyPageState extends State<PasskeyPage> {
           'Confirm your identity to enable passkey on this device.',
     );
     if (!mounted) return;
-    setState(() => _isBusy = false);
     if (!result.success) {
-      setState(() => _errorMessage = result.errorMessage);
+      setState(() {
+        _isBusy = false;
+        _errorMessage = result.errorMessage;
+      });
       return;
     }
+    // Refresh user data to reflect updated passkeyEnabled flag
+    await _auth.getCurrentUser(forceRefresh: true);
+    if (!mounted) return;
+    setState(() {
+      _isBusy = false;
+      _alreadyEnabled = true;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Passkey enabled on this device.')),
     );
@@ -71,6 +81,9 @@ class _PasskeyPageState extends State<PasskeyPage> {
     });
     try {
       await _passkey.disable();
+      if (!mounted) return;
+      // Refresh user data to reflect updated passkeyEnabled flag
+      await _auth.getCurrentUser(forceRefresh: true);
       if (!mounted) return;
       setState(() {
         _alreadyEnabled = false;

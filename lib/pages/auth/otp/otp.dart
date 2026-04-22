@@ -15,10 +15,12 @@ class OtpPage extends StatefulWidget {
 
 class _OtpPageState extends State<OtpPage> {
   bool _isLoading = false;
+  bool _isResending = false;
   String? _errorMessage;
   String? _userId;
   String? _purpose;
   String? _email;
+  String? _preAuthToken;
 
   final List<TextEditingController> _otpControllers = List.generate(
     6,
@@ -36,9 +38,10 @@ class _OtpPageState extends State<OtpPage> {
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args != null) {
         setState(() {
-          _userId = args['userId'];
-          _purpose = args['purpose'];
-          _email = args['email'];
+          _userId = args['userId'] as String?;
+          _purpose = args['purpose'] as String?;
+          _email = args['email'] as String?;
+          _preAuthToken = args['preAuthToken'] as String?;
         });
       }
     });
@@ -63,11 +66,6 @@ class _OtpPageState extends State<OtpPage> {
       return;
     }
 
-    if (_userId == null) {
-      setState(() => _errorMessage = 'Missing user ID');
-      return;
-    }
-
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -75,7 +73,24 @@ class _OtpPageState extends State<OtpPage> {
 
     try {
       if (_purpose == 'verify-email') {
+        if (_userId == null) {
+          setState(() => _errorMessage = 'Missing user ID');
+          return;
+        }
         await _authService.verifyEmail(userId: _userId!, code: otp);
+        if (mounted) {
+          AppRouter.clearAndGo(context, AppRouter.home);
+        }
+      } else if (_purpose == 'login-otp' || _purpose == 'login-totp') {
+        if (_preAuthToken == null || _preAuthToken!.isEmpty) {
+          setState(() => _errorMessage = 'Missing authentication token');
+          return;
+        }
+        await _authService.verifyLoginOtp(
+          preAuthToken: _preAuthToken!,
+          code: otp,
+        );
+        await _authService.getCurrentUser(forceRefresh: true);
         if (mounted) {
           AppRouter.clearAndGo(context, AppRouter.home);
         }
@@ -90,6 +105,34 @@ class _OtpPageState extends State<OtpPage> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _handleResend() async {
+    if (_isResending) return;
+    setState(() {
+      _isResending = true;
+      _errorMessage = null;
+    });
+    try {
+      if (_purpose == 'verify-email' && _userId != null) {
+        await _authService.resendVerification(_email ?? '');
+      } else if (_purpose == 'login-otp' && _userId != null) {
+        await _authService.resendLoginOtp(_userId!);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Verification code resent.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(
+          () => _errorMessage = e.toString().replaceAll('Exception: ', ''),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isResending = false);
     }
   }
 
@@ -135,6 +178,8 @@ class _OtpPageState extends State<OtpPage> {
                     child: Text(
                       _purpose == 'verify-email'
                           ? 'Verify Email'
+                          : _purpose == 'login-totp'
+                          ? 'Authenticator Code'
                           : 'Verify OTP',
                       textAlign: TextAlign.center,
                       style: AppTextStyles.sectionLabel(context),
@@ -198,7 +243,9 @@ class _OtpPageState extends State<OtpPage> {
                     Text(
                       _purpose == 'verify-email'
                           ? 'Enter the 6-digit code sent to ${_email ?? 'your email'}'
-                          : 'Enter the verification code',
+                          : _purpose == 'login-totp'
+                          ? 'Open your authenticator app and enter the current 6-digit code'
+                          : 'Enter the 6-digit code sent to ${_email ?? 'your email'}',
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodyMedium(
                         context,
@@ -329,18 +376,28 @@ class _OtpPageState extends State<OtpPage> {
 
                     // ── Resend Link ─────────────────────────────
                     TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              // TODO: Implement resend OTP
-                            },
-                      child: Text(
-                        t.translate('resend_code'),
-                        style: AppTextStyles.bodyMedium(context).copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryPurple,
-                        ),
-                      ),
+                      onPressed:
+                          (_isLoading ||
+                                  _isResending ||
+                                  _purpose == 'login-totp')
+                              ? null
+                              : _handleResend,
+                      child: _isResending
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primaryPurple,
+                              ),
+                            )
+                          : Text(
+                              t.translate('resend_code'),
+                              style: AppTextStyles.bodyMedium(context).copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryPurple,
+                              ),
+                            ),
                     ),
 
                     const SizedBox(height: 32),

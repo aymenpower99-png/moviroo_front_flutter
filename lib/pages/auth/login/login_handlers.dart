@@ -22,8 +22,38 @@ Future<void> handleLogin({
   });
 
   try {
-    await authService.login(email: email, password: password);
-    // Pre-cache user data so profile page doesn't refetch
+    final result = await authService.login(email: email, password: password);
+
+    if (!context.mounted) return;
+
+    // 2FA OTP required — navigate to OTP page with pre-auth token
+    if (result['requiresOtp'] == true) {
+      final stage = (result['stage'] as String?) ?? 'login-otp';
+      final preAuthToken = (result['preAuthToken'] as String?) ?? '';
+      final userId = (result['userId'] as String?) ?? '';
+      batchSetState(() => setLoginLoading(false));
+      Navigator.pushNamed(context, AppRouter.otp, arguments: {
+        'purpose': stage,
+        'preAuthToken': preAuthToken,
+        'userId': userId,
+        'email': email,
+      });
+      return;
+    }
+
+    // Email verification required — navigate to OTP page
+    if (result['requiresVerification'] == true) {
+      final userId = (result['userId'] as String?) ?? '';
+      batchSetState(() => setLoginLoading(false));
+      Navigator.pushNamed(context, AppRouter.otp, arguments: {
+        'purpose': 'verify-email',
+        'userId': userId,
+        'email': email,
+      });
+      return;
+    }
+
+    // Normal login — pre-cache user data so profile page doesn't refetch
     await authService.getCurrentUser(forceRefresh: true);
     if (context.mounted) {
       AppRouter.clearAndGo(context, AppRouter.home);

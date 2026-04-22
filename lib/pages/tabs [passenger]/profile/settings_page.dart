@@ -162,8 +162,15 @@ class _SettingsPageState extends State<SettingsPage> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
+              // Show loading overlay during logout
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const _LoadingDialog(),
+              );
               await _authService.logout();
               if (mounted) {
+                Navigator.of(context, rootNavigator: true).pop();
                 AppRouter.clearAndGo(context, AppRouter.login);
               }
             },
@@ -206,7 +213,33 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-// ── Profile header with avatar letter ────────────────────────────────────────
+// ── Logout loading dialog ─────────────────────────────────────────────────────
+
+class _LoadingDialog extends StatelessWidget {
+  const _LoadingDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: AppColors.surface(context),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: AppColors.primaryPurple),
+            SizedBox(width: 20),
+            Text(
+              'Signing out…',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _ProfileHeader extends StatelessWidget {
   final String letter;

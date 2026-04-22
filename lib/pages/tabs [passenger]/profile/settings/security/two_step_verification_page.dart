@@ -34,6 +34,19 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
   }
 
   Future<void> _bootstrap() async {
+    // Show cached data immediately to avoid the 1-2s spinner
+    final cached = _authService.getCachedUser();
+    if (cached != null && mounted) {
+      setState(() {
+        _emailEnabled = (cached['is2faEnabled'] as bool?) ?? false;
+        _authAppEnabled = (cached['totpEnabled'] as bool?) ?? false;
+        _primary = twoFactorMethodFromString(
+          cached['primary2faMethod'] as String?,
+        );
+        _isBootstrapping = false;
+      });
+    }
+    // Then refresh from backend in background
     try {
       final user = await _authService.getCurrentUser(forceRefresh: true);
       if (!mounted) return;
@@ -48,7 +61,9 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        if (_isBootstrapping) {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        }
         _isBootstrapping = false;
       });
     }

@@ -81,6 +81,17 @@ class AuthService {
     required String code,
   }) => AuthAPI.verifyEmail(userId: userId, code: code);
 
+  Future<Map<String, dynamic>> verifyLoginOtp({
+    required String preAuthToken,
+    required String code,
+  }) async {
+    _cachedUser = null;
+    return AuthAPI.verifyLoginOtp(preAuthToken: preAuthToken, code: code);
+  }
+
+  Future<void> resendLoginOtp(String userId) =>
+      AuthAPI.resendLoginOtp(userId);
+
   // ─── OAuth: Google ───────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> googleSignIn() => AuthOAuth.googleSignIn();
