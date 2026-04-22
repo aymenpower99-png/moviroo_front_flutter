@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth_service.dart';
 import 'login_handlers.dart';
@@ -76,30 +77,70 @@ class _LoginPageState extends State<LoginPage> {
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 48),
-              widgets.buildLogoAndTitle(context, t),
-              const SizedBox(height: 40),
-              widgets.buildEmailField(context, t),
-              const SizedBox(height: 20),
-              widgets.buildPasswordField(context, t),
-              const SizedBox(height: 12),
-              widgets.buildForgotPasswordAndError(context, t),
-              const SizedBox(height: 16),
-              widgets.buildLoginButton(context, t),
-              const SizedBox(height: 24),
-              widgets.buildSignUpLink(context, t),
-              const SizedBox(height: 24),
-              widgets.buildSocialLogin(context, t),
-              const SizedBox(height: 32),
-            ],
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 48),
+                  widgets.buildLogoAndTitle(context, t),
+                  const SizedBox(height: 40),
+                  widgets.buildEmailField(context, t),
+                  const SizedBox(height: 20),
+                  widgets.buildPasswordField(context, t),
+                  const SizedBox(height: 12),
+                  widgets.buildForgotPasswordAndError(context, t),
+                  const SizedBox(height: 16),
+                  widgets.buildLoginButton(context, t),
+                  const SizedBox(height: 24),
+                  widgets.buildSignUpLink(context, t),
+                  const SizedBox(height: 24),
+                  widgets.buildSocialLogin(context, t),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
           ),
-        ),
+          if (_isAnyLoading)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 24,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface(context),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primaryPurple,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        t.translate('loading'),
+                        style: AppTextStyles.bodyMedium(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

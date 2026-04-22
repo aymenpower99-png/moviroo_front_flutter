@@ -25,7 +25,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   String _firstName = '';
   String _lastName = '';
-  String _email = '';
   String _phone = '';
   bool _isLoadingUser = true;
 
@@ -42,7 +41,6 @@ class _SettingsPageState extends State<SettingsPage> {
         setState(() {
           _firstName = user['firstName'] ?? '';
           _lastName = user['lastName'] ?? '';
-          _email = user['email'] ?? '';
           _phone = user['phone'] ?? '';
           _isLoadingUser = false;
         });
@@ -95,7 +93,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     _ProfileHeader(
                       letter: _avatarLetter,
                       fullName: _fullName,
-                      email: _email,
                       phone: _phone,
                       isLoading: _isLoadingUser,
                     ),
@@ -231,14 +228,12 @@ class _TopBar extends StatelessWidget {
 class _ProfileHeader extends StatelessWidget {
   final String letter;
   final String fullName;
-  final String email;
   final String phone;
   final bool isLoading;
 
   const _ProfileHeader({
     required this.letter,
     required this.fullName,
-    required this.email,
     required this.phone,
     this.isLoading = false,
   });
@@ -282,10 +277,6 @@ class _ProfileHeader extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Text(fullName, style: AppTextStyles.profileName(context)),
-        if (email.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(email, style: AppTextStyles.bodySmall(context)),
-        ],
         if (phone.isNotEmpty) ...[
           const SizedBox(height: 2),
           Text(phone, style: AppTextStyles.bodySmall(context)),

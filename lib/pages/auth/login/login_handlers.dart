@@ -23,6 +23,8 @@ Future<void> handleLogin({
 
   try {
     await authService.login(email: email, password: password);
+    // Pre-cache user data so profile page doesn't refetch
+    await authService.getCurrentUser(forceRefresh: true);
     if (context.mounted) {
       AppRouter.clearAndGo(context, AppRouter.home);
     }
@@ -51,6 +53,8 @@ Future<void> handleGoogleSignIn({
 
   try {
     await authService.googleSignIn();
+    // Pre-cache user data so profile page doesn't refetch
+    await authService.getCurrentUser(forceRefresh: true);
     if (context.mounted) {
       AppRouter.clearAndGo(context, AppRouter.home);
     }

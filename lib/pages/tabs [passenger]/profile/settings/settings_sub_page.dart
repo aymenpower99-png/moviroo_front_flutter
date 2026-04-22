@@ -4,6 +4,7 @@ import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
 import 'security_page.dart';
 import 'currency_page.dart';
+import 'security/payment_method_page.dart';
 import '../../profile/settings/privacy_terms/privacy_policy_page.dart';
 import '../../profile/settings/privacy_terms/TermsOfUsePage.dart';
 
@@ -41,11 +42,27 @@ class SettingsSubPage extends StatelessWidget {
                         MaterialPageRoute(builder: (_) => const SecurityPage()),
                       ),
                     ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Payments ───────────────────────────────────
+                    _SectionLabel(t('payments')),
+                    const SizedBox(height: 12),
+
                     _NavTile(
                       title: t('currency'),
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const CurrencyPage()),
+                      ),
+                    ),
+                    _NavTile(
+                      title: t('payment_methods'),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PaymentMethodPage(),
+                        ),
                       ),
                     ),
 
@@ -55,7 +72,7 @@ class SettingsSubPage extends StatelessWidget {
                     _SectionLabel(t('legal')),
                     const SizedBox(height: 12),
 
-                     _NavTile(
+                    _NavTile(
                       title: t('privacy_policy'),
                       onTap: () => Navigator.push(
                         context,
@@ -73,6 +90,14 @@ class SettingsSubPage extends StatelessWidget {
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 24),
+
+                    // ── About ─────────────────────────────────────
+                    _SectionLabel(t('about')),
+                    const SizedBox(height: 12),
+
+                    _NavTile(title: t('app_version'), onTap: () {}),
 
                     const SizedBox(height: 24),
                   ],

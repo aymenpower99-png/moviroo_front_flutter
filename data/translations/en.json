@@ -444,5 +444,13 @@
   "pct_to_moviroo_max": "{pct}% to Moviroo Max",
   "submit_rating": "Submit Rating",
   "report_a_problem": "Report a Problem",
-  "arrived_at_label": "Arrived at"
+  "arrived_at_label": "Arrived at",
+  "loading": "Loading…",
+  "danger_zone": "DANGER ZONE",
+  "delete_account_confirm": "This action is permanent and cannot be undone. All your data, rides, and payment info will be permanently deleted.",
+  "two_factor_authentication": "Two-Factor Authentication",
+  "about": "ABOUT",
+  "app_version": "App Version",
+  "app_info": "App Info",
+  "passkeys": "Passkeys"
 }

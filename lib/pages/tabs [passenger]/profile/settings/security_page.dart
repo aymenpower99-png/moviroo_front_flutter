@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../tabs [passenger]/profile/settings/security/auth_app_page.dart';
+import '../../../../services/auth_service.dart';
+import '../../../../routing/router.dart';
 import '../../../tabs [passenger]/profile/settings/security/password_page.dart';
 import '../../../tabs [passenger]/profile/settings/security/two_step_verification_page.dart';
-import '../../../tabs [passenger]/profile/settings/security/payment_method_page.dart';
 
 class SecurityPage extends StatelessWidget {
   const SecurityPage({super.key});
@@ -28,6 +28,7 @@ class SecurityPage extends StatelessWidget {
                   children: [
                     const SizedBox(height: 8),
 
+                    // ── Security ───────────────────────────────────
                     _SecurityNavTile(
                       title: t('Password'),
                       onTap: () => Navigator.push(
@@ -36,14 +37,7 @@ class SecurityPage extends StatelessWidget {
                       ),
                     ),
                     _SecurityNavTile(
-                      title: t('Authentication App'),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const AuthAppPage()),
-                      ),
-                    ),
-                    _SecurityNavTile(
-                      title: t('2-Step Verification'),
+                      title: t('two_factor_authentication'),
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -52,13 +46,15 @@ class SecurityPage extends StatelessWidget {
                       ),
                     ),
                     _SecurityNavTile(
-                      title: t('Payment Methods'),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const PaymentMethodPage(),
-                        ),
-                      ),
+                      title: t('passkeys'),
+                      onTap: () {
+                        // TODO: navigate to passkeys page
+                      },
+                    ),
+                    _SecurityNavTile(
+                      title: t('delete_account'),
+                      isDestructive: true,
+                      onTap: () => _confirmDeleteAccount(context),
                     ),
 
                     const SizedBox(height: 24),
@@ -71,6 +67,50 @@ class SecurityPage extends StatelessWidget {
       ),
     );
   }
+
+  void _confirmDeleteAccount(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface(context),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          t('delete_account'),
+          style: AppTextStyles.bodyLarge(
+            context,
+          ).copyWith(color: AppColors.error),
+        ),
+        content: Text(
+          t('delete_account_confirm'),
+          style: AppTextStyles.bodySmall(context),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              t('cancel'),
+              style: TextStyle(color: AppColors.subtext(context)),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              // TODO: Call delete account API
+              await AuthService().logout();
+              if (context.mounted) {
+                AppRouter.clearAndGo(context, AppRouter.login);
+              }
+            },
+            child: Text(
+              t('delete'),
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ── Simple nav tile — title + chevron, no icon, no subtitle ──────────────────
@@ -78,11 +118,18 @@ class SecurityPage extends StatelessWidget {
 class _SecurityNavTile extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
+  final bool isDestructive;
 
-  const _SecurityNavTile({required this.title, required this.onTap});
+  const _SecurityNavTile({
+    required this.title,
+    required this.onTap,
+    this.isDestructive = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final color = isDestructive ? AppColors.error : null;
+
     return Column(
       children: [
         GestureDetector(
@@ -93,10 +140,15 @@ class _SecurityNavTile extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: AppTextStyles.settingsItem(context)),
+                Text(
+                  title,
+                  style: AppTextStyles.settingsItem(
+                    context,
+                  ).copyWith(color: color),
+                ),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: AppColors.subtext(context),
+                  color: color ?? AppColors.subtext(context),
                   size: 20,
                 ),
               ],

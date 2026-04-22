@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -40,14 +39,22 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
         SnackBar(
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.primaryPurple,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           content: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
               const SizedBox(width: 10),
               Text(
                 t('profile_updated'),
-                style: AppTextStyles.bodyMedium(context).copyWith(color: Colors.white),
+                style: AppTextStyles.bodyMedium(
+                  context,
+                ).copyWith(color: Colors.white),
               ),
             ],
           ),
@@ -68,7 +75,9 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: PersonalDataTopBar(onBack: () => Navigator.maybePop(context)),
+              child: PersonalDataTopBar(
+                onBack: () => Navigator.maybePop(context),
+              ),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -78,11 +87,18 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Center(child: AvatarSection()),
+                      Center(
+                        child: AvatarSection(
+                          letter: _ctrl.firstName.text.isNotEmpty
+                              ? _ctrl.firstName.text[0].toUpperCase()
+                              : '?',
+                        ),
+                      ),
                       const SizedBox(height: 32),
 
                       SectionLabel(t('personal_details')),
                       const SizedBox(height: 12),
+
                       FieldCard(
                         children: [
                           FieldTile(
@@ -92,29 +108,46 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                                 ? t('first_name_required')
                                 : null,
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      FieldCard(
+                        children: [
                           FieldTile(
                             label: t('last_name'),
                             controller: _ctrl.lastName,
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      FieldCard(
+                        children: [
                           FieldTile(
                             label: t('email_address'),
                             controller: _ctrl.email,
                             keyboardType: TextInputType.emailAddress,
                             validator: (v) {
-                              if (v == null || v.trim().isEmpty) return t('email_required');
-                              if (!RegExp(r'^[\w.]+@[\w]+\.[a-z]+$').hasMatch(v.trim())) {
+                              if (v == null || v.trim().isEmpty)
+                                return t('email_required');
+                              if (!RegExp(
+                                r'^[\w.]+@[\w]+\.[a-z]+$',
+                              ).hasMatch(v.trim())) {
                                 return t('email_invalid');
                               }
                               return null;
                             },
                           ),
-                          FieldTile(
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      FieldCard(
+                        children: [
+                          PhoneFieldTile(
                             label: t('phone_number'),
                             controller: _ctrl.phone,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s\-]')),
-                            ],
                           ),
                         ],
                       ),
@@ -125,9 +158,6 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                         hasChanges: _ctrl.hasChanges,
                         onPressed: _save,
                       ),
-
-                      const SizedBox(height: 24),
-                      const DangerSection(),
                     ],
                   ),
                 ),

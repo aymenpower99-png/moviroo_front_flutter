@@ -5,6 +5,120 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Phone Field Tile (with flag + +216 prefix)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class PhoneFieldTile extends StatefulWidget {
+  final String label;
+  final TextEditingController controller;
+
+  const PhoneFieldTile({
+    super.key,
+    required this.label,
+    required this.controller,
+  });
+
+  @override
+  State<PhoneFieldTile> createState() => _PhoneFieldTileState();
+}
+
+class _PhoneFieldTileState extends State<PhoneFieldTile> {
+  late final FocusNode _focus;
+  bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus = FocusNode()
+      ..addListener(() => setState(() => _focused = _focus.hasFocus));
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppColors.border(context), width: 1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.label,
+            style: AppTextStyles.settingsItemValue(context).copyWith(
+              color: _focused
+                  ? AppColors.primaryPurple
+                  : AppColors.subtext(context),
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Image.asset(
+                'images/flags/tunisia.png',
+                width: 24,
+                height: 16,
+                fit: BoxFit.cover,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '+216',
+                style: AppTextStyles.settingsItem(
+                  context,
+                ).copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextFormField(
+                  controller: widget.controller,
+                  focusNode: _focus,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  cursorColor: AppColors.primaryPurple,
+                  style: AppTextStyles.settingsItem(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    hintText: '12345678',
+                    hintStyle: AppTextStyles.settingsItem(context).copyWith(
+                      color: AppColors.subtext(context).withValues(alpha: 0.4),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ),
+              if (_focused)
+                const Icon(
+                  Icons.edit_rounded,
+                  color: AppColors.primaryPurple,
+                  size: 14,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Top Bar
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -29,7 +143,11 @@ class PersonalDataTopBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.border(context)),
             ),
-            child: Icon(Icons.chevron_left_rounded, color: AppColors.text(context), size: 22),
+            child: Icon(
+              Icons.chevron_left_rounded,
+              color: AppColors.text(context),
+              size: 22,
+            ),
           ),
         ),
         Expanded(
@@ -50,66 +168,36 @@ class PersonalDataTopBar extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AvatarSection extends StatelessWidget {
-  const AvatarSection({super.key});
+  final String letter;
+
+  const AvatarSection({super.key, required this.letter});
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context).translate;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Column(
-      children: [
-        Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Color(0xFFBB6BD9), AppColors.primaryPurple],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(2.5),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.iconBg(context),
-                  ),
-                  child: ClipOval(
-                    child: Icon(
-                      Icons.person,
-                      color: AppColors.primaryPurple,
-                      size: 52,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
+    return Container(
+      width: 82,
+      height: 82,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.primaryPurple, width: 2.5),
+      ),
+      child: ClipOval(
+        child: Container(
+          color: isDark ? const Color(0xFF2A1A3E) : const Color(0xFFEDE7F6),
+          child: Center(
+            child: Text(
+              letter,
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.w700,
                 color: AppColors.primaryPurple,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.bg(context), width: 2),
-              ),
-              child: const Icon(
-                Icons.camera_alt_rounded,
-                color: Colors.white,
-                size: 14,
               ),
             ),
-          ],
+          ),
         ),
-        const SizedBox(height: 14),
-        Text(t('profile_photo'), style: AppTextStyles.profileName(context)),
-        const SizedBox(height: 4),
-        Text(t('tap_to_change_photo'), style: AppTextStyles.bodySmall(context)),
-      ],
+      ),
     );
   }
 }
@@ -205,7 +293,9 @@ class _FieldTileState extends State<FieldTile> {
           Text(
             widget.label,
             style: AppTextStyles.settingsItemValue(context).copyWith(
-              color: _focused ? AppColors.primaryPurple : AppColors.subtext(context),
+              color: _focused
+                  ? AppColors.primaryPurple
+                  : AppColors.subtext(context),
               fontWeight: FontWeight.w500,
               fontSize: 12,
             ),
@@ -221,9 +311,9 @@ class _FieldTileState extends State<FieldTile> {
                   inputFormatters: widget.inputFormatters,
                   validator: widget.validator,
                   cursorColor: AppColors.primaryPurple,
-                  style: AppTextStyles.settingsItem(context).copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.settingsItem(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w600),
                   decoration: InputDecoration(
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
@@ -232,7 +322,8 @@ class _FieldTileState extends State<FieldTile> {
                     focusedBorder: InputBorder.none,
                     errorBorder: InputBorder.none,
                     focusedErrorBorder: InputBorder.none,
-                    hintText: '${t('add_prefix')} ${widget.label.toLowerCase()}',
+                    hintText:
+                        '${t('add_prefix')} ${widget.label.toLowerCase()}',
                     hintStyle: AppTextStyles.settingsItem(context).copyWith(
                       color: AppColors.subtext(context).withValues(alpha: 0.4),
                       fontWeight: FontWeight.w400,
@@ -246,7 +337,11 @@ class _FieldTileState extends State<FieldTile> {
                 ),
               ),
               if (_focused)
-                const Icon(Icons.edit_rounded, color: AppColors.primaryPurple, size: 14),
+                const Icon(
+                  Icons.edit_rounded,
+                  color: AppColors.primaryPurple,
+                  size: 14,
+                ),
             ],
           ),
         ],

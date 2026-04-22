@@ -179,28 +179,16 @@ class AuthAPI {
   }
 
   static Future<Map<String, dynamic>?> getCurrentUser() async {
-    final accessToken = await AuthStorage.getAccessToken();
-    if (accessToken == null) return null;
+    final isLoggedIn = await AuthStorage.isLoggedIn();
+    if (!isLoggedIn) return null;
 
-    final response = await http.get(
-      Uri.parse('$baseUrl/auth/me'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else if (response.statusCode == 401) {
-      // Token expired, try refresh
-      final refreshed = await refreshTokens();
-      if (refreshed != null) {
-        return getCurrentUser();
+    try {
+      final response = await AuthHTTP.authenticatedGet('/auth/me');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
       }
-      await AuthStorage.clearTokens();
       return null;
-    } else {
+    } catch (_) {
       return null;
     }
   }
