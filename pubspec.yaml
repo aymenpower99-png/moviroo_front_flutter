@@ -26,8 +26,12 @@ dependencies:
   maplibre_gl: ^0.25.0 # MapLibre GL for real map rendering
   socket_io_client: ^2.0.3+1 # WebSocket for live driver tracking
   flutter_secure_storage: ^9.2.2 # JWT token storage
+  google_sign_in: ^6.2.1 # Google OAuth
+  sign_in_with_apple: ^6.1.0 # Apple Sign-In
   url_launcher: ^6.3.1 # Phone dialer
   http: ^1.2.0 # HTTP client for API calls
+  firebase_core: ^4.7.0
+  app_links: ^6.3.3 # Deep link handling
 
 dev_dependencies:
   flutter_test:
@@ -100,6 +104,7 @@ flutter:
     - images/flags/china.png
     - images/flags/japan.png
     - images/flags/russia.png
+    - images/flags/tunisia.png
     - images/icons/chat.png
     - images/icons/phone-call.png
     - images/icons/warning.png

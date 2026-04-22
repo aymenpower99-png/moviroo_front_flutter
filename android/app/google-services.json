@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "72379381319",
+    "project_id": "moviroo-system",
+    "storage_bucket": "moviroo-system.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:72379381319:android:1e0d000500de7c4c09e362",
+        "android_client_info": {
+          "package_name": "com.example.moviroo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "72379381319-u35h630eiqgjubdifbbfkdva7ck0vhoj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.moviroo",
+            "certificate_hash": "841a15a1744edcf71ce405e3af87e9d38f13ee6f"
+          }
+        },
+        {
+          "client_id": "72379381319-ih8u29beod1to7bjb7tnvpfs5i2p375v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMzIegm_mDgxyGfRD0mwtSV4_4zkfxAQE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "72379381319-ih8u29beod1to7bjb7tnvpfs5i2p375v.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "72379381319-1d4gdeitat97gjd5ai46o2b37h3d3poq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.movirooDriverApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:72379381319:android:5eb7a279fece6e9009e362",
+        "android_client_info": {
+          "package_name": "com.example.moviroo_driver_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "72379381319-ih8u29beod1to7bjb7tnvpfs5i2p375v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMzIegm_mDgxyGfRD0mwtSV4_4zkfxAQE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "72379381319-ih8u29beod1to7bjb7tnvpfs5i2p375v.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "72379381319-1d4gdeitat97gjd5ai46o2b37h3d3poq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.movirooDriverApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

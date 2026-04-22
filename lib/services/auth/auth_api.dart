@@ -1,0 +1,207 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../core/config/app_config.dart';
+import 'auth_storage.dart';
+import 'auth_oauth.dart';
+import 'auth_http.dart';
+
+class AuthAPI {
+  static const String baseUrl = AppConfig.baseUrl;
+
+  static Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      // If email verification required, don't save tokens
+      if (data['requiresVerification'] == true) {
+        return data;
+      }
+      await AuthStorage.saveTokens(data['accessToken'], data['refreshToken']);
+      return data;
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Login failed');
+    }
+  }
+
+  static Future<Map<String, dynamic>> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    String? phone,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'firstName': firstName,
+        'lastName': lastName,
+        'email': email,
+        'password': password,
+        if (phone != null) 'phone': phone,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Registration failed');
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyEmail({
+    required String userId,
+    required String code,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/verify-email'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'userId': userId, 'code': code}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      await AuthStorage.saveTokens(data['accessToken'], data['refreshToken']);
+      return data;
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Verification failed');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? phone,
+  }) async {
+    final response = await AuthHTTP.authenticatedPatch('/auth/me', {
+      if (firstName != null) 'firstName': firstName,
+      if (lastName != null) 'lastName': lastName,
+      if (phone != null) 'phone': phone,
+    });
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Profile update failed');
+    }
+  }
+
+  static Future<void> forgotPassword(String email) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/forgot-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to send reset email');
+    }
+  }
+
+  static Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/reset-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'token': token, 'newPassword': newPassword}),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Password reset failed');
+    }
+  }
+
+  static Future<Map<String, dynamic>?> refreshTokens() async {
+    final refreshToken = await AuthStorage.getRefreshToken();
+    if (refreshToken == null) return null;
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/refresh'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $refreshToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      await AuthStorage.saveTokens(data['accessToken'], data['refreshToken']);
+      return data;
+    } else {
+      await AuthStorage.clearTokens();
+      return null;
+    }
+  }
+
+  static Future<void> resendVerification(String email) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/resend-verification'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to resend verification');
+    }
+  }
+
+  static Future<void> logout() async {
+    final accessToken = await AuthStorage.getAccessToken();
+    if (accessToken != null) {
+      await http.post(
+        Uri.parse('$baseUrl/auth/logout'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+      );
+    }
+    await AuthStorage.clearTokens();
+    // Sign out from Google to force account selection on next login
+    await AuthOAuth.signOutGoogle();
+  }
+
+  static Future<Map<String, dynamic>?> getCurrentUser() async {
+    final accessToken = await AuthStorage.getAccessToken();
+    if (accessToken == null) return null;
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/auth/me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      // Token expired, try refresh
+      final refreshed = await refreshTokens();
+      if (refreshed != null) {
+        return getCurrentUser();
+      }
+      await AuthStorage.clearTokens();
+      return null;
+    } else {
+      return null;
+    }
+  }
+}

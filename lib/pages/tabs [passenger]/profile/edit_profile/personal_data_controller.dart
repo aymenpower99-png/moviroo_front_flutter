@@ -1,37 +1,65 @@
 import 'package:flutter/material.dart';
+import '../../../../services/auth_service.dart';
 
 /// Holds all state and logic for the PersonalDataPage.
 /// Keeps the page widget thin and testable.
 class PersonalDataController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final AuthService _authService = AuthService();
 
-  final TextEditingController firstName = TextEditingController(text: 'Hamza');
-  final TextEditingController lastName  = TextEditingController(text: '');
-  final TextEditingController email     = TextEditingController(text: 'hamza@example.com');
-  final TextEditingController phone     = TextEditingController(text: '+212 929 698 05');
+  final TextEditingController firstName = TextEditingController();
+  final TextEditingController lastName = TextEditingController();
+  final TextEditingController email = TextEditingController();
+  final TextEditingController phone = TextEditingController();
 
   List<TextEditingController> get _all => [firstName, lastName, email, phone];
 
-  bool isSaving   = false;
+  bool isSaving = false;
   bool hasChanges = false;
+  bool isLoading = true;
 
   /// Call in initState — pass setState so listeners can trigger rebuilds.
-  void init(VoidCallback setState) {
+  void init(VoidCallback setState) async {
     for (final c in _all) {
       c.addListener(() => setState());
     }
+    await _loadUser();
+    setState();
   }
 
-  
+  Future<void> _loadUser() async {
+    try {
+      final user = await _authService.getCurrentUser();
+      if (user != null) {
+        firstName.text = user['firstName'] ?? '';
+        lastName.text = user['lastName'] ?? '';
+        email.text = user['email'] ?? '';
+        phone.text = user['phone'] ?? '';
+      }
+    } catch (_) {
+      // Keep empty fields on error
+    } finally {
+      isLoading = false;
+    }
+  }
 
   /// Returns true if save succeeded.
   Future<bool> save() async {
     if (!formKey.currentState!.validate()) return false;
     isSaving = true;
-    await Future.delayed(const Duration(milliseconds: 900));
-    isSaving    = false;
-    hasChanges  = false;
-    return true;
+    try {
+      await _authService.updateProfile(
+        firstName: firstName.text.trim(),
+        lastName: lastName.text.trim(),
+        phone: phone.text.trim(),
+      );
+      hasChanges = false;
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      isSaving = false;
+    }
   }
 
   void dispose() {

@@ -1,17 +1,24 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:app_links/app_links.dart';
 import 'routing/router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
 import 'theme/locale_provider.dart';
 import 'l10n/app_localizations.dart';
+import 'core/firebase/firebase_service.dart';
+import 'services/auth_service.dart';
 
 final themeProvider = ThemeProvider();
 final localeProvider = LocaleProvider();
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseService.initialize();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -31,6 +38,52 @@ class SmartWayApp extends StatefulWidget {
 
 class _SmartWayAppState extends State<SmartWayApp> {
   int _restartCount = 0;
+  StreamSubscription? _linkSubscription;
+  final AuthService _authService = AuthService();
+  final _appLinks = AppLinks();
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _initDeepLinks() async {
+    if (Platform.isAndroid || Platform.isIOS) {
+      _linkSubscription = _appLinks.uriLinkStream.listen(
+        (Uri uri) {
+          _handleDeepLink(uri);
+        },
+        onError: (err) {
+          print('Deep link error: $err');
+        },
+      );
+    }
+  }
+
+  void _handleDeepLink(Uri? uri) {
+    if (uri == null) return;
+
+    if (uri.scheme == 'moviroo' && uri.path == '/auth/callback') {
+      final accessToken = uri.queryParameters['accessToken'];
+      final refreshToken = uri.queryParameters['refreshToken'];
+
+      if (accessToken != null && refreshToken != null) {
+        _authService.saveTokens(accessToken, refreshToken);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            AppRouter.clearAndGo(context, AppRouter.home);
+          }
+        });
+      }
+    }
+  }
 
   void restartApp() => setState(() => _restartCount++);
 

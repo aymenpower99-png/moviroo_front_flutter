@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'onboarding_step_1.dart';
 import 'onboarding_step_2.dart';
 import 'onboarding_step_3.dart';
-import '../auth/login_page.dart';
+import '../auth/login/login_page.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
