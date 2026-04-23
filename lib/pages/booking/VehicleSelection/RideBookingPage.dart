@@ -6,7 +6,6 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../models/vehicle_pricing_response.dart';
 import '../../../../services/vehicle_pricing_service.dart';
 import '_CarCard.dart';
-import '_ClassFilterBar.dart';
 
 class RideBookingPage extends StatefulWidget {
   final double pickupLat;
@@ -34,7 +33,6 @@ class _RideBookingPageState extends State<RideBookingPage> {
   // ignore: unused_field
   mbx.MapboxMap? _mapboxMap; // Will be used for markers and polyline
   int _selectedCarIndex = 0;
-  String _selectedClass = 'All';
   VehiclePricingResponse? _pricingResponse;
   bool _isLoadingPrices = true;
 
@@ -76,7 +74,7 @@ class _RideBookingPageState extends State<RideBookingPage> {
       return [];
     }
 
-    final allCars = _pricingResponse!.vehicleClasses
+    return _pricingResponse!.vehicleClasses
         .map(
           (vc) => CarOption(
             name: vc.name,
@@ -89,13 +87,6 @@ class _RideBookingPageState extends State<RideBookingPage> {
             classCategory: 'All',
             badge: '',
           ),
-        )
-        .toList();
-
-    if (_selectedClass == 'All') return allCars;
-    return allCars
-        .where(
-          (c) => c.classCategory.toLowerCase() == _selectedClass.toLowerCase(),
         )
         .toList();
   }
@@ -165,11 +156,10 @@ class _RideBookingPageState extends State<RideBookingPage> {
 
           // ── Bottom sheet ─────────────────────────────────
           DraggableScrollableSheet(
-            initialChildSize: 0.55,
-            minChildSize: 0.30,
-            maxChildSize: 0.93,
-            snap: true,
-            snapSizes: const [0.30, 0.55, 0.93],
+            initialChildSize: 0.25,
+            minChildSize: 0.20,
+            maxChildSize: 0.85,
+            snap: false,
             builder: (context, scrollController) {
               return Container(
                 decoration: BoxDecoration(
@@ -188,11 +178,7 @@ class _RideBookingPageState extends State<RideBookingPage> {
                 child: Column(
                   children: [
                     // ── Non-scrolling sticky header ──────────
-                    _SheetHeader(
-                      selectedClass: _selectedClass,
-                      onClassSelected: (c) =>
-                          setState(() => _selectedClass = c),
-                    ),
+                    _SheetHeader(),
 
                     // ── Scrollable car list ─────────────────
                     Expanded(
@@ -343,15 +329,9 @@ class _LocationCard extends StatelessWidget {
   }
 }
 
-// ── Sheet Header (drag handle + title + filter) ───────────────────────────────
+// ── Sheet Header (drag handle + title) ───────────────────────────────────────
 class _SheetHeader extends StatelessWidget {
-  final String selectedClass;
-  final ValueChanged<String> onClassSelected;
-
-  const _SheetHeader({
-    required this.selectedClass,
-    required this.onClassSelected,
-  });
+  const _SheetHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -382,13 +362,6 @@ class _SheetHeader extends StatelessWidget {
               context,
             ).copyWith(fontSize: 18, fontWeight: FontWeight.w700),
           ),
-        ),
-        const SizedBox(height: 14),
-
-        // Filter chips
-        ClassFilterBar(
-          selectedClass: selectedClass,
-          onClassSelected: onClassSelected,
         ),
         const SizedBox(height: 8),
 
