@@ -98,6 +98,8 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
         if (!mounted) return;
         setState(() {
           _emailEnabled = (result['is2faEnabled'] as bool?) ?? true;
+          // One-method-at-a-time: enabling email also disables TOTP on the backend.
+          _authAppEnabled = (result['totpEnabled'] as bool?) ?? false;
           _primary = twoFactorMethodFromString(
             result['primary2faMethod'] as String?,
           );
@@ -140,8 +142,26 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
       );
       if (!mounted) return;
       if (result == true) {
-        // Pull fresh flags so we also learn the new primary method.
-        await _bootstrap();
+        // One-method-at-a-time: TOTP is now active, email is off, TOTP is primary.
+        // Apply immediately — no spinner — then reconcile silently with backend.
+        setState(() {
+          _authAppEnabled = true;
+          _emailEnabled = false;
+          _primary = TwoFactorMethod.totp;
+          _errorMessage = null;
+        });
+        _authService.getCurrentUser(forceRefresh: true).then((user) {
+          if (!mounted || user == null) return;
+          setState(() {
+            _authAppEnabled = (user['totpEnabled'] as bool?) ?? true;
+            _emailEnabled = (user['is2faEnabled'] as bool?) ?? false;
+            _primary =
+                twoFactorMethodFromString(
+                  user['primary2faMethod'] as String?,
+                ) ??
+                TwoFactorMethod.totp;
+          });
+        }).catchError((_) {});
       }
     } else {
       setState(() {

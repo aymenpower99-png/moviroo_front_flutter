@@ -23,6 +23,11 @@ class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _firstNameFocus = FocusNode();
+  final _lastNameFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _phoneFocus = FocusNode();
+  final _passwordFocus = FocusNode();
   final AuthService _authService = AuthService();
 
   @override
@@ -43,6 +48,11 @@ class _SignUpPageState extends State<SignUpPage> {
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _firstNameFocus.dispose();
+    _lastNameFocus.dispose();
+    _emailFocus.dispose();
+    _phoneFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -115,30 +125,32 @@ class _SignUpPageState extends State<SignUpPage> {
     required IconData prefixIcon,
     Widget? suffix,
     Widget? prefix,
+    FocusNode? focusNode,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
       hintText: hint,
       hintStyle: AppTextStyles.bodyMedium(
         context,
       ).copyWith(color: AppColors.subtext(context)),
       prefixIcon:
-          prefix ?? Icon(prefixIcon, color: AppColors.text(context), size: 20),
+          prefix ??
+          Icon(
+            prefixIcon,
+            color: focusNode?.hasFocus ?? false
+                ? AppColors.primaryPurple
+                : AppColors.text(context),
+          ),
       suffixIcon: suffix,
       filled: true,
       fillColor: AppColors.surface(context),
       isDense: true,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: isDark
-            ? BorderSide.none
-            : BorderSide(color: AppColors.border(context)),
+        borderSide: BorderSide(color: AppColors.border(context)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: isDark
-            ? BorderSide.none
-            : BorderSide(color: AppColors.border(context)),
+        borderSide: BorderSide(color: AppColors.border(context)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -155,42 +167,74 @@ class _SignUpPageState extends State<SignUpPage> {
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 48),
+        child: Column(
+          children: [
+            // ── Top bar with back button ───────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.maybePop(context),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface(context),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.border(context)),
+                      ),
+                      child: Icon(
+                        Icons.chevron_left_rounded,
+                        color: AppColors.text(context),
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 24),
 
-              _buildLogoAndTitle(context, t),
+                    _buildLogoAndTitle(context, t),
 
-              const SizedBox(height: 36),
+                    const SizedBox(height: 36),
 
-              _buildNameFields(context, t),
+                    _buildNameFields(context, t),
 
-              const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-              _buildEmailField(context, t),
+                    _buildEmailField(context, t),
 
-              const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-              _buildPhoneField(context, t),
+                    _buildPhoneField(context, t),
 
-              const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-              _buildPasswordField(context, t),
+                    _buildPasswordField(context, t),
 
-              const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-              _buildErrorAndButton(context, t),
+                    _buildErrorAndButton(context, t),
 
-              const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-              _buildSignInLink(context, t),
+                    _buildSignInLink(context, t),
 
-              const SizedBox(height: 32),
-            ],
-          ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -244,18 +288,16 @@ class _SignUpPageState extends State<SignUpPage> {
             children: [
               _label(context, t.translate('label_first_name')),
               const SizedBox(height: 8),
-              SizedBox(
-                height: 56,
-                child: TextField(
-                  controller: _firstNameController,
-                  cursorColor: AppColors.subtext(context),
-                  textCapitalization: TextCapitalization.words,
-                  style: AppTextStyles.bodyMedium(context),
-                  decoration: _fieldDecoration(
-                    context,
-                    hint: 'John',
-                    prefixIcon: Icons.person_outline,
-                  ),
+              TextField(
+                controller: _firstNameController,
+                focusNode: _firstNameFocus,
+                textCapitalization: TextCapitalization.words,
+                onTap: () => setState(() {}),
+                decoration: _fieldDecoration(
+                  context,
+                  hint: 'John',
+                  prefixIcon: Icons.person_outline,
+                  focusNode: _firstNameFocus,
                 ),
               ),
             ],
@@ -268,18 +310,16 @@ class _SignUpPageState extends State<SignUpPage> {
             children: [
               _label(context, t.translate('label_last_name')),
               const SizedBox(height: 8),
-              SizedBox(
-                height: 56,
-                child: TextField(
-                  controller: _lastNameController,
-                  cursorColor: AppColors.subtext(context),
-                  textCapitalization: TextCapitalization.words,
-                  style: AppTextStyles.bodyMedium(context),
-                  decoration: _fieldDecoration(
-                    context,
-                    hint: 'Doe',
-                    prefixIcon: Icons.person_outline,
-                  ),
+              TextField(
+                controller: _lastNameController,
+                focusNode: _lastNameFocus,
+                textCapitalization: TextCapitalization.words,
+                onTap: () => setState(() {}),
+                decoration: _fieldDecoration(
+                  context,
+                  hint: 'Doe',
+                  prefixIcon: Icons.person_outline,
+                  focusNode: _lastNameFocus,
                 ),
               ),
             ],
@@ -294,18 +334,16 @@ class _SignUpPageState extends State<SignUpPage> {
       children: [
         _label(context, t.translate('label_email_address')),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 56,
-          child: TextField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            cursorColor: AppColors.subtext(context),
-            style: AppTextStyles.bodyMedium(context),
-            decoration: _fieldDecoration(
-              context,
-              hint: t.translate('hint_email'),
-              prefixIcon: Icons.email_outlined,
-            ),
+        TextField(
+          controller: _emailController,
+          focusNode: _emailFocus,
+          keyboardType: TextInputType.emailAddress,
+          onTap: () => setState(() {}),
+          decoration: _fieldDecoration(
+            context,
+            hint: t.translate('hint_email'),
+            prefixIcon: Icons.email_outlined,
+            focusNode: _emailFocus,
           ),
         ),
       ],
@@ -317,65 +355,65 @@ class _SignUpPageState extends State<SignUpPage> {
       children: [
         _label(context, t.translate('label_phone_number')),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 56,
-          child: TextField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            cursorColor: AppColors.subtext(context),
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(8),
-            ],
-            style: AppTextStyles.bodyMedium(context),
-            decoration: InputDecoration(
-              hintText: '12345678',
-              hintStyle: AppTextStyles.bodyMedium(
-                context,
-              ).copyWith(color: AppColors.subtext(context)),
-              prefixIcon: Container(
-                margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      'images/flags/tunisia.png',
-                      width: 24,
-                      height: 16,
-                      fit: BoxFit.cover,
+        TextField(
+          controller: _phoneController,
+          focusNode: _phoneFocus,
+          keyboardType: TextInputType.phone,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(8),
+          ],
+          onTap: () => setState(() {}),
+          decoration: InputDecoration(
+            hintText: '12345678',
+            hintStyle: AppTextStyles.bodyMedium(
+              context,
+            ).copyWith(color: AppColors.subtext(context)),
+            prefixIcon: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'images/flags/tunisia.png',
+                    width: 24,
+                    height: 16,
+                    fit: BoxFit.cover,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '+216',
+                    style: AppTextStyles.bodyMedium(context).copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: _phoneFocus.hasFocus
+                          ? AppColors.primaryPurple
+                          : AppColors.text(context),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '+216',
-                      style: AppTextStyles.bodyMedium(
-                        context,
-                      ).copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              filled: true,
-              fillColor: AppColors.surface(context),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            filled: true,
+            fillColor: AppColors.surface(context),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColors.primaryPurple,
+                width: 1.5,
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColors.border(context)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: AppColors.primaryPurple,
-                  width: 1.5,
-                ),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
             ),
           ),
         ),
@@ -389,30 +427,25 @@ class _SignUpPageState extends State<SignUpPage> {
       children: [
         _label(context, t.translate('label_password')),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 56,
-          child: TextField(
-            controller: _passwordController,
-            obscureText: _obscurePassword,
-            cursorColor: AppColors.subtext(context),
-            style: AppTextStyles.bodyMedium(context),
-            decoration: _fieldDecoration(
-              context,
-              hint: '••••••••',
-              prefixIcon: Icons.lock_outline,
-              suffix: IconButton(
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: AppColors.text(context),
-                  size: 20,
-                ),
-                onPressed: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
-                constraints: const BoxConstraints(),
-                padding: EdgeInsets.zero,
+        TextField(
+          controller: _passwordController,
+          focusNode: _passwordFocus,
+          obscureText: _obscurePassword,
+          onTap: () => setState(() {}),
+          decoration: _fieldDecoration(
+            context,
+            hint: '••••••••',
+            prefixIcon: Icons.lock_outline_rounded,
+            focusNode: _passwordFocus,
+            suffix: IconButton(
+              icon: Icon(
+                _obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: AppColors.subtext(context),
               ),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
         ),

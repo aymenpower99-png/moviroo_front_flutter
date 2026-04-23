@@ -8,23 +8,29 @@ InputDecoration fieldDecoration(
   required String hint,
   required IconData prefixIcon,
   Widget? suffix,
+  FocusNode? focusNode,
 }) {
   return InputDecoration(
     hintText: hint,
     hintStyle: AppTextStyles.bodyMedium(
       context,
     ).copyWith(color: AppColors.subtext(context)),
-    prefixIcon: Icon(prefixIcon, color: AppColors.primaryPurple, size: 20),
+    prefixIcon: Icon(
+      prefixIcon,
+      color: focusNode?.hasFocus ?? false
+          ? AppColors.primaryPurple
+          : AppColors.text(context),
+    ),
     suffixIcon: suffix,
     filled: true,
     fillColor: AppColors.surface(context),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: AppColors.primaryPurple),
+      borderSide: BorderSide(color: AppColors.border(context)),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: AppColors.primaryPurple),
+      borderSide: BorderSide(color: AppColors.border(context)),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
@@ -72,6 +78,9 @@ class LoginWidgets {
   final VoidCallback togglePassword;
   final Future<void> Function()? onLogin;
   final Future<void> Function()? onGoogleSignIn;
+  final FocusNode emailFocus;
+  final FocusNode passwordFocus;
+  final VoidCallback setState;
 
   LoginWidgets({
     required this.obscurePassword,
@@ -83,6 +92,9 @@ class LoginWidgets {
     required this.togglePassword,
     required this.onLogin,
     required this.onGoogleSignIn,
+    required this.emailFocus,
+    required this.passwordFocus,
+    required this.setState,
   });
 
   Widget buildLogoAndTitle(BuildContext context, AppLocalizations t) {
@@ -117,18 +129,16 @@ class LoginWidgets {
       children: [
         label(context, t.translate('label_email_address')),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 56,
-          child: TextField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
-            cursorColor: AppColors.subtext(context),
-            style: AppTextStyles.bodyMedium(context),
-            decoration: fieldDecoration(
-              context,
-              hint: t.translate('hint_email'),
-              prefixIcon: Icons.email_outlined,
-            ),
+        TextField(
+          controller: emailController,
+          focusNode: emailFocus,
+          keyboardType: TextInputType.emailAddress,
+          onTap: () => setState(),
+          decoration: fieldDecoration(
+            context,
+            hint: t.translate('hint_email'),
+            prefixIcon: Icons.email_outlined,
+            focusNode: emailFocus,
           ),
         ),
       ],
@@ -140,29 +150,24 @@ class LoginWidgets {
       children: [
         label(context, t.translate('label_password')),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 56,
-          child: TextField(
-            controller: passwordController,
-            obscureText: obscurePassword,
-            cursorColor: AppColors.subtext(context),
-            style: AppTextStyles.bodyMedium(context),
-            decoration: fieldDecoration(
-              context,
-              hint: '••••••••',
-              prefixIcon: Icons.lock_outline,
-              suffix: IconButton(
-                icon: Icon(
-                  obscurePassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: AppColors.text(context),
-                  size: 20,
-                ),
-                onPressed: togglePassword,
-                constraints: const BoxConstraints(),
-                padding: EdgeInsets.zero,
+        TextField(
+          controller: passwordController,
+          focusNode: passwordFocus,
+          obscureText: obscurePassword,
+          onTap: () => setState(),
+          decoration: fieldDecoration(
+            context,
+            hint: '••••••••',
+            prefixIcon: Icons.lock_outline_rounded,
+            focusNode: passwordFocus,
+            suffix: IconButton(
+              icon: Icon(
+                obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: AppColors.subtext(context),
               ),
+              onPressed: togglePassword,
             ),
           ),
         ),

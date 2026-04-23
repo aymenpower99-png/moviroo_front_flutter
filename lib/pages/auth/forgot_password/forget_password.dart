@@ -17,11 +17,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   String? _successMessage;
 
   final _identifierController = TextEditingController();
+  final _identifierFocus = FocusNode();
   final AuthService _authService = AuthService();
 
   @override
   void dispose() {
     _identifierController.dispose();
+    _identifierFocus.dispose();
     super.dispose();
   }
 
@@ -62,34 +64,32 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     BuildContext context, {
     required String hint,
     required IconData prefixIcon,
+    FocusNode? focusNode,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
       hintText: hint,
       hintStyle: AppTextStyles.bodyMedium(
         context,
       ).copyWith(color: AppColors.subtext(context)),
-      prefixIcon: Icon(prefixIcon, color: AppColors.text(context), size: 20),
+      prefixIcon: Icon(
+        prefixIcon,
+        color: focusNode?.hasFocus ?? false
+            ? AppColors.primaryPurple
+            : AppColors.text(context),
+      ),
       filled: true,
       fillColor: AppColors.surface(context),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: isDark
-            ? BorderSide.none
-            : BorderSide(color: AppColors.border(context)),
+        borderSide: BorderSide(color: AppColors.border(context)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: isDark
-            ? BorderSide.none
-            : BorderSide(color: AppColors.border(context)),
+        borderSide: BorderSide(color: AppColors.border(context)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: isDark ? AppColors.primaryPurple : const Color(0xFFD1D5DB),
-          width: 1.5,
-        ),
+        borderSide: BorderSide(color: AppColors.primaryPurple, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
@@ -215,13 +215,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     // ── Input ─────────────────────────────────────
                     TextField(
                       controller: _identifierController,
+                      focusNode: _identifierFocus,
                       keyboardType: TextInputType.emailAddress,
-                      cursorColor: AppColors.subtext(context),
-                      style: AppTextStyles.bodyMedium(context),
+                      onTap: () => setState(() {}),
                       decoration: _fieldDecoration(
                         context,
                         hint: t.translate('hint_email_short'),
                         prefixIcon: Icons.alternate_email_rounded,
+                        focusNode: _identifierFocus,
                       ),
                     ),
 

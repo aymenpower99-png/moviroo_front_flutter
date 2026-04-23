@@ -11,11 +11,13 @@ import '../../../../l10n/app_localizations.dart';
 class PhoneFieldTile extends StatefulWidget {
   final String label;
   final TextEditingController controller;
+  final bool showBottomBorder;
 
   const PhoneFieldTile({
     super.key,
     required this.label,
     required this.controller,
+    this.showBottomBorder = true,
   });
 
   @override
@@ -44,9 +46,11 @@ class _PhoneFieldTileState extends State<PhoneFieldTile> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: AppColors.border(context), width: 1),
-        ),
+        border: widget.showBottomBorder
+            ? Border(
+                bottom: BorderSide(color: AppColors.border(context), width: 1),
+              )
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,8 +128,9 @@ class _PhoneFieldTileState extends State<PhoneFieldTile> {
 
 class PersonalDataTopBar extends StatelessWidget {
   final VoidCallback onBack;
+  final String? title;
 
-  const PersonalDataTopBar({super.key, required this.onBack});
+  const PersonalDataTopBar({super.key, required this.onBack, this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +157,7 @@ class PersonalDataTopBar extends StatelessWidget {
         ),
         Expanded(
           child: Text(
-            t('personal_data_title'),
+            title ?? t('personal_data_title'),
             textAlign: TextAlign.center,
             style: AppTextStyles.pageTitle(context),
           ),
@@ -245,6 +250,8 @@ class FieldTile extends StatefulWidget {
   final TextInputType keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
+  final bool showBottomBorder;
+  final bool readOnly;
 
   const FieldTile({
     super.key,
@@ -253,6 +260,8 @@ class FieldTile extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
     this.validator,
+    this.showBottomBorder = true,
+    this.readOnly = false,
   });
 
   @override
@@ -283,9 +292,11 @@ class _FieldTileState extends State<FieldTile> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: AppColors.border(context), width: 1),
-        ),
+        border: widget.showBottomBorder
+            ? Border(
+                bottom: BorderSide(color: AppColors.border(context), width: 1),
+              )
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +304,7 @@ class _FieldTileState extends State<FieldTile> {
           Text(
             widget.label,
             style: AppTextStyles.settingsItemValue(context).copyWith(
-              color: _focused
+              color: _focused && !widget.readOnly
                   ? AppColors.primaryPurple
                   : AppColors.subtext(context),
               fontWeight: FontWeight.w500,
@@ -310,10 +321,14 @@ class _FieldTileState extends State<FieldTile> {
                   keyboardType: widget.keyboardType,
                   inputFormatters: widget.inputFormatters,
                   validator: widget.validator,
+                  readOnly: widget.readOnly,
                   cursorColor: AppColors.primaryPurple,
-                  style: AppTextStyles.settingsItem(
-                    context,
-                  ).copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.settingsItem(context).copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: widget.readOnly
+                        ? AppColors.subtext(context)
+                        : AppColors.text(context),
+                  ),
                   decoration: InputDecoration(
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
@@ -336,7 +351,7 @@ class _FieldTileState extends State<FieldTile> {
                   ),
                 ),
               ),
-              if (_focused)
+              if (_focused && !widget.readOnly)
                 const Icon(
                   Icons.edit_rounded,
                   color: AppColors.primaryPurple,

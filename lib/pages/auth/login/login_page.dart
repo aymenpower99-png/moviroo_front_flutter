@@ -22,12 +22,16 @@ class _LoginPageState extends State<LoginPage> {
   bool get _isAnyLoading => _isLoginLoading || _isGoogleLoading;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
   final AuthService _authService = AuthService();
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -73,6 +77,9 @@ class _LoginPageState extends State<LoginPage> {
           setState(() => _obscurePassword = !_obscurePassword),
       onLogin: _isAnyLoading ? null : _handleLogin,
       onGoogleSignIn: _isAnyLoading ? null : _handleGoogleSignIn,
+      emailFocus: _emailFocus,
+      passwordFocus: _passwordFocus,
+      setState: () => setState(() {}),
     );
 
     return Scaffold(
@@ -91,13 +98,13 @@ class _LoginPageState extends State<LoginPage> {
                   widgets.buildEmailField(context, t),
                   const SizedBox(height: 20),
                   widgets.buildPasswordField(context, t),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 1),
                   widgets.buildForgotPasswordAndError(context, t),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 0),
                   widgets.buildLoginButton(context, t),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
                   widgets.buildSignUpLink(context, t),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   widgets.buildSocialLogin(context, t),
                   const SizedBox(height: 32),
                 ],

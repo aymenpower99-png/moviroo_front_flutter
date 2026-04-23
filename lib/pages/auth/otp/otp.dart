@@ -220,8 +220,10 @@ class _OtpPageState extends State<OtpPage> {
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.verified_user_rounded,
+                      child: Icon(
+                        _purpose == 'login-totp'
+                            ? Icons.phonelink_lock_rounded
+                            : Icons.verified_user_rounded,
                         color: AppColors.primaryPurple,
                         size: 38,
                       ),
