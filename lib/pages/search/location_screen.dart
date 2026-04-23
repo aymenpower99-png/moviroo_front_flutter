@@ -38,6 +38,12 @@ class _LocationScreenState extends State<LocationScreen>
   List<MapboxPlace> _recentPickupSearches = [];
   List<MapboxPlace> _recentDropoffSearches = [];
 
+  // Store coordinates for navigation to RideBookingPage
+  double? _pickupLat;
+  double? _pickupLon;
+  double? _dropoffLat;
+  double? _dropoffLon;
+
   // ← typed as String? so null subtitle is valid
   final _riders = <Map<String, String?>>[
     {'name': 'Me', 'subtitle': null},
@@ -105,16 +111,26 @@ class _LocationScreenState extends State<LocationScreen>
     final dropOff = _toController.text.trim();
     final pickUp = _fromController.text.trim();
 
-    if (dropOff.isNotEmpty && pickUp.isNotEmpty && _pickedTime != null) {
+    if (dropOff.isNotEmpty &&
+        pickUp.isNotEmpty &&
+        _pickedTime != null &&
+        _pickupLat != null &&
+        _pickupLon != null &&
+        _dropoffLat != null &&
+        _dropoffLon != null) {
       FocusScope.of(context).unfocus();
       Future.delayed(const Duration(milliseconds: 200), () {
         if (!mounted) return;
         Navigator.pushNamed(
           context,
-          '/vehicle_selection_page',
+          '/ride_booking_page',
           arguments: {
-            'pickUp': pickUp,
-            'dropOff': dropOff,
+            'pickupLat': _pickupLat,
+            'pickupLon': _pickupLon,
+            'pickupAddress': pickUp,
+            'dropoffLat': _dropoffLat,
+            'dropoffLon': _dropoffLon,
+            'dropoffAddress': dropOff,
             'date': _pickedDate,
             'time': _pickedTime,
             'passengerCount': _passengerCount,
@@ -158,12 +174,20 @@ class _LocationScreenState extends State<LocationScreen>
   void _onSuggestionTap(MapboxPlace place) async {
     if (_toFocus.hasFocus) {
       _toController.text = place.placeName;
-      setState(() => _suggestions = []);
+      setState(() {
+        _suggestions = [];
+        _dropoffLat = place.latitude;
+        _dropoffLon = place.longitude;
+      });
       await RecentSearchesService.addDropoffRecentSearch(place);
       _maybeNavigate();
     } else if (_fromFocus.hasFocus) {
       _fromController.text = place.placeName;
-      setState(() => _suggestions = []);
+      setState(() {
+        _suggestions = [];
+        _pickupLat = place.latitude;
+        _pickupLon = place.longitude;
+      });
       await RecentSearchesService.addPickupRecentSearch(place);
       Future.delayed(const Duration(milliseconds: 100), () {
         if (mounted) _toFocus.requestFocus();
@@ -179,12 +203,20 @@ class _LocationScreenState extends State<LocationScreen>
 
     if (fromEmpty) {
       _fromController.text = locationName;
+      setState(() {
+        _pickupLat = place.latitude;
+        _pickupLon = place.longitude;
+      });
       await RecentSearchesService.addPickupRecentSearch(place);
       Future.delayed(const Duration(milliseconds: 100), () {
         if (mounted) _toFocus.requestFocus();
       });
     } else {
       _toController.text = locationName;
+      setState(() {
+        _dropoffLat = place.latitude;
+        _dropoffLon = place.longitude;
+      });
       await RecentSearchesService.addDropoffRecentSearch(place);
       _maybeNavigate();
     }
@@ -197,6 +229,10 @@ class _LocationScreenState extends State<LocationScreen>
       final place = await GpsService.getCurrentLocationWithAddress();
       if (place != null && mounted) {
         _fromController.text = place.placeName;
+        setState(() {
+          _pickupLat = place.latitude;
+          _pickupLon = place.longitude;
+        });
         await RecentSearchesService.addPickupRecentSearch(place);
         Future.delayed(const Duration(milliseconds: 100), () {
           if (mounted) _toFocus.requestFocus();
@@ -255,8 +291,21 @@ class _LocationScreenState extends State<LocationScreen>
 
     if (result != null && mounted) {
       final address = (result['address'] as String?)?.trim() ?? '';
+      final lat = result['latitude'] as double?;
+      final lon = result['longitude'] as double?;
       if (address.isNotEmpty) {
         setState(() => target.text = address);
+        if (fillingPickup) {
+          setState(() {
+            _pickupLat = lat;
+            _pickupLon = lon;
+          });
+        } else {
+          setState(() {
+            _dropoffLat = lat;
+            _dropoffLon = lon;
+          });
+        }
         // If we just filled pickup, move focus to drop-off so the user can
         // immediately continue the flow.
         if (fillingPickup) {

@@ -21,6 +21,7 @@ import '../pages/tabs [passenger]/profile/settings_page.dart';
 import '../pages/tabs [passenger]/trajet/trajet_page.dart';
 import '../pages/tabs [passenger]/membre/membre_pass_screen.dart';
 import '../pages/booking/VehicleSelection/vehicle_selection_page.dart';
+import '../pages/booking/VehicleSelection/RideBookingPage.dart';
 import '../pages/splash/splash_page.dart';
 
 class AppRouter {
@@ -35,6 +36,7 @@ class AppRouter {
   static const String rideCard = '/ride-card';
   static const String nextDestinationSearchRoute = '/nextdestinationsearch';
   static const String vehicleSelectionPage = '/vehicle_selection_page';
+  static const String rideBookingPage = '/ride_booking_page';
   static const String login = '/login';
   static const String signup = '/signup';
   static const String forgotPass = '/forgot-password';
@@ -58,6 +60,18 @@ class AppRouter {
     chat: (_) => const ChatPage(),
     booking: (_) => const BookingSummaryPage(),
     vehicleSelectionPage: (_) => const VehicleSelectionPage(),
+    rideBookingPage: (ctx) {
+      final args =
+          ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
+      return RideBookingPage(
+        pickupLat: (args?['pickupLat'] as num?)?.toDouble() ?? 36.8065,
+        pickupLon: (args?['pickupLon'] as num?)?.toDouble() ?? 10.1815,
+        pickupAddress: args?['pickupAddress'] as String? ?? '',
+        dropoffLat: (args?['dropoffLat'] as num?)?.toDouble() ?? 36.8525,
+        dropoffLon: (args?['dropoffLon'] as num?)?.toDouble() ?? 10.2076,
+        dropoffAddress: args?['dropoffAddress'] as String? ?? '',
+      );
+    },
     getStartedPage: (_) => const OnboardingPage(),
     login: (_) => const LoginPage(),
     signup: (_) => const SignUpPage(),

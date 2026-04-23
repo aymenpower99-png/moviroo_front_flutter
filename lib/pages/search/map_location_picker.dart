@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
+import 'package:geolocator/geolocator.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../l10n/app_localizations.dart';
@@ -25,7 +26,7 @@ class MapLocationPicker extends StatefulWidget {
   const MapLocationPicker({
     super.key,
     this.confirmLabel = 'Confirm pickup',
-    this.title = 'Set your pickup spot',
+    this.title = 'Choose your pickup location',
     this.subtitle = 'Drag map to move pin',
     this.initialAddress,
   });
@@ -37,7 +38,7 @@ class MapLocationPicker extends StatefulWidget {
 class _MapLocationPickerState extends State<MapLocationPicker>
     with SingleTickerProviderStateMixin {
   // ── Map ──────────────────────────────────────────────────────────────────
-  MapboxMap? _mapboxMap;
+  mbx.MapboxMap? _mapboxMap;
 
   // Default center: Tunis (same as driver app)
   static const double _defaultLat = 36.8065;
@@ -53,6 +54,8 @@ class _MapLocationPickerState extends State<MapLocationPicker>
   bool _isLoadingAddress = false;
   double _currentLat = _defaultLat;
   double _currentLon = _defaultLon;
+  bool _isLoadingLocation = false;
+  bool _isOutOfCoverage = false;
 
   @override
   void initState() {
@@ -78,20 +81,34 @@ class _MapLocationPickerState extends State<MapLocationPicker>
   }
 
   // ── Map lifecycle ────────────────────────────────────────────────────────
-  void _onMapCreated(MapboxMap mapboxMap) {
+  void _onMapCreated(mbx.MapboxMap mapboxMap) {
     _mapboxMap = mapboxMap;
     // Hide default compass / scale bar to match driver app style.
-    mapboxMap.compass.updateSettings(CompassSettings(enabled: false));
-    mapboxMap.scaleBar.updateSettings(ScaleBarSettings(enabled: false));
+    mapboxMap.compass.updateSettings(mbx.CompassSettings(enabled: false));
+    mapboxMap.scaleBar.updateSettings(mbx.ScaleBarSettings(enabled: false));
+    // Reduce scroll/pan sensitivity by adjusting gesture settings
+    mapboxMap.gestures.updateSettings(
+      mbx.GesturesSettings(
+        pinchToZoomEnabled: true,
+        pinchToZoomDecelerationEnabled: true,
+        rotateEnabled: false,
+        rotateDecelerationEnabled: false,
+        pitchEnabled: false,
+        quickZoomEnabled: true,
+        doubleTapToZoomInEnabled: true,
+        scrollEnabled: true,
+        scrollDecelerationEnabled: true,
+      ),
+    );
   }
 
-  void _onStyleLoaded(StyleLoadedEventData _) {
+  void _onStyleLoaded(mbx.StyleLoadedEventData _) {
     // Trigger an initial reverse geocode so the input is populated right away.
     _reverseGeocode();
   }
 
   /// Fires continuously while the camera is moving (finger dragging).
-  void _onCameraChangeListener(CameraChangedEventData _) {
+  void _onCameraChangeListener(mbx.CameraChangedEventData _) {
     if (!_isDragging) {
       setState(() => _isDragging = true);
       // Pin lifts up immediately — no bounce while moving.
@@ -100,7 +117,7 @@ class _MapLocationPickerState extends State<MapLocationPicker>
   }
 
   /// Fires once when the camera settles after a gesture.
-  Future<void> _onMapIdleListener(MapIdleEventData _) async {
+  Future<void> _onMapIdleListener(mbx.MapIdleEventData _) async {
     if (_isDragging) {
       setState(() => _isDragging = false);
       // Trigger the elastic drop animation.
@@ -118,19 +135,36 @@ class _MapLocationPickerState extends State<MapLocationPicker>
     final lon = coords.lng.toDouble();
     final lat = coords.lat.toDouble();
 
+    // Check if within Tunisia bounding box
+    final inCoverage = _isInTunisia(lat, lon);
+
     if (!mounted) return;
     setState(() {
       _currentLat = lat;
       _currentLon = lon;
       _isLoadingAddress = true;
+      _isOutOfCoverage = !inCoverage;
     });
 
-    final place = await svc.MapboxService.reverseGeocode(lat, lon);
-    if (!mounted) return;
-    setState(() {
-      _isLoadingAddress = false;
-      _addressController.text = place?.placeName ?? '';
-    });
+    if (inCoverage) {
+      final place = await svc.MapboxService.reverseGeocode(lat, lon);
+      if (!mounted) return;
+      setState(() {
+        _isLoadingAddress = false;
+        _addressController.text = place?.placeName ?? '';
+      });
+    } else {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingAddress = false;
+        _addressController.text = '';
+      });
+    }
+  }
+
+  /// Check if coordinates are within Tunisia's bounding box
+  bool _isInTunisia(double lat, double lng) {
+    return lat >= 30.2 && lat <= 37.5 && lng >= 7.5 && lng <= 11.6;
   }
 
   // ── Confirm ──────────────────────────────────────────────────────────────
@@ -140,6 +174,44 @@ class _MapLocationPickerState extends State<MapLocationPicker>
       'latitude': _currentLat,
       'longitude': _currentLon,
     });
+  }
+
+  // ── Current location ──────────────────────────────────────────────────────
+  Future<void> _handleCurrentLocation() async {
+    if (_isLoadingLocation) return;
+
+    setState(() => _isLoadingLocation = true);
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      if (mounted) {
+        _mapboxMap?.flyTo(
+          mbx.CameraOptions(
+            center: mbx.Point(
+              coordinates: mbx.Position(position.longitude, position.latitude),
+            ),
+            zoom: 16.0,
+            bearing: 0.0, // Ensure north-up orientation
+            pitch: 0.0,
+          ),
+          mbx.MapAnimationOptions(duration: 800),
+        );
+      }
+    } catch (e) {
+      // Handle permission denied or location errors
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to get current location')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingLocation = false);
+      }
+    }
   }
 
   // ── Build ────────────────────────────────────────────────────────────────
@@ -154,14 +226,17 @@ class _MapLocationPickerState extends State<MapLocationPicker>
         children: [
           // ── Full-screen map ────────────────────────────────────────────
           Positioned.fill(
-            child: MapWidget(
-              styleUri:
-                  isDark ? MapboxStyles.DARK : MapboxStyles.MAPBOX_STREETS,
-              cameraOptions: CameraOptions(
-                center: Point(
-                  coordinates: Position(_defaultLon, _defaultLat),
+            child: mbx.MapWidget(
+              styleUri: isDark
+                  ? mbx.MapboxStyles.DARK
+                  : mbx.MapboxStyles.MAPBOX_STREETS,
+              cameraOptions: mbx.CameraOptions(
+                center: mbx.Point(
+                  coordinates: mbx.Position(_defaultLon, _defaultLat),
                 ),
                 zoom: 14.0,
+                bearing: 0.0, // Fix upside-down orientation (north-up)
+                pitch: 0.0,
               ),
               onMapCreated: _onMapCreated,
               onStyleLoadedListener: _onStyleLoaded,
@@ -202,6 +277,16 @@ class _MapLocationPickerState extends State<MapLocationPicker>
             ),
           ),
 
+          // ── Current location button (bottom-right, above bottom sheet) ──
+          Positioned(
+            right: 16,
+            bottom: 280, // Position above the bottom sheet
+            child: _LocationBtn(
+              isLoading: _isLoadingLocation,
+              onTap: _handleCurrentLocation,
+            ),
+          ),
+
           // ── Bottom sheet ───────────────────────────────────────────────
           Align(
             alignment: Alignment.bottomCenter,
@@ -211,8 +296,11 @@ class _MapLocationPickerState extends State<MapLocationPicker>
               confirmLabel: widget.confirmLabel,
               addressController: _addressController,
               isLoading: _isLoadingAddress,
+              isOutOfCoverage: _isOutOfCoverage,
               onConfirm:
-                  _addressController.text.trim().isEmpty ? null : _handleConfirm,
+                  _addressController.text.trim().isEmpty || _isOutOfCoverage
+                  ? null
+                  : _handleConfirm,
               localizations: t,
             ),
           ),
@@ -264,9 +352,7 @@ class _CenterPin extends StatelessWidget {
           height: 22,
           decoration: const BoxDecoration(
             color: AppColors.primaryPurple,
-            borderRadius: BorderRadius.vertical(
-              bottom: Radius.circular(2),
-            ),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(2)),
           ),
         ),
       ],
@@ -302,6 +388,54 @@ class _BackBtn extends StatelessWidget {
   }
 }
 
+// ─── Current location button ───────────────────────────────────────────────
+
+class _LocationBtn extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback onTap;
+  const _LocationBtn({required this.isLoading, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isLoading ? null : onTap,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.surface(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border(context)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: isLoading
+            ? const Padding(
+                padding: EdgeInsets.all(14),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primaryPurple,
+                  ),
+                ),
+              )
+            : Icon(
+                Icons.my_location_rounded,
+                size: 22,
+                color: AppColors.text(context),
+              ),
+      ),
+    );
+  }
+}
+
 // ─── Bottom sheet ─────────────────────────────────────────────────────────
 
 class _BottomSheet extends StatelessWidget {
@@ -310,6 +444,7 @@ class _BottomSheet extends StatelessWidget {
   final String confirmLabel;
   final TextEditingController addressController;
   final bool isLoading;
+  final bool isOutOfCoverage;
   final VoidCallback? onConfirm;
   final AppLocalizations localizations;
 
@@ -319,6 +454,7 @@ class _BottomSheet extends StatelessWidget {
     required this.confirmLabel,
     required this.addressController,
     required this.isLoading,
+    required this.isOutOfCoverage,
     required this.onConfirm,
     required this.localizations,
   });
@@ -337,7 +473,7 @@ class _BottomSheet extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
       child: SafeArea(
         top: false,
         child: Column(
@@ -349,7 +485,7 @@ class _BottomSheet extends StatelessWidget {
               child: Container(
                 width: 40,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 14),
+                margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
                   color: AppColors.border(context),
                   borderRadius: BorderRadius.circular(2),
@@ -358,69 +494,72 @@ class _BottomSheet extends StatelessWidget {
             ),
 
             // Title
-            Text(
-              title,
-              style: AppTextStyles.pageTitle(context),
-            ),
-            const SizedBox(height: 4),
+            Text(title, style: AppTextStyles.pageTitle(context)),
+            const SizedBox(height: 6),
 
             // Subtitle
-            Text(
-              subtitle,
-              style: AppTextStyles.bodySmall(context),
-            ),
-            const SizedBox(height: 16),
+            Text(subtitle, style: AppTextStyles.bodySmall(context)),
+            const SizedBox(height: 24),
 
-            // Address input
-            TextField(
-              controller: addressController,
-              readOnly: true,
-              style: AppTextStyles.bodyMedium(context),
-              decoration: InputDecoration(
-                hintText: isLoading ? 'Locating…' : 'Pin location',
-                hintStyle: TextStyle(color: AppColors.subtext(context)),
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.only(left: 14, right: 10),
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primaryPurple,
-                    ),
+            // Location name row — clean text with dot, not a form field
+            Row(
+              children: [
+                // Colored dot
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isOutOfCoverage
+                        ? AppColors.error
+                        : AppColors.primaryPurple,
                   ),
                 ),
-                prefixIconConstraints: const BoxConstraints(
-                  minWidth: 30,
-                  minHeight: 30,
-                ),
-                suffixIcon: isLoading
-                    ? const Padding(
-                        padding: EdgeInsets.all(14),
-                        child: SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primaryPurple,
-                          ),
+                const SizedBox(width: 14),
+                // Place name as plain text
+                Expanded(
+                  child: isLoading
+                      ? Text(
+                          'Locating…',
+                          style: AppTextStyles.bodyMedium(
+                            context,
+                          ).copyWith(color: AppColors.subtext(context)),
+                        )
+                      : isOutOfCoverage
+                      ? Text(
+                          'Not available in this region yet',
+                          style: AppTextStyles.bodyMedium(
+                            context,
+                          ).copyWith(color: AppColors.error),
+                        )
+                      : Text(
+                          addressController.text.trim().isEmpty
+                              ? 'Pin location'
+                              : addressController.text,
+                          style: AppTextStyles.bodyMedium(context),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      )
-                    : Icon(
-                        Icons.search_rounded,
-                        color: AppColors.subtext(context),
-                      ),
-              ),
+                ),
+              ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Confirm button — uses AppTheme elevated button style
             ElevatedButton(
               onPressed: onConfirm,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isOutOfCoverage
+                    ? AppColors.border(context)
+                    : null, // Use default when enabled
+                disabledBackgroundColor: AppColors.border(context),
+              ),
               child: Text(
                 confirmLabel,
-                style: AppTextStyles.buttonPrimary,
+                style: AppTextStyles.buttonPrimary.copyWith(
+                  color: isOutOfCoverage ? AppColors.subtext(context) : null,
+                ),
               ),
             ),
           ],
