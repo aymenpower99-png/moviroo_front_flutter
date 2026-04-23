@@ -10,6 +10,7 @@ class LocationCard extends StatelessWidget {
   final Animation<double> pulseAnim;
   final VoidCallback onSwap;
   final VoidCallback? onUseCurrentLocation;
+  final bool isFetchingLocation;
 
   const LocationCard({
     super.key,
@@ -20,6 +21,7 @@ class LocationCard extends StatelessWidget {
     required this.pulseAnim,
     required this.onSwap,
     this.onUseCurrentLocation,
+    this.isFetchingLocation = false,
   });
 
   InputDecoration _inputDec(
@@ -28,21 +30,20 @@ class LocationCard extends StatelessWidget {
     EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(
       vertical: 14,
     ),
-  }) =>
-      InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(
-          color: AppColors.subtext(context),
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-        ),
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        filled: false,
-        isDense: false,
-        contentPadding: contentPadding,
-      );
+  }) => InputDecoration(
+    hintText: hint,
+    hintStyle: TextStyle(
+      color: AppColors.subtext(context),
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+    ),
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    filled: false,
+    isDense: false,
+    contentPadding: contentPadding,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -158,6 +159,17 @@ class LocationCard extends StatelessWidget {
                                     Icons.close_rounded,
                                     size: 20,
                                     color: AppColors.subtext(context),
+                                  ),
+                                )
+                              : isFetchingLocation
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.primaryPurple,
+                                    ),
                                   ),
                                 )
                               : GestureDetector(

@@ -7,6 +7,10 @@ import 'RecentSearchItem.dart';
 import './DateTimeRow.dart';
 import 'modal/RiderSheet.dart';
 import 'modal/PassengerSheet.dart';
+import '../../../services/mapbox_service.dart';
+import '../../../services/recent_searches_service.dart';
+import '../../../services/gps_service.dart';
+import 'map_location_picker.dart';
 
 class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key});
@@ -26,44 +30,18 @@ class _LocationScreenState extends State<LocationScreen>
 
   int? _selectedRider;
   int _passengerCount = 1;
-  List<SuggestionItem> _suggestions = [];
-  bool _fromConfirmed = false;
-  bool _toConfirmed = false;
+  List<MapboxPlace> _suggestions = [];
   DateTime _pickedDate = DateTime.now();
   TimeOfDay? _pickedTime;
+  bool _isLoadingSuggestions = false;
+  bool _isFetchingLocation = false;
+  List<MapboxPlace> _recentPickupSearches = [];
+  List<MapboxPlace> _recentDropoffSearches = [];
 
   // ← typed as String? so null subtitle is valid
   final _riders = <Map<String, String?>>[
     {'name': 'Me', 'subtitle': null},
     {'name': 'Youssef', 'subtitle': '+216 22 333 444'},
-  ];
-
-  final _recentSearches = [
-    const RecentSearchItem(title: 'Sousse', subtitle: 'Sousse, Tunisia'),
-    const RecentSearchItem(
-      title: 'The Ferry Building',
-      subtitle: '1 Ferry Building, San Francisco',
-    ),
-    const RecentSearchItem(title: 'Central Park', subtitle: 'New York, NY'),
-  ];
-
-  final _allPlaces = [
-    const SuggestionItem(title: 'Sousse', subtitle: 'Sousse, Tunisia'),
-    const SuggestionItem(title: 'Tunis Centre', subtitle: 'Tunis, Tunisia'),
-    const SuggestionItem(title: 'Sfax', subtitle: 'Sfax, Tunisia'),
-    const SuggestionItem(
-      title: 'Monastir Airport',
-      subtitle: 'Monastir, Tunisia',
-    ),
-    const SuggestionItem(title: 'La Marsa', subtitle: 'Tunis, Tunisia'),
-    const SuggestionItem(title: 'Hammamet', subtitle: 'Nabeul, Tunisia'),
-    const SuggestionItem(title: 'Carthage', subtitle: 'Tunis, Tunisia'),
-    const SuggestionItem(title: 'Sidi Bou Said', subtitle: 'Tunis, Tunisia'),
-    const SuggestionItem(title: 'Djerba', subtitle: 'Medenine, Tunisia'),
-    const SuggestionItem(
-      title: 'Tunis Carthage Airport',
-      subtitle: 'Tunis, Tunisia',
-    ),
   ];
 
   @override
@@ -78,13 +56,27 @@ class _LocationScreenState extends State<LocationScreen>
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _fromFocus.requestFocus();
+      if (mounted) {
+        _fromFocus.requestFocus();
+        _loadRecentSearches();
+      }
     });
 
     _fromController.addListener(_onQueryChanged);
     _toController.addListener(_onQueryChanged);
     _fromFocus.addListener(_onFocusChanged);
     _toFocus.addListener(_onFocusChanged);
+  }
+
+  Future<void> _loadRecentSearches() async {
+    final pickup = await RecentSearchesService.getPickupRecentSearches();
+    final dropoff = await RecentSearchesService.getDropoffRecentSearches();
+    if (mounted) {
+      setState(() {
+        _recentPickupSearches = pickup;
+        _recentDropoffSearches = dropoff;
+      });
+    }
   }
 
   @override
@@ -102,11 +94,8 @@ class _LocationScreenState extends State<LocationScreen>
   }
 
   void _onFocusChanged() {
-    if (!_fromFocus.hasFocus &&
-        !_fromConfirmed &&
-        _fromController.text.trim().isNotEmpty) {
-      _fromController.clear();
-    }
+    // Only clear suggestions when both fields lose focus
+    // Don't clear the input text automatically - let the user control it
     if (!_fromFocus.hasFocus && !_toFocus.hasFocus) {
       setState(() => _suggestions = []);
     }
@@ -135,7 +124,7 @@ class _LocationScreenState extends State<LocationScreen>
     }
   }
 
-  void _onQueryChanged() {
+  void _onQueryChanged() async {
     if (!_fromFocus.hasFocus && !_toFocus.hasFocus) {
       setState(() => _suggestions = []);
       return;
@@ -144,58 +133,97 @@ class _LocationScreenState extends State<LocationScreen>
     final query = _toFocus.hasFocus
         ? _toController.text.trim()
         : _fromController.text.trim();
-    if (!_toFocus.hasFocus) _fromConfirmed = false;
 
     if (query.isEmpty) {
       setState(() => _suggestions = []);
       return;
     }
 
-    final filtered = _allPlaces
-        .where(
-          (p) =>
-              p.title.toLowerCase().contains(query.toLowerCase()) ||
-              (p.subtitle?.toLowerCase().contains(query.toLowerCase()) ??
-                  false),
-        )
-        .take(4)
-        .toList();
+    setState(() => _isLoadingSuggestions = true);
 
-    setState(() => _suggestions = filtered);
+    try {
+      final results = await MapboxService.searchPlaces(query);
+      if (mounted) {
+        setState(() => _suggestions = results);
+      }
+    } catch (e) {
+      print('Search error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingSuggestions = false);
+      }
+    }
   }
 
-  void _onSuggestionTap(SuggestionItem item) {
+  void _onSuggestionTap(MapboxPlace place) async {
     if (_toFocus.hasFocus) {
-      _toController.text = item.title;
-      _toConfirmed = true;
+      _toController.text = place.placeName;
       setState(() => _suggestions = []);
+      await RecentSearchesService.addDropoffRecentSearch(place);
       _maybeNavigate();
     } else if (_fromFocus.hasFocus) {
-      _fromController.text = item.title;
-      _fromConfirmed = true;
+      _fromController.text = place.placeName;
       setState(() => _suggestions = []);
+      await RecentSearchesService.addPickupRecentSearch(place);
       Future.delayed(const Duration(milliseconds: 100), () {
         if (mounted) _toFocus.requestFocus();
       });
     } else {
-      _fillSmartField(item.title);
+      _fillSmartField(place.placeName, place);
     }
   }
 
-  void _fillSmartField(String locationName) {
+  void _fillSmartField(String locationName, MapboxPlace place) async {
     final fromEmpty = _fromController.text.trim().isEmpty;
     setState(() => _suggestions = []);
 
     if (fromEmpty) {
       _fromController.text = locationName;
-      _fromConfirmed = true;
+      await RecentSearchesService.addPickupRecentSearch(place);
       Future.delayed(const Duration(milliseconds: 100), () {
         if (mounted) _toFocus.requestFocus();
       });
     } else {
       _toController.text = locationName;
-      _toConfirmed = true;
+      await RecentSearchesService.addDropoffRecentSearch(place);
       _maybeNavigate();
+    }
+  }
+
+  Future<void> _handleUseCurrentLocation() async {
+    setState(() => _isFetchingLocation = true);
+
+    try {
+      final place = await GpsService.getCurrentLocationWithAddress();
+      if (place != null && mounted) {
+        _fromController.text = place.placeName;
+        await RecentSearchesService.addPickupRecentSearch(place);
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) _toFocus.requestFocus();
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Unable to get current location'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Location permission denied or unavailable'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isFetchingLocation = false);
+      }
     }
   }
 
@@ -203,8 +231,41 @@ class _LocationScreenState extends State<LocationScreen>
     final from = _fromController.text;
     _fromController.text = _toController.text;
     _toController.text = from;
-    _fromConfirmed = _fromController.text.trim().isNotEmpty;
-    _toConfirmed = _toController.text.trim().isNotEmpty;
+  }
+
+  Future<void> _handleSelectOnMap() async {
+    // Decide which field we are filling. Pickup is filled first if empty,
+    // otherwise we fill drop-off.
+    final fillingPickup = _fromController.text.trim().isEmpty;
+    final target = fillingPickup ? _fromController : _toController;
+
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MapLocationPicker(
+          title: fillingPickup
+              ? 'Set your pickup spot'
+              : 'Set your drop-off spot',
+          subtitle: 'Drag map to move pin',
+          confirmLabel: fillingPickup ? 'Confirm pickup' : 'Confirm drop-off',
+          initialAddress: target.text,
+        ),
+      ),
+    );
+
+    if (result != null && mounted) {
+      final address = (result['address'] as String?)?.trim() ?? '';
+      if (address.isNotEmpty) {
+        setState(() => target.text = address);
+        // If we just filled pickup, move focus to drop-off so the user can
+        // immediately continue the flow.
+        if (fillingPickup) {
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) _toFocus.requestFocus();
+          });
+        }
+      }
+    }
   }
 
   Future<void> _showRiderSheet() async {
@@ -258,12 +319,17 @@ class _LocationScreenState extends State<LocationScreen>
 
     final pillLabel =
         (_selectedRider != null && _selectedRider! < _riders.length)
-            ? _riders[_selectedRider!]['name']!
-            : t.translate('for_me');
+        ? _riders[_selectedRider!]['name']!
+        : t.translate('for_me');
+
+    final isPickupFocused = _fromFocus.hasFocus;
+    final currentRecentSearches = isPickupFocused
+        ? _recentPickupSearches
+        : _recentDropoffSearches;
 
     final showRecent =
         _suggestions.isEmpty &&
-        _recentSearches.isNotEmpty &&
+        currentRecentSearches.isNotEmpty &&
         !(_fromFocus.hasFocus && _fromController.text.trim().isNotEmpty) &&
         !(_toFocus.hasFocus && _toController.text.trim().isNotEmpty);
 
@@ -349,7 +415,7 @@ class _LocationScreenState extends State<LocationScreen>
             Expanded(
               child: SingleChildScrollView(
                 keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
+                    ScrollViewKeyboardDismissBehavior.manual,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,7 +427,10 @@ class _LocationScreenState extends State<LocationScreen>
                       toFocus: _toFocus,
                       pulseAnim: _pulseAnim,
                       onSwap: _swapLocations,
-                      onUseCurrentLocation: () {},
+                      onUseCurrentLocation: _isFetchingLocation
+                          ? null
+                          : () => _handleUseCurrentLocation(),
+                      isFetchingLocation: _isFetchingLocation,
                     ),
                     const SizedBox(height: 10),
                     DateTimeRow(
@@ -373,23 +442,37 @@ class _LocationScreenState extends State<LocationScreen>
                     NextDestinationSearch(
                       suggestions: _suggestions,
                       onSuggestionTap: _onSuggestionTap,
-                      onSelectOnMap: () {},
-                      onSavedPlaces: () {},
+                      onSelectOnMap: _handleSelectOnMap,
                     ),
                     if (showRecent) ...[
                       const SizedBox(height: 2),
-                      ..._recentSearches.map(
-                        (item) => RecentSearchTile(
-                          item: item,
-                          onTap: () => _fillSmartField(item.title),
-                        ),
-                      ),
+                      ...(_fromFocus.hasFocus
+                              ? _recentPickupSearches
+                              : _recentDropoffSearches)
+                          .map(
+                            (place) => RecentSearchTile(
+                              item: RecentSearchItem(
+                                title: place.placeName,
+                                subtitle: place.fullAddress,
+                                categoryIcon: place.categoryIcon,
+                              ),
+                              onTap: () =>
+                                  _fillSmartField(place.placeName, place),
+                            ),
+                          ),
                       const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerRight,
                         child: GestureDetector(
-                          onTap: () =>
-                              setState(() => _recentSearches.clear()),
+                          onTap: () async {
+                            if (_fromFocus.hasFocus) {
+                              await RecentSearchesService.clearPickupRecentSearches();
+                              setState(() => _recentPickupSearches = []);
+                            } else {
+                              await RecentSearchesService.clearDropoffRecentSearches();
+                              setState(() => _recentDropoffSearches = []);
+                            }
+                          },
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -417,6 +500,37 @@ class _LocationScreenState extends State<LocationScreen>
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            // ── Confirm button (only shows when both fields are filled) ──
+            if (_fromController.text.trim().isNotEmpty &&
+                _toController.text.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _maybeNavigate();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryPurple,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      t.translate('confirm'),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:app_links/app_links.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'routing/router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
@@ -18,6 +19,9 @@ final localeProvider = LocaleProvider();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MapboxOptions.setAccessToken(
+    'pk.eyJ1IjoiYXltb3VuMTEiLCJhIjoiY21vM2JvY3UzMGtrdzJzcXc0cXZwbmE5eiJ9.LcnOY7q-WQ37STLy7wogRA',
+  );
   await FirebaseService.initialize();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

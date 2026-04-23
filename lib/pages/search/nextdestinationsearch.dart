@@ -1,24 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
-
-class SuggestionItem {
-  final String title;
-  final String? subtitle;
-
-  const SuggestionItem({required this.title, this.subtitle});
-}
+import '../../../services/mapbox_service.dart';
 
 class NextDestinationSearch extends StatelessWidget {
   final VoidCallback? onSelectOnMap;
-  final VoidCallback? onSavedPlaces;
-  final List<SuggestionItem> suggestions;
-  final void Function(SuggestionItem)? onSuggestionTap;
+  final List<MapboxPlace> suggestions;
+  final void Function(MapboxPlace)? onSuggestionTap;
 
   const NextDestinationSearch({
     super.key,
     this.onSelectOnMap,
-    this.onSavedPlaces,
     this.suggestions = const [],
     this.onSuggestionTap,
   });
@@ -31,7 +23,9 @@ class NextDestinationSearch extends StatelessWidget {
       children: [
         // ── Suggestions (max 4, visible only while typing) ──
         if (suggestions.isNotEmpty) ...[
-          ...suggestions.take(4).map(
+          ...suggestions
+              .take(4)
+              .map(
                 (item) => Column(
                   children: [
                     _SuggestionTile(
@@ -57,18 +51,6 @@ class NextDestinationSearch extends StatelessWidget {
           subtitle: t.translate('select_on_map_sub'),
           onTap: onSelectOnMap ?? () {},
         ),
-        Divider(
-          height: 1,
-          thickness: 0.5,
-          indent: 64,
-          color: AppColors.border(context),
-        ),
-        _ActionTile(
-          icon: Icons.star_outline_rounded,
-          title: t.translate('saved_places'),
-          subtitle: t.translate('saved_places_sub'),
-          onTap: onSavedPlaces ?? () {},
-        ),
       ],
     );
   }
@@ -77,7 +59,7 @@ class NextDestinationSearch extends StatelessWidget {
 // ── Suggestion tile ───────────────────────────────────────────────────────────
 
 class _SuggestionTile extends StatelessWidget {
-  final SuggestionItem item;
+  final MapboxPlace item;
   final VoidCallback onTap;
 
   const _SuggestionTile({required this.item, required this.onTap});
@@ -98,8 +80,8 @@ class _SuggestionTile extends StatelessWidget {
                 color: AppColors.primaryPurple.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.location_on_outlined,
+              child: Icon(
+                item.categoryIcon,
                 size: 22,
                 color: AppColors.primaryPurple,
               ),
@@ -110,23 +92,23 @@ class _SuggestionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
+                    item.placeName,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.text(context),
                     ),
                   ),
-                  if (item.subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      item.subtitle!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.subtext(context),
-                      ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.fullAddress,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.subtext(context),
                     ),
-                  ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),

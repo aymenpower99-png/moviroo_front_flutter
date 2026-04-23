@@ -4,10 +4,12 @@ import '../../../../theme/app_colors.dart';
 class RecentSearchItem {
   final String title;
   final String subtitle;
+  final IconData categoryIcon;
 
   const RecentSearchItem({
     required this.title,
     required this.subtitle,
+    required this.categoryIcon,
   });
 }
 
@@ -33,8 +35,8 @@ class RecentSearchTile extends StatelessWidget {
                 color: AppColors.primaryPurple.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.history_rounded,
+              child: Icon(
+                item.categoryIcon,
                 size: 22,
                 color: AppColors.primaryPurple,
               ),

@@ -24,12 +24,14 @@ dependencies:
   flutter_map: ^7.0.2 # OpenStreetMap tile rendering
   latlong2: ^0.9.1 # LatLng type for flutter_map
   maplibre_gl: ^0.25.0 # MapLibre GL for real map rendering
+  mapbox_maps_flutter: ^2.3.0 # Mapbox GL for booking location picker
   socket_io_client: ^2.0.3+1 # WebSocket for live driver tracking
   flutter_secure_storage: ^9.2.2 # JWT token storage
   google_sign_in: ^6.2.1 # Google OAuth
   sign_in_with_apple: ^6.1.0 # Apple Sign-In
   url_launcher: ^6.3.1 # Phone dialer
   http: ^1.2.0 # HTTP client for API calls
+  geolocator: ^12.0.0 # GPS location fetching
   firebase_core: ^4.7.0
   app_links: ^6.3.3 # Deep link handling
   lottie: ^3.1.2 # Splash animation
