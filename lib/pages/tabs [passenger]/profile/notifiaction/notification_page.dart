@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
-import '../../../../../services/auth_service.dart';
+import '../../../../../services/auth_service/auth_service.dart';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -37,8 +37,7 @@ class _NotificationPageState extends State<NotificationPage> {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         setState(() {
           _pushEnabled = (data['pushNotificationsEnabled'] as bool?) ?? true;
-          _emailEnabled =
-              (data['emailNotificationsEnabled'] as bool?) ?? true;
+          _emailEnabled = (data['emailNotificationsEnabled'] as bool?) ?? true;
           _isLoading = false;
         });
       } else {
@@ -68,9 +67,7 @@ class _NotificationPageState extends State<NotificationPage> {
         if (email != null) _emailEnabled = !email;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -193,10 +190,7 @@ class _NotificationGroupCard extends StatelessWidget {
                   thickness: 1,
                   color: AppColors.border(context),
                 ),
-                _ToggleRow(
-                  item: items[i],
-                  isDark: isDark,
-                ),
+                _ToggleRow(item: items[i], isDark: isDark),
               ],
             );
           }),
@@ -243,8 +237,9 @@ class _ToggleRow extends StatelessWidget {
             activeColor: Colors.white,
             activeTrackColor: AppColors.primaryPurple,
             inactiveThumbColor: Colors.white,
-            inactiveTrackColor:
-                isDark ? const Color(0xFF333340) : AppColors.lightBorder,
+            inactiveTrackColor: isDark
+                ? const Color(0xFF333340)
+                : AppColors.lightBorder,
           ),
         ],
       ),

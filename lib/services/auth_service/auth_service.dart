@@ -1,11 +1,11 @@
 import 'package:http/http.dart' as http;
-import 'auth/auth_storage.dart';
-import 'auth/auth_helpers.dart';
-import 'auth/auth_oauth.dart';
-import 'auth/auth_api.dart';
-import 'auth/auth_http.dart';
-import 'auth/security_api.dart';
-export 'auth/security_api.dart'
+import '../auth/auth_storage.dart';
+import '../auth/auth_helpers.dart';
+import '../auth/auth_oauth.dart';
+import '../auth/auth_api.dart';
+import '../auth/auth_http.dart';
+import '../auth/security_api.dart';
+export '../auth/security_api.dart'
     show TwoFactorMethod, SecurityApiException, twoFactorMethodFromString;
 
 class AuthService {
@@ -89,8 +89,7 @@ class AuthService {
     return AuthAPI.verifyLoginOtp(preAuthToken: preAuthToken, code: code);
   }
 
-  Future<void> resendLoginOtp(String userId) =>
-      AuthAPI.resendLoginOtp(userId);
+  Future<void> resendLoginOtp(String userId) => AuthAPI.resendLoginOtp(userId);
 
   // ─── OAuth: Google ───────────────────────────────────────────────────────────
 
@@ -176,7 +175,10 @@ class AuthService {
     );
   }
 
-  Future<Map<String, dynamic>> toggleEmail2fa(bool enabled, {String? otp}) async {
+  Future<Map<String, dynamic>> toggleEmail2fa(
+    bool enabled, {
+    String? otp,
+  }) async {
     final result = await SecurityApi.toggleEmail2fa(enabled, otp: otp);
     _cachedUser = null;
     return result;

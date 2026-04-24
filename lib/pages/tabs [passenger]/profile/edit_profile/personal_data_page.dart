@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../services/auth_service.dart';
+import '../../../../services/auth_service/auth_service.dart';
 import 'personal_data_actions.dart';
 import 'personal_data_widgets.dart';
 
@@ -40,7 +40,9 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
           _firstName = (user['firstName'] as String?) ?? '';
           _lastName = (user['lastName'] as String?) ?? '';
           _email = (user['email'] as String?) ?? '';
-          _phone = rawPhone.startsWith('+216') ? rawPhone.substring(4) : rawPhone;
+          _phone = rawPhone.startsWith('+216')
+              ? rawPhone.substring(4)
+              : rawPhone;
         });
       }
     } catch (_) {}
@@ -71,7 +73,9 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: PersonalDataTopBar(onBack: () => Navigator.maybePop(context)),
+              child: PersonalDataTopBar(
+                onBack: () => Navigator.maybePop(context),
+              ),
             ),
             Expanded(
               child: _isLoading
@@ -100,7 +104,9 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                             color: AppColors.surface(context),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(color: AppColors.border(context)),
+                              side: BorderSide(
+                                color: AppColors.border(context),
+                              ),
                             ),
                             clipBehavior: Clip.antiAlias,
                             child: Column(
@@ -108,10 +114,12 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                                 _InfoRow(
                                   label: t('name'),
                                   value: _displayName,
-                                  onTap: () => _open(_EditNamePage(
-                                    firstName: _firstName,
-                                    lastName: _lastName,
-                                  )),
+                                  onTap: () => _open(
+                                    _EditNamePage(
+                                      firstName: _firstName,
+                                      lastName: _lastName,
+                                    ),
+                                  ),
                                 ),
                                 Divider(
                                   height: 1,
@@ -122,7 +130,8 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                                 _InfoRow(
                                   label: t('email_address'),
                                   value: _email.isEmpty ? '—' : _email,
-                                  onTap: () => _open(_EditEmailPage(email: _email)),
+                                  onTap: () =>
+                                      _open(_EditEmailPage(email: _email)),
                                 ),
                                 Divider(
                                   height: 1,
@@ -133,7 +142,8 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                                 _InfoRow(
                                   label: t('phone_number'),
                                   value: _phone.isEmpty ? '—' : '+216 $_phone',
-                                  onTap: () => _open(_EditPhonePage(phone: _phone)),
+                                  onTap: () =>
+                                      _open(_EditPhonePage(phone: _phone)),
                                 ),
                               ],
                             ),
@@ -176,14 +186,16 @@ class _InfoRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: AppTextStyles.bodyLarge(context)
-                        .copyWith(fontWeight: FontWeight.w600),
+                    style: AppTextStyles.bodyLarge(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     value,
-                    style: AppTextStyles.bodyMedium(context)
-                        .copyWith(color: AppColors.subtext(context)),
+                    style: AppTextStyles.bodyMedium(
+                      context,
+                    ).copyWith(color: AppColors.subtext(context)),
                   ),
                 ],
               ),
@@ -215,8 +227,9 @@ void _showToast(BuildContext context, String message) {
           Expanded(
             child: Text(
               message,
-              style: AppTextStyles.bodyMedium(context)
-                  .copyWith(color: Colors.white),
+              style: AppTextStyles.bodyMedium(
+                context,
+              ).copyWith(color: Colors.white),
             ),
           ),
         ],
@@ -244,8 +257,9 @@ class _ErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: AppTextStyles.bodySmall(context)
-                  .copyWith(color: AppColors.error),
+              style: AppTextStyles.bodySmall(
+                context,
+              ).copyWith(color: AppColors.error),
             ),
           ),
         ],
@@ -349,10 +363,9 @@ class _EditNamePageState extends State<_EditNamePage> {
                             FieldTile(
                               label: t('first_name'),
                               controller: _first,
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty)
-                                      ? t('first_name_required')
-                                      : null,
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? t('first_name_required')
+                                  : null,
                             ),
                             FieldTile(
                               label: t('last_name'),
@@ -519,9 +532,7 @@ class _EditPhonePageState extends State<_EditPhonePage> {
       _error = null;
     });
     try {
-      await _authService.updateProfile(
-        phone: '+216${_phone.text.trim()}',
-      );
+      await _authService.updateProfile(phone: '+216${_phone.text.trim()}');
       if (!mounted) return;
       _showToast(
         context,

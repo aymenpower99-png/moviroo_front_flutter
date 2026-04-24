@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../services/auth_service.dart';
+import '../../../../services/auth_service/auth_service.dart';
 import '../../../tabs [passenger]/profile/settings/security/password_page.dart';
 import '../../../tabs [passenger]/profile/settings/security/two_step_verification_page.dart';
 import '../../../tabs [passenger]/profile/settings/security/passkey_page.dart';

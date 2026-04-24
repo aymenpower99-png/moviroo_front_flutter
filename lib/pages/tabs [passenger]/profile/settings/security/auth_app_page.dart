@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../theme/app_colors.dart';
-import '../../../../../services/auth_service.dart';
+import '../../../../../services/auth_service/auth_service.dart';
 import '2_step_ver_modal/auth_app_confirm_modal.dart'; // ← import the extracted modal
 
 class AuthAppPage extends StatefulWidget {

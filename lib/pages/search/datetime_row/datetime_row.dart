@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
+import 'widgets.dart';
+import 'utils.dart';
 
 class DateTimeRow extends StatefulWidget {
   final DateTime? initialDate;
@@ -26,60 +28,15 @@ class _DateTimeRowState extends State<DateTimeRow> {
   void initState() {
     super.initState();
     _pickedDate = widget.initialDate ?? DateTime.now();
-    _pickedTime = _defaultTimeForDate(_pickedDate);
+    _pickedTime = defaultTimeForDate(_pickedDate);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onTimeChanged?.call(_pickedTime);
     });
   }
 
-  TimeOfDay _defaultTimeForDate(DateTime date) {
-    final now = DateTime.now();
-    final isToday = date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
-    final base = isToday ? now.add(const Duration(hours: 2)) : now;
-    final roundedMinute = ((base.minute / 15).ceil() * 15) % 60;
-    final extraHour = (base.minute >= 45) ? 1 : 0;
-    return TimeOfDay(
-      hour: (base.hour + extraHour) % 24,
-      minute: roundedMinute,
-    );
-  }
+  String _dateLabel(AppLocalizations t) => formatDate(_pickedDate, t);
 
-  String _dateLabel(AppLocalizations t) => _formatDate(_pickedDate, t);
-
-  String get _timeLabel {
-    final h = _pickedTime.hour.toString().padLeft(2, '0');
-    final m = _pickedTime.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
-
-  String _formatDate(DateTime date, AppLocalizations t) {
-    final days = [
-      t.translate('day_mon'),
-      t.translate('day_tue'),
-      t.translate('day_wed'),
-      t.translate('day_thu'),
-      t.translate('day_fri'),
-      t.translate('day_sat'),
-      t.translate('day_sun'),
-    ];
-    final months = [
-      t.translate('month_jan'),
-      t.translate('month_feb'),
-      t.translate('month_mar'),
-      t.translate('month_apr'),
-      t.translate('month_may'),
-      t.translate('month_jun'),
-      t.translate('month_jul'),
-      t.translate('month_aug'),
-      t.translate('month_sep'),
-      t.translate('month_oct'),
-      t.translate('month_nov'),
-      t.translate('month_dec'),
-    ];
-    return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
-  }
+  String get _timeLabel => formatTimeLabel(_pickedTime);
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -120,7 +77,7 @@ class _DateTimeRowState extends State<DateTimeRow> {
       ),
     );
     if (picked != null) {
-      final newDefault = _defaultTimeForDate(picked);
+      final newDefault = defaultTimeForDate(picked);
       setState(() {
         _pickedDate = picked;
         _pickedTime = newDefault;
@@ -315,7 +272,7 @@ class _DateTimeRowState extends State<DateTimeRow> {
     return Row(
       children: [
         Expanded(
-          child: _PillChip(
+          child: PillChip(
             icon: Icons.calendar_today_rounded,
             label: _dateLabel(t),
             showChevron: true,
@@ -324,7 +281,7 @@ class _DateTimeRowState extends State<DateTimeRow> {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _PillChip(
+          child: PillChip(
             icon: Icons.access_time_rounded,
             label: _timeLabel,
             showChevron: true,
@@ -332,64 +289,6 @@ class _DateTimeRowState extends State<DateTimeRow> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _PillChip extends StatelessWidget {
-  final IconData? icon;
-  final String label;
-  final bool showChevron;
-  final VoidCallback onTap;
-
-  const _PillChip({
-    this.icon,
-    required this.label,
-    required this.showChevron,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: AppColors.border(context)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 16, color: AppColors.primaryPurple),
-              const SizedBox(width: 6),
-            ],
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.text(context),
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (showChevron) ...[
-              const SizedBox(width: 2),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 18,
-                color: AppColors.subtext(context),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }

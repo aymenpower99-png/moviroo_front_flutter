@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../services/auth_service.dart';
+import '../../../../services/auth_service/auth_service.dart';
 
 /// Holds all state and logic for the PersonalDataPage.
 /// Keeps the page widget thin and testable.

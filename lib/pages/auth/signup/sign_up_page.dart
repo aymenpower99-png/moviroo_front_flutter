@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../services/auth_service.dart';
+import '../../../../services/auth_service/auth_service.dart';
 import '../../../../widgets/password_strength_indicator.dart';
 
 class SignUpPage extends StatefulWidget {

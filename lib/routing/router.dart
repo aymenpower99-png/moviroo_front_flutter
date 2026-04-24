@@ -5,7 +5,7 @@ import 'package:moviroo/pages/booking/payment/payment_page.dart';
 import 'package:moviroo/pages/chat/chat_page.dart';
 import 'package:moviroo/pages/map_eta/map_eta_page.dart';
 import 'package:moviroo/pages/booking/payment/payment_success/payment_success_page.dart';
-import 'package:moviroo/pages/search/location_screen.dart';
+import 'package:moviroo/pages/search/location_screen/location_screen.dart';
 import 'package:moviroo/pages/tracking/track_ride_page.dart';
 
 import '../pages/onboarding/onboarding_page.dart';
@@ -21,7 +21,7 @@ import '../pages/tabs [passenger]/profile/settings_page.dart';
 import '../pages/tabs [passenger]/trajet/trajet_page.dart';
 import '../pages/tabs [passenger]/membre/membre_pass_screen.dart';
 import '../pages/booking/VehicleSelection/vehicle_selection_page.dart';
-import '../pages/booking/VehicleSelection/RideBookingPage.dart';
+import '../pages/booking/VehicleSelection/RideBooking/RideBookingPage.dart';
 import '../pages/splash/splash_page.dart';
 
 class AppRouter {
@@ -66,10 +66,8 @@ class AppRouter {
       return RideBookingPage(
         pickupLat: (args?['pickupLat'] as num?)?.toDouble() ?? 36.8065,
         pickupLon: (args?['pickupLon'] as num?)?.toDouble() ?? 10.1815,
-        pickupAddress: args?['pickupAddress'] as String? ?? '',
         dropoffLat: (args?['dropoffLat'] as num?)?.toDouble() ?? 36.8525,
         dropoffLon: (args?['dropoffLon'] as num?)?.toDouble() ?? 10.2076,
-        dropoffAddress: args?['dropoffAddress'] as String? ?? '',
       );
     },
     getStartedPage: (_) => const OnboardingPage(),

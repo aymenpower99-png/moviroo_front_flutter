@@ -1,6 +1,6 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import '../core/config/app_config.dart';
-import '../core/storage/token_storage.dart';
+import '../../core/config/app_config.dart';
+import '../../core/storage/token_storage.dart';
 
 /// Connects the passenger to the live ride WebSocket room.
 /// Listens for driver GPS updates and phase-change events.
@@ -54,9 +54,7 @@ class PassengerTrackingSocket {
     _socket!.on('trip:started', (_) => onRideStarted?.call());
 
     _socket!.on('trip:completed', (data) {
-      onRideCompleted?.call(
-        data is Map ? Map<String, dynamic>.from(data) : {},
-      );
+      onRideCompleted?.call(data is Map ? Map<String, dynamic>.from(data) : {});
     });
   }
 

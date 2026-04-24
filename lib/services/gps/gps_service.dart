@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'mapbox_place.dart';
-import 'mapbox_service.dart';
+import '../mapbox/mapbox_place.dart';
+import '../mapbox/mapbox_service.dart';
 
 class GpsService {
   /// Check if location services are enabled

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../core/config/app_config.dart';
-import '../core/storage/token_storage.dart';
-import '../models/vehicle_pricing_response.dart';
+import '../../core/config/app_config.dart';
+import '../../core/storage/token_storage.dart';
+import '../../models/vehicle_pricing_response.dart';
 
 class VehiclePricingService {
   Future<VehiclePricingResponse?> getVehiclePrices({
@@ -27,14 +27,12 @@ class VehiclePricingService {
         if (bookingDt != null) 'bookingDt': bookingDt,
       };
 
-      final uri = Uri.parse('${AppConfig.baseUrl}/rides/pricing')
-          .replace(queryParameters: queryParams);
+      final uri = Uri.parse(
+        '${AppConfig.baseUrl}/rides/pricing',
+      ).replace(queryParameters: queryParams);
 
       final res = await http
-          .get(
-            uri,
-            headers: headers,
-          )
+          .get(uri, headers: headers)
           .timeout(const Duration(seconds: 15));
 
       if (res.statusCode == 200) {

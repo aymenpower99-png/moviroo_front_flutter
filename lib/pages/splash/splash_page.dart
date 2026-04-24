@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../routing/router.dart';
-import '../../services/auth_service.dart';
+import '../../services/auth_service/auth_service.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -26,7 +26,7 @@ class _SplashPageState extends State<SplashPage> {
   Future<void> _startApp() async {
     final results = await Future.wait([
       _authService.tryRestoreSession(),
-      Future.delayed(const Duration(milliseconds: 2800))
+      Future.delayed(const Duration(milliseconds: 2800)),
     ]);
 
     if (!mounted) return;

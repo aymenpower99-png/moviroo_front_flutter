@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../services/auth_service.dart';
+import '../../../../services/auth_service/auth_service.dart';
 import '../../../../routing/router.dart';
 
 Future<void> handleLogin({
@@ -32,12 +32,16 @@ Future<void> handleLogin({
       final preAuthToken = (result['preAuthToken'] as String?) ?? '';
       final userId = (result['userId'] as String?) ?? '';
       batchSetState(() => setLoginLoading(false));
-      Navigator.pushNamed(context, AppRouter.otp, arguments: {
-        'purpose': stage,
-        'preAuthToken': preAuthToken,
-        'userId': userId,
-        'email': email,
-      });
+      Navigator.pushNamed(
+        context,
+        AppRouter.otp,
+        arguments: {
+          'purpose': stage,
+          'preAuthToken': preAuthToken,
+          'userId': userId,
+          'email': email,
+        },
+      );
       return;
     }
 
@@ -45,11 +49,15 @@ Future<void> handleLogin({
     if (result['requiresVerification'] == true) {
       final userId = (result['userId'] as String?) ?? '';
       batchSetState(() => setLoginLoading(false));
-      Navigator.pushNamed(context, AppRouter.otp, arguments: {
-        'purpose': 'verify-email',
-        'userId': userId,
-        'email': email,
-      });
+      Navigator.pushNamed(
+        context,
+        AppRouter.otp,
+        arguments: {
+          'purpose': 'verify-email',
+          'userId': userId,
+          'email': email,
+        },
+      );
       return;
     }
 

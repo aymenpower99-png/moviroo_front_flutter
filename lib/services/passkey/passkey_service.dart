@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:local_auth/error_codes.dart' as auth_error;
 
-import 'auth_service.dart';
+import '../auth_service/auth_service.dart';
 
 /// Result of a local passkey challenge.
 class PasskeyResult {
@@ -16,16 +16,14 @@ class PasskeyResult {
   final bool success;
   final String? errorMessage;
 
-  const PasskeyResult.success({
-    required this.method,
-    required this.actionToken,
-  })  : success = true,
-        errorMessage = null;
+  const PasskeyResult.success({required this.method, required this.actionToken})
+    : success = true,
+      errorMessage = null;
 
   const PasskeyResult.failure(this.errorMessage)
-      : success = false,
-        method = null,
-        actionToken = null;
+    : success = false,
+      method = null,
+      actionToken = null;
 }
 
 /// Passkey = device-level biometric layer (Face ID / Fingerprint / Device PIN).
@@ -118,10 +116,7 @@ class PasskeyService {
     try {
       final response = await _authService.verifyPasskey(prompt.method!);
       final token = response['actionToken'] as String?;
-      return PasskeyResult.success(
-        method: prompt.method,
-        actionToken: token,
-      );
+      return PasskeyResult.success(method: prompt.method, actionToken: token);
     } catch (e) {
       return PasskeyResult.failure(e.toString());
     }

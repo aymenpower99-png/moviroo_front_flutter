@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../../../theme/app_colors.dart';
 import '../../../../../../theme/app_text_styles.dart';
 import '../../../../../../l10n/app_localizations.dart';
-import '../../../../../../services/auth_service.dart';
+import '../../../../../../services/auth_service/auth_service.dart';
 
 enum _Step { send, verify }
 
@@ -29,8 +29,10 @@ class _EmailSendModalState extends State<EmailSendModal> {
 
   // Step 2 OTP fields
   static const int _codeLength = 6;
-  final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   int _resendSeconds = 0;
 
@@ -112,8 +114,9 @@ class _EmailSendModalState extends State<EmailSendModal> {
       for (int i = 0; i < _codeLength && i < digits.length; i++) {
         _controllers[i].text = digits[i];
       }
-      final next =
-          digits.length < _codeLength ? digits.length : _codeLength - 1;
+      final next = digits.length < _codeLength
+          ? digits.length
+          : _codeLength - 1;
       _focusNodes[next].requestFocus();
       setState(() {});
       return;
@@ -259,10 +262,9 @@ class _EmailSendModalState extends State<EmailSendModal> {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        style: AppTextStyles.bodyLarge(context).copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 20,
-                        ),
+                        style: AppTextStyles.bodyLarge(
+                          context,
+                        ).copyWith(fontWeight: FontWeight.w600, fontSize: 20),
                         decoration: InputDecoration(
                           counterText: '',
                           filled: true,
@@ -301,8 +303,9 @@ class _EmailSendModalState extends State<EmailSendModal> {
               const SizedBox(height: 20),
 
               GestureDetector(
-                onTap:
-                    _isComplete ? () => Navigator.of(context).pop(_enteredCode) : null,
+                onTap: _isComplete
+                    ? () => Navigator.of(context).pop(_enteredCode)
+                    : null,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: double.infinity,

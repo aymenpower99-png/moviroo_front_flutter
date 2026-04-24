@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_colors.dart';
-import '../../../../l10n/app_localizations.dart';
-import 'LocationCard.dart';
-import 'nextdestinationsearch.dart';
-import 'RecentSearchItem.dart';
-import './DateTimeRow.dart';
-import 'modal/RiderSheet.dart';
-import 'modal/PassengerSheet.dart';
-import '../../../services/mapbox_place.dart';
-import '../../../services/mapbox_service.dart';
-import '../../../services/recent_searches_service.dart';
-import '../../../services/gps_service.dart';
-import 'map_location_picker.dart';
+import '../../../theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
+import '../LocationCard.dart';
+import '../nextdestinationsearch.dart';
+import '../RecentSearchItem.dart';
+import '../datetime_row/datetime_row.dart';
+import '../modal/RiderSheet.dart';
+import '../modal/PassengerSheet.dart';
+import '../../../../services/mapbox/mapbox_place.dart';
+import '../../../../services/mapbox/mapbox_service.dart';
+import '../../../../services/recent_searches/recent_searches_service.dart';
+import '../../../../services/gps/gps_service.dart';
+import '../map_location_picker/map_location_picker.dart';
+import 'widgets.dart';
 
 class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key});
@@ -143,10 +144,8 @@ class _LocationScreenState extends State<LocationScreen>
           arguments: {
             'pickupLat': _pickupLat,
             'pickupLon': _pickupLon,
-            'pickupAddress': pickUp,
             'dropoffLat': _dropoffLat,
             'dropoffLon': _dropoffLon,
-            'dropoffAddress': dropOff,
             'date': _pickedDate,
             'time': _pickedTime,
             'passengerCount': _passengerCount,
@@ -302,11 +301,11 @@ class _LocationScreenState extends State<LocationScreen>
     );
 
     if (result != null && mounted) {
-      final address = (result['address'] as String?)?.trim() ?? '';
       final lat = result['latitude'] as double?;
       final lon = result['longitude'] as double?;
-      if (address.isNotEmpty) {
-        setState(() => target.text = address);
+
+      if (lat != null && lon != null) {
+        // Store coordinates in state
         if (fillingPickup) {
           setState(() {
             _pickupLat = lat;
@@ -318,6 +317,13 @@ class _LocationScreenState extends State<LocationScreen>
             _dropoffLon = lon;
           });
         }
+
+        // Fetch display name from backend
+        final place = await MapboxService.reverseGeocode(lat, lon);
+        if (place != null && mounted) {
+          setState(() => target.text = place.placeName);
+        }
+
         // If we just filled pickup, move focus to drop-off so the user can
         // immediately continue the flow.
         if (fillingPickup) {
@@ -459,7 +465,7 @@ class _LocationScreenState extends State<LocationScreen>
                     child: Row(
                       children: [
                         Expanded(
-                          child: _Pill(
+                          child: Pill(
                             icon: Icons.person_outline_rounded,
                             label: pillLabel,
                             onTap: _showRiderSheet,
@@ -467,7 +473,7 @@ class _LocationScreenState extends State<LocationScreen>
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _Pill(
+                          child: Pill(
                             icon: Icons.people_outline_rounded,
                             label:
                                 '$_passengerCount ${t.translate('passengers')}',
@@ -610,61 +616,6 @@ class _LocationScreenState extends State<LocationScreen>
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _Pill({required this.icon, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: AppColors.border(context)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 17, color: AppColors.primaryPurple),
-            const SizedBox(width: 7),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.text(context),
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 17,
-              color: AppColors.primaryPurple,
-            ),
           ],
         ),
       ),

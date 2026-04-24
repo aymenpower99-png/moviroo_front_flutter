@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 import 'package:geolocator/geolocator.dart';
 import '../../../theme/app_colors.dart';
-import '../../../theme/app_text_styles.dart';
-import '../../services/mapbox_service.dart' as svc;
+import '../../../../services/mapbox/mapbox_service.dart' as svc;
+import 'widgets.dart';
+import 'utils.dart';
 
 /// Map-based location picker used to confirm a single location (pickup or
 /// drop-off). The map is full-screen, a fixed Flutter widget pin stays at the
@@ -135,7 +136,7 @@ class _MapLocationPickerState extends State<MapLocationPicker>
     final lat = coords.lat.toDouble();
 
     // Check if within Tunisia bounding box
-    final inCoverage = _isInTunisia(lat, lon);
+    final inCoverage = isInTunisia(lat, lon);
 
     if (!mounted) return;
     setState(() {
@@ -161,15 +162,10 @@ class _MapLocationPickerState extends State<MapLocationPicker>
     }
   }
 
-  /// Check if coordinates are within Tunisia's bounding box
-  bool _isInTunisia(double lat, double lng) {
-    return lat >= 30.2 && lat <= 37.5 && lng >= 7.5 && lng <= 11.6;
-  }
-
   // ── Confirm ──────────────────────────────────────────────────────────────
   void _handleConfirm() {
+    // Return ONLY lat/lon - backend will handle reverse geocoding for display name
     Navigator.of(context).pop<Map<String, dynamic>>({
-      'address': _addressController.text,
       'latitude': _currentLat,
       'longitude': _currentLon,
     });
@@ -250,10 +246,10 @@ class _MapLocationPickerState extends State<MapLocationPicker>
             right: 16,
             child: Row(
               children: [
-                _BackBtn(onTap: () => Navigator.of(context).maybePop()),
+                BackBtn(onTap: () => Navigator.of(context).maybePop()),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _SearchInput(
+                  child: SearchInput(
                     addressController: _addressController,
                     isLoading: _isLoadingAddress,
                     isOutOfCoverage: _isOutOfCoverage,
@@ -283,7 +279,7 @@ class _MapLocationPickerState extends State<MapLocationPicker>
                     child: child,
                   );
                 },
-                child: const _CenterPin(),
+                child: const CenterPin(),
               ),
             ),
           ),
@@ -291,7 +287,7 @@ class _MapLocationPickerState extends State<MapLocationPicker>
           // ── Bottom sheet ───────────────────────────────────────────────
           Align(
             alignment: Alignment.bottomCenter,
-            child: _BottomSheet(
+            child: PickerBottomSheet(
               confirmLabel: widget.confirmLabel,
               addressController: _addressController,
               isLoading: _isLoadingAddress,
@@ -308,290 +304,12 @@ class _MapLocationPickerState extends State<MapLocationPicker>
             right: 16,
             bottom:
                 260, // Position above the compact bottom sheet card with clear gap
-            child: _LocationBtn(
+            child: LocationBtn(
               isLoading: _isLoadingLocation,
               onTap: _handleCurrentLocation,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ─── Centre pin (head + stem) ─────────────────────────────────────────────
-
-class _CenterPin extends StatelessWidget {
-  const _CenterPin();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Head — filled circle (primary) with a white inner dot.
-        Container(
-          width: 28,
-          height: 28,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.primaryPurple,
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 8,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          alignment: Alignment.center,
-          child: Container(
-            width: 10,
-            height: 10,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        // Stem — thin rounded rectangle beneath the head.
-        Container(
-          width: 4,
-          height: 22,
-          decoration: const BoxDecoration(
-            color: AppColors.primaryPurple,
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(2)),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Back button ──────────────────────────────────────────────────────────
-
-class _BackBtn extends StatelessWidget {
-  final VoidCallback onTap;
-  const _BackBtn({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border(context)),
-        ),
-        child: Icon(
-          Icons.arrow_back_ios_new_rounded,
-          size: 18,
-          color: AppColors.text(context),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Search input field (pill with colored dot) ─────────────────────────────
-
-class _SearchInput extends StatelessWidget {
-  final TextEditingController addressController;
-  final bool isLoading;
-  final bool isOutOfCoverage;
-
-  const _SearchInput({
-    required this.addressController,
-    required this.isLoading,
-    required this.isOutOfCoverage,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border(context)),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 12),
-          // Colored dot
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isOutOfCoverage
-                  ? AppColors.error
-                  : AppColors.primaryPurple,
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Address text
-          Expanded(
-            child: isLoading
-                ? Text(
-                    'Locating…',
-                    style: AppTextStyles.bodyMedium(
-                      context,
-                    ).copyWith(color: AppColors.subtext(context)),
-                  )
-                : isOutOfCoverage
-                ? Text(
-                    'Not available in this region yet',
-                    style: AppTextStyles.bodyMedium(
-                      context,
-                    ).copyWith(color: AppColors.error),
-                  )
-                : Text(
-                    addressController.text.trim().isEmpty
-                        ? 'Pin location'
-                        : addressController.text,
-                    style: AppTextStyles.bodyMedium(context),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Current location button ───────────────────────────────────────────────
-
-class _LocationBtn extends StatelessWidget {
-  final bool isLoading;
-  final VoidCallback onTap;
-  const _LocationBtn({required this.isLoading, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: isLoading ? null : onTap,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border(context)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x33000000),
-              blurRadius: 8,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: isLoading
-            ? const Padding(
-                padding: EdgeInsets.all(14),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.primaryPurple,
-                  ),
-                ),
-              )
-            : Icon(
-                Icons.my_location_rounded,
-                size: 22,
-                color: AppColors.text(context),
-              ),
-      ),
-    );
-  }
-}
-
-// ─── Compact floating card bottom sheet ────────────────────────────────────
-
-class _BottomSheet extends StatelessWidget {
-  final String confirmLabel;
-  final TextEditingController addressController;
-  final bool isLoading;
-  final bool isOutOfCoverage;
-  final VoidCallback? onConfirm;
-
-  const _BottomSheet({
-    required this.confirmLabel,
-    required this.addressController,
-    required this.isLoading,
-    required this.isOutOfCoverage,
-    required this.onConfirm,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      decoration: BoxDecoration(
-        color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 20,
-            offset: Offset(0, -4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Bold title (centered)
-            const Text(
-              'Your Pickup',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-
-            // Subtitle (centered)
-            Text(
-              'Tap button to confirm',
-              style: AppTextStyles.bodySmall(context),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-
-            // Confirm button
-            ElevatedButton(
-              onPressed: onConfirm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isOutOfCoverage
-                    ? AppColors.border(context)
-                    : null,
-                disabledBackgroundColor: AppColors.border(context),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                confirmLabel,
-                style: AppTextStyles.buttonPrimary.copyWith(
-                  color: isOutOfCoverage ? AppColors.subtext(context) : null,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -4,6 +4,8 @@ class MapboxPlace {
   final String id;
   final String placeName;
   final String fullAddress;
+  final String city;
+  final String country;
   final IconData categoryIcon;
   final double? latitude;
   final double? longitude;
@@ -13,9 +15,46 @@ class MapboxPlace {
     required this.placeName,
     required this.fullAddress,
     required this.categoryIcon,
+    this.city = '',
+    this.country = '',
     this.latitude,
     this.longitude,
   });
+
+  /// Create from backend geocoding response format
+  factory MapboxPlace.fromBackend(Map<String, dynamic> json) {
+    final lat = (json['lat'] as num?)?.toDouble();
+    final lon = (json['lon'] as num?)?.toDouble();
+    final displayName = json['display_name'] as String? ?? '';
+    final city = json['city'] as String? ?? '';
+    final country = json['country'] as String? ?? '';
+    final source = json['source'] as String? ?? '';
+
+    // Build full address from components
+    final fullAddress = [
+      displayName,
+      city,
+      country,
+    ].where((part) => part.isNotEmpty).join(', ');
+
+    // Generate ID from coordinates and source
+    final id =
+        '${source}_${lat?.toStringAsFixed(6)}_${lon?.toStringAsFixed(6)}';
+
+    // Determine icon based on display name
+    final categoryIcon = _resolveIconFromName(displayName);
+
+    return MapboxPlace(
+      id: id,
+      placeName: displayName,
+      fullAddress: fullAddress,
+      city: city,
+      country: country,
+      categoryIcon: categoryIcon,
+      latitude: lat,
+      longitude: lon,
+    );
+  }
 
   factory MapboxPlace.fromJson(Map<String, dynamic> json) {
     final placeName = json['place_name'] as String? ?? '';
@@ -81,32 +120,71 @@ class MapboxPlace {
   static IconData _resolveIcon(List<String> signals) {
     final combined = signals.join(' ').toLowerCase();
 
-    if (_has(combined, ['airport', 'aéroport', 'aeroport', 'aerodrome',
-        'carthage international', 'tunis-carthage', 'enfidha',
-        'monastir habib', 'djerba-zarzis', 'sfax-thyna', 'tabarka'])) {
+    if (_has(combined, [
+      'airport',
+      'aéroport',
+      'aeroport',
+      'aerodrome',
+      'carthage international',
+      'tunis-carthage',
+      'enfidha',
+      'monastir habib',
+      'djerba-zarzis',
+      'sfax-thyna',
+      'tabarka',
+    ])) {
       return Icons.flight;
     }
-    if (_has(combined, ['hotel', 'hôtel', 'lodging', 'motel', 'hostel',
-        'guesthouse', 'guest_house', 'riad', 'resort', 'auberge',
-        'dar ', 'pension', 'villa '])) {
+    if (_has(combined, [
+      'hotel',
+      'hôtel',
+      'lodging',
+      'motel',
+      'hostel',
+      'guesthouse',
+      'guest_house',
+      'riad',
+      'resort',
+      'auberge',
+      'dar ',
+      'pension',
+      'villa ',
+    ])) {
       return Icons.hotel;
     }
-    if (_has(combined, ['restaurant', 'eatery', 'diner', 'brasserie',
-        'rotisserie', 'grill'])) {
+    if (_has(combined, [
+      'restaurant',
+      'eatery',
+      'diner',
+      'brasserie',
+      'rotisserie',
+      'grill',
+    ])) {
       return Icons.restaurant;
     }
     if (_has(combined, ['cafe', 'café', 'coffee', 'tearoom', 'salon de thé'])) {
       return Icons.coffee;
     }
-    if (_has(combined, ['bakery', 'boulangerie', 'pastry', 'patisserie',
-        'pâtisserie'])) {
+    if (_has(combined, [
+      'bakery',
+      'boulangerie',
+      'pastry',
+      'patisserie',
+      'pâtisserie',
+    ])) {
       return Icons.bakery_dining;
     }
     if (_has(combined, ['bar', 'pub', 'nightclub', 'lounge'])) {
       return Icons.local_bar;
     }
-    if (_has(combined, ['fast_food', 'fastfood', 'fast food',
-        'burger', 'sandwich', 'pizza'])) {
+    if (_has(combined, [
+      'fast_food',
+      'fastfood',
+      'fast food',
+      'burger',
+      'sandwich',
+      'pizza',
+    ])) {
       return Icons.fastfood;
     }
     if (_has(combined, ['ice_cream', 'icecream', 'ice cream', 'glace'])) {
@@ -120,24 +198,48 @@ class MapboxPlace {
       return Icons.directions_bus;
     }
     if (_has(combined, ['taxi', 'louage'])) return Icons.local_taxi;
-    if (_has(combined, ['fuel', 'gas_station', 'petrol', 'station-service',
-        'essence'])) {
+    if (_has(combined, [
+      'fuel',
+      'gas_station',
+      'petrol',
+      'station-service',
+      'essence',
+    ])) {
       return Icons.local_gas_station;
     }
     if (_has(combined, ['parking'])) return Icons.local_parking;
     if (_has(combined, ['port', 'marina', 'harbour', 'harbor'])) {
       return Icons.directions_boat;
     }
-    if (_has(combined, ['hospital', 'clinic', 'clinique', 'medical',
-        'doctor', 'médecin', 'hopital', 'hôpital', 'polyclinique'])) {
+    if (_has(combined, [
+      'hospital',
+      'clinic',
+      'clinique',
+      'medical',
+      'doctor',
+      'médecin',
+      'hopital',
+      'hôpital',
+      'polyclinique',
+    ])) {
       return Icons.local_hospital;
     }
     if (_has(combined, ['pharmacy', 'pharmacie', 'drugstore'])) {
       return Icons.medication;
     }
-    if (_has(combined, ['school', 'école', 'university', 'université',
-        'college', 'collège', 'lycée', 'lycee', 'kindergarten',
-        'maternelle', 'institut'])) {
+    if (_has(combined, [
+      'school',
+      'école',
+      'university',
+      'université',
+      'college',
+      'collège',
+      'lycée',
+      'lycee',
+      'kindergarten',
+      'maternelle',
+      'institut',
+    ])) {
       return Icons.school;
     }
     if (_has(combined, ['library', 'bibliothèque', 'bibliotheque'])) {
@@ -146,8 +248,17 @@ class MapboxPlace {
     if (_has(combined, ['mall', 'centre commercial', 'shopping'])) {
       return Icons.shopping_bag;
     }
-    if (_has(combined, ['supermarket', 'supermarché', 'supermarche',
-        'grocery', 'épicerie', 'epicerie', 'marché', 'marche', 'market'])) {
+    if (_has(combined, [
+      'supermarket',
+      'supermarché',
+      'supermarche',
+      'grocery',
+      'épicerie',
+      'epicerie',
+      'marché',
+      'marche',
+      'market',
+    ])) {
       return Icons.shopping_cart;
     }
     if (_has(combined, ['shop', 'store', 'boutique', 'magasin'])) {
@@ -178,15 +289,24 @@ class MapboxPlace {
     if (_has(combined, ['fire_station', 'pompiers'])) {
       return Icons.local_fire_department;
     }
-    if (_has(combined, ['embassy', 'ambassade', 'consulat', 'consulate',
-        'government', 'gouvernement', 'municipalité', 'municipalite',
-        'mairie'])) {
+    if (_has(combined, [
+      'embassy',
+      'ambassade',
+      'consulat',
+      'consulate',
+      'government',
+      'gouvernement',
+      'municipalité',
+      'municipalite',
+      'mairie',
+    ])) {
       return Icons.account_balance;
     }
     if (_has(combined, ['beach', 'plage'])) return Icons.beach_access;
     if (_has(combined, ['park', 'parc', 'jardin', 'garden'])) return Icons.park;
     if (_has(combined, ['camping', 'campground'])) return Icons.terrain;
-    if (_has(combined, ['hiking', 'randonnée', 'randonnee'])) return Icons.hiking;
+    if (_has(combined, ['hiking', 'randonnée', 'randonnee']))
+      return Icons.hiking;
     if (_has(combined, ['golf'])) return Icons.sports_golf;
     if (_has(combined, ['gym', 'fitness', 'salle de sport'])) {
       return Icons.fitness_center;
@@ -196,8 +316,13 @@ class MapboxPlace {
     if (_has(combined, ['mosque', 'mosquée', 'mosquee', 'masjid'])) {
       return Icons.mosque;
     }
-    if (_has(combined, ['church', 'église', 'eglise', 'cathedral',
-        'cathédrale'])) {
+    if (_has(combined, [
+      'church',
+      'église',
+      'eglise',
+      'cathedral',
+      'cathédrale',
+    ])) {
       return Icons.church;
     }
     if (_has(combined, ['synagogue'])) return Icons.synagogue;
@@ -208,4 +333,10 @@ class MapboxPlace {
 
   static bool _has(String text, List<String> keywords) =>
       keywords.any((kw) => text.contains(kw));
+
+  /// Resolve icon from display name (for backend responses)
+  static IconData _resolveIconFromName(String name) {
+    final lowerName = name.toLowerCase();
+    return _resolveIcon([lowerName]);
+  }
 }

@@ -12,7 +12,7 @@ import 'theme/theme_provider.dart';
 import 'theme/locale_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'core/firebase/firebase_service.dart';
-import 'services/auth_service.dart';
+import 'services/auth_service/auth_service.dart';
 
 final themeProvider = ThemeProvider();
 final localeProvider = LocaleProvider();

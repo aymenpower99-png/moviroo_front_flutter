@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
-import '../../../../../services/auth_service.dart';
+import '../../../../../services/auth_service/auth_service.dart';
 import 'auth_app_page.dart';
 import '2_step_ver_modal/email_send_modal.dart';
 
@@ -150,18 +150,21 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
           _primary = TwoFactorMethod.totp;
           _errorMessage = null;
         });
-        _authService.getCurrentUser(forceRefresh: true).then((user) {
-          if (!mounted || user == null) return;
-          setState(() {
-            _authAppEnabled = (user['totpEnabled'] as bool?) ?? true;
-            _emailEnabled = (user['is2faEnabled'] as bool?) ?? false;
-            _primary =
-                twoFactorMethodFromString(
-                  user['primary2faMethod'] as String?,
-                ) ??
-                TwoFactorMethod.totp;
-          });
-        }).catchError((_) {});
+        _authService
+            .getCurrentUser(forceRefresh: true)
+            .then((user) {
+              if (!mounted || user == null) return;
+              setState(() {
+                _authAppEnabled = (user['totpEnabled'] as bool?) ?? true;
+                _emailEnabled = (user['is2faEnabled'] as bool?) ?? false;
+                _primary =
+                    twoFactorMethodFromString(
+                      user['primary2faMethod'] as String?,
+                    ) ??
+                    TwoFactorMethod.totp;
+              });
+            })
+            .catchError((_) {});
       }
     } else {
       setState(() {

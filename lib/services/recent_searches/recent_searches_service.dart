@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'mapbox_place.dart';
-import 'mapbox_service.dart';
+import '../mapbox/mapbox_place.dart';
+import '../mapbox/mapbox_service.dart';
 
 class RecentSearchesService {
   static const String _pickupKey = 'recent_searches_pickup';
@@ -81,12 +81,12 @@ class RecentSearchesService {
 
   // ── Encode MapboxPlace → Map (IconData serialized safely) ─────────────
   static Map<String, dynamic> _encode(MapboxPlace p) => {
-        'id': p.id,
-        'place_name': p.placeName,
-        'full_address': p.fullAddress,
-        'icon_code_point': p.categoryIcon.codePoint,
-        'icon_font_family': p.categoryIcon.fontFamily ?? 'MaterialIcons',
-        'latitude': p.latitude,
-        'longitude': p.longitude,
-      };
+    'id': p.id,
+    'place_name': p.placeName,
+    'full_address': p.fullAddress,
+    'icon_code_point': p.categoryIcon.codePoint,
+    'icon_font_family': p.categoryIcon.fontFamily ?? 'MaterialIcons',
+    'latitude': p.latitude,
+    'longitude': p.longitude,
+  };
 }

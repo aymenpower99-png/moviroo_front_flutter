@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../services/auth_service.dart';
+import '../../../../services/auth_service/auth_service.dart';
 import '../../../../routing/router.dart';
 
 class OtpPage extends StatefulWidget {
@@ -380,10 +380,10 @@ class _OtpPageState extends State<OtpPage> {
                     TextButton(
                       onPressed:
                           (_isLoading ||
-                                  _isResending ||
-                                  _purpose == 'login-totp')
-                              ? null
-                              : _handleResend,
+                              _isResending ||
+                              _purpose == 'login-totp')
+                          ? null
+                          : _handleResend,
                       child: _isResending
                           ? const SizedBox(
                               width: 16,

@@ -3,7 +3,7 @@ import '../../widgets/tab_bar.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../services/auth_service.dart';
+import '../../../../services/auth_service/auth_service.dart';
 import '../../../../routing/router.dart';
 import 'settings_data.dart';
 import 'settings_widgets.dart';
