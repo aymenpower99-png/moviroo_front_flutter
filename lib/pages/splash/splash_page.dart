@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import '../../routing/router.dart';
 import '../../services/auth_service.dart';
 
@@ -10,13 +9,9 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage>
-    with SingleTickerProviderStateMixin {
+class _SplashPageState extends State<SplashPage> {
   final AuthService _authService = AuthService();
 
-  late final AnimationController _controller;
-
-  bool _animationDone = false;
   bool _sessionDone = false;
   bool _sessionOk = false;
 
@@ -24,26 +19,27 @@ class _SplashPageState extends State<SplashPage>
   void initState() {
     super.initState();
 
-    _controller = AnimationController(vsync: this);
-
-    _checkSession();
+    _startApp();
   }
 
-  // 🔐 session check
-  Future<void> _checkSession() async {
-    try {
-      _sessionOk = await _authService.tryRestoreSession();
-    } catch (_) {
-      _sessionOk = false;
-    }
+  // 🔐 session check + minimum splash time
+  Future<void> _startApp() async {
+    final results = await Future.wait([
+      _authService.tryRestoreSession(),
+      Future.delayed(const Duration(milliseconds: 2800))
+    ]);
 
+    if (!mounted) return;
+
+    _sessionOk = results[0] as bool;
     _sessionDone = true;
+
     _goNext();
   }
 
-  // 🚀 navigation control
+  // 🚀 navigation
   void _goNext() {
-    if (!_animationDone || !_sessionDone) return;
+    if (!_sessionDone) return;
     if (!mounted) return;
 
     if (_sessionOk) {
@@ -54,29 +50,15 @@ class _SplashPageState extends State<SplashPage>
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SizedBox.expand(
-        child: Lottie.asset(
-          'images/splash.json',
-          controller: _controller,
-          fit: BoxFit.cover,
+      backgroundColor: Colors.black,
 
-          onLoaded: (composition) {
-            _controller
-              ..duration = composition.duration
-              ..forward().then((_) {
-                _animationDone = true;
-                _goNext();
-              });
-          },
+      body: SizedBox.expand(
+        child: Image.asset(
+          'images/complete.gif',
+          fit: BoxFit.cover,
+          gaplessPlayback: true, // 🔥 prevents GIF restart/flicker
         ),
       ),
     );

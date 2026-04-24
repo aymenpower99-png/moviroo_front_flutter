@@ -11,6 +11,7 @@ class LocationCard extends StatelessWidget {
   final VoidCallback onSwap;
   final VoidCallback? onUseCurrentLocation;
   final bool isFetchingLocation;
+  final bool hasFocus;
 
   const LocationCard({
     super.key,
@@ -22,6 +23,7 @@ class LocationCard extends StatelessWidget {
     required this.onSwap,
     this.onUseCurrentLocation,
     this.isFetchingLocation = false,
+    this.hasFocus = false,
   });
 
   InputDecoration _inputDec(
@@ -54,6 +56,9 @@ class LocationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(20),
+        border: hasFocus
+            ? Border.all(color: AppColors.primaryPurple, width: 2)
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.07),

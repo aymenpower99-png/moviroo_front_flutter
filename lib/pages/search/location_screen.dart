@@ -12,7 +12,6 @@ import '../../../services/mapbox_service.dart';
 import '../../../services/recent_searches_service.dart';
 import '../../../services/gps_service.dart';
 import 'map_location_picker.dart';
-import 'dart:async';
 
 class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key});
@@ -37,7 +36,6 @@ class _LocationScreenState extends State<LocationScreen>
   TimeOfDay? _pickedTime;
   bool _isLoadingSuggestions = false;
   bool _isFetchingLocation = false;
-  Timer? _debounce; // ← ADD HERE
 
   List<MapboxPlace> _recentPickupSearches = [];
   List<MapboxPlace> _recentDropoffSearches = [];
@@ -47,6 +45,9 @@ class _LocationScreenState extends State<LocationScreen>
   double? _pickupLon;
   double? _dropoffLat;
   double? _dropoffLon;
+
+  // Track if either input is focused for border highlight
+  bool _isCardFocused = false;
 
   // ← typed as String? so null subtitle is valid
   final _riders = <Map<String, String?>>[
@@ -76,6 +77,15 @@ class _LocationScreenState extends State<LocationScreen>
     _toController.addListener(_onQueryChanged);
     _fromFocus.addListener(_onFocusChanged);
     _toFocus.addListener(_onFocusChanged);
+    _fromFocus.addListener(_updateCardFocus);
+    _toFocus.addListener(_updateCardFocus);
+  }
+
+  void _updateCardFocus() {
+    final isFocused = _fromFocus.hasFocus || _toFocus.hasFocus;
+    if (_isCardFocused != isFocused) {
+      setState(() => _isCardFocused = isFocused);
+    }
   }
 
   Future<void> _loadRecentSearches() async {
@@ -91,12 +101,13 @@ class _LocationScreenState extends State<LocationScreen>
 
   @override
   void dispose() {
-    _debounce?.cancel(); // ← ADD HERE
     _pulseController.dispose();
     _fromController.removeListener(_onQueryChanged);
     _toController.removeListener(_onQueryChanged);
     _fromFocus.removeListener(_onFocusChanged);
     _toFocus.removeListener(_onFocusChanged);
+    _fromFocus.removeListener(_updateCardFocus);
+    _toFocus.removeListener(_updateCardFocus);
     _fromController.dispose();
     _toController.dispose();
     _fromFocus.dispose();
@@ -145,9 +156,7 @@ class _LocationScreenState extends State<LocationScreen>
     }
   }
 
-  void _onQueryChanged() {
-    _debounce?.cancel();
-
+  void _onQueryChanged() async {
     if (!_fromFocus.hasFocus && !_toFocus.hasFocus) {
       setState(() => _suggestions = []);
       return;
@@ -157,22 +166,21 @@ class _LocationScreenState extends State<LocationScreen>
         ? _toController.text.trim()
         : _fromController.text.trim();
 
-    if (query.length < 2) {
+    if (query.isEmpty) {
       setState(() => _suggestions = []);
       return;
     }
 
-    _debounce = Timer(const Duration(milliseconds: 400), () async {
-      setState(() => _isLoadingSuggestions = true);
-      try {
-        final results = await MapboxService.searchPlaces(query);
-        if (mounted) setState(() => _suggestions = results);
-      } catch (e) {
-        debugPrint('Search error: $e');
-      } finally {
-        if (mounted) setState(() => _isLoadingSuggestions = false);
-      }
-    });
+    setState(() => _isLoadingSuggestions = true);
+
+    try {
+      final results = await MapboxService.searchPlaces(query);
+      if (mounted) setState(() => _suggestions = results);
+    } catch (e) {
+      debugPrint('Search error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingSuggestions = false);
+    }
   }
 
   void _onSuggestionTap(MapboxPlace place) async {
@@ -387,89 +395,104 @@ class _LocationScreenState extends State<LocationScreen>
         !(_toFocus.hasFocus && _toController.text.trim().isNotEmpty);
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // Top bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child: Stack(
-                alignment: Alignment.center,
+            // Top header section (title + pills)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Column(
                 children: [
-                  Text(
-                    t.translate('plan_your_ride'),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.text(context),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () => Navigator.maybePop(context),
-                      child: Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: AppColors.surface(context),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                  // Top bar
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Text(
+                          t.translate('plan_your_ride'),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.text(context),
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: GestureDetector(
+                            onTap: () => Navigator.maybePop(context),
+                            child: Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface(context),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                size: 18,
+                                color: AppColors.text(context),
+                              ),
                             ),
-                          ],
+                          ),
                         ),
-                        child: Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: 18,
-                          color: AppColors.text(context),
-                        ),
-                      ),
+                      ],
                     ),
                   ),
+
+                  const SizedBox(height: 12),
+
+                  // Rider & Passenger pills
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _Pill(
+                            icon: Icons.person_outline_rounded,
+                            label: pillLabel,
+                            onTap: _showRiderSheet,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _Pill(
+                            icon: Icons.people_outline_rounded,
+                            label:
+                                '$_passengerCount ${t.translate('passengers')}',
+                            onTap: _showPassengerPicker,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
 
-            const SizedBox(height: 12),
-
-            // Rider & Passenger pills
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _Pill(
-                      icon: Icons.person_outline_rounded,
-                      label: pillLabel,
-                      onTap: _showRiderSheet,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _Pill(
-                      icon: Icons.people_outline_rounded,
-                      label: '$_passengerCount ${t.translate('passengers')}',
-                      onTap: _showPassengerPicker,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Scrollable body
-            Expanded(
+            // Scrollable body (positioned to fill available space below header)
+            Positioned(
+              top: 140, // Start below the header section (title + pills)
+              left: 0,
+              right: 0,
+              bottom: 0,
               child: SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.manual,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -484,6 +507,7 @@ class _LocationScreenState extends State<LocationScreen>
                           ? null
                           : () => _handleUseCurrentLocation(),
                       isFetchingLocation: _isFetchingLocation,
+                      hasFocus: _isCardFocused,
                     ),
                     const SizedBox(height: 10),
                     DateTimeRow(
@@ -553,12 +577,14 @@ class _LocationScreenState extends State<LocationScreen>
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            // ── Confirm button (only shows when both fields are filled) ──
+
+            // ── Confirm button (fixed at bottom, only shows when both fields are filled) ──
             if (_fromController.text.trim().isNotEmpty &&
                 _toController.text.trim().isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
                 child: SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -619,7 +645,7 @@ class _Pill extends StatelessWidget {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [ 
+          children: [
             Icon(icon, size: 17, color: AppColors.primaryPurple),
             const SizedBox(width: 7),
             Flexible(
