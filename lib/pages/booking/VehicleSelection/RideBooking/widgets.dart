@@ -36,68 +36,88 @@ class BackButtonWidget extends StatelessWidget {
   }
 }
 
-/// Anchored Location Card (floats above a marker on the map)
+// ── Anchored Location Card ──────────────────────────────────────────────────
+
+/// Compact location card that floats above a map marker.
+/// The pointer triangle adapts its horizontal position so it always
+/// points toward the marker, even when the card is clamped to screen edges.
 class AnchoredLocationCard extends StatelessWidget {
-  /// Screen-space position of the marker this card should hover above.
-  final Offset screen;
-
-  /// Location name (bold, larger).
+  final Offset markerScreen;
+  final double screenWidth;
   final String name;
-
-  /// "City, Country" line (smaller, lighter).
   final String subtitle;
+  final bool isPickup;
 
-  static const double _cardWidth = 210;
-  static const double _triangleH = 8;
-  static const double _gapAboveMarker = 6; // px between triangle tip and marker
+  static const double _cardWidth = 190;
+  static const double _triangleW = 14;
+  static const double _triangleH = 7;
+  static const double _gap = 4;
+  static const double _edgePad = 10;
 
   const AnchoredLocationCard({
-    required this.screen,
+    required this.markerScreen,
+    required this.screenWidth,
     required this.name,
     required this.subtitle,
+    required this.isPickup,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Horizontally center the card on the marker, then clamp so it
-    // never runs off-screen.
-    final screenWidth = MediaQuery.of(context).size.width;
-    double left = screen.dx - _cardWidth / 2;
-    if (left < 8) left = 8;
-    if (left + _cardWidth > screenWidth - 8) {
-      left = screenWidth - _cardWidth - 8;
-    }
+    // Clamp card left so it stays on screen
+    double left = markerScreen.dx - _cardWidth / 2;
+    left = left.clamp(_edgePad, screenWidth - _cardWidth - _edgePad);
 
-    // Card body height (~56) + triangle (8) + gap (6) above marker
-    const estimatedHeight = 56 + _triangleH + _gapAboveMarker;
-    final top = screen.dy - estimatedHeight;
+    // Estimate total height: body (~46) + triangle (7) + gap (4)
+    const bodyH = 46.0;
+    const totalH = bodyH + _triangleH + _gap;
+    double top = markerScreen.dy - totalH;
+    if (top < 4) top = 4;
+
+    // Triangle offset: how far the marker center is from card left edge
+    final triangleCenterX = (markerScreen.dx - left).clamp(
+      _triangleW / 2 + 8,
+      _cardWidth - _triangleW / 2 - 8,
+    );
 
     final surfaceColor = AppColors.surface(context);
 
     return Positioned(
       left: left,
-      top: top < 4 ? 4 : top,
+      top: top,
       width: _cardWidth,
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Card body ──────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: surfaceColor,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.16),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
             child: Row(
               children: [
-                // Left: two-line text block
+                // Dot indicator (purple for pickup, red-ish for dropoff)
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: isPickup
+                        ? AppColors.primaryPurple
+                        : AppColors.primaryPurple.withOpacity(0.7),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,7 +126,7 @@ class AnchoredLocationCard extends StatelessWidget {
                       Text(
                         name,
                         style: AppTextStyles.bodyMedium(context).copyWith(
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: AppColors.text(context),
                         ),
@@ -114,12 +134,11 @@ class AnchoredLocationCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 1),
                         Text(
                           subtitle,
                           style: AppTextStyles.bodySmall(context).copyWith(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 10,
                             color: AppColors.subtext(context),
                           ),
                           maxLines: 1,
@@ -129,21 +148,21 @@ class AnchoredLocationCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                // Right: chevron, vertically centered
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: AppColors.subtext(context),
-                ),
               ],
             ),
           ),
 
-          // ── Triangle tail (speech-bubble pointer) ──────────
-          CustomPaint(
-            size: const Size(16, _triangleH),
-            painter: TrianglePainter(color: surfaceColor),
+          // ── Adaptive triangle pointer ──────
+          SizedBox(
+            width: _cardWidth,
+            height: _triangleH,
+            child: CustomPaint(
+              painter: _AdaptiveTrianglePainter(
+                color: surfaceColor,
+                triangleCenterX: triangleCenterX,
+                triangleWidth: _triangleW,
+              ),
+            ),
           ),
         ],
       ),
@@ -151,28 +170,37 @@ class AnchoredLocationCard extends StatelessWidget {
   }
 }
 
-/// Triangle painter for the speech-bubble tail
-class TrianglePainter extends CustomPainter {
+/// Paints a downward triangle at [triangleCenterX] within the available width.
+class _AdaptiveTrianglePainter extends CustomPainter {
   final Color color;
-  const TrianglePainter({required this.color});
+  final double triangleCenterX;
+  final double triangleWidth;
+
+  const _AdaptiveTrianglePainter({
+    required this.color,
+    required this.triangleCenterX,
+    required this.triangleWidth,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
+    final half = triangleWidth / 2;
     final path = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width / 2, size.height)
-      ..lineTo(size.width, 0)
+      ..moveTo(triangleCenterX - half, 0)
+      ..lineTo(triangleCenterX, size.height)
+      ..lineTo(triangleCenterX + half, 0)
       ..close();
 
-    // Soft shadow beneath the triangle
-    canvas.drawShadow(path, Colors.black, 4.0, false);
-    // Fill the triangle with the card surface colour
+    canvas.drawShadow(path, Colors.black, 3.0, false);
     canvas.drawPath(path, Paint()..color = color);
   }
 
   @override
-  bool shouldRepaint(covariant TrianglePainter old) => old.color != color;
+  bool shouldRepaint(covariant _AdaptiveTrianglePainter old) =>
+      old.color != color || old.triangleCenterX != triangleCenterX;
 }
+
+// ── Sheet Header ────────────────────────────────────────────────────────────
 
 /// Sheet Header (drag handle + title)
 class SheetHeader extends StatelessWidget {
@@ -215,6 +243,8 @@ class SheetHeader extends StatelessWidget {
     );
   }
 }
+
+// ── Confirm Bar ─────────────────────────────────────────────────────────────
 
 /// Confirm Bar (sticky bottom)
 class ConfirmBar extends StatelessWidget {

@@ -16,6 +16,8 @@ class RideBookingPage extends StatefulWidget {
   final double pickupLon;
   final double dropoffLat;
   final double dropoffLon;
+  final String? pickupAddress;
+  final String? dropoffAddress;
 
   const RideBookingPage({
     super.key,
@@ -23,6 +25,8 @@ class RideBookingPage extends StatefulWidget {
     required this.pickupLon,
     required this.dropoffLat,
     required this.dropoffLon,
+    this.pickupAddress,
+    this.dropoffAddress,
   });
 
   @override
@@ -31,8 +35,6 @@ class RideBookingPage extends StatefulWidget {
 
 class _RideBookingPageState extends State<RideBookingPage> {
   mbx.MapboxMap? _mapboxMap;
-  mbx.PointAnnotationManager? _pointAnnotationManager;
-  mbx.PolylineAnnotationManager? _polylineAnnotationManager;
   MapManager? _mapManager;
   int _selectedCarIndex = 0;
   VehiclePricingResponse? _pricingResponse;
@@ -52,24 +54,35 @@ class _RideBookingPageState extends State<RideBookingPage> {
   @override
   void initState() {
     super.initState();
+    // Use passed display names immediately so user never sees stale data
+    _pickupAddress = widget.pickupAddress ?? '';
+    _dropoffAddress = widget.dropoffAddress ?? '';
+    if (_pickupAddress.isNotEmpty && _dropoffAddress.isNotEmpty) {
+      _isLoadingAddresses = false;
+    }
     _loadVehiclePrices();
-    _loadAddresses();
+    _loadAddressDetails();
   }
 
-  Future<void> _loadAddresses() async {
+  Future<void> _loadAddressDetails() async {
+    // If we already have display names from the search screen, only fetch
+    // city/country details. The display_name stays as-is for consistency.
     try {
-      final pickupPlace = await MapboxService.reverseGeocode(
-        widget.pickupLat,
-        widget.pickupLon,
-      );
-      final dropoffPlace = await MapboxService.reverseGeocode(
-        widget.dropoffLat,
-        widget.dropoffLon,
-      );
+      final results = await Future.wait([
+        MapboxService.reverseGeocode(widget.pickupLat, widget.pickupLon),
+        MapboxService.reverseGeocode(widget.dropoffLat, widget.dropoffLon),
+      ]);
+      final pickupPlace = results[0];
+      final dropoffPlace = results[1];
       if (mounted) {
         setState(() {
-          _pickupAddress = pickupPlace?.placeName ?? 'Unknown location';
-          _dropoffAddress = dropoffPlace?.placeName ?? 'Unknown location';
+          // Only override address if we didn't receive one from the search screen
+          if (_pickupAddress.isEmpty) {
+            _pickupAddress = pickupPlace?.placeName ?? 'Unknown location';
+          }
+          if (_dropoffAddress.isEmpty) {
+            _dropoffAddress = dropoffPlace?.placeName ?? 'Unknown location';
+          }
           _pickupCity = pickupPlace?.city ?? '';
           _pickupCountry = pickupPlace?.country ?? '';
           _dropoffCity = dropoffPlace?.city ?? '';
@@ -78,13 +91,17 @@ class _RideBookingPageState extends State<RideBookingPage> {
         });
       }
     } catch (e) {
-      debugPrint('Error loading addresses: $e');
+      debugPrint('Error loading address details: $e');
       if (mounted) {
         setState(() {
-          _pickupAddress =
-              'Location (${widget.pickupLat.toStringAsFixed(4)}, ${widget.pickupLon.toStringAsFixed(4)})';
-          _dropoffAddress =
-              'Location (${widget.dropoffLat.toStringAsFixed(4)}, ${widget.dropoffLon.toStringAsFixed(4)})';
+          if (_pickupAddress.isEmpty) {
+            _pickupAddress =
+                'Location (${widget.pickupLat.toStringAsFixed(4)}, ${widget.pickupLon.toStringAsFixed(4)})';
+          }
+          if (_dropoffAddress.isEmpty) {
+            _dropoffAddress =
+                'Location (${widget.dropoffLat.toStringAsFixed(4)}, ${widget.dropoffLon.toStringAsFixed(4)})';
+          }
           _isLoadingAddresses = false;
         });
       }
@@ -114,26 +131,18 @@ class _RideBookingPageState extends State<RideBookingPage> {
   }
 
   void _onStyleLoaded(mbx.StyleLoadedEventData _) async {
-    // Create annotation managers
-    _pointAnnotationManager = await _mapboxMap!.annotations
-        .createPointAnnotationManager();
-    _polylineAnnotationManager = await _mapboxMap!.annotations
-        .createPolylineAnnotationManager();
+    if (_mapboxMap == null) return;
 
-    // Initialize map manager
     _mapManager = MapManager(
-      mapboxMap: _mapboxMap,
-      pointAnnotationManager: _pointAnnotationManager,
-      polylineAnnotationManager: _polylineAnnotationManager,
+      mapboxMap: _mapboxMap!,
       pickupLat: widget.pickupLat,
       pickupLon: widget.pickupLon,
       dropoffLat: widget.dropoffLat,
       dropoffLon: widget.dropoffLon,
-      onScreenPositionUpdate: () => _updateScreenPositions(),
     );
 
-    // Add markers and polyline
-    await _mapManager!.addMarkersAndPolyline();
+    await _mapManager!.setup();
+    _updateScreenPositions();
   }
 
   void _onCameraChanged(mbx.CameraChangedEventData _) {
@@ -142,14 +151,13 @@ class _RideBookingPageState extends State<RideBookingPage> {
 
   Future<void> _updateScreenPositions() async {
     if (_mapManager == null) return;
-    await _mapManager!.updateScreenPositions((pickupScreen, dropoffScreen) {
-      if (mounted) {
-        setState(() {
-          _pickupScreen = pickupScreen;
-          _dropoffScreen = dropoffScreen;
-        });
-      }
-    });
+    final positions = await _mapManager!.getScreenPositions();
+    if (mounted && positions != null) {
+      setState(() {
+        _pickupScreen = positions.$1;
+        _dropoffScreen = positions.$2;
+      });
+    }
   }
 
   List<CarOption> get _filteredCars {
@@ -180,9 +188,16 @@ class _RideBookingPageState extends State<RideBookingPage> {
   }
 
   @override
+  void dispose() {
+    _mapManager?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).padding.bottom;
     final t = AppLocalizations.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -216,20 +231,28 @@ class _RideBookingPageState extends State<RideBookingPage> {
             child: const BackButtonWidget(),
           ),
 
-          // ── Pickup location card (anchored above pickup marker) ─────
+          // ── Pickup location card ─────
           if (_pickupScreen != null)
             AnchoredLocationCard(
-              screen: _pickupScreen!,
-              name: _isLoadingAddresses ? 'Loading...' : _pickupAddress,
+              markerScreen: _pickupScreen!,
+              screenWidth: screenWidth,
+              name: _isLoadingAddresses && _pickupAddress.isEmpty
+                  ? 'Loading...'
+                  : _pickupAddress,
               subtitle: cityCountry(_pickupCity, _pickupCountry),
+              isPickup: true,
             ),
 
-          // ── Drop-off location card (anchored above drop-off marker) ─
+          // ── Drop-off location card ─
           if (_dropoffScreen != null)
             AnchoredLocationCard(
-              screen: _dropoffScreen!,
-              name: _isLoadingAddresses ? 'Loading...' : _dropoffAddress,
+              markerScreen: _dropoffScreen!,
+              screenWidth: screenWidth,
+              name: _isLoadingAddresses && _dropoffAddress.isEmpty
+                  ? 'Loading...'
+                  : _dropoffAddress,
               subtitle: cityCountry(_dropoffCity, _dropoffCountry),
+              isPickup: false,
             ),
 
           // ── Bottom sheet ─────────────────────────────────

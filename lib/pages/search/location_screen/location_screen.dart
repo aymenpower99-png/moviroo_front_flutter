@@ -128,31 +128,55 @@ class _LocationScreenState extends State<LocationScreen>
     final dropOff = _toController.text.trim();
     final pickUp = _fromController.text.trim();
 
-    if (dropOff.isNotEmpty &&
-        pickUp.isNotEmpty &&
-        _pickedTime != null &&
-        _pickupLat != null &&
-        _pickupLon != null &&
-        _dropoffLat != null &&
-        _dropoffLon != null) {
-      FocusScope.of(context).unfocus();
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (!mounted) return;
-        Navigator.pushNamed(
-          context,
-          '/ride_booking_page',
-          arguments: {
-            'pickupLat': _pickupLat,
-            'pickupLon': _pickupLon,
-            'dropoffLat': _dropoffLat,
-            'dropoffLon': _dropoffLon,
-            'date': _pickedDate,
-            'time': _pickedTime,
-            'passengerCount': _passengerCount,
-          },
-        );
-      });
+    if (pickUp.isEmpty || dropOff.isEmpty) return;
+
+    if (_pickedTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a time'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
     }
+    if (_pickupLat == null || _pickupLon == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pickup location is incomplete'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    if (_dropoffLat == null || _dropoffLon == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Drop-off location is incomplete'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (!mounted) return;
+      Navigator.pushNamed(
+        context,
+        '/ride_booking_page',
+        arguments: {
+          'pickupLat': _pickupLat,
+          'pickupLon': _pickupLon,
+          'dropoffLat': _dropoffLat,
+          'dropoffLon': _dropoffLon,
+          'pickupAddress': pickUp,
+          'dropoffAddress': dropOff,
+          'date': _pickedDate,
+          'time': _pickedTime,
+          'passengerCount': _passengerCount,
+        },
+      );
+    });
   }
 
   void _onQueryChanged() async {
@@ -275,9 +299,20 @@ class _LocationScreenState extends State<LocationScreen>
   }
 
   void _swapLocations() {
-    final from = _fromController.text;
-    _fromController.text = _toController.text;
-    _toController.text = from;
+    final fromText = _fromController.text;
+    final toText = _toController.text;
+    final tmpLat = _pickupLat;
+    final tmpLon = _pickupLon;
+
+    _fromController.text = toText;
+    _toController.text = fromText;
+
+    setState(() {
+      _pickupLat = _dropoffLat;
+      _pickupLon = _dropoffLon;
+      _dropoffLat = tmpLat;
+      _dropoffLon = tmpLon;
+    });
   }
 
   Future<void> _handleSelectOnMap() async {

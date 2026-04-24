@@ -68,6 +68,8 @@ class AppRouter {
         pickupLon: (args?['pickupLon'] as num?)?.toDouble() ?? 10.1815,
         dropoffLat: (args?['dropoffLat'] as num?)?.toDouble() ?? 36.8525,
         dropoffLon: (args?['dropoffLon'] as num?)?.toDouble() ?? 10.2076,
+        pickupAddress: args?['pickupAddress'] as String?,
+        dropoffAddress: args?['dropoffAddress'] as String?,
       );
     },
     getStartedPage: (_) => const OnboardingPage(),
