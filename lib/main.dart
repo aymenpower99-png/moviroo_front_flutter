@@ -13,6 +13,7 @@ import 'theme/locale_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'core/firebase/firebase_service.dart';
 import 'services/auth_service/auth_service.dart';
+import 'services/recent_searches/recent_searches_service.dart';
 
 final themeProvider = ThemeProvider();
 final localeProvider = LocaleProvider();
@@ -23,6 +24,8 @@ void main() async {
     'pk.eyJ1IjoiYXltb3VuMTEiLCJhIjoiY21vM2JvY3UzMGtrdzJzcXc0cXZwbmE5eiJ9.LcnOY7q-WQ37STLy7wogRA',
   );
   await FirebaseService.initialize();
+  // Clear pre-migration cache to ensure Mapbox-only results
+  await RecentSearchesService.clearOldCache();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

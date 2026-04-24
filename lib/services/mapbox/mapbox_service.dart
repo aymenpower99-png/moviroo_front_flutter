@@ -74,6 +74,19 @@ class MapboxService {
     double dropoffLat,
     double dropoffLon,
   ) async {
+    debugPrint(
+      '[MapboxService] getRouteGeometry called: pickup=($pickupLat, $pickupLon), dropoff=($dropoffLat, $dropoffLon)',
+    );
+
+    // Ensure coordinates are in valid range
+    if (pickupLat.abs() > 90 ||
+        pickupLon.abs() > 180 ||
+        dropoffLat.abs() > 90 ||
+        dropoffLon.abs() > 180) {
+      debugPrint('[MapboxService] Coordinates out of range - using fallback');
+      return [];
+    }
+
     try {
       final url =
           Uri.parse(
@@ -86,14 +99,18 @@ class MapboxService {
             },
           );
 
+      debugPrint('[MapboxService] requesting: $url');
       final response = await http.get(url);
+      debugPrint('[MapboxService] response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
         final routes = data['routes'] as List;
+        debugPrint('[MapboxService] routes count: ${routes.length}');
         if (routes.isNotEmpty) {
           final geometry = routes[0]['geometry'] as Map<String, dynamic>;
           final coordinates = geometry['coordinates'] as List;
+          debugPrint('[MapboxService] coordinate count: ${coordinates.length}');
 
           // Flatten the coordinates array from [[lon, lat], [lon, lat], ...] to [lon, lat, lon, lat, ...]
           final flattened = <double>[];
@@ -101,14 +118,20 @@ class MapboxService {
             flattened.add((coord as List)[0] as double); // lon
             flattened.add((coord as List)[1] as double); // lat
           }
+          debugPrint(
+            '[MapboxService] returning ${flattened.length} flattened values',
+          );
           return flattened;
         }
+      } else {
+        debugPrint('[MapboxService] non-200 response: ${response.body}');
       }
     } catch (e, st) {
       debugPrint('Mapbox Directions API error: $e\n$st');
     }
 
     // Fallback to straight line if API fails
+    debugPrint('[MapboxService] using fallback straight line');
     return [pickupLon, pickupLat, dropoffLon, dropoffLat];
   }
 }

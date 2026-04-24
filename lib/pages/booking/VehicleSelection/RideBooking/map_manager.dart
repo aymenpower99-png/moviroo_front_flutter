@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'dart:math';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 import '../../../../theme/app_colors.dart';
 import '../../../../services/mapbox/mapbox_service.dart';
+import 'map_painters.dart';
 
 /// Manages map operations: custom markers, dual-layer route, looping animation.
 class MapManager {
@@ -15,6 +14,7 @@ class MapManager {
   final double pickupLon;
   final double dropoffLat;
   final double dropoffLon;
+  final BuildContext context; // For theme detection
 
   mbx.PointAnnotationManager? _pointManager;
   mbx.PolylineAnnotationManager? _baseRouteManager;
@@ -34,22 +34,34 @@ class MapManager {
     required this.pickupLon,
     required this.dropoffLat,
     required this.dropoffLon,
+    required this.context,
   });
 
   // ── Public API ─────────────────────────────────────────────────────────
 
   /// One-shot setup: create managers, add markers, fetch route, start animation.
   Future<void> setup() async {
+    debugPrint('[MapManager] setup started');
+
     _pointManager = await mapboxMap.annotations.createPointAnnotationManager();
     _baseRouteManager = await mapboxMap.annotations
         .createPolylineAnnotationManager();
     _animRouteManager = await mapboxMap.annotations
         .createPolylineAnnotationManager();
 
+    debugPrint('[MapManager] annotation managers created');
+
     await _addMarkers();
+    debugPrint('[MapManager] markers added');
+
     await _fetchAndDrawRoute();
+    debugPrint('[MapManager] route fetched and base layer drawn');
+
     await fitCameraToBounds();
+    debugPrint('[MapManager] camera fitted');
+
     _startRouteAnimation();
+    debugPrint('[MapManager] animation started');
   }
 
   /// Returns (pickupScreen, dropoffScreen) offsets for card positioning.
@@ -78,175 +90,152 @@ class MapManager {
   Future<void> _addMarkers() async {
     if (_pointManager == null) return;
 
-    // Pickup marker: bullseye (ring + inner dot)
-    final pickupBytes = await _renderPickupMarker();
-    if (pickupBytes != null) {
-      await mapboxMap.style.addStyleImage(
-        'pickup_marker',
-        1.0,
-        mbx.MbxImage(width: 48, height: 48, data: pickupBytes),
-        false,
-        [],
-        [],
-        null,
-      );
-      await _pointManager!.create(
-        mbx.PointAnnotationOptions(
-          geometry: mbx.Point(coordinates: mbx.Position(pickupLon, pickupLat)),
-          iconImage: 'pickup_marker',
-          iconSize: 1.0,
-          iconAnchor: mbx.IconAnchor.CENTER,
-        ),
-      );
-    }
-
-    // Drop-off marker: teardrop pin
-    final dropoffBytes = await _renderDropoffMarker();
-    if (dropoffBytes != null) {
-      await mapboxMap.style.addStyleImage(
-        'dropoff_marker',
-        1.0,
-        mbx.MbxImage(width: 48, height: 64, data: dropoffBytes),
-        false,
-        [],
-        [],
-        null,
-      );
-      await _pointManager!.create(
-        mbx.PointAnnotationOptions(
-          geometry: mbx.Point(
-            coordinates: mbx.Position(dropoffLon, dropoffLat),
-          ),
-          iconImage: 'dropoff_marker',
-          iconSize: 1.0,
-          iconAnchor: mbx.IconAnchor.BOTTOM,
-        ),
-      );
-    }
-  }
-
-  /// Renders a 48x48 bullseye: outer ring + solid inner dot.
-  Future<Uint8List?> _renderPickupMarker() async {
-    const size = 48.0;
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    final center = const Offset(size / 2, size / 2);
-
-    // Outer ring
-    canvas.drawCircle(
-      center,
-      18,
-      Paint()
-        ..color = AppColors.primaryPurple
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 4,
+    debugPrint(
+      '[MapManager] _addMarkers started - using driver app marker implementation',
     );
-    // Inner filled dot
-    canvas.drawCircle(center, 8, Paint()..color = AppColors.primaryPurple);
 
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(size.toInt(), size.toInt());
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-    return bytes?.buffer.asUint8List();
-  }
+    // Pickup marker: using driver app's exact implementation
+    await _pointManager!.create(
+      mbx.PointAnnotationOptions(
+        geometry: mbx.Point(coordinates: mbx.Position(pickupLon, pickupLat)),
+        image: await MapPainters.renderPickupBitmap(),
+        iconSize: 1.0,
+        iconAnchor: mbx.IconAnchor.CENTER,
+      ),
+    );
+    debugPrint('[MapManager] pickup marker added (driver app style)');
 
-  /// Renders a 48x64 teardrop pin with white inner dot.
-  Future<Uint8List?> _renderDropoffMarker() async {
-    const w = 48.0;
-    const h = 64.0;
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-
-    final paint = Paint()..color = AppColors.primaryPurple;
-
-    // Teardrop path: circle at top + triangular tail pointing down
-    final path = Path();
-    const cx = w / 2;
-    const cy = 20.0;
-    const r = 16.0;
-
-    // Upper circle
-    path.addOval(Rect.fromCircle(center: const Offset(cx, cy), radius: r));
-
-    // Triangular tail from circle bottom to pin tip
-    path.moveTo(cx - r * 0.7, cy + r * 0.7);
-    path.lineTo(cx, h - 4);
-    path.lineTo(cx + r * 0.7, cy + r * 0.7);
-    path.close();
-
-    // Shadow
-    canvas.drawShadow(path, Colors.black, 4.0, false);
-    canvas.drawPath(path, paint);
-
-    // White inner dot
-    canvas.drawCircle(const Offset(cx, cy), 6, Paint()..color = Colors.white);
-
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(w.toInt(), h.toInt());
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-    return bytes?.buffer.asUint8List();
+    // Drop-off marker: using driver app's exact implementation
+    await _pointManager!.create(
+      mbx.PointAnnotationOptions(
+        geometry: mbx.Point(coordinates: mbx.Position(dropoffLon, dropoffLat)),
+        image: await MapPainters.renderDropoffBitmap(),
+        iconSize: 1.0,
+        iconAnchor: mbx.IconAnchor.BOTTOM,
+      ),
+    );
+    debugPrint('[MapManager] dropoff marker added (driver app style)');
   }
 
   // ── Route ──────────────────────────────────────────────────────────────
 
   Future<void> _fetchAndDrawRoute() async {
-    final routeGeometry = await MapboxService.getRouteGeometry(
-      pickupLat,
-      pickupLon,
-      dropoffLat,
-      dropoffLon,
-    );
+    debugPrint('[MapManager] _fetchAndDrawRoute started');
 
-    // Convert flattened [lon, lat, lon, lat, ...] to Position list
-    final positions = <mbx.Position>[];
-    for (int i = 0; i < routeGeometry.length; i += 2) {
-      positions.add(mbx.Position(routeGeometry[i], routeGeometry[i + 1]));
+    try {
+      final routeGeometry = await MapboxService.getRouteGeometry(
+        pickupLat,
+        pickupLon,
+        dropoffLat,
+        dropoffLon,
+      );
+
+      debugPrint('[MapManager] routeGeometry length: ${routeGeometry.length}');
+
+      // Convert flattened [lon, lat, lon, lat, ...] to Position list
+      final positions = <mbx.Position>[];
+      for (int i = 0; i < routeGeometry.length; i += 2) {
+        positions.add(mbx.Position(routeGeometry[i], routeGeometry[i + 1]));
+      }
+
+      debugPrint(
+        '[MapManager] converted to ${positions.length} Position objects',
+      );
+
+      // Ensure route starts EXACTLY at pickup and ends EXACTLY at dropoff
+      final pickupPos = mbx.Position(pickupLon, pickupLat);
+      final dropoffPos = mbx.Position(dropoffLon, dropoffLat);
+
+      if (positions.isEmpty) {
+        debugPrint('[MapManager] routeGeometry empty, drawing debug line');
+        await _drawDebugLine(pickupPos, dropoffPos);
+        return;
+      } else {
+        // Replace first/last with exact marker coords to eliminate gaps
+        positions[0] = pickupPos;
+        positions[positions.length - 1] = dropoffPos;
+      }
+
+      _routePositions = positions;
+      debugPrint(
+        '[MapManager] final routePositions: ${_routePositions.length}',
+      );
+
+      // Draw base (context) layer — full route, low opacity
+      if (_baseRouteManager != null && positions.length >= 2) {
+        debugPrint('[MapManager] creating base polyline');
+        await _baseRouteManager!.create(
+          mbx.PolylineAnnotationOptions(
+            geometry: mbx.LineString(coordinates: positions),
+            lineColor: AppColors.primaryPurple.value,
+            lineWidth: 5.0,
+            lineOpacity: 0.25,
+          ),
+        );
+        debugPrint('[MapManager] base polyline created');
+      } else {
+        debugPrint(
+          '[MapManager] base polyline NOT created: manager=${_baseRouteManager != null}, positions=${positions.length}',
+        );
+        await _drawDebugLine(pickupPos, dropoffPos);
+      }
+    } catch (e) {
+      debugPrint('[MapManager] route fetch error: $e');
+      final pickupPos = mbx.Position(pickupLon, pickupLat);
+      final dropoffPos = mbx.Position(dropoffLon, dropoffLat);
+      await _drawDebugLine(pickupPos, dropoffPos);
     }
+  }
 
-    // Ensure route starts EXACTLY at pickup and ends EXACTLY at dropoff
-    final pickupPos = mbx.Position(pickupLon, pickupLat);
-    final dropoffPos = mbx.Position(dropoffLon, dropoffLat);
-
-    if (positions.isEmpty) {
-      positions.addAll([pickupPos, dropoffPos]);
-    } else {
-      // Replace first/last with exact marker coords to eliminate gaps
-      positions[0] = pickupPos;
-      positions[positions.length - 1] = dropoffPos;
-    }
-
-    _routePositions = positions;
-
-    // Draw base (context) layer — full route, low opacity
-    if (_baseRouteManager != null && positions.length >= 2) {
+  /// Draw debug line (red straight line) when route fails
+  Future<void> _drawDebugLine(mbx.Position pickup, mbx.Position dropoff) async {
+    if (_baseRouteManager == null) return;
+    try {
+      final debugPositions = [pickup, dropoff];
       await _baseRouteManager!.create(
         mbx.PolylineAnnotationOptions(
-          geometry: mbx.LineString(coordinates: positions),
-          lineColor: AppColors.primaryPurple.value,
-          lineWidth: 5.0,
-          lineOpacity: 0.25,
+          geometry: mbx.LineString(coordinates: debugPositions),
+          lineColor: Colors.red.value,
+          lineWidth: 3.0,
+          lineOpacity: 0.8,
         ),
       );
+      debugPrint('[MapManager] debug line drawn');
+    } catch (e) {
+      debugPrint('[MapManager] debug line draw failed: $e');
     }
   }
 
   // ── Looping animation ──────────────────────────────────────────────────
 
   void _startRouteAnimation() {
-    if (_routePositions.length < 2) return;
+    debugPrint(
+      '[MapManager] _startRouteAnimation: routePositions=${_routePositions.length}',
+    );
+    if (_routePositions.length < 2) {
+      debugPrint('[MapManager] animation NOT started: insufficient positions');
+      return;
+    }
     _animStep = 0;
 
     _animTimer = Timer.periodic(_animInterval, (_) {
       if (_disposed) {
+        debugPrint('[MapManager] animation timer cancelled (disposed)');
         _animTimer?.cancel();
         return;
       }
       _advanceAnimation();
     });
+    debugPrint('[MapManager] animation timer started');
   }
 
   Future<void> _advanceAnimation() async {
-    if (_animRouteManager == null || _routePositions.length < 2) return;
+    if (_animRouteManager == null || _routePositions.length < 2) {
+      debugPrint(
+        '[MapManager] _advanceAnimation skipped: manager=${_animRouteManager != null}, positions=${_routePositions.length}',
+      );
+      return;
+    }
 
     _animStep++;
     if (_animStep > _totalAnimSteps) _animStep = 1; // loop
@@ -267,19 +256,24 @@ class MapManager {
           lineOpacity: 1.0,
         ),
       );
+      if (_animStep % 20 == 0) {
+        debugPrint(
+          '[MapManager] animation step $_animStep/${_totalAnimSteps}, endIndex=$endIndex',
+        );
+      }
     } catch (e) {
-      // Swallow — map may not be ready or widget disposed
+      debugPrint('[MapManager] animation step error: $e');
     }
   }
 
   // ── Camera ─────────────────────────────────────────────────────────────
 
-  Future<void> fitCameraToBounds() async {
+  Future<void> fitCameraToBounds({int retryCount = 0}) async {
     try {
-      final southLat = min(pickupLat, dropoffLat);
-      final northLat = max(pickupLat, dropoffLat);
-      final westLon = min(pickupLon, dropoffLon);
-      final eastLon = max(pickupLon, dropoffLon);
+      final southLat = math.min(pickupLat, dropoffLat);
+      final northLat = math.max(pickupLat, dropoffLat);
+      final westLon = math.min(pickupLon, dropoffLon);
+      final eastLon = math.max(pickupLon, dropoffLon);
 
       final bounds = mbx.CoordinateBounds(
         southwest: mbx.Point(coordinates: mbx.Position(westLon, southLat)),
@@ -297,8 +291,15 @@ class MapManager {
       );
 
       await mapboxMap.flyTo(camera, mbx.MapAnimationOptions(duration: 800));
+      debugPrint('[MapManager] camera fit succeeded');
     } catch (e) {
-      debugPrint('Error fitting camera to bounds: $e');
+      debugPrint('[MapManager] camera fit failed (attempt $retryCount): $e');
+      if (retryCount < 3) {
+        await Future.delayed(Duration(milliseconds: 200 * (retryCount + 1)));
+        await fitCameraToBounds(retryCount: retryCount + 1);
+      } else {
+        debugPrint('[MapManager] camera fit failed after 3 retries');
+      }
     }
   }
 }

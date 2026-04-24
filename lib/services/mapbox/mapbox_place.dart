@@ -28,7 +28,6 @@ class MapboxPlace {
     final displayName = json['display_name'] as String? ?? '';
     final city = json['city'] as String? ?? '';
     final country = json['country'] as String? ?? '';
-    final source = json['source'] as String? ?? '';
 
     // Build full address from components
     final fullAddress = [
@@ -37,9 +36,8 @@ class MapboxPlace {
       country,
     ].where((part) => part.isNotEmpty).join(', ');
 
-    // Generate ID from coordinates and source
-    final id =
-        '${source}_${lat?.toStringAsFixed(6)}_${lon?.toStringAsFixed(6)}';
+    // Generate ID from coordinates only (Mapbox-only now)
+    final id = 'geo_${lat?.toStringAsFixed(6)}_${lon?.toStringAsFixed(6)}';
 
     // Determine icon based on display name
     final categoryIcon = _resolveIconFromName(displayName);

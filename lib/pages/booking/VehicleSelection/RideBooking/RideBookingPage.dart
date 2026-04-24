@@ -139,6 +139,7 @@ class _RideBookingPageState extends State<RideBookingPage> {
       pickupLon: widget.pickupLon,
       dropoffLat: widget.dropoffLat,
       dropoffLon: widget.dropoffLon,
+      context: context,
     );
 
     await _mapManager!.setup();
@@ -198,6 +199,7 @@ class _RideBookingPageState extends State<RideBookingPage> {
     final bottomPad = MediaQuery.of(context).padding.bottom;
     final t = AppLocalizations.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -206,7 +208,9 @@ class _RideBookingPageState extends State<RideBookingPage> {
           // ── Mapbox map (full screen) ─────────────────────
           Positioned.fill(
             child: mbx.MapWidget(
-              styleUri: mbx.MapboxStyles.MAPBOX_STREETS,
+              styleUri: isDark
+                  ? mbx.MapboxStyles.DARK
+                  : mbx.MapboxStyles.MAPBOX_STREETS,
               onMapCreated: _onMapCreated,
               onStyleLoadedListener: _onStyleLoaded,
               onCameraChangeListener: _onCameraChanged,
@@ -217,7 +221,8 @@ class _RideBookingPageState extends State<RideBookingPage> {
                     (widget.pickupLat + widget.dropoffLat) / 2,
                   ),
                 ),
-                zoom: 12.0,
+                zoom:
+                    14.0, // Higher initial zoom, will be overridden by dynamic fit
                 bearing: 0.0,
                 pitch: 0.0,
               ),

@@ -5,9 +5,18 @@ import '../mapbox/mapbox_place.dart';
 import '../mapbox/mapbox_service.dart';
 
 class RecentSearchesService {
-  static const String _pickupKey = 'recent_searches_pickup';
-  static const String _dropoffKey = 'recent_searches_dropoff';
+  static const String _pickupKey = 'recent_searches_pickup_v2';
+  static const String _dropoffKey = 'recent_searches_dropoff_v2';
+  static const String _oldPickupKey = 'recent_searches_pickup';
+  static const String _oldDropoffKey = 'recent_searches_dropoff';
   static const int _maxRecentSearches = 3;
+
+  /// Clear old v1 cache keys (pre-migration data)
+  static Future<void> clearOldCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_oldPickupKey);
+    await prefs.remove(_oldDropoffKey);
+  }
 
   /// Get recent searches for pickup
   static Future<List<MapboxPlace>> getPickupRecentSearches() async {
