@@ -7,10 +7,12 @@ import 'RecentSearchItem.dart';
 import './DateTimeRow.dart';
 import 'modal/RiderSheet.dart';
 import 'modal/PassengerSheet.dart';
+import '../../../services/mapbox_place.dart';
 import '../../../services/mapbox_service.dart';
 import '../../../services/recent_searches_service.dart';
 import '../../../services/gps_service.dart';
 import 'map_location_picker.dart';
+import 'dart:async';
 
 class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key});
@@ -35,6 +37,8 @@ class _LocationScreenState extends State<LocationScreen>
   TimeOfDay? _pickedTime;
   bool _isLoadingSuggestions = false;
   bool _isFetchingLocation = false;
+  Timer? _debounce; // ← ADD HERE
+
   List<MapboxPlace> _recentPickupSearches = [];
   List<MapboxPlace> _recentDropoffSearches = [];
 
@@ -87,6 +91,7 @@ class _LocationScreenState extends State<LocationScreen>
 
   @override
   void dispose() {
+    _debounce?.cancel(); // ← ADD HERE
     _pulseController.dispose();
     _fromController.removeListener(_onQueryChanged);
     _toController.removeListener(_onQueryChanged);
@@ -140,7 +145,9 @@ class _LocationScreenState extends State<LocationScreen>
     }
   }
 
-  void _onQueryChanged() async {
+  void _onQueryChanged() {
+    _debounce?.cancel();
+
     if (!_fromFocus.hasFocus && !_toFocus.hasFocus) {
       setState(() => _suggestions = []);
       return;
@@ -150,25 +157,22 @@ class _LocationScreenState extends State<LocationScreen>
         ? _toController.text.trim()
         : _fromController.text.trim();
 
-    if (query.isEmpty) {
+    if (query.length < 2) {
       setState(() => _suggestions = []);
       return;
     }
 
-    setState(() => _isLoadingSuggestions = true);
-
-    try {
-      final results = await MapboxService.searchPlaces(query);
-      if (mounted) {
-        setState(() => _suggestions = results);
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      setState(() => _isLoadingSuggestions = true);
+      try {
+        final results = await MapboxService.searchPlaces(query);
+        if (mounted) setState(() => _suggestions = results);
+      } catch (e) {
+        debugPrint('Search error: $e');
+      } finally {
+        if (mounted) setState(() => _isLoadingSuggestions = false);
       }
-    } catch (e) {
-      print('Search error: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingSuggestions = false);
-      }
-    }
+    });
   }
 
   void _onSuggestionTap(MapboxPlace place) async {
@@ -615,7 +619,7 @@ class _Pill extends StatelessWidget {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: [ 
             Icon(icon, size: 17, color: AppColors.primaryPurple),
             const SizedBox(width: 7),
             Flexible(

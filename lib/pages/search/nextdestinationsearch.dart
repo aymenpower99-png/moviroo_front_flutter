@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../services/mapbox_place.dart';
 import '../../../services/mapbox_service.dart';
 
 class NextDestinationSearch extends StatelessWidget {

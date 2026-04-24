@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'mapbox_place.dart';
 import 'mapbox_service.dart';
 
 class RecentSearchesService {
@@ -10,11 +12,11 @@ class RecentSearchesService {
   /// Get recent searches for pickup
   static Future<List<MapboxPlace>> getPickupRecentSearches() async {
     final prefs = await SharedPreferences.getInstance();
-    final json = prefs.getString(_pickupKey);
-    if (json == null) return [];
+    final jsonStr = prefs.getString(_pickupKey);
+    if (jsonStr == null) return [];
 
     try {
-      final List<dynamic> decoded = jsonDecode(json);
+      final List<dynamic> decoded = jsonDecode(jsonStr);
       return decoded
           .map((item) => MapboxPlace.fromJson(item as Map<String, dynamic>))
           .toList();
@@ -26,11 +28,11 @@ class RecentSearchesService {
   /// Get recent searches for dropoff
   static Future<List<MapboxPlace>> getDropoffRecentSearches() async {
     final prefs = await SharedPreferences.getInstance();
-    final json = prefs.getString(_dropoffKey);
-    if (json == null) return [];
+    final jsonStr = prefs.getString(_dropoffKey);
+    if (jsonStr == null) return [];
 
     try {
-      final List<dynamic> decoded = jsonDecode(json);
+      final List<dynamic> decoded = jsonDecode(jsonStr);
       return decoded
           .map((item) => MapboxPlace.fromJson(item as Map<String, dynamic>))
           .toList();
@@ -44,25 +46,12 @@ class RecentSearchesService {
     final prefs = await SharedPreferences.getInstance();
     final current = await getPickupRecentSearches();
 
-    // Remove if already exists
     final filtered = current.where((p) => p.id != place.id).toList();
-
-    // Add to beginning
     filtered.insert(0, place);
-
-    // Keep only max items
     final limited = filtered.take(_maxRecentSearches).toList();
 
-    final json = jsonEncode(limited.map((p) => {
-      'id': p.id,
-      'place_name': p.placeName,
-      'full_address': p.fullAddress,
-      'category_icon': p.categoryIcon,
-      'latitude': p.latitude,
-      'longitude': p.longitude,
-    }).toList());
-
-    await prefs.setString(_pickupKey, json);
+    final jsonStr = jsonEncode(limited.map((p) => _encode(p)).toList());
+    await prefs.setString(_pickupKey, jsonStr);
   }
 
   /// Add a place to recent searches for dropoff
@@ -70,25 +59,12 @@ class RecentSearchesService {
     final prefs = await SharedPreferences.getInstance();
     final current = await getDropoffRecentSearches();
 
-    // Remove if already exists
     final filtered = current.where((p) => p.id != place.id).toList();
-
-    // Add to beginning
     filtered.insert(0, place);
-
-    // Keep only max items
     final limited = filtered.take(_maxRecentSearches).toList();
 
-    final json = jsonEncode(limited.map((p) => {
-      'id': p.id,
-      'place_name': p.placeName,
-      'full_address': p.fullAddress,
-      'category_icon': p.categoryIcon,
-      'latitude': p.latitude,
-      'longitude': p.longitude,
-    }).toList());
-
-    await prefs.setString(_dropoffKey, json);
+    final jsonStr = jsonEncode(limited.map((p) => _encode(p)).toList());
+    await prefs.setString(_dropoffKey, jsonStr);
   }
 
   /// Clear all pickup recent searches
@@ -102,4 +78,15 @@ class RecentSearchesService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_dropoffKey);
   }
+
+  // ── Encode MapboxPlace → Map (IconData serialized safely) ─────────────
+  static Map<String, dynamic> _encode(MapboxPlace p) => {
+        'id': p.id,
+        'place_name': p.placeName,
+        'full_address': p.fullAddress,
+        'icon_code_point': p.categoryIcon.codePoint,
+        'icon_font_family': p.categoryIcon.fontFamily ?? 'MaterialIcons',
+        'latitude': p.latitude,
+        'longitude': p.longitude,
+      };
 }

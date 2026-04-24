@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'mapbox_place.dart';
 import 'mapbox_service.dart';
 
 class GpsService {
@@ -20,31 +22,22 @@ class GpsService {
   /// Get current position
   static Future<Position?> getCurrentPosition() async {
     try {
-      // Check if location service is enabled
-      bool serviceEnabled = await isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        return null;
-      }
+      final bool serviceEnabled = await isLocationServiceEnabled();
+      if (!serviceEnabled) return null;
 
-      // Check permission
       LocationPermission permission = await checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await requestPermission();
-        if (permission == LocationPermission.denied) {
-          return null;
-        }
+        if (permission == LocationPermission.denied) return null;
       }
 
-      if (permission == LocationPermission.deniedForever) {
-        return null;
-      }
+      if (permission == LocationPermission.deniedForever) return null;
 
-      // Get current position
       return await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
     } catch (e) {
-      print('GPS error: $e');
+      debugPrint('GPS error: $e');
       return null;
     }
   }
@@ -55,15 +48,12 @@ class GpsService {
       final position = await getCurrentPosition();
       if (position == null) return null;
 
-      // Reverse geocode using Mapbox
-      final place = await MapboxService.reverseGeocode(
+      return await MapboxService.reverseGeocode(
         position.latitude,
         position.longitude,
       );
-
-      return place;
     } catch (e) {
-      print('GPS with address error: $e');
+      debugPrint('GPS with address error: $e');
       return null;
     }
   }

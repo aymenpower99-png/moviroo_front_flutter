@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import '../../routing/router.dart';
 import '../../services/auth_service.dart';
 
@@ -9,27 +10,43 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> {
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
   final AuthService _authService = AuthService();
+
+  late final AnimationController _controller;
+
+  bool _animationDone = false;
+  bool _sessionDone = false;
+  bool _sessionOk = false;
 
   @override
   void initState() {
     super.initState();
-    _initApp();
+
+    _controller = AnimationController(vsync: this);
+
+    _checkSession();
   }
 
-  Future<void> _initApp() async {
-    // Run session check in parallel with minimum splash duration
-    final results = await Future.wait([
-      _authService.tryRestoreSession(),
-      Future.delayed(const Duration(seconds: 2), () => null),
-    ]);
+  // 🔐 session check
+  Future<void> _checkSession() async {
+    try {
+      _sessionOk = await _authService.tryRestoreSession();
+    } catch (_) {
+      _sessionOk = false;
+    }
 
+    _sessionDone = true;
+    _goNext();
+  }
+
+  // 🚀 navigation control
+  void _goNext() {
+    if (!_animationDone || !_sessionDone) return;
     if (!mounted) return;
 
-    final bool sessionRestored = results[0] as bool;
-
-    if (sessionRestored) {
+    if (_sessionOk) {
       AppRouter.clearAndGo(context, AppRouter.home);
     } else {
       AppRouter.clearAndGo(context, AppRouter.login);
@@ -37,11 +54,30 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SizedBox.expand(
-        child: Image.asset('images/complete.gif', fit: BoxFit.cover),
+        child: Lottie.asset(
+          'images/splash.json',
+          controller: _controller,
+          fit: BoxFit.cover,
+
+          onLoaded: (composition) {
+            _controller
+              ..duration = composition.duration
+              ..forward().then((_) {
+                _animationDone = true;
+                _goNext();
+              });
+          },
+        ),
       ),
     );
   }

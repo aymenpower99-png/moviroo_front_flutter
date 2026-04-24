@@ -77,12 +77,11 @@ flutter:
     - images/trip.png
     - images/bgstart.jpg
     - images/img.png
-    - images/Intro.mp4
     - images/lsnn.png
-    - images/logo.gif
-    - images/complete.gif
     - images/logob.png
+    - images/splash.json
     - images/appanim.mp4
+    - images/complete.gif
     - images/map_preview.png
     - images/bmw.png
     - images/car.png
