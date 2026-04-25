@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../services/mapbox/mapbox_place.dart';
-import '../../../../services/mapbox/mapbox_service.dart';
+import '../../../../services/geocoding/geocoding_service.dart';
 import '../../../../services/recent_searches/recent_searches_service.dart';
 import '../modal/RiderSheet.dart';
 import '../modal/PassengerSheet.dart';
@@ -12,9 +11,9 @@ class LocationScreenUIHandlers {
   final TextEditingController toController;
   final FocusNode fromFocus;
   final FocusNode toFocus;
-  final List<MapboxPlace> suggestions;
-  final List<MapboxPlace> recentPickupSearches;
-  final List<MapboxPlace> recentDropoffSearches;
+  final List<GeocodingPlace> suggestions;
+  final List<GeocodingPlace> recentPickupSearches;
+  final List<GeocodingPlace> recentDropoffSearches;
   final List<Map<String, String?>> riders;
 
   final void Function(VoidCallback fn) setState;
@@ -62,13 +61,7 @@ class LocationScreenUIHandlers {
     }
   }
 
-  void onQueryChanged(
-    bool pickupFrozen,
-    bool dropoffFrozen,
-    void Function(bool) setIsLoadingSuggestions,
-  ) {
-    // Remove frozen state blocking - allow search even when frozen
-    // User might be editing the text after selecting a suggestion
+  void onQueryChanged(void Function(bool) setIsLoadingSuggestions) {
     if (!fromFocus.hasFocus && !toFocus.hasFocus) {
       setState(() => suggestions.clear());
       return;
@@ -85,7 +78,8 @@ class LocationScreenUIHandlers {
 
     setIsLoadingSuggestions(true);
 
-    MapboxService.searchPlaces(query)
+    GeocodingService()
+        .searchPlaces(query)
         .then((results) {
           if (state.mounted)
             setState(() {

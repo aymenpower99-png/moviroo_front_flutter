@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import '../mapbox/mapbox_place.dart';
-import '../mapbox/mapbox_service.dart';
+import '../geocoding/geocoding_service.dart';
 
 class GpsService {
   /// Check if location services are enabled
@@ -42,15 +41,21 @@ class GpsService {
     }
   }
 
-  /// Get current position and reverse geocode to address
-  static Future<MapboxPlace?> getCurrentLocationWithAddress() async {
+  /// Get current position and create a GeocodingPlace
+  static Future<GeocodingPlace?> getCurrentLocationWithAddress() async {
     try {
       final position = await getCurrentPosition();
       if (position == null) return null;
 
-      return await MapboxService.reverseGeocode(
-        position.latitude,
-        position.longitude,
+      // For now, create a basic place with coordinates
+      // Reverse geocoding can be added later if needed
+      return GeocodingPlace(
+        id: 'gps-${DateTime.now().millisecondsSinceEpoch}',
+        placeName: 'Current Location',
+        address: null,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        source: 'gps',
       );
     } catch (e) {
       debugPrint('GPS with address error: $e');

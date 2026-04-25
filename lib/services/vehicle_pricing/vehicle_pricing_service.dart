@@ -5,6 +5,8 @@ import '../../core/storage/token_storage.dart';
 import '../../models/vehicle_pricing_response.dart';
 
 class VehiclePricingService {
+  /// Get pricing for ALL active car classes from backend
+  /// This endpoint fetches car classes from DB and returns pricing for all of them
   Future<VehiclePricingResponse?> getVehiclePrices({
     required double pickupLat,
     required double pickupLon,
@@ -28,7 +30,7 @@ class VehiclePricingService {
       };
 
       final uri = Uri.parse(
-        '${AppConfig.baseUrl}/rides/pricing',
+        '${AppConfig.baseUrl}/rides/pricing/all',
       ).replace(queryParameters: queryParams);
 
       final res = await http

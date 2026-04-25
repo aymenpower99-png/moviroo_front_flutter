@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../../services/mapbox/mapbox_place.dart';
+import '../../../../services/geocoding/geocoding_service.dart';
 import '../../../../services/recent_searches/recent_searches_service.dart';
 import 'location_screen_ui.dart';
 import 'location_screen_location_handlers.dart';
@@ -27,24 +27,20 @@ class _LocationScreenState extends State<LocationScreen>
 
   int? _selectedRider;
   int _passengerCount = 1;
-  List<MapboxPlace> _suggestions = [];
+  List<GeocodingPlace> _suggestions = [];
   DateTime _pickedDate = DateTime.now();
   TimeOfDay? _pickedTime;
   bool _isLoadingSuggestions = false;
   bool _isFetchingLocation = false;
 
-  List<MapboxPlace> _recentPickupSearches = [];
-  List<MapboxPlace> _recentDropoffSearches = [];
+  List<GeocodingPlace> _recentPickupSearches = [];
+  List<GeocodingPlace> _recentDropoffSearches = [];
 
   // Store coordinates for navigation to RideBookingPage
   double? _pickupLat;
   double? _pickupLon;
   double? _dropoffLat;
   double? _dropoffLon;
-
-  // Track if coordinates are frozen (single source of truth)
-  bool _pickupFrozen = false;
-  bool _dropoffFrozen = false;
 
   // Track if either input is focused for border highlight
   bool _isCardFocused = false;
@@ -105,8 +101,6 @@ class _LocationScreenState extends State<LocationScreen>
       setPickupLon: (v) => setState(() => _pickupLon = v),
       setDropoffLat: (v) => setState(() => _dropoffLat = v),
       setDropoffLon: (v) => setState(() => _dropoffLon = v),
-      setPickupFrozen: (v) => setState(() => _pickupFrozen = v),
-      setDropoffFrozen: (v) => setState(() => _dropoffFrozen = v),
       onMaybeNavigate: _maybeNavigate,
     );
 
@@ -131,36 +125,19 @@ class _LocationScreenState extends State<LocationScreen>
   void _updateCardFocus() => _uiHandlers.updateCardFocus();
   void _onFocusChanged() => _uiHandlers.onFocusChanged();
   void _onQueryChanged() {
-    // Reset frozen state when user types
-    if (_fromFocus.hasFocus && _pickupFrozen) {
-      setState(() => _pickupFrozen = false);
-    }
-    if (_toFocus.hasFocus && _dropoffFrozen) {
-      setState(() => _dropoffFrozen = false);
-    }
     _uiHandlers.onQueryChanged(
-      _pickupFrozen,
-      _dropoffFrozen,
       (v) => setState(() => _isLoadingSuggestions = v),
     );
   }
 
-  void _onSuggestionTap(MapboxPlace place) => _locationHandlers.onSuggestionTap(
-    place,
-    _pickupLat,
-    _pickupLon,
-    _dropoffLat,
-    _dropoffLon,
-    _pickupFrozen,
-    _dropoffFrozen,
-  );
-  void _fillSmartField(String locationName, MapboxPlace place) =>
+  void _onSuggestionTap(GeocodingPlace place) => _locationHandlers
+      .onSuggestionTap(place, _pickupLat, _pickupLon, _dropoffLat, _dropoffLon);
+  void _fillSmartField(String locationName, GeocodingPlace place) =>
       _locationHandlers.fillSmartField(locationName, place);
   void _handleUseCurrentLocation() =>
       _locationHandlers.handleUseCurrentLocation(
         _pickupLat,
         _pickupLon,
-        _pickupFrozen,
         (v) => setState(() => _isFetchingLocation = v),
       );
   void _swapLocations() => _locationHandlers.swapLocations(
@@ -174,8 +151,6 @@ class _LocationScreenState extends State<LocationScreen>
     _pickupLon,
     _dropoffLat,
     _dropoffLon,
-    _pickupFrozen,
-    _dropoffFrozen,
   );
   void _showRiderSheet() => _uiHandlers.showRiderSheet(_selectedRider);
   void _showPassengerPicker() =>

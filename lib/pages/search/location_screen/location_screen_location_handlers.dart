@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../services/mapbox/mapbox_place.dart';
-import '../../../../services/mapbox/mapbox_service.dart';
+import '../../../../services/geocoding/geocoding_service.dart';
 import '../../../../services/recent_searches/recent_searches_service.dart';
 import '../../../../services/gps/gps_service.dart';
 import '../map_location_picker/map_location_picker.dart';
@@ -12,15 +11,13 @@ class LocationScreenLocationHandlers {
   final TextEditingController toController;
   final FocusNode fromFocus;
   final FocusNode toFocus;
-  final List<MapboxPlace> suggestions;
+  final List<GeocodingPlace> suggestions;
 
   final void Function(VoidCallback fn) setState;
   final void Function(double?) setPickupLat;
   final void Function(double?) setPickupLon;
   final void Function(double?) setDropoffLat;
   final void Function(double?) setDropoffLon;
-  final void Function(bool) setPickupFrozen;
-  final void Function(bool) setDropoffFrozen;
   final VoidCallback onMaybeNavigate;
 
   LocationScreenLocationHandlers({
@@ -35,27 +32,37 @@ class LocationScreenLocationHandlers {
     required this.setPickupLon,
     required this.setDropoffLat,
     required this.setDropoffLon,
-    required this.setPickupFrozen,
-    required this.setDropoffFrozen,
     required this.onMaybeNavigate,
   });
 
   Future<void> onSuggestionTap(
-    MapboxPlace place,
+    GeocodingPlace place,
     double? pickupLat,
     double? pickupLon,
     double? dropoffLat,
     double? dropoffLon,
-    bool pickupFrozen,
-    bool dropoffFrozen,
   ) async {
+    // Reject places with invalid coordinates (e.g. 0,0 sea fallbacks)
+    if (!place.hasValidCoordinates) {
+      if (state.mounted) {
+        ScaffoldMessenger.of(state.context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Selected location has invalid coordinates. Please pick another.',
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
     if (toFocus.hasFocus) {
       toController.text = place.placeName;
       setState(() {
         suggestions.clear();
         setDropoffLat(place.latitude);
         setDropoffLon(place.longitude);
-        setDropoffFrozen(true);
       });
       await RecentSearchesService.addDropoffRecentSearch(place);
       onMaybeNavigate();
@@ -65,7 +72,6 @@ class LocationScreenLocationHandlers {
         suggestions.clear();
         setPickupLat(place.latitude);
         setPickupLon(place.longitude);
-        setPickupFrozen(true);
       });
       await RecentSearchesService.addPickupRecentSearch(place);
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -74,21 +80,20 @@ class LocationScreenLocationHandlers {
     }
   }
 
-  void handleTextChange(
-    String text,
-    bool isPickup,
-    void Function(bool) setFrozen,
-  ) {
-    // Reset frozen state when user manually edits text
-    // This allows autocomplete to work again after selecting a suggestion
-    if (isPickup) {
-      setFrozen(false);
-    } else {
-      setFrozen(false);
+  void fillSmartField(String locationName, GeocodingPlace place) async {
+    // Reject places with invalid coordinates
+    if (!place.hasValidCoordinates) {
+      if (state.mounted) {
+        ScaffoldMessenger.of(state.context).showSnackBar(
+          const SnackBar(
+            content: Text('Selected location has invalid coordinates.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
     }
-  }
 
-  void fillSmartField(String locationName, MapboxPlace place) async {
     final fromEmpty = fromController.text.trim().isEmpty;
     setState(() => suggestions.clear());
 
@@ -97,7 +102,6 @@ class LocationScreenLocationHandlers {
       setState(() {
         setPickupLat(place.latitude);
         setPickupLon(place.longitude);
-        setPickupFrozen(true);
       });
       await RecentSearchesService.addPickupRecentSearch(place);
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -108,7 +112,6 @@ class LocationScreenLocationHandlers {
       setState(() {
         setDropoffLat(place.latitude);
         setDropoffLon(place.longitude);
-        setDropoffFrozen(true);
       });
       await RecentSearchesService.addDropoffRecentSearch(place);
       onMaybeNavigate();
@@ -118,7 +121,6 @@ class LocationScreenLocationHandlers {
   Future<void> handleUseCurrentLocation(
     double? pickupLat,
     double? pickupLon,
-    bool pickupFrozen,
     void Function(bool) setIsFetchingLocation,
   ) async {
     setIsFetchingLocation(true);
@@ -130,7 +132,6 @@ class LocationScreenLocationHandlers {
         setState(() {
           setPickupLat(place.latitude);
           setPickupLon(place.longitude);
-          setPickupFrozen(true);
         });
         await RecentSearchesService.addPickupRecentSearch(place);
         Future.delayed(const Duration(milliseconds: 100), () {
@@ -189,8 +190,6 @@ class LocationScreenLocationHandlers {
     double? pickupLon,
     double? dropoffLat,
     double? dropoffLon,
-    bool pickupFrozen,
-    bool dropoffFrozen,
   ) async {
     final fillingPickup = fromController.text.trim().isEmpty;
     final target = fillingPickup ? fromController : toController;
@@ -218,18 +217,22 @@ class LocationScreenLocationHandlers {
           setState(() {
             setPickupLat(lat);
             setPickupLon(lon);
-            setPickupFrozen(true);
           });
         } else {
           setState(() {
             setDropoffLat(lat);
             setDropoffLon(lon);
-            setDropoffFrozen(true);
           });
         }
 
-        final place = await MapboxService.reverseGeocode(lat, lon);
-        if (place != null && state.mounted) {
+        final place = GeocodingPlace(
+          id: 'map-${DateTime.now().millisecondsSinceEpoch}',
+          placeName: 'Selected location',
+          latitude: lat,
+          longitude: lon,
+          source: 'map_picker',
+        );
+        if (state.mounted) {
           setState(() => target.text = place.placeName);
         }
 
@@ -277,6 +280,28 @@ class LocationScreenLocationHandlers {
       ScaffoldMessenger.of(state.context).showSnackBar(
         const SnackBar(
           content: Text('Drop-off location is incomplete'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    // Final guard: reject (0,0) coordinates that may have slipped through
+    if ((pickupLat == 0 && pickupLon == 0) ||
+        (dropoffLat == 0 && dropoffLon == 0)) {
+      ScaffoldMessenger.of(state.context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Invalid coordinates. Please re-select your locations.',
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    if (pickupLat == dropoffLat && pickupLon == dropoffLon) {
+      ScaffoldMessenger.of(state.context).showSnackBar(
+        const SnackBar(
+          content: Text('Pickup and drop-off cannot be the same location.'),
           duration: Duration(seconds: 2),
         ),
       );

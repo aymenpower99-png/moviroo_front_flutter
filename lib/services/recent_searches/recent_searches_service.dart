@@ -1,17 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../mapbox/mapbox_place.dart';
-import '../mapbox/mapbox_service.dart';
+import '../geocoding/geocoding_service.dart';
 
 class RecentSearchesService {
-  static const String _pickupKey = 'recent_searches_pickup_v2';
-  static const String _dropoffKey = 'recent_searches_dropoff_v2';
-  static const String _oldPickupKey = 'recent_searches_pickup';
-  static const String _oldDropoffKey = 'recent_searches_dropoff';
+  static const String _pickupKey = 'recent_searches_pickup_v3';
+  static const String _dropoffKey = 'recent_searches_dropoff_v3';
+  static const String _oldPickupKey = 'recent_searches_pickup_v2';
+  static const String _oldDropoffKey = 'recent_searches_dropoff_v2';
   static const int _maxRecentSearches = 3;
 
-  /// Clear old v1 cache keys (pre-migration data)
+  /// Clear old v2 cache keys (pre-backend-API data)
   static Future<void> clearOldCache() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_oldPickupKey);
@@ -19,7 +18,7 @@ class RecentSearchesService {
   }
 
   /// Get recent searches for pickup
-  static Future<List<MapboxPlace>> getPickupRecentSearches() async {
+  static Future<List<GeocodingPlace>> getPickupRecentSearches() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonStr = prefs.getString(_pickupKey);
     if (jsonStr == null) return [];
@@ -27,7 +26,7 @@ class RecentSearchesService {
     try {
       final List<dynamic> decoded = jsonDecode(jsonStr);
       return decoded
-          .map((item) => MapboxPlace.fromJson(item as Map<String, dynamic>))
+          .map((item) => GeocodingPlace.fromJson(item as Map<String, dynamic>))
           .toList();
     } catch (e) {
       return [];
@@ -35,7 +34,7 @@ class RecentSearchesService {
   }
 
   /// Get recent searches for dropoff
-  static Future<List<MapboxPlace>> getDropoffRecentSearches() async {
+  static Future<List<GeocodingPlace>> getDropoffRecentSearches() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonStr = prefs.getString(_dropoffKey);
     if (jsonStr == null) return [];
@@ -43,7 +42,7 @@ class RecentSearchesService {
     try {
       final List<dynamic> decoded = jsonDecode(jsonStr);
       return decoded
-          .map((item) => MapboxPlace.fromJson(item as Map<String, dynamic>))
+          .map((item) => GeocodingPlace.fromJson(item as Map<String, dynamic>))
           .toList();
     } catch (e) {
       return [];
@@ -51,7 +50,7 @@ class RecentSearchesService {
   }
 
   /// Add a place to recent searches for pickup
-  static Future<void> addPickupRecentSearch(MapboxPlace place) async {
+  static Future<void> addPickupRecentSearch(GeocodingPlace place) async {
     final prefs = await SharedPreferences.getInstance();
     final current = await getPickupRecentSearches();
 
@@ -64,7 +63,7 @@ class RecentSearchesService {
   }
 
   /// Add a place to recent searches for dropoff
-  static Future<void> addDropoffRecentSearch(MapboxPlace place) async {
+  static Future<void> addDropoffRecentSearch(GeocodingPlace place) async {
     final prefs = await SharedPreferences.getInstance();
     final current = await getDropoffRecentSearches();
 
@@ -88,14 +87,13 @@ class RecentSearchesService {
     await prefs.remove(_dropoffKey);
   }
 
-  // ── Encode MapboxPlace → Map (IconData serialized safely) ─────────────
-  static Map<String, dynamic> _encode(MapboxPlace p) => {
+  // ── Encode GeocodingPlace → Map ─────────────
+  static Map<String, dynamic> _encode(GeocodingPlace p) => {
     'id': p.id,
     'place_name': p.placeName,
-    'full_address': p.fullAddress,
-    'icon_code_point': p.categoryIcon.codePoint,
-    'icon_font_family': p.categoryIcon.fontFamily ?? 'MaterialIcons',
+    'address': p.address,
     'latitude': p.latitude,
     'longitude': p.longitude,
+    'source': p.source,
   };
 }

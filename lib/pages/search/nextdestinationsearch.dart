@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../services/mapbox/mapbox_place.dart';
+import '../../../services/geocoding/geocoding_service.dart';
 
 class NextDestinationSearch extends StatelessWidget {
   final VoidCallback? onSelectOnMap;
-  final List<MapboxPlace> suggestions;
-  final void Function(MapboxPlace)? onSuggestionTap;
+  final List<GeocodingPlace> suggestions;
+  final void Function(GeocodingPlace)? onSuggestionTap;
 
   const NextDestinationSearch({
     super.key,
@@ -59,7 +59,7 @@ class NextDestinationSearch extends StatelessWidget {
 // ── Suggestion tile ───────────────────────────────────────────────────────────
 
 class _SuggestionTile extends StatelessWidget {
-  final MapboxPlace item;
+  final GeocodingPlace item;
   final VoidCallback onTap;
 
   const _SuggestionTile({required this.item, required this.onTap});

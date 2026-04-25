@@ -7,7 +7,7 @@ import '../RecentSearchItem.dart';
 import '../datetime_row/datetime_row.dart';
 import '../modal/RiderSheet.dart';
 import '../modal/PassengerSheet.dart';
-import '../../../../services/mapbox/mapbox_place.dart';
+import '../../../../services/geocoding/geocoding_service.dart';
 import '../../../../services/recent_searches/recent_searches_service.dart';
 import 'widgets.dart';
 
@@ -22,9 +22,9 @@ class LocationScreenUI extends StatelessWidget {
   final int passengerCount;
   final DateTime pickedDate;
   final TimeOfDay? pickedTime;
-  final List<MapboxPlace> suggestions;
-  final List<MapboxPlace> recentPickupSearches;
-  final List<MapboxPlace> recentDropoffSearches;
+  final List<GeocodingPlace> suggestions;
+  final List<GeocodingPlace> recentPickupSearches;
+  final List<GeocodingPlace> recentDropoffSearches;
   final bool isLoadingSuggestions;
   final bool isFetchingLocation;
   final bool isCardFocused;
@@ -32,11 +32,11 @@ class LocationScreenUI extends StatelessWidget {
 
   final VoidCallback onSwap;
   final VoidCallback? onUseCurrentLocation;
-  final Function(MapboxPlace) onSuggestionTap;
+  final Function(GeocodingPlace) onSuggestionTap;
   final VoidCallback onSelectOnMap;
   final Function(DateTime) onDateChanged;
   final Function(TimeOfDay?) onTimeChanged;
-  final Function(String, MapboxPlace) onFillSmartField;
+  final Function(String, GeocodingPlace) onFillSmartField;
   final VoidCallback onMaybeNavigate;
   final VoidCallback onShowRiderSheet;
   final VoidCallback onShowPassengerPicker;
@@ -164,7 +164,8 @@ class LocationScreenUI extends StatelessWidget {
                         Expanded(
                           child: Pill(
                             icon: Icons.people_outline_rounded,
-                            label: '$passengerCount ${t.translate('passengers')}',
+                            label:
+                                '$passengerCount ${t.translate('passengers')}',
                             onTap: onShowPassengerPicker,
                           ),
                         ),
