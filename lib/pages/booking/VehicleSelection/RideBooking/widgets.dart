@@ -202,19 +202,25 @@ class _AdaptiveTrianglePainter extends CustomPainter {
 
 // ── Sheet Header ────────────────────────────────────────────────────────────
 
-/// Sheet Header (drag handle + title)
+/// Sheet Header (pill + title + divider).
+///
+/// This is a *purely visual* widget. The drag-to-expand/collapse behaviour is
+/// driven by the parent `DraggableScrollableSheet` through the scroll controller
+/// it injects into the `CustomScrollView`. Because this header lives inside that
+/// scrollable, dragging on the pill is automatically translated into sheet
+/// movement at the sheet's boundaries (collapsed ↔ expanded).
 class SheetHeader extends StatelessWidget {
-  const SheetHeader();
+  const SheetHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Drag handle
         const SizedBox(height: 10),
+        // Pill / drag handle (visual only — the scrollable handles the drag)
         Center(
           child: Container(
             width: 40,
@@ -226,7 +232,6 @@ class SheetHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-
         // Title
         Center(
           child: Text(
@@ -237,7 +242,6 @@ class SheetHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-
         Divider(height: 1, color: AppColors.border(context)),
       ],
     );
