@@ -110,6 +110,9 @@ class _LocationScreenState extends State<LocationScreen>
       onMaybeNavigate: _maybeNavigate,
     );
 
+    // Initialize focus state
+    _updateCardFocus();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _fromFocus.requestFocus();
@@ -127,11 +130,21 @@ class _LocationScreenState extends State<LocationScreen>
 
   void _updateCardFocus() => _uiHandlers.updateCardFocus();
   void _onFocusChanged() => _uiHandlers.onFocusChanged();
-  void _onQueryChanged() => _uiHandlers.onQueryChanged(
-    _pickupFrozen,
-    _dropoffFrozen,
-    (v) => setState(() => _isLoadingSuggestions = v),
-  );
+  void _onQueryChanged() {
+    // Reset frozen state when user types
+    if (_fromFocus.hasFocus && _pickupFrozen) {
+      setState(() => _pickupFrozen = false);
+    }
+    if (_toFocus.hasFocus && _dropoffFrozen) {
+      setState(() => _dropoffFrozen = false);
+    }
+    _uiHandlers.onQueryChanged(
+      _pickupFrozen,
+      _dropoffFrozen,
+      (v) => setState(() => _isLoadingSuggestions = v),
+    );
+  }
+
   void _onSuggestionTap(MapboxPlace place) => _locationHandlers.onSuggestionTap(
     place,
     _pickupLat,

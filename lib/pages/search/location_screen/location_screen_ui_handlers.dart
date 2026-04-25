@@ -40,9 +40,7 @@ class LocationScreenUIHandlers {
 
   void updateCardFocus() {
     final isFocused = fromFocus.hasFocus || toFocus.hasFocus;
-    if (isFocused != (state as dynamic)._isCardFocused) {
-      setState(() => setIsCardFocused(isFocused));
-    }
+    setIsCardFocused(isFocused);
   }
 
   Future<void> loadRecentSearches() async {
@@ -69,9 +67,8 @@ class LocationScreenUIHandlers {
     bool dropoffFrozen,
     void Function(bool) setIsLoadingSuggestions,
   ) {
-    if (pickupFrozen && fromFocus.hasFocus) return;
-    if (dropoffFrozen && toFocus.hasFocus) return;
-
+    // Remove frozen state blocking - allow search even when frozen
+    // User might be editing the text after selecting a suggestion
     if (!fromFocus.hasFocus && !toFocus.hasFocus) {
       setState(() => suggestions.clear());
       return;

@@ -13,7 +13,7 @@ class LocationScreenLocationHandlers {
   final FocusNode fromFocus;
   final FocusNode toFocus;
   final List<MapboxPlace> suggestions;
-  
+
   final void Function(VoidCallback fn) setState;
   final void Function(double?) setPickupLat;
   final void Function(double?) setPickupLon;
@@ -40,7 +40,15 @@ class LocationScreenLocationHandlers {
     required this.onMaybeNavigate,
   });
 
-  Future<void> onSuggestionTap(MapboxPlace place, double? pickupLat, double? pickupLon, double? dropoffLat, double? dropoffLon, bool pickupFrozen, bool dropoffFrozen) async {
+  Future<void> onSuggestionTap(
+    MapboxPlace place,
+    double? pickupLat,
+    double? pickupLon,
+    double? dropoffLat,
+    double? dropoffLon,
+    bool pickupFrozen,
+    bool dropoffFrozen,
+  ) async {
     if (toFocus.hasFocus) {
       toController.text = place.placeName;
       setState(() {
@@ -63,6 +71,20 @@ class LocationScreenLocationHandlers {
       Future.delayed(const Duration(milliseconds: 100), () {
         if (state.mounted) toFocus.requestFocus();
       });
+    }
+  }
+
+  void handleTextChange(
+    String text,
+    bool isPickup,
+    void Function(bool) setFrozen,
+  ) {
+    // Reset frozen state when user manually edits text
+    // This allows autocomplete to work again after selecting a suggestion
+    if (isPickup) {
+      setFrozen(false);
+    } else {
+      setFrozen(false);
     }
   }
 
@@ -93,7 +115,12 @@ class LocationScreenLocationHandlers {
     }
   }
 
-  Future<void> handleUseCurrentLocation(double? pickupLat, double? pickupLon, bool pickupFrozen, void Function(bool) setIsFetchingLocation) async {
+  Future<void> handleUseCurrentLocation(
+    double? pickupLat,
+    double? pickupLon,
+    bool pickupFrozen,
+    void Function(bool) setIsFetchingLocation,
+  ) async {
     setIsFetchingLocation(true);
 
     try {
@@ -135,7 +162,12 @@ class LocationScreenLocationHandlers {
     }
   }
 
-  void swapLocations(double? pickupLat, double? pickupLon, double? dropoffLat, double? dropoffLon) {
+  void swapLocations(
+    double? pickupLat,
+    double? pickupLon,
+    double? dropoffLat,
+    double? dropoffLon,
+  ) {
     final fromText = fromController.text;
     final toText = toController.text;
     final tmpLat = pickupLat;
@@ -152,7 +184,14 @@ class LocationScreenLocationHandlers {
     });
   }
 
-  Future<void> handleSelectOnMap(double? pickupLat, double? pickupLon, double? dropoffLat, double? dropoffLon, bool pickupFrozen, bool dropoffFrozen) async {
+  Future<void> handleSelectOnMap(
+    double? pickupLat,
+    double? pickupLon,
+    double? dropoffLat,
+    double? dropoffLon,
+    bool pickupFrozen,
+    bool dropoffFrozen,
+  ) async {
     final fillingPickup = fromController.text.trim().isEmpty;
     final target = fillingPickup ? fromController : toController;
 
@@ -203,7 +242,17 @@ class LocationScreenLocationHandlers {
     }
   }
 
-  void maybeNavigate(double? pickupLat, double? pickupLon, double? dropoffLat, double? dropoffLon, String dropOff, String pickUp, DateTime pickedDate, TimeOfDay? pickedTime, int passengerCount) {
+  void maybeNavigate(
+    double? pickupLat,
+    double? pickupLon,
+    double? dropoffLat,
+    double? dropoffLon,
+    String dropOff,
+    String pickUp,
+    DateTime pickedDate,
+    TimeOfDay? pickedTime,
+    int passengerCount,
+  ) {
     if (pickUp.isEmpty || dropOff.isEmpty) return;
 
     if (pickedTime == null) {

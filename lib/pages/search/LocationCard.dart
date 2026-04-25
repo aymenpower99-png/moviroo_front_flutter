@@ -51,7 +51,9 @@ class LocationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
       padding: const EdgeInsets.fromLTRB(20, 16, 14, 16),
       decoration: BoxDecoration(
         color: AppColors.surface(context),

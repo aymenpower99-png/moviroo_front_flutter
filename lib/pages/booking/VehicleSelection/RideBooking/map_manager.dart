@@ -24,6 +24,7 @@ class MapManager {
   Timer? _animTimer;
   int _animStep = 0;
   bool _disposed = false;
+  String? _currentAnimPolylineId;
 
   static const int _totalAnimSteps = 80;
   static const Duration _animInterval = Duration(milliseconds: 40);
@@ -238,24 +239,65 @@ class MapManager {
     }
 
     _animStep++;
-    if (_animStep > _totalAnimSteps) _animStep = 1; // loop
+    if (_animStep > _totalAnimSteps) _animStep = 1;
 
-    final endIndex = (_routePositions.length * _animStep / _totalAnimSteps)
-        .ceil()
-        .clamp(2, _routePositions.length);
+    // Calculate progress (0.0 to 1.0)
+    final progress = _animStep / _totalAnimSteps;
+
+    // Calculate route segment
+    final endIndex = (_routePositions.length * progress).ceil().clamp(
+      2,
+      _routePositions.length,
+    );
 
     try {
-      await _animRouteManager!.deleteAll();
-      await _animRouteManager!.create(
-        mbx.PolylineAnnotationOptions(
-          geometry: mbx.LineString(
-            coordinates: _routePositions.sublist(0, endIndex),
+      // Create polyline on first frame, then update geometry on subsequent frames
+      if (_currentAnimPolylineId == null) {
+        final annotation = await _animRouteManager!.create(
+          mbx.PolylineAnnotationOptions(
+            geometry: mbx.LineString(
+              coordinates: _routePositions.sublist(0, endIndex),
+            ),
+            lineColor: AppColors.primaryPurple.value,
+            lineWidth: 5.0,
+            lineOpacity: 1.0,
           ),
-          lineColor: AppColors.primaryPurple.value,
-          lineWidth: 5.0,
-          lineOpacity: 1.0,
-        ),
-      );
+        );
+        _currentAnimPolylineId = annotation.id;
+      } else {
+        // Try to update existing annotation
+        try {
+          await _animRouteManager!.update(
+            mbx.PolylineAnnotation(
+              id: _currentAnimPolylineId!,
+              geometry: mbx.LineString(
+                coordinates: _routePositions.sublist(0, endIndex),
+              ),
+              lineColor: AppColors.primaryPurple.value,
+              lineWidth: 5.0,
+              lineOpacity: 1.0,
+            ),
+          );
+        } catch (e) {
+          // If update fails, fall back to delete/create
+          debugPrint(
+            '[MapManager] update failed, falling back to delete/create: $e',
+          );
+          await _animRouteManager!.deleteAll();
+          final annotation = await _animRouteManager!.create(
+            mbx.PolylineAnnotationOptions(
+              geometry: mbx.LineString(
+                coordinates: _routePositions.sublist(0, endIndex),
+              ),
+              lineColor: AppColors.primaryPurple.value,
+              lineWidth: 5.0,
+              lineOpacity: 1.0,
+            ),
+          );
+          _currentAnimPolylineId = annotation.id;
+        }
+      }
+
       if (_animStep % 20 == 0) {
         debugPrint(
           '[MapManager] animation step $_animStep/${_totalAnimSteps}, endIndex=$endIndex',
