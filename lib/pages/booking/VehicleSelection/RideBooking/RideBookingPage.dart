@@ -233,16 +233,23 @@ class _RideBookingPageState extends State<RideBookingPage> {
     final screenHeight = MediaQuery.of(context).size.height;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // ── Sheet height calculation ────────────────────────────────────────────
-    // Calculate the height needed to fit 1 card + header + confirm bar.
-    // This is used as the initial collapsed height.
+    // ── Sheet height bounds ─────────────────────────────────────────────────
+    // The minimum sheet height is the EXACT space needed to show:
+    //   pill + title (SheetHeader) + 1 full CarCard + ConfirmBar (+ safe area)
+    // Dragging below this point is impossible — the floor is fixed.
+    // The maximum is 85% of the screen.
     final reservePx =
         _headerHeightPx + _sliverTopPadPx + _confirmBarHeightPx + bottomPad;
     final oneCardSize = (reservePx + _cardHeightPx) / screenHeight;
+    final minSheetFraction = oneCardSize.clamp(0.20, 0.85);
+    const maxSheetFraction = 0.85;
 
-    // Initialize sheet height if not already set (first build)
+    // Initialize sheet height on first build, then clamp every build to
+    // protect against orientation/window-size changes pushing it below the floor.
     if (_sheetHeight == 0.35) {
-      _sheetHeight = oneCardSize.clamp(0.25, 0.85);
+      _sheetHeight = minSheetFraction;
+    } else {
+      _sheetHeight = _sheetHeight.clamp(minSheetFraction, maxSheetFraction);
     }
 
     return Scaffold(
@@ -323,85 +330,150 @@ class _RideBookingPageState extends State<RideBookingPage> {
               onVerticalDragUpdate: (details) {
                 final deltaY = details.globalPosition.dy - _dragStartY;
                 final deltaHeight = -deltaY / screenHeight;
+                // Hard floor: cannot drag below the "1 card + header + confirm
+                // bar" position. Hard ceiling: 85% of screen.
                 final newHeight = (_dragStartHeight + deltaHeight).clamp(
-                  0.25,
-                  0.85,
+                  minSheetFraction,
+                  maxSheetFraction,
                 );
                 setState(() {
                   _sheetHeight = newHeight;
                 });
               },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface(context),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.13),
-                      blurRadius: 28,
-                      offset: const Offset(0, -6),
-                    ),
-                  ],
+              child: ClipRRect(
+                // Hard-edge clipping: nothing inside the sheet can ever paint
+                // outside this rounded rectangle. Cards, confirm bar, anything —
+                // if it spills past the sheet's edge, it is clipped, not drawn.
+                clipBehavior: Clip.hardEdge,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
                 ),
-                child: _isLoadingPrices
-                    ? const Column(
-                        children: [
-                          SheetHeader(),
-                          Expanded(
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                        ],
-                      )
-                    : _filteredCars.isEmpty
-                    ? Column(
-                        children: [
-                          const SheetHeader(),
-                          Expanded(
-                            child: Center(
-                              child: Text(
-                                t.translate('no_vehicles_available'),
-                                style: AppTextStyles.bodyMedium(context),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          const SheetHeader(),
-                          Flexible(
-                            child: ClipRect(
-                              child: Column(
-                                children: [
-                                  const SizedBox(height: 4),
-                                  for (
-                                    int index = 0;
-                                    index < _filteredCars.length;
-                                    index++
-                                  )
-                                    CarCard(
-                                      car: _filteredCars[index],
-                                      isSelected: _selectedCarIndex == index,
-                                      onTap: () => setState(
-                                        () => _selectedCarIndex = index,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          if (_selectedCar != null)
-                            ConfirmBar(
-                              car: _selectedCar!,
-                              bottomPad: bottomPad,
-                              onConfirm: () {
-                                Navigator.pop(context);
-                              },
-                            ),
-                        ],
+                child: Container(
+                  clipBehavior: Clip.hardEdge,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface(context),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.13),
+                        blurRadius: 28,
+                        offset: const Offset(0, -6),
                       ),
+                    ],
+                  ),
+                  // ── Strict layout with absolute positioning ──
+                  // The sheet has a fixed height (screenHeight * _sheetHeight).
+                  // The ConfirmBar is positioned absolutely at the bottom.
+                  // ALL car cards are always rendered. The cards area is strictly
+                  // clipped to the space between the SheetHeader and the
+                  // ConfirmBar — dragging the pill simply uncovers/covers cards
+                  // by changing the visible portion of the sheet.
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final sheetHeight = constraints.maxHeight;
+                      final confirmBarTotalHeight = _selectedCar != null
+                          ? _confirmBarHeightPx + bottomPad
+                          : 0.0;
+                      // Available space for cards = sheet - header - confirm bar
+                      final cardsAreaHeight =
+                          (sheetHeight -
+                                  _headerHeightPx -
+                                  confirmBarTotalHeight)
+                              .clamp(0.0, double.infinity);
+
+                      // ── Card content ──
+                      // ALL cards are always rendered. The ClipRect on the cards
+                      // area + OverflowBox lets the column use its natural full
+                      // height, but only the portion that fits is visible.
+                      // Dragging the pill changes cardsAreaHeight, which uncovers
+                      // or covers more cards — but every card always exists.
+                      Widget content;
+                      if (_isLoadingPrices) {
+                        content = const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      } else if (_filteredCars.isEmpty) {
+                        content = Center(
+                          child: Text(
+                            t.translate('no_vehicles_available'),
+                            style: AppTextStyles.bodyMedium(context),
+                          ),
+                        );
+                      } else {
+                        content = Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 4),
+                            for (
+                              int index = 0;
+                              index < _filteredCars.length;
+                              index++
+                            )
+                              CarCard(
+                                car: _filteredCars[index],
+                                isSelected: _selectedCarIndex == index,
+                                onTap: () =>
+                                    setState(() => _selectedCarIndex = index),
+                              ),
+                          ],
+                        );
+                      }
+
+                      // The cards' total natural height (header pad + all cards).
+                      // OverflowBox lets the inner Column claim this full height
+                      // even though the parent Positioned only allocates
+                      // cardsAreaHeight — the rest is clipped by ClipRect.
+                      final totalContentHeight = _filteredCars.isEmpty
+                          ? cardsAreaHeight
+                          : (4.0 + _filteredCars.length * _cardHeightPx);
+
+                      return Stack(
+                        clipBehavior: Clip.hardEdge,
+                        children: [
+                          // ── SheetHeader at top ──
+                          const Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: SheetHeader(),
+                          ),
+
+                          // ── Cards area: strictly constrained, clipped ──
+                          // All cards exist in the tree. Only the portion of the
+                          // column that fits in cardsAreaHeight is visible.
+                          Positioned(
+                            top: _headerHeightPx,
+                            left: 0,
+                            right: 0,
+                            height: cardsAreaHeight,
+                            child: ClipRect(
+                              child: OverflowBox(
+                                alignment: Alignment.topCenter,
+                                minHeight: 0,
+                                maxHeight: totalContentHeight,
+                                child: content,
+                              ),
+                            ),
+                          ),
+
+                          // ── ConfirmBar absolutely positioned at bottom ──
+                          if (_selectedCar != null)
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              child: ConfirmBar(
+                                car: _selectedCar!,
+                                bottomPad: bottomPad,
+                                onConfirm: () {
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
           ),
