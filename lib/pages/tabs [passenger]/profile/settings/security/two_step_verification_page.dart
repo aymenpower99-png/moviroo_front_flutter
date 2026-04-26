@@ -313,7 +313,7 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.error.withOpacity(0.08),
+                            color: AppColors.error.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -367,7 +367,7 @@ class _InfoBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.primaryPurple.withOpacity(0.07),
+        color: AppColors.primaryPurple.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -465,7 +465,7 @@ class _VerificationMethodTile extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryPurple.withOpacity(0.12),
+                              color: AppColors.primaryPurple.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text(
@@ -511,7 +511,7 @@ class _VerificationMethodTile extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryPurple.withOpacity(0.08),
+                    color: AppColors.primaryPurple.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

@@ -81,9 +81,43 @@ class MapManager {
     }
   }
 
+  /// Pause the looping animation. Cancels and nullifies the timer.
+  /// The animation can be resumed later via [resumeAnimation].
+  void pauseAnimation() {
+    if (_animTimer == null) {
+      debugPrint('[MapManager] pauseAnimation: no active timer');
+      return;
+    }
+    debugPrint('[MapManager] pauseAnimation: cancelling timer');
+    _animTimer?.cancel();
+    _animTimer = null;
+  }
+
+  /// Resume the looping animation if it was paused.
+  /// Does nothing if disposed or already running.
+  void resumeAnimation() {
+    if (_disposed) {
+      debugPrint('[MapManager] resumeAnimation: skipped (disposed)');
+      return;
+    }
+    if (_animTimer != null) {
+      debugPrint('[MapManager] resumeAnimation: skipped (already running)');
+      return;
+    }
+    if (_routePositions.length < 2) {
+      debugPrint('[MapManager] resumeAnimation: skipped (no route)');
+      return;
+    }
+    debugPrint('[MapManager] resumeAnimation: restarting timer');
+    _startRouteAnimation();
+  }
+
   void dispose() {
+    debugPrint('[MapManager] dispose called');
     _disposed = true;
     _animTimer?.cancel();
+    _animTimer = null;
+    debugPrint('[MapManager] dispose completed, timer cancelled and nullified');
   }
 
   // ── Markers ────────────────────────────────────────────────────────────
@@ -168,7 +202,7 @@ class MapManager {
         await _baseRouteManager!.create(
           mbx.PolylineAnnotationOptions(
             geometry: mbx.LineString(coordinates: positions),
-            lineColor: AppColors.primaryPurple.value,
+            lineColor: AppColors.primaryPurple.toARGB32(),
             lineWidth: 5.0,
             lineOpacity: 0.25,
           ),
@@ -196,7 +230,7 @@ class MapManager {
       await _baseRouteManager!.create(
         mbx.PolylineAnnotationOptions(
           geometry: mbx.LineString(coordinates: debugPositions),
-          lineColor: Colors.red.value,
+          lineColor: Colors.red.toARGB32(),
           lineWidth: 3.0,
           lineOpacity: 0.8,
         ),
@@ -217,12 +251,19 @@ class MapManager {
       debugPrint('[MapManager] animation NOT started: insufficient positions');
       return;
     }
+    if (_disposed) {
+      debugPrint('[MapManager] animation NOT started: already disposed');
+      return;
+    }
+    if (_animTimer != null) {
+      debugPrint('[MapManager] animation NOT started: timer already exists');
+      return;
+    }
     _animStep = 0;
 
     _animTimer = Timer.periodic(_animInterval, (_) {
       if (_disposed) {
         debugPrint('[MapManager] animation timer cancelled (disposed)');
-        _animTimer?.cancel();
         return;
       }
       _advanceAnimation();
@@ -231,6 +272,10 @@ class MapManager {
   }
 
   Future<void> _advanceAnimation() async {
+    if (_disposed) {
+      debugPrint('[MapManager] _advanceAnimation skipped: disposed');
+      return;
+    }
     if (_animRouteManager == null || _routePositions.length < 2) {
       debugPrint(
         '[MapManager] _advanceAnimation skipped: manager=${_animRouteManager != null}, positions=${_routePositions.length}',
@@ -258,7 +303,7 @@ class MapManager {
             geometry: mbx.LineString(
               coordinates: _routePositions.sublist(0, endIndex),
             ),
-            lineColor: AppColors.primaryPurple.value,
+            lineColor: AppColors.primaryPurple.toARGB32(),
             lineWidth: 5.0,
             lineOpacity: 1.0,
           ),
@@ -273,7 +318,7 @@ class MapManager {
               geometry: mbx.LineString(
                 coordinates: _routePositions.sublist(0, endIndex),
               ),
-              lineColor: AppColors.primaryPurple.value,
+              lineColor: AppColors.primaryPurple.toARGB32(),
               lineWidth: 5.0,
               lineOpacity: 1.0,
             ),
@@ -289,7 +334,7 @@ class MapManager {
               geometry: mbx.LineString(
                 coordinates: _routePositions.sublist(0, endIndex),
               ),
-              lineColor: AppColors.primaryPurple.value,
+              lineColor: AppColors.primaryPurple.toARGB32(),
               lineWidth: 5.0,
               lineOpacity: 1.0,
             ),
@@ -300,7 +345,7 @@ class MapManager {
 
       if (_animStep % 20 == 0) {
         debugPrint(
-          '[MapManager] animation step $_animStep/${_totalAnimSteps}, endIndex=$endIndex',
+          '[MapManager] animation step $_animStep/$_totalAnimSteps, endIndex=$endIndex',
         );
       }
     } catch (e) {

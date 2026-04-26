@@ -9,6 +9,7 @@ class BookingSummaryCard extends StatelessWidget {
   final int bags;
   final String vehicleName;
   final String carName;
+  final String? imageUrl;
 
   const BookingSummaryCard({
     super.key,
@@ -16,6 +17,7 @@ class BookingSummaryCard extends StatelessWidget {
     required this.bags,
     required this.vehicleName,
     required this.carName,
+    this.imageUrl,
   });
 
   @override
@@ -25,8 +27,25 @@ class BookingSummaryCard extends StatelessWidget {
     return SummaryCard(
       child: Row(
         children: [
-          Image.asset('images/bmw.png',
-              width: 90, height: 60, fit: BoxFit.contain),
+          imageUrl != null && imageUrl!.isNotEmpty
+              ? Image.network(
+                  imageUrl!,
+                  width: 90,
+                  height: 60,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => Image.asset(
+                    'images/bmw.png',
+                    width: 90,
+                    height: 60,
+                    fit: BoxFit.contain,
+                  ),
+                )
+              : Image.asset(
+                  'images/bmw.png',
+                  width: 90,
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -35,10 +54,9 @@ class BookingSummaryCard extends StatelessWidget {
                 if (vehicleName.isNotEmpty)
                   Text(
                     vehicleName,
-                    style: AppTextStyles.bodyLarge(context).copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
+                    style: AppTextStyles.bodyLarge(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w800, fontSize: 18),
                   ),
                 if (carName.isNotEmpty) ...[
                   const SizedBox(height: 2),

@@ -48,8 +48,12 @@ class _EmailSendModalState extends State<EmailSendModal> {
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -91,7 +95,9 @@ class _EmailSendModalState extends State<EmailSendModal> {
   }
 
   Future<void> _resendCode() async {
-    for (final c in _controllers) c.clear();
+    for (final c in _controllers) {
+      c.clear();
+    }
     setState(() {
       _errorMessage = null;
       _resendSeconds = 59;
@@ -269,14 +275,18 @@ class _EmailSendModalState extends State<EmailSendModal> {
                           counterText: '',
                           filled: true,
                           fillColor: isFocused
-                              ? const Color(0xFF7C3AED).withOpacity(0.10)
-                              : const Color(0xFF7C3AED).withOpacity(0.06),
+                              ? const Color(0xFF7C3AED).withValues(alpha: 0.10)
+                              : const Color(0xFF7C3AED).withValues(alpha: 0.06),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
                               color: isFilled
-                                  ? const Color(0xFF7C3AED).withOpacity(0.6)
-                                  : const Color(0xFF7C3AED).withOpacity(0.2),
+                                  ? const Color(
+                                      0xFF7C3AED,
+                                    ).withValues(alpha: 0.6)
+                                  : const Color(
+                                      0xFF7C3AED,
+                                    ).withValues(alpha: 0.2),
                               width: 1.5,
                             ),
                           ),
@@ -314,7 +324,7 @@ class _EmailSendModalState extends State<EmailSendModal> {
                     gradient: _isComplete ? AppColors.purpleGradient : null,
                     color: _isComplete
                         ? null
-                        : const Color(0xFF7C3AED).withOpacity(0.4),
+                        : const Color(0xFF7C3AED).withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   alignment: Alignment.center,
@@ -362,7 +372,7 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.08),
+        color: AppColors.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -404,7 +414,9 @@ class _GradientButton extends StatelessWidget {
         height: 52,
         decoration: BoxDecoration(
           gradient: isLoading ? null : AppColors.purpleGradient,
-          color: isLoading ? const Color(0xFF7C3AED).withOpacity(0.4) : null,
+          color: isLoading
+              ? const Color(0xFF7C3AED).withValues(alpha: 0.4)
+              : null,
           borderRadius: BorderRadius.circular(14),
         ),
         alignment: Alignment.center,

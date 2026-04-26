@@ -41,7 +41,7 @@ class _SuccessIconState extends State<SuccessIcon>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
-      builder: (_, __) {
+      builder: (_, _) {
         return Stack(
           alignment: Alignment.center,
           children: [
@@ -52,7 +52,7 @@ class _SuccessIconState extends State<SuccessIcon>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.green.withOpacity(0.30 * _glowAnim.value),
+                    color: Colors.green.withValues(alpha: 0.30 * _glowAnim.value),
                     blurRadius: 40,
                     spreadRadius: 10,
                   ),

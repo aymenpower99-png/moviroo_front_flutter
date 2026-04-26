@@ -11,10 +11,7 @@ import '../../../../main.dart';
 class ProfileHeaderCard extends StatelessWidget {
   final String name;
 
-  const ProfileHeaderCard({
-    super.key,
-    required this.name,
-  });
+  const ProfileHeaderCard({super.key, required this.name});
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +40,11 @@ class _Avatar extends StatelessWidget {
       child: ClipOval(
         child: Container(
           color: const Color(0xFF2A1A3E),
-          child: const Icon(Icons.person, color: AppColors.primaryPurple, size: 40),
+          child: const Icon(
+            Icons.person,
+            color: AppColors.primaryPurple,
+            size: 40,
+          ),
         ),
       ),
     );
@@ -124,14 +125,16 @@ class SettingsRowTile extends StatelessWidget {
                 children: [
                   Text(
                     item.title,
-                    style: AppTextStyles.settingsItem(context).copyWith(
-                      color: isLogout ? AppColors.error : null,
-                    ),
+                    style: AppTextStyles.settingsItem(
+                      context,
+                    ).copyWith(color: isLogout ? AppColors.error : null),
                   ),
                   if (item.subtitle != null) ...[
                     const SizedBox(height: 2),
-                    Text(item.subtitle!,
-                        style: AppTextStyles.bodySmall(context)),
+                    Text(
+                      item.subtitle!,
+                      style: AppTextStyles.bodySmall(context),
+                    ),
                   ],
                 ],
               ),
@@ -139,13 +142,18 @@ class SettingsRowTile extends StatelessWidget {
 
             // ── Trailing ──────────────────────────────────────────
             if (item.trailing != null) ...[
-              Text(item.trailing!,
-                  style: AppTextStyles.settingsItemValue(context)),
+              Text(
+                item.trailing!,
+                style: AppTextStyles.settingsItemValue(context),
+              ),
               const SizedBox(width: 6),
             ],
             if (!isLogout)
-              Icon(Icons.chevron_right_rounded,
-                  color: AppColors.subtext(context), size: 20),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.subtext(context),
+                size: 20,
+              ),
           ],
         ),
       ),
@@ -182,27 +190,27 @@ class _PreferencesSectionState extends State<PreferencesSection> {
   void _onChanged() => setState(() {});
 
   String get _currentThemeLabel => switch (themeProvider.mode) {
-        ThemeMode.dark   => 'Dark',
-        ThemeMode.light  => 'Light',
-        ThemeMode.system => 'System',
-      };
+    ThemeMode.dark => 'Dark',
+    ThemeMode.light => 'Light',
+    ThemeMode.system => 'System',
+  };
 
   /// Native name shown in the profile row — always in the target language
   /// so the user can recognise it regardless of the active UI language.
- String get _currentLanguageLabel =>
-    switch (localeProvider.locale.languageCode) {
-      'fr' => 'Français',
-      'ar' => 'العربية',
-      'de' => 'Deutsch',
-      'es' => 'Español',
-      'it' => 'Italiano',
-      'pt' => 'Português',
-      'tr' => 'Türkçe',
-      'zh' => '中文',       // ← added
-      'ru' => 'Русский',   // ← added
-      'ja' => '日本語',     // ← added
-      _    => 'English (US)',
-    };
+  String get _currentLanguageLabel =>
+      switch (localeProvider.locale.languageCode) {
+        'fr' => 'Français',
+        'ar' => 'العربية',
+        'de' => 'Deutsch',
+        'es' => 'Español',
+        'it' => 'Italiano',
+        'pt' => 'Português',
+        'tr' => 'Türkçe',
+        'zh' => '中文', // ← added
+        'ru' => 'Русский', // ← added
+        'ja' => '日本語', // ← added
+        _ => 'English (US)',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -227,13 +235,15 @@ class _PreferencesSectionState extends State<PreferencesSection> {
               const _TileIcon(icon: Icons.notifications_none_rounded),
               const SizedBox(width: 16),
               Expanded(
-                child: Text('Notifications',
-                    style: AppTextStyles.settingsItem(context)),
+                child: Text(
+                  'Notifications',
+                  style: AppTextStyles.settingsItem(context),
+                ),
               ),
               Switch(
                 value: _notifications,
                 onChanged: (v) => setState(() => _notifications = v),
-                activeColor: Colors.white,
+                activeThumbColor: Colors.white,
                 activeTrackColor: AppColors.primaryPurple,
                 inactiveThumbColor: Colors.white,
                 inactiveTrackColor: isDark
@@ -268,14 +278,21 @@ class _PreferencesSectionState extends State<PreferencesSection> {
                 const _TileIcon(icon: Icons.palette_outlined),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text('Appearance',
-                      style: AppTextStyles.settingsItem(context)),
+                  child: Text(
+                    'Appearance',
+                    style: AppTextStyles.settingsItem(context),
+                  ),
                 ),
-                Text(_currentThemeLabel,
-                    style: AppTextStyles.settingsItemValue(context)),
+                Text(
+                  _currentThemeLabel,
+                  style: AppTextStyles.settingsItemValue(context),
+                ),
                 const SizedBox(width: 6),
-                Icon(Icons.chevron_right_rounded,
-                    color: AppColors.subtext(context), size: 20),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.subtext(context),
+                  size: 20,
+                ),
               ],
             ),
           ),
@@ -304,14 +321,21 @@ class _PreferencesSectionState extends State<PreferencesSection> {
                 const _TileIcon(icon: Icons.language_rounded),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text('Language',
-                      style: AppTextStyles.settingsItem(context)),
+                  child: Text(
+                    'Language',
+                    style: AppTextStyles.settingsItem(context),
+                  ),
                 ),
-                Text(_currentLanguageLabel,
-                    style: AppTextStyles.settingsItemValue(context)),
+                Text(
+                  _currentLanguageLabel,
+                  style: AppTextStyles.settingsItemValue(context),
+                ),
                 const SizedBox(width: 6),
-                Icon(Icons.chevron_right_rounded,
-                    color: AppColors.subtext(context), size: 20),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.subtext(context),
+                  size: 20,
+                ),
               ],
             ),
           ),

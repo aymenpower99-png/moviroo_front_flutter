@@ -133,7 +133,7 @@ class _CurrencyPageState extends State<CurrencyPage> {
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: _filtered.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     Divider(height: 1, color: AppColors.border(context)),
                 itemBuilder: (context, index) {
                   final currency = _filtered[index];

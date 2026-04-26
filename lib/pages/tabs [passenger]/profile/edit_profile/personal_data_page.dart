@@ -247,7 +247,7 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.08),
+        color: AppColors.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -458,7 +458,7 @@ class _EditEmailPageState extends State<_EditEmailPage> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryPurple.withOpacity(0.07),
+                        color: AppColors.primaryPurple.withValues(alpha: 0.07),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(

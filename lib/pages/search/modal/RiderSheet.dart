@@ -249,7 +249,7 @@ class _RiderSheetBodyState extends State<_RiderSheetBody> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.primaryPurple.withOpacity(0.1),
+                color: AppColors.primaryPurple.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.person_add_alt_1_outlined,
@@ -324,7 +324,7 @@ class _RiderTile extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.primaryPurple.withOpacity(0.1),
+          color: AppColors.primaryPurple.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: const Icon(Icons.person_outline_rounded,

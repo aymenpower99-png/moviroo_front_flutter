@@ -6,7 +6,7 @@ import '../_CarCard.dart';
 
 /// Back button widget
 class BackButtonWidget extends StatelessWidget {
-  const BackButtonWidget();
+  const BackButtonWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class BackButtonWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.14),
+              color: Colors.black.withValues(alpha: 0.14),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -55,6 +55,7 @@ class AnchoredLocationCard extends StatelessWidget {
   static const double _edgePad = 10;
 
   const AnchoredLocationCard({
+    super.key,
     required this.markerScreen,
     required this.screenWidth,
     required this.name,
@@ -98,7 +99,7 @@ class AnchoredLocationCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.16),
+                  color: Colors.black.withValues(alpha: 0.16),
                   blurRadius: 12,
                   offset: const Offset(0, 3),
                 ),
@@ -113,7 +114,7 @@ class AnchoredLocationCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isPickup
                         ? AppColors.primaryPurple
-                        : AppColors.primaryPurple.withOpacity(0.7),
+                        : AppColors.primaryPurple.withValues(alpha: 0.7),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -257,6 +258,7 @@ class ConfirmBar extends StatelessWidget {
   final VoidCallback onConfirm;
 
   const ConfirmBar({
+    super.key,
     required this.car,
     required this.bottomPad,
     required this.onConfirm,

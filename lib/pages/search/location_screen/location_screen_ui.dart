@@ -5,10 +5,7 @@ import '../LocationCard.dart';
 import '../nextdestinationsearch.dart';
 import '../RecentSearchItem.dart';
 import '../datetime_row/datetime_row.dart';
-import '../modal/RiderSheet.dart';
-import '../modal/PassengerSheet.dart';
 import '../../../../services/geocoding/geocoding_service.dart';
-import '../../../../services/recent_searches/recent_searches_service.dart';
 import 'widgets.dart';
 
 class LocationScreenUI extends StatelessWidget {
@@ -128,7 +125,7 @@ class LocationScreenUI extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
+                                    color: Colors.black.withValues(alpha: 0.08),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),

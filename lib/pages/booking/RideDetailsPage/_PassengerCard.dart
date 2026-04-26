@@ -4,7 +4,11 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class PassengerCard extends StatelessWidget {
-  const PassengerCard({super.key});
+  final String? passengerName;
+  final String? email;
+  final String? phone;
+
+  const PassengerCard({super.key, this.passengerName, this.email, this.phone});
 
   @override
   Widget build(BuildContext context) {
@@ -13,13 +17,15 @@ class PassengerCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(t.translate('passenger'),
-            style: AppTextStyles.bodySmall(context).copyWith(
-              color: AppColors.subtext(context),
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              fontSize: 11,
-            )),
+        Text(
+          t.translate('passenger'),
+          style: AppTextStyles.bodySmall(context).copyWith(
+            color: AppColors.subtext(context),
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            fontSize: 11,
+          ),
+        ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
@@ -32,7 +38,7 @@ class PassengerCard extends StatelessWidget {
               PassengerRow(
                 icon: Icons.person_outline_rounded,
                 label: t.translate('main_passenger'),
-                value: 'Aymen Ben Nacer',
+                value: passengerName ?? 'Aymen Ben Nacer',
                 editable: false,
                 isFirst: true,
               ),
@@ -40,14 +46,14 @@ class PassengerCard extends StatelessWidget {
               PassengerRow(
                 icon: Icons.email_outlined,
                 label: t.translate('email'),
-                value: 'aymenpower99@gmail.com',
+                value: email ?? 'aymenpower99@gmail.com',
                 editable: false,
               ),
               Divider(height: 1, color: AppColors.border(context)),
               PassengerRow(
                 icon: Icons.phone_outlined,
                 label: t.translate('phone_number'),
-                value: '+21694338510',
+                value: phone ?? '+21694338510',
                 editable: false,
               ),
             ],
@@ -81,9 +87,10 @@ class PassengerRow extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 38, height: 38,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: AppColors.primaryPurple.withOpacity(0.12),
+              color: AppColors.primaryPurple.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(11),
             ),
             child: Icon(icon, color: AppColors.primaryPurple, size: 18),
@@ -94,18 +101,27 @@ class PassengerRow extends StatelessWidget {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label,
-                          style: AppTextStyles.bodySmall(context).copyWith(
-                              color: AppColors.subtext(context))),
+                      Text(
+                        label,
+                        style: AppTextStyles.bodySmall(
+                          context,
+                        ).copyWith(color: AppColors.subtext(context)),
+                      ),
                       const SizedBox(height: 2),
-                      Text(value,
-                          style: AppTextStyles.bodyMedium(context)
-                              .copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        value,
+                        style: AppTextStyles.bodyMedium(
+                          context,
+                        ).copyWith(fontWeight: FontWeight.w700),
+                      ),
                     ],
                   )
-                : Text(value,
-                    style: AppTextStyles.bodyMedium(context)
-                        .copyWith(fontWeight: FontWeight.w500)),
+                : Text(
+                    value,
+                    style: AppTextStyles.bodyMedium(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w500),
+                  ),
           ),
         ],
       ),

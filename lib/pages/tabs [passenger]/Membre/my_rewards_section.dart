@@ -55,7 +55,7 @@ class _MyRewardsSectionState extends State<MyRewardsSection> {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: widget.rewards.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, i) {
               final reward  = widget.rewards[i];
               final copied  = _copiedIndices.contains(i);

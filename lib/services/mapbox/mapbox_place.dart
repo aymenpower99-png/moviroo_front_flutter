@@ -303,8 +303,9 @@ class MapboxPlace {
     if (_has(combined, ['beach', 'plage'])) return Icons.beach_access;
     if (_has(combined, ['park', 'parc', 'jardin', 'garden'])) return Icons.park;
     if (_has(combined, ['camping', 'campground'])) return Icons.terrain;
-    if (_has(combined, ['hiking', 'randonnée', 'randonnee']))
+    if (_has(combined, ['hiking', 'randonnée', 'randonnee'])) {
       return Icons.hiking;
+    }
     if (_has(combined, ['golf'])) return Icons.sports_golf;
     if (_has(combined, ['gym', 'fitness', 'salle de sport'])) {
       return Icons.fitness_center;

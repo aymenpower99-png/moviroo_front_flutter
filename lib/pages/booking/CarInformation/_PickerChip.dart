@@ -22,10 +22,10 @@ class PickerChip extends StatelessWidget {
         // Intrinsic size — chip is exactly as wide as its content
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: AppColors.primaryPurple.withOpacity(0.08),
+          color: AppColors.primaryPurple.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(30),
           border: Border.all(
-            color: AppColors.primaryPurple.withOpacity(0.30),
+            color: AppColors.primaryPurple.withValues(alpha: 0.30),
             width: 1,
           ),
         ),

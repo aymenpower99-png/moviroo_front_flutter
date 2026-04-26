@@ -3,24 +3,53 @@ import 'package:moviroo/routing/router.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../models/vehicle_pricing_response.dart';
+import '../../../../services/ride_api/booking_api_service.dart';
 import '_BookingSummaryCard.dart';
 import '_RouteSection.dart';
 import '_DiscountSection.dart';
 import '_BillingAddressSection.dart';
+import '_PaymentMethodSection.dart';
 import '_PriceSummarySection.dart';
 
 class BookingSummaryPage extends StatefulWidget {
-  const BookingSummaryPage({super.key});
+  final VehicleClassPrice? selectedVehicle;
+  final String? pickupAddress;
+  final String? dropoffAddress;
+  final double? pickupLat;
+  final double? pickupLon;
+  final double? dropoffLat;
+  final double? dropoffLon;
+  final DateTime? scheduledDate;
+  final TimeOfDay? scheduledTime;
+
+  const BookingSummaryPage({
+    super.key,
+    this.selectedVehicle,
+    this.pickupAddress,
+    this.dropoffAddress,
+    this.pickupLat,
+    this.pickupLon,
+    this.dropoffLat,
+    this.dropoffLon,
+    this.scheduledDate,
+    this.scheduledTime,
+  });
 
   @override
   State<BookingSummaryPage> createState() => _BookingSummaryPageState();
 }
 
 class _BookingSummaryPageState extends State<BookingSummaryPage> {
-  int _pax  = 2;
-  int _bags = 3;
-
   final _billingKey = GlobalKey<BillingAddressSectionState>();
+  String _selectedPaymentMethod = 'card';
+  final BookingApiService _bookingApi = BookingApiService();
+
+  void _onPaymentMethodChanged(String method) {
+    setState(() {
+      _selectedPaymentMethod = method;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +60,6 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
       body: SafeArea(
         child: Column(
           children: [
-
             // ── Top bar ────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -43,7 +71,9 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                         Navigator.pop(context);
                       } else {
                         Navigator.pushReplacementNamed(
-                            context, AppRouter.booking);
+                          context,
+                          AppRouter.booking,
+                        );
                       }
                     },
                     child: Container(
@@ -54,22 +84,26 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                      child: Icon(Icons.arrow_back_ios_new_rounded,
-                          size: 17, color: AppColors.text(context)),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 17,
+                        color: AppColors.text(context),
+                      ),
                     ),
                   ),
                   Expanded(
                     child: Text(
                       t.translate('booking_summary'),
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.bodyLarge(context).copyWith(
-                          fontWeight: FontWeight.w700, fontSize: 17),
+                      style: AppTextStyles.bodyLarge(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.w700, fontSize: 17),
                     ),
                   ),
                   const SizedBox(width: 40),
@@ -84,19 +118,39 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                 child: Column(
                   children: [
                     BookingSummaryCard(
-                      pax: _pax,
-                      bags: _bags,
-                      vehicleName: 'Economy',
-                      carName: 'BMW 3 Series or similar',
+                      pax: widget.selectedVehicle?.seats ?? 2,
+                      bags: widget.selectedVehicle?.bags ?? 3,
+                      vehicleName: widget.selectedVehicle?.name ?? 'Economy',
+                      carName:
+                          '${widget.selectedVehicle?.name ?? 'Economy'} or similar',
+                      imageUrl: widget.selectedVehicle?.imageUrl,
                     ),
                     const SizedBox(height: 12),
-                    RouteSection(pax: _pax),
+                    RouteSection(
+                      pax: widget.selectedVehicle?.seats ?? 2,
+                      pickupAddress: widget.pickupAddress,
+                      dropoffAddress: widget.dropoffAddress,
+                      scheduledDate: widget.scheduledDate,
+                      scheduledTime: widget.scheduledTime,
+                      distanceKm: widget.selectedVehicle?.distanceKm,
+                      durationMin: widget.selectedVehicle?.durationMin,
+                    ),
                     const SizedBox(height: 12),
                     const DiscountSection(),
                     const SizedBox(height: 12),
                     BillingAddressSection(key: _billingKey),
                     const SizedBox(height: 12),
-                    const PriceSummarySection(),
+                    PaymentMethodSection(
+                      initialMethod: _selectedPaymentMethod,
+                      onPaymentMethodChanged: _onPaymentMethodChanged,
+                    ),
+                    const SizedBox(height: 12),
+                    PriceSummarySection(
+                      priceTnd: widget.selectedVehicle?.priceTnd,
+                      exactPrice: widget.selectedVehicle?.exactPrice,
+                      surgeMultiplier: widget.selectedVehicle?.surgeMultiplier,
+                      loyaltyPoints: widget.selectedVehicle?.loyaltyPoints,
+                    ),
                   ],
                 ),
               ),
@@ -109,18 +163,92 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final billingOk =
                         _billingKey.currentState?.validateAndProceed() ?? true;
                     if (!billingOk) return;
-                    AppRouter.clearAndGo(context, AppRouter.rideDetails);
+
+                    if (!mounted) return;
+
+                    // Route based on payment method
+                    if (_selectedPaymentMethod == 'card') {
+                      // Card payment → Payment Page
+                      if (mounted) {
+                        AppRouter.push(
+                          context,
+                          AppRouter.payment,
+                          args: {
+                            'selectedVehicle': widget.selectedVehicle,
+                            'pickupAddress': widget.pickupAddress,
+                            'dropoffAddress': widget.dropoffAddress,
+                            'pickupLat': widget.pickupLat,
+                            'pickupLon': widget.pickupLon,
+                            'dropoffLat': widget.dropoffLat,
+                            'dropoffLon': widget.dropoffLon,
+                            'scheduledDate': widget.scheduledDate,
+                            'scheduledTime': widget.scheduledTime,
+                          },
+                        );
+                      }
+                    } else {
+                      // Cash payment → Create + Confirm ride, then go to Booking Confirmed
+                      try {
+                        final ride = await _bookingApi.createRide(
+                          pickupLat: widget.pickupLat ?? 0.0,
+                          pickupLon: widget.pickupLon ?? 0.0,
+                          dropoffLat: widget.dropoffLat ?? 0.0,
+                          dropoffLon: widget.dropoffLon ?? 0.0,
+                          pickupAddress: widget.pickupAddress,
+                          dropoffAddress: widget.dropoffAddress,
+                          classId: widget.selectedVehicle?.id,
+                          scheduledDate: widget.scheduledDate,
+                          scheduledTime: widget.scheduledTime,
+                        );
+
+                        final rideId = ride?['id'] as String?;
+                        if (rideId == null) {
+                          throw Exception('Ride id not returned by backend');
+                        }
+
+                        // Confirm ride (locks price + triggers dispatch)
+                        await _bookingApi.confirmRide(rideId);
+
+                        if (!mounted) return;
+
+                        // Navigate to Booking Confirmed Screen
+                        AppRouter.push(
+                          context,
+                          AppRouter.bookingConfirmed,
+                          args: {
+                            'selectedVehicle': widget.selectedVehicle,
+                            'pickupAddress': widget.pickupAddress,
+                            'dropoffAddress': widget.dropoffAddress,
+                            'pickupLat': widget.pickupLat,
+                            'pickupLon': widget.pickupLon,
+                            'dropoffLat': widget.dropoffLat,
+                            'dropoffLon': widget.dropoffLon,
+                            'scheduledDate': widget.scheduledDate,
+                            'scheduledTime': widget.scheduledTime,
+                            'paymentMethod': 'cash',
+                            'bookingId': rideId,
+                          },
+                        );
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error creating ride: $e')),
+                          );
+                        }
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPurple,
                     foregroundColor: Colors.white,
                     elevation: 12,
-                    shadowColor:
-                        AppColors.primaryPurple.withValues(alpha: 0.45),
+                    shadowColor: AppColors.primaryPurple.withValues(
+                      alpha: 0.45,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),

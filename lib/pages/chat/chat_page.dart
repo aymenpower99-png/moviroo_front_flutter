@@ -196,7 +196,7 @@ class _ChatTopBar extends StatelessWidget {
           ),
           CircleAvatar(
             radius: 18,
-            backgroundColor: AppColors.primaryPurple.withOpacity(0.15),
+            backgroundColor: AppColors.primaryPurple.withValues(alpha: 0.15),
             child: Icon(Icons.person_rounded,
                 color: AppColors.primaryPurple, size: 20),
           ),

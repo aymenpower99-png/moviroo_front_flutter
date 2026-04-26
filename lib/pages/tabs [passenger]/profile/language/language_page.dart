@@ -152,7 +152,7 @@ class _LanguagePageState extends State<LanguagePage> {
               Expanded(
                 child: ListView.separated(
                   itemCount: languages.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, i) => _LanguageCard(
                     flagAsset: languages[i].flagAsset,
                     label: languages[i].label,
@@ -241,7 +241,7 @@ class _LanguageCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(

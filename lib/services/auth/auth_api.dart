@@ -94,7 +94,7 @@ class AuthAPI {
         'lastName': lastName,
         'email': email,
         'password': password,
-        if (phone != null) 'phone': phone,
+        'phone': ?phone,
       }),
     );
 
@@ -132,9 +132,9 @@ class AuthAPI {
     String? phone,
   }) async {
     final response = await AuthHTTP.authenticatedPatch('/auth/me', {
-      if (firstName != null) 'firstName': firstName,
-      if (lastName != null) 'lastName': lastName,
-      if (phone != null) 'phone': phone,
+      'firstName': ?firstName,
+      'lastName': ?lastName,
+      'phone': ?phone,
     });
 
     if (response.statusCode == 200) {

@@ -233,7 +233,7 @@ class _CardTile extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryPurple.withOpacity(0.12),
+                      color: AppColors.primaryPurple.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -356,7 +356,7 @@ class _CardBrandIcon extends StatelessWidget {
                 width: 18,
                 height: 18,
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.9),
+                  color: AppColors.warning.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -475,7 +475,7 @@ class _InfoNote extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.primaryPurple.withOpacity(0.07),
+        color: AppColors.primaryPurple.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

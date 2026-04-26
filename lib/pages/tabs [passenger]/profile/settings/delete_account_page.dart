@@ -279,7 +279,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.error.withOpacity(0.08),
+                            color: AppColors.error.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -371,9 +371,9 @@ class _WarningBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.08),
+        color: AppColors.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -674,7 +674,7 @@ class _DeleteButton extends StatelessWidget {
         width: double.infinity,
         height: 52,
         decoration: BoxDecoration(
-          color: enabled ? AppColors.error : AppColors.error.withOpacity(0.4),
+          color: enabled ? AppColors.error : AppColors.error.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(14),
         ),
         alignment: Alignment.center,

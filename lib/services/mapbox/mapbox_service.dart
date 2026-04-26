@@ -115,8 +115,9 @@ class MapboxService {
           // Flatten the coordinates array from [[lon, lat], [lon, lat], ...] to [lon, lat, lon, lat, ...]
           final flattened = <double>[];
           for (var coord in coordinates) {
-            flattened.add((coord as List)[0] as double); // lon
-            flattened.add((coord as List)[1] as double); // lat
+            final c = coord as List;
+            flattened.add(c[0] as double); // lon
+            flattened.add(c[1] as double); // lat
           }
           debugPrint(
             '[MapboxService] returning ${flattened.length} flattened values',

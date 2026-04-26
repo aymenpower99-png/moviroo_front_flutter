@@ -28,9 +28,36 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
   bool _completed = false; // track if finished playing
 
   static const List<double> _bars = [
-    0.3, 0.6, 0.4, 0.9, 0.5, 0.7, 0.3, 1.0, 0.6, 0.4,
-    0.8, 0.5, 0.3, 0.7, 0.9, 0.4, 0.6, 0.3, 0.8, 0.5,
-    0.7, 0.4, 0.6, 0.9, 0.3, 0.5, 0.8, 0.4, 0.7, 0.6,
+    0.3,
+    0.6,
+    0.4,
+    0.9,
+    0.5,
+    0.7,
+    0.3,
+    1.0,
+    0.6,
+    0.4,
+    0.8,
+    0.5,
+    0.3,
+    0.7,
+    0.9,
+    0.4,
+    0.6,
+    0.3,
+    0.8,
+    0.5,
+    0.7,
+    0.4,
+    0.6,
+    0.9,
+    0.3,
+    0.5,
+    0.8,
+    0.4,
+    0.7,
+    0.6,
   ];
 
   @override
@@ -46,10 +73,12 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
       // Explicitly no loop
       await _player.setLoopMode(LoopMode.off);
       final duration = await _player.setFilePath(widget.audioPath!);
-      if (mounted) setState(() {
-        _total = duration ?? Duration.zero;
-        _ready = true;
-      });
+      if (mounted) {
+        setState(() {
+          _total = duration ?? Duration.zero;
+          _ready = true;
+        });
+      }
 
       _player.positionStream.listen((pos) {
         if (mounted) setState(() => _position = pos);
@@ -104,12 +133,11 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
 
   @override
   Widget build(BuildContext context) {
-    final bubbleColor =
-        widget.isMe ? AppColors.primaryPurple : AppColors.surface(context);
-    final contentColor =
-        widget.isMe ? Colors.white : AppColors.text(context);
-    final activeColor =
-        widget.isMe ? Colors.white : AppColors.primaryPurple;
+    final bubbleColor = widget.isMe
+        ? AppColors.primaryPurple
+        : AppColors.surface(context);
+    final contentColor = widget.isMe ? Colors.white : AppColors.text(context);
+    final activeColor = widget.isMe ? Colors.white : AppColors.primaryPurple;
     final inactiveColor = widget.isMe
         ? Colors.white.withValues(alpha: 0.35)
         : AppColors.subtext(context).withValues(alpha: 0.4);

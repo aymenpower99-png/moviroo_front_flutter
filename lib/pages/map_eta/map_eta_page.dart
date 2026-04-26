@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:moviroo/routing/router.dart';
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_text_styles.dart';
 import '_RouteCard.dart';
 import '_EtaSheet.dart';
 
@@ -21,13 +19,9 @@ class _MapEtaPageState extends State<MapEtaPage> {
       backgroundColor: AppColors.bg(context),
       body: Stack(
         children: [
-
           // ── 1. MAP fullscreen ────────────────────────────
           Positioned.fill(
-            child: Image.asset(
-              'images/map_preview.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('images/map_preview.png', fit: BoxFit.cover),
           ),
 
           // ── 2. Route cards sur la map ────────────────────
@@ -54,7 +48,9 @@ class _MapEtaPageState extends State<MapEtaPage> {
 
           // ── 3. Back button ───────────────────────────────
           Positioned(
-            top: 0, left: 0, right: 0,
+            top: 0,
+            left: 0,
+            right: 0,
             child: SafeArea(
               bottom: false,
               child: Padding(
@@ -68,10 +64,7 @@ class _MapEtaPageState extends State<MapEtaPage> {
                           : null,
                     ),
                     const Spacer(),
-                    _MapBtn(
-                      icon: Icons.layers_outlined,
-                      onTap: () {},
-                    ),
+                    _MapBtn(icon: Icons.layers_outlined, onTap: () {}),
                   ],
                 ),
               ),
@@ -96,11 +89,12 @@ class _MapBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 42, height: 42,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
-          color: AppColors.bg(context).withOpacity(0.55),
+          color: AppColors.bg(context).withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.12)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         ),
         child: Icon(icon, color: Colors.white, size: 20),
       ),

@@ -199,7 +199,10 @@ class _TopBar extends StatelessWidget {
 
     return Row(
       children: [
-        GestureDetector(onTap: onBack, child: Container(width: 36, height: 36)),
+        GestureDetector(
+          onTap: onBack,
+          child: const SizedBox(width: 36, height: 36),
+        ),
         Expanded(
           child: Text(
             t('profile'),

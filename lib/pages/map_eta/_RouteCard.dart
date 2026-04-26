@@ -24,18 +24,18 @@ class RouteCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF1A1228)
-              : Colors.black.withOpacity(0.72),
+              : Colors.black.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF7C3AED)
-                : Colors.white.withOpacity(0.15),
+                : Colors.white.withValues(alpha: 0.15),
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF7C3AED).withOpacity(0.28),
+                    color: const Color(0xFF7C3AED).withValues(alpha: 0.28),
                     blurRadius: 14,
                     offset: const Offset(0, 4),
                   ),
@@ -49,8 +49,8 @@ class RouteCard extends StatelessWidget {
               width: 30, height: 44,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF7C3AED).withOpacity(0.18)
-                    : Colors.white.withOpacity(0.08),
+                    ? const Color(0xFF7C3AED).withValues(alpha: 0.18)
+                    : Colors.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -73,7 +73,7 @@ class RouteCard extends StatelessWidget {
                         fontSize: 14)),
                 Text(distance,
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.55),
+                        color: Colors.white.withValues(alpha: 0.55),
                         fontSize: 11,
                         fontWeight: FontWeight.w500)),
               ],

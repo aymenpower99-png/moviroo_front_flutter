@@ -218,7 +218,7 @@ class _AnimatedRideProgressBarState extends State<AnimatedRideProgressBar>
         _fadeAnim,
         _flashAnim,
       ]),
-      builder: (_, __) {
+      builder: (_, _) {
         final fill = _showShimmer
             ? widget
                   .progress // live value, no fill animation

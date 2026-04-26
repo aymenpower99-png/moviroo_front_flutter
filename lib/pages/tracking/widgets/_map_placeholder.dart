@@ -18,7 +18,7 @@ class MapPlaceholder extends StatelessWidget {
               colors: [
                 Colors.transparent,
                 Colors.transparent,
-                AppColors.darkBg.withOpacity(0.6),
+                AppColors.darkBg.withValues(alpha: 0.6),
                 AppColors.darkBg,
               ],
               stops: const [0, 0.5, 0.78, 1],
@@ -47,7 +47,7 @@ class MapPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final glowPaint = Paint()
-      ..color = AppColors.primaryPurple.withOpacity(0.25)
+      ..color = AppColors.primaryPurple.withValues(alpha: 0.25)
       ..strokeWidth = 14
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke
@@ -84,7 +84,7 @@ class MapPainter extends CustomPainter {
       Offset(size.width * 0.95, size.height * 0.72),
       10,
       Paint()
-        ..color = Colors.white.withOpacity(0.3)
+        ..color = Colors.white.withValues(alpha: 0.3)
         ..style = PaintingStyle.fill,
     );
     canvas.drawCircle(
@@ -110,7 +110,7 @@ class MapPainter extends CustomPainter {
       center,
       18,
       Paint()
-        ..color = const Color(0xFFFF3B6B).withOpacity(0.25)
+        ..color = const Color(0xFFFF3B6B).withValues(alpha: 0.25)
         ..style = PaintingStyle.fill,
     );
     canvas.drawCircle(
@@ -150,7 +150,7 @@ class MapPainter extends CustomPainter {
       text: TextSpan(
         text: dist,
         style: TextStyle(
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha: 0.6),
             fontSize: 10,
             fontWeight: FontWeight.w400),
       ),

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:convert' show utf8;
 
 class AuthHelpers {
   static bool isTokenExpired(String token) {

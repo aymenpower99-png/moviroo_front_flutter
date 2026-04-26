@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:moviroo/pages/booking/CarInformation/booking.dart';
 import 'package:moviroo/pages/booking/RideDetailsPage/ride_details_page.dart';
 import 'package:moviroo/pages/booking/payment/payment_page.dart';
+import 'package:moviroo/pages/booking/booking_confirmed/booking_confirmed_page.dart';
 import 'package:moviroo/pages/chat/chat_page.dart';
 import 'package:moviroo/pages/map_eta/map_eta_page.dart';
 import 'package:moviroo/pages/booking/payment/payment_success/payment_success_page.dart';
@@ -20,9 +21,15 @@ import '../pages/tabs [passenger]/support/support_page.dart';
 import '../pages/tabs [passenger]/profile/settings_page.dart';
 import '../pages/tabs [passenger]/trajet/trajet_page.dart';
 import '../pages/tabs [passenger]/membre/membre_pass_screen.dart';
-import '../pages/booking/VehicleSelection/vehicle_selection_page.dart';
 import '../pages/booking/VehicleSelection/RideBooking/RideBookingPage.dart';
 import '../pages/splash/splash_page.dart';
+import '../models/vehicle_pricing_response.dart';
+
+/// Global RouteObserver to allow widgets to listen for navigation events.
+/// Use this with the `RouteAware` mixin to detect when a widget's route
+/// becomes inactive (e.g., when a new route is pushed on top).
+final RouteObserver<PageRoute<dynamic>> appRouteObserver =
+    RouteObserver<PageRoute<dynamic>>();
 
 class AppRouter {
   static const String splash = '/splash';
@@ -30,12 +37,12 @@ class AppRouter {
   static const String getStartedPage = '/onboarding';
   static const String booking = '/booking';
   static const String payment = '/payment';
+  static const String bookingConfirmed = '/booking-confirmed';
   static const String mapEtaPage = '/map-eta';
   static const String trackRide = '/track_ride';
   static const String paymentSuccess = '/payment-success';
   static const String rideCard = '/ride-card';
   static const String nextDestinationSearchRoute = '/nextdestinationsearch';
-  static const String vehicleSelectionPage = '/vehicle_selection_page';
   static const String rideBookingPage = '/ride_booking_page';
   static const String login = '/login';
   static const String signup = '/signup';
@@ -54,12 +61,84 @@ class AppRouter {
 
   static Map<String, WidgetBuilder> get routes => {
     splash: (_) => const SplashPage(),
-    payment: (_) => const PaymentPage(),
-    paymentSuccess: (_) => const PaymentSuccessPage(),
-    rideDetails: (_) => const RideDetailsPage(),
+    paymentSuccess: (ctx) {
+      final args =
+          ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
+      return PaymentSuccessPage(
+        selectedVehicle: args?['selectedVehicle'] as VehicleClassPrice?,
+        pickupAddress: args?['pickupAddress'] as String?,
+        dropoffAddress: args?['dropoffAddress'] as String?,
+        pickupLat: (args?['pickupLat'] as num?)?.toDouble(),
+        pickupLon: (args?['pickupLon'] as num?)?.toDouble(),
+        dropoffLat: (args?['dropoffLat'] as num?)?.toDouble(),
+        dropoffLon: (args?['dropoffLon'] as num?)?.toDouble(),
+        scheduledDate: args?['scheduledDate'] as DateTime?,
+        scheduledTime: args?['scheduledTime'] as TimeOfDay?,
+        bookingId: args?['bookingId'] as String?,
+      );
+    },
+    rideDetails: (ctx) {
+      final args =
+          ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
+      return RideDetailsPage(
+        selectedVehicle: args?['selectedVehicle'] as VehicleClassPrice?,
+        pickupAddress: args?['pickupAddress'] as String?,
+        dropoffAddress: args?['dropoffAddress'] as String?,
+        pickupLat: (args?['pickupLat'] as num?)?.toDouble(),
+        pickupLon: (args?['pickupLon'] as num?)?.toDouble(),
+        dropoffLat: (args?['dropoffLat'] as num?)?.toDouble(),
+        dropoffLon: (args?['dropoffLon'] as num?)?.toDouble(),
+        scheduledDate: args?['scheduledDate'] as DateTime?,
+        scheduledTime: args?['scheduledTime'] as TimeOfDay?,
+      );
+    },
     chat: (_) => const ChatPage(),
-    booking: (_) => const BookingSummaryPage(),
-    vehicleSelectionPage: (_) => const VehicleSelectionPage(),
+    booking: (ctx) {
+      final args =
+          ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
+      return BookingSummaryPage(
+        selectedVehicle: args?['selectedVehicle'] as VehicleClassPrice?,
+        pickupAddress: args?['pickupAddress'] as String?,
+        dropoffAddress: args?['dropoffAddress'] as String?,
+        pickupLat: (args?['pickupLat'] as num?)?.toDouble(),
+        pickupLon: (args?['pickupLon'] as num?)?.toDouble(),
+        dropoffLat: (args?['dropoffLat'] as num?)?.toDouble(),
+        dropoffLon: (args?['dropoffLon'] as num?)?.toDouble(),
+        scheduledDate: args?['scheduledDate'] as DateTime?,
+        scheduledTime: args?['scheduledTime'] as TimeOfDay?,
+      );
+    },
+    payment: (ctx) {
+      final args =
+          ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
+      return PaymentPage(
+        selectedVehicle: args?['selectedVehicle'] as VehicleClassPrice?,
+        pickupAddress: args?['pickupAddress'] as String?,
+        dropoffAddress: args?['dropoffAddress'] as String?,
+        pickupLat: (args?['pickupLat'] as num?)?.toDouble(),
+        pickupLon: (args?['pickupLon'] as num?)?.toDouble(),
+        dropoffLat: (args?['dropoffLat'] as num?)?.toDouble(),
+        dropoffLon: (args?['dropoffLon'] as num?)?.toDouble(),
+        scheduledDate: args?['scheduledDate'] as DateTime?,
+        scheduledTime: args?['scheduledTime'] as TimeOfDay?,
+      );
+    },
+    bookingConfirmed: (ctx) {
+      final args =
+          ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
+      return BookingConfirmedPage(
+        selectedVehicle: args?['selectedVehicle'] as VehicleClassPrice?,
+        pickupAddress: args?['pickupAddress'] as String?,
+        dropoffAddress: args?['dropoffAddress'] as String?,
+        pickupLat: (args?['pickupLat'] as num?)?.toDouble(),
+        pickupLon: (args?['pickupLon'] as num?)?.toDouble(),
+        dropoffLat: (args?['dropoffLat'] as num?)?.toDouble(),
+        dropoffLon: (args?['dropoffLon'] as num?)?.toDouble(),
+        scheduledDate: args?['scheduledDate'] as DateTime?,
+        scheduledTime: args?['scheduledTime'] as TimeOfDay?,
+        paymentMethod: args?['paymentMethod'] as String? ?? 'cash',
+      );
+    },
     rideBookingPage: (ctx) {
       final args =
           ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;

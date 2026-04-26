@@ -4,22 +4,55 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class RideDetailsCard extends StatelessWidget {
-  const RideDetailsCard({super.key});
+  final double? distanceKm;
+  final int? durationMin;
+  final int? passengers;
+
+  const RideDetailsCard({
+    super.key,
+    this.distanceKm,
+    this.durationMin,
+    this.passengers,
+  });
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
 
+    String formatDistance() {
+      if (distanceKm != null) {
+        return '${distanceKm!.toStringAsFixed(1)} km';
+      }
+      return '-- km';
+    }
+
+    String formatDuration() {
+      if (durationMin != null) {
+        if (durationMin! >= 60) {
+          final hours = durationMin! ~/ 60;
+          final mins = durationMin! % 60;
+          if (mins > 0) {
+            return '~${hours}h ${mins}min';
+          }
+          return '~${hours}h';
+        }
+        return '~$durationMin min';
+      }
+      return '-- min';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(t.translate('ride_details'),
-            style: AppTextStyles.bodySmall(context).copyWith(
-              color: AppColors.subtext(context),
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              fontSize: 11,
-            )),
+        Text(
+          t.translate('ride_details'),
+          style: AppTextStyles.bodySmall(context).copyWith(
+            color: AppColors.subtext(context),
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            fontSize: 11,
+          ),
+        ),
         const SizedBox(height: 8),
         Container(
           width: double.infinity,
@@ -34,19 +67,19 @@ class RideDetailsCard extends StatelessWidget {
               _DetailRow(
                 icon: Icons.straighten_outlined,
                 label: t.translate('distance'),
-                value: '142 km',
+                value: formatDistance(),
               ),
               Divider(height: 24, color: AppColors.border(context)),
               _DetailRow(
                 icon: Icons.schedule_outlined,
                 label: t.translate('duration'),
-                value: '~1h 30min',
+                value: formatDuration(),
               ),
               Divider(height: 24, color: AppColors.border(context)),
               _DetailRow(
                 icon: Icons.person_outline_rounded,
                 label: t.translate('passengers'),
-                value: '4',
+                value: passengers?.toString() ?? '--',
               ),
             ],
           ),
@@ -60,13 +93,11 @@ class _DetailRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final Color? valueColor;
 
   const _DetailRow({
     required this.icon,
     required this.label,
     required this.value,
-    this.valueColor,
   });
 
   @override
@@ -77,21 +108,26 @@ class _DetailRow extends StatelessWidget {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: AppColors.primaryPurple.withOpacity(0.10),
+            color: AppColors.primaryPurple.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(11),
           ),
           child: Icon(icon, color: AppColors.primaryPurple, size: 18),
         ),
         const SizedBox(width: 14),
-        Text(label,
-            style: AppTextStyles.bodyMedium(context)
-                .copyWith(color: AppColors.subtext(context))),
+        Text(
+          label,
+          style: AppTextStyles.bodyMedium(
+            context,
+          ).copyWith(color: AppColors.subtext(context)),
+        ),
         const Spacer(),
-        Text(value,
-            style: AppTextStyles.bodyMedium(context).copyWith(
-              fontWeight: FontWeight.w700,
-              color: valueColor ?? AppColors.text(context),
-            )),
+        Text(
+          value,
+          style: AppTextStyles.bodyMedium(context).copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.text(context),
+          ),
+        ),
       ],
     );
   }

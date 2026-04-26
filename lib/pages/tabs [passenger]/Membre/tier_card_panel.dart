@@ -167,7 +167,7 @@ class _TierProgressBlockState extends State<TierProgressBlock>
         const SizedBox(height: 8),
         AnimatedBuilder(
           animation: _prog,
-          builder: (_, __) => ClipRRect(
+          builder: (_, _) => ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: _prog.value,

@@ -248,7 +248,7 @@ class _CarImagePod extends StatelessWidget {
               borderRadius: BorderRadius.circular(50),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.55 : 0.18),
+                  color: Colors.black.withValues(alpha: isDark ? 0.55 : 0.18),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -260,7 +260,7 @@ class _CarImagePod extends StatelessWidget {
             width: 100,
             height: 58,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Icon(
+            errorBuilder: (_, _, _) => Icon(
               Icons.directions_car_rounded,
               size: 48,
               color: AppColors.subtext(context),
@@ -305,7 +305,7 @@ class _CarDetailSheet extends StatelessWidget {
               child: Image.asset(
                 car.image,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Icon(
+                errorBuilder: (_, _, _) => Icon(
                   Icons.directions_car,
                   size: 80,
                   color: AppColors.subtext(context),

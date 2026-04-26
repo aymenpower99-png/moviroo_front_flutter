@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:moviroo/pages/onboarding/OnboardingShell.dart';
-import 'route_painter.dart';
-import 'page_indicator.dart';
-import '../../../../theme/app_theme.dart';
 
 class OnboardingStep1 extends StatelessWidget {
   final VoidCallback onNext;
@@ -18,13 +15,14 @@ class OnboardingStep1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => OnboardingShell(
-        onNext: onNext,
-        carT: carT,
-        wheelAngle: wheelAngle,
-        currentStep: 0,
-        label: 'SMART WAY TO TRAVEL',
-        titleLine1: 'Book Your',
-        titleAccent: 'Ride',
-        subtitle: 'Find nearby drivers instantly and book a comfortable ride in seconds.',
-      );
+    onNext: onNext,
+    carT: carT,
+    wheelAngle: wheelAngle,
+    currentStep: 0,
+    label: 'SMART WAY TO TRAVEL',
+    titleLine1: 'Book Your',
+    titleAccent: 'Ride',
+    subtitle:
+        'Find nearby drivers instantly and book a comfortable ride in seconds.',
+  );
 }

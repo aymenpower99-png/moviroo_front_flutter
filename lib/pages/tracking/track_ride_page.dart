@@ -216,8 +216,9 @@ class _TrackRidePageState extends State<TrackRidePage>
 
   // ── Smooth animation tick ──────────────────────────────────────────────────
   void _onMoveAnimTick() {
-    if (_animStart == null || _animEnd == null || _mapController == null)
+    if (_animStart == null || _animEnd == null || _mapController == null) {
       return;
+    }
     final t = Curves.easeInOut.transform(_moveAnim.value);
     final lat = _lerp(_animStart!.latitude, _animEnd!.latitude, t);
     final lng = _lerp(_animStart!.longitude, _animEnd!.longitude, t);
@@ -228,8 +229,9 @@ class _TrackRidePageState extends State<TrackRidePage>
   void _maybeRefreshEta(LatLng driverPos) {
     final now = DateTime.now();
     if (_lastEtaRefresh != null &&
-        now.difference(_lastEtaRefresh!).inSeconds < 30)
+        now.difference(_lastEtaRefresh!).inSeconds < 30) {
       return;
+    }
     _lastEtaRefresh = now;
     _refreshEta(driverPos);
   }

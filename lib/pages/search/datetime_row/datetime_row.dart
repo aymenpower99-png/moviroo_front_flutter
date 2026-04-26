@@ -61,17 +61,16 @@ class _DateTimeRowState extends State<DateTimeRow> {
                   onPrimary: Colors.white,
                   onSurface: AppColors.text(context),
                 ),
-          dialogBackgroundColor: AppColors.surface(context),
+          dialogTheme: DialogThemeData(
+            backgroundColor: AppColors.surface(context),
+          ),
           textTheme: Theme.of(context).textTheme.copyWith(
-                headlineMedium: const TextStyle(
-                  fontSize: 0,
-                  color: Colors.transparent,
-                ),
-                labelSmall: const TextStyle(
-                  fontSize: 0,
-                  color: Colors.transparent,
-                ),
-              ),
+            headlineMedium: const TextStyle(
+              fontSize: 0,
+              color: Colors.transparent,
+            ),
+            labelSmall: const TextStyle(fontSize: 0, color: Colors.transparent),
+          ),
         ),
         child: child!,
       ),
@@ -90,16 +89,18 @@ class _DateTimeRowState extends State<DateTimeRow> {
   Future<void> _pickTime() async {
     final t = AppLocalizations.of(context);
     final minuteSlots = [0, 15, 30, 45];
-    int initMinuteIndex =
-        minuteSlots.indexWhere((m) => m == _pickedTime.minute);
+    int initMinuteIndex = minuteSlots.indexWhere(
+      (m) => m == _pickedTime.minute,
+    );
     if (initMinuteIndex < 0) initMinuteIndex = 0;
 
     int tempHour = _pickedTime.hour;
     int tempMinuteIndex = initMinuteIndex;
 
     final hourCtrl = FixedExtentScrollController(initialItem: tempHour);
-    final minuteCtrl =
-        FixedExtentScrollController(initialItem: initMinuteIndex);
+    final minuteCtrl = FixedExtentScrollController(
+      initialItem: initMinuteIndex,
+    );
 
     await showModalBottomSheet(
       context: context,
@@ -185,8 +186,9 @@ class _DateTimeRowState extends State<DateTimeRow> {
                             height: 48,
                             margin: const EdgeInsets.symmetric(horizontal: 40),
                             decoration: BoxDecoration(
-                              color:
-                                  AppColors.primaryPurple.withOpacity(0.08),
+                              color: AppColors.primaryPurple.withValues(
+                                alpha: 0.08,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
@@ -235,9 +237,7 @@ class _DateTimeRowState extends State<DateTimeRow> {
                                   childCount: 4,
                                   builder: (_, i) => Center(
                                     child: Text(
-                                      minuteSlots[i]
-                                          .toString()
-                                          .padLeft(2, '0'),
+                                      minuteSlots[i].toString().padLeft(2, '0'),
                                       style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.w400,

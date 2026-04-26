@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
@@ -26,7 +27,7 @@ class VehiclePricingService {
         'pickupLon': pickupLon.toString(),
         'dropoffLat': dropoffLat.toString(),
         'dropoffLon': dropoffLon.toString(),
-        if (bookingDt != null) 'bookingDt': bookingDt,
+        'bookingDt': ?bookingDt,
       };
 
       final uri = Uri.parse(
@@ -43,7 +44,7 @@ class VehiclePricingService {
       }
     } catch (e) {
       // Log error or handle silently
-      print('Error fetching vehicle prices: $e');
+      debugPrint('Error fetching vehicle prices: $e');
     }
     return null;
   }

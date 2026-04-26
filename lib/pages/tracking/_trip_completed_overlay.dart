@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
 import 'ride_state.dart';
@@ -114,10 +114,6 @@ class _TripRouteCard extends StatelessWidget {
     final dropoff = rideState.dropoffAddress.isNotEmpty
         ? rideState.dropoffAddress
         : 'Drop-off location';
-    final arrivalTime = rideState.arrivalTime.isNotEmpty
-        ? rideState.arrivalTime
-        : '—';
-
     return _Card(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -416,7 +412,7 @@ class _RewardsCard extends StatelessWidget {
               tween: Tween(begin: 0.0, end: progress),
               duration: const Duration(milliseconds: 900),
               curve: Curves.easeOutCubic,
-              builder: (_, value, __) => LinearProgressIndicator(
+              builder: (_, value, _) => LinearProgressIndicator(
                 value: value,
                 minHeight: 7,
                 backgroundColor: AppColors.border(context),

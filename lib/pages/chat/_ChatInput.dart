@@ -68,10 +68,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
     _currentPath =
         '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.aac';
 
-    await _recorder.startRecorder(
-      toFile: _currentPath,
-      codec: Codec.aacADTS,
-    );
+    await _recorder.startRecorder(toFile: _currentPath, codec: Codec.aacADTS);
 
     setState(() {
       _isRecording = true;
@@ -98,10 +95,12 @@ class _ChatInputBarState extends State<ChatInputBar> {
     _recordTimer?.cancel();
     await _recorder.stopRecorder();
     _currentPath = null;
-    if (mounted) setState(() {
-      _isRecording = false;
-      _recordSeconds = 0;
-    });
+    if (mounted) {
+      setState(() {
+        _isRecording = false;
+        _recordSeconds = 0;
+      });
+    }
   }
 
   String _fmtSeconds(int s) {
@@ -140,10 +139,9 @@ class _ChatInputBarState extends State<ChatInputBar> {
                           const SizedBox(width: 8),
                           Text(
                             'Recording  ${_fmtSeconds(_recordSeconds)}',
-                            style: AppTextStyles.bodyMedium(context).copyWith(
-                              fontSize: 14,
-                              color: Colors.red,
-                            ),
+                            style: AppTextStyles.bodyMedium(
+                              context,
+                            ).copyWith(fontSize: 14, color: Colors.red),
                           ),
                           const Spacer(),
                           GestureDetector(
@@ -161,22 +159,25 @@ class _ChatInputBarState extends State<ChatInputBar> {
                     )
                   : TextField(
                       controller: widget.controller,
-                      style: AppTextStyles.bodyMedium(context)
-                          .copyWith(fontSize: 14),
+                      style: AppTextStyles.bodyMedium(
+                        context,
+                      ).copyWith(fontSize: 14),
                       maxLines: null,
                       minLines: 1,
                       keyboardType: TextInputType.multiline,
                       textInputAction: TextInputAction.newline,
                       decoration: InputDecoration(
                         hintText: 'Message',
-                        hintStyle: AppTextStyles.bodySmall(context)
-                            .copyWith(color: AppColors.subtext(context)),
+                        hintStyle: AppTextStyles.bodySmall(
+                          context,
+                        ).copyWith(color: AppColors.subtext(context)),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         isDense: true,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                        ),
                       ),
                     ),
             ),
@@ -196,24 +197,24 @@ class _ChatInputBarState extends State<ChatInputBar> {
                     ),
                   )
                 : _isRecording
-                    ? GestureDetector(
-                        key: const ValueKey('stop'),
-                        onTap: _stopRecording,
-                        child: const _ActionButton(
-                          color: Colors.red,
-                          icon: Icons.stop_rounded,
-                        ),
-                      )
-                    : GestureDetector(
-                        key: const ValueKey('mic'),
-                        onLongPressStart: (_) => _startRecording(),
-                        onLongPressEnd: (_) => _stopRecording(),
-                        onTap: _startRecording,
-                        child: _ActionButton(
-                          color: AppColors.primaryPurple,
-                          icon: Icons.mic_rounded,
-                        ),
-                      ),
+                ? GestureDetector(
+                    key: const ValueKey('stop'),
+                    onTap: _stopRecording,
+                    child: const _ActionButton(
+                      color: Colors.red,
+                      icon: Icons.stop_rounded,
+                    ),
+                  )
+                : GestureDetector(
+                    key: const ValueKey('mic'),
+                    onLongPressStart: (_) => _startRecording(),
+                    onLongPressEnd: (_) => _stopRecording(),
+                    onTap: _startRecording,
+                    child: _ActionButton(
+                      color: AppColors.primaryPurple,
+                      icon: Icons.mic_rounded,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -235,8 +236,9 @@ class _PulseDotState extends State<_PulseDot>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 800))
-      ..repeat(reverse: true);
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
     _anim = Tween(begin: 0.4, end: 1.0).animate(_ctrl);
   }
 
@@ -254,7 +256,9 @@ class _PulseDotState extends State<_PulseDot>
         width: 10,
         height: 10,
         decoration: const BoxDecoration(
-            color: Colors.red, shape: BoxShape.circle),
+          color: Colors.red,
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }

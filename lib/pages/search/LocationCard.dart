@@ -63,7 +63,7 @@ class LocationCard extends StatelessWidget {
             : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -82,7 +82,7 @@ class LocationCard extends StatelessWidget {
                 children: [
                   AnimatedBuilder(
                     animation: pulseAnim,
-                    builder: (_, __) => Container(
+                    builder: (_, _) => Container(
                       width: 12,
                       height: 12,
                       decoration: BoxDecoration(
@@ -94,7 +94,7 @@ class LocationCard extends StatelessWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryPurple.withOpacity(
+                            color: AppColors.primaryPurple.withValues(alpha: 
                               0.25 * pulseAnim.value,
                             ),
                             blurRadius: 6,
@@ -159,7 +159,7 @@ class LocationCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         ValueListenableBuilder<TextEditingValue>(
                           valueListenable: fromController,
-                          builder: (_, val, __) => val.text.isNotEmpty
+                          builder: (_, val, _) => val.text.isNotEmpty
                               ? GestureDetector(
                                   onTap: () => fromController.clear(),
                                   child: Icon(
@@ -225,7 +225,7 @@ class LocationCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         ValueListenableBuilder<TextEditingValue>(
                           valueListenable: toController,
-                          builder: (_, val, __) => val.text.isNotEmpty
+                          builder: (_, val, _) => val.text.isNotEmpty
                               ? GestureDetector(
                                   onTap: toController.clear,
                                   child: Icon(

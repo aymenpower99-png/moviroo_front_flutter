@@ -206,7 +206,7 @@ class _PasskeyPageState extends State<PasskeyPage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.08),
+                          color: AppColors.error.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -271,7 +271,7 @@ class _PasskeyPageState extends State<PasskeyPage> {
                             ? AppColors.error
                             : AppColors.primaryPurple,
                         disabledBackgroundColor: AppColors.primaryPurple
-                            .withOpacity(0.4),
+                            .withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),

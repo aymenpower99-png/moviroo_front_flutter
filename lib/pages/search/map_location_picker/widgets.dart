@@ -3,7 +3,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_text_styles.dart';
 
 class CenterPin extends StatelessWidget {
-  const CenterPin();
+  const CenterPin({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +52,7 @@ class CenterPin extends StatelessWidget {
 
 class BackBtn extends StatelessWidget {
   final VoidCallback onTap;
-  const BackBtn({required this.onTap});
+  const BackBtn({super.key, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +82,7 @@ class SearchInput extends StatelessWidget {
   final bool isOutOfCoverage;
 
   const SearchInput({
+    super.key,
     required this.addressController,
     required this.isLoading,
     required this.isOutOfCoverage,
@@ -146,7 +147,7 @@ class SearchInput extends StatelessWidget {
 class LocationBtn extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onTap;
-  const LocationBtn({required this.isLoading, required this.onTap});
+  const LocationBtn({super.key, required this.isLoading, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -197,6 +198,7 @@ class PickerBottomSheet extends StatelessWidget {
   final VoidCallback? onConfirm;
 
   const PickerBottomSheet({
+    super.key,
     required this.confirmLabel,
     required this.addressController,
     required this.isLoading,

@@ -201,7 +201,7 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.primaryPurple.withOpacity(0.07),
+                color: AppColors.primaryPurple.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -220,7 +220,7 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
                     t.translate('passenger_name_device_note'),
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.primaryPurple.withOpacity(0.7),
+                      color: AppColors.primaryPurple.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -363,7 +363,7 @@ class _NewPassengerFormState extends State<_NewPassengerForm> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryPurple,
                   disabledBackgroundColor:
-                      AppColors.primaryPurple.withOpacity(0.4),
+                      AppColors.primaryPurple.withValues(alpha: 0.4),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16)),
                   elevation: 0,
@@ -473,7 +473,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
               padding: const EdgeInsets.symmetric(
                   horizontal: 20, vertical: 8),
               itemCount: _filtered(t).length,
-              separatorBuilder: (_, __) => Divider(
+              separatorBuilder: (_, _) => Divider(
                 height: 1,
                 thickness: 0.5,
                 color: AppColors.border(context),

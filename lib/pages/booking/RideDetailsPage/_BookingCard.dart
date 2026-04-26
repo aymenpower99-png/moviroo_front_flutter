@@ -5,16 +5,57 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class BookingCard extends StatelessWidget {
-  const BookingCard({super.key});
+  final String? pickupAddress;
+  final String? dropoffAddress;
+  final DateTime? scheduledDate;
+  final TimeOfDay? scheduledTime;
+
+  const BookingCard({
+    super.key,
+    this.pickupAddress,
+    this.dropoffAddress,
+    this.scheduledDate,
+    this.scheduledTime,
+  });
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
 
+    String formatDateTime() {
+      if (scheduledDate != null && scheduledTime != null) {
+        final combined = DateTime(
+          scheduledDate!.year,
+          scheduledDate!.month,
+          scheduledDate!.day,
+          scheduledTime!.hour,
+          scheduledTime!.minute,
+        );
+        final monthNames = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+        return '${monthNames[combined.month - 1]} ${combined.day}, ${combined.year}, ${combined.hour.toString().padLeft(2, '0')}:${combined.minute.toString().padLeft(2, '0')}';
+      }
+      return 'Now';
+    }
+
+    final bookingId =
+        '#${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         // ── Booking number + status ──────────────────────────
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -22,20 +63,27 @@ class BookingCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(t.translate('booking'),
-                    style: AppTextStyles.bodySmall(context)
-                        .copyWith(color: AppColors.subtext(context))),
+                Text(
+                  t.translate('booking'),
+                  style: AppTextStyles.bodySmall(
+                    context,
+                  ).copyWith(color: AppColors.subtext(context)),
+                ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Text('#78438620',
-                        style: AppTextStyles.bodyLarge(context).copyWith(
-                            fontWeight: FontWeight.w800, fontSize: 22)),
+                    Text(
+                      bookingId,
+                      style: AppTextStyles.bodyLarge(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.w800, fontSize: 22),
+                    ),
                     const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () {
                         Clipboard.setData(
-                            const ClipboardData(text: '78438620'));
+                          ClipboardData(text: bookingId.replaceAll('#', '')),
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(t.translate('booking_id_copied')),
@@ -43,8 +91,11 @@ class BookingCard extends StatelessWidget {
                           ),
                         );
                       },
-                      child: Icon(Icons.copy_outlined,
-                          size: 16, color: AppColors.subtext(context)),
+                      child: Icon(
+                        Icons.copy_outlined,
+                        size: 16,
+                        color: AppColors.subtext(context),
+                      ),
                     ),
                   ],
                 ),
@@ -54,21 +105,26 @@ class BookingCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.15),
+                color: Colors.amber.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.access_time_rounded,
-                      color: Colors.amber.shade600, size: 13),
+                  Icon(
+                    Icons.access_time_rounded,
+                    color: Colors.amber.shade600,
+                    size: 13,
+                  ),
                   const SizedBox(width: 5),
-                  Text(t.translate('payment_pending'),
-                      style: TextStyle(
-                        color: Colors.amber.shade600,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                      )),
+                  Text(
+                    t.translate('payment_pending'),
+                    style: TextStyle(
+                      color: Colors.amber.shade600,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -91,32 +147,37 @@ class BookingCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.calendar_today_outlined,
-                      size: 13, color: AppColors.subtext(context)),
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: 13,
+                    color: AppColors.subtext(context),
+                  ),
                   const SizedBox(width: 6),
-                  Text('13 February 2026, 13:00',
-                      style: AppTextStyles.bodySmall(context)),
+                  Text(
+                    formatDateTime(),
+                    style: AppTextStyles.bodySmall(context),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
 
               _RouteStop(
                 dot: _DotFilled(),
-                title: 'Tunis Carthage Airport (TUN)',
-                subtitle: 'Tunis, Tunisia',
+                title: pickupAddress ?? 'Pickup location',
+                subtitle: '',
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 6),
                 child: Container(
                   width: 1.5,
                   height: 28,
-                  color: AppColors.primaryPurple.withOpacity(0.4),
+                  color: AppColors.primaryPurple.withValues(alpha: 0.4),
                 ),
               ),
               _RouteStop(
                 dot: _DotOutline(),
-                title: 'Enfidha Hammamet Airport (NBE)',
-                subtitle: 'Enfidha, Tunisia',
+                title: dropoffAddress ?? 'Drop-off location',
+                subtitle: '',
               ),
             ],
           ),
@@ -130,8 +191,11 @@ class _RouteStop extends StatelessWidget {
   final Widget dot;
   final String title;
   final String subtitle;
-  const _RouteStop(
-      {required this.dot, required this.title, required this.subtitle});
+  const _RouteStop({
+    required this.dot,
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -143,9 +207,12 @@ class _RouteStop extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
-                style: AppTextStyles.bodyMedium(context)
-                    .copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              title,
+              style: AppTextStyles.bodyMedium(
+                context,
+              ).copyWith(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 2),
             Text(subtitle, style: AppTextStyles.bodySmall(context)),
           ],
@@ -158,23 +225,23 @@ class _RouteStop extends StatelessWidget {
 class _DotFilled extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-        width: 13,
-        height: 13,
-        decoration: BoxDecoration(
-          color: AppColors.primaryPurple,
-          shape: BoxShape.circle,
-        ),
-      );
+    width: 13,
+    height: 13,
+    decoration: BoxDecoration(
+      color: AppColors.primaryPurple,
+      shape: BoxShape.circle,
+    ),
+  );
 }
 
 class _DotOutline extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-        width: 13,
-        height: 13,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.primaryPurple, width: 2),
-        ),
-      );
+    width: 13,
+    height: 13,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: AppColors.primaryPurple, width: 2),
+    ),
+  );
 }

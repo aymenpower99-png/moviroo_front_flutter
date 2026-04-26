@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
@@ -61,10 +62,12 @@ class PlacesService {
 
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body) as List;
-        return json.map((e) => Place.fromJson(e as Map<String, dynamic>)).toList();
+        return json
+            .map((e) => Place.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
     } catch (e) {
-      print('Error fetching nearby places: $e');
+      debugPrint('Error fetching nearby places: $e');
     }
     return [];
   }
@@ -96,10 +99,12 @@ class PlacesService {
 
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body) as List;
-        return json.map((e) => Place.fromJson(e as Map<String, dynamic>)).toList();
+        return json
+            .map((e) => Place.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
     } catch (e) {
-      print('Error searching places: $e');
+      debugPrint('Error searching places: $e');
     }
     return [];
   }

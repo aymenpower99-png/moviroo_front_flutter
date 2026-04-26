@@ -89,7 +89,7 @@ class PassengerSheet {
                             margin:
                                 const EdgeInsets.symmetric(horizontal: 40),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryPurple.withOpacity(0.08),
+                              color: AppColors.primaryPurple.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
@@ -42,10 +43,12 @@ class VehicleClassesService {
 
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body) as List;
-        return json.map((e) => VehicleClass.fromJson(e as Map<String, dynamic>)).toList();
+        return json
+            .map((e) => VehicleClass.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
     } catch (e) {
-      print('Error fetching vehicle classes: $e');
+      debugPrint('Error fetching vehicle classes: $e');
     }
     return [];
   }

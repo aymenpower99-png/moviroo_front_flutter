@@ -33,14 +33,16 @@ class RideCard extends StatelessWidget {
                     children: [
                       Text(
                         ride.vehicleType,
-                        style: AppTextStyles.bodyLarge(context)
-                            .copyWith(fontWeight: FontWeight.w700),
+                        style: AppTextStyles.bodyLarge(
+                          context,
+                        ).copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         ride.vehicleName,
-                        style: AppTextStyles.bodySmall(context)
-                            .copyWith(fontSize: 12),
+                        style: AppTextStyles.bodySmall(
+                          context,
+                        ).copyWith(fontSize: 12),
                       ),
                     ],
                   ),
@@ -58,10 +60,14 @@ class RideCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     _IconLabel(
-                        icon: Icons.calendar_today_rounded, label: ride.date),
+                      icon: Icons.calendar_today_rounded,
+                      label: ride.date,
+                    ),
                     const SizedBox(height: 4),
                     _IconLabel(
-                        icon: Icons.access_time_rounded, label: ride.time),
+                      icon: Icons.access_time_rounded,
+                      label: ride.time,
+                    ),
                   ],
                 ),
               ],
@@ -92,8 +98,10 @@ class _IconLabel extends StatelessWidget {
       children: [
         Icon(icon, size: 12, color: AppColors.subtext(context)),
         const SizedBox(width: 4),
-        Text(label,
-            style: AppTextStyles.bodySmall(context).copyWith(fontSize: 12)),
+        Text(
+          label,
+          style: AppTextStyles.bodySmall(context).copyWith(fontSize: 12),
+        ),
       ],
     );
   }
@@ -110,28 +118,30 @@ class _ActionButton extends StatelessWidget {
     final t = AppLocalizations.of(context).translate;
 
     switch (ride.status) {
-
       // ── Upcoming: Track + Chat ─────────────────────────────
       case RideStatus.upcoming:
         return Row(
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () => AppRouter.push(context, AppRouter.trackRide,
-                    args: {
-                      'rideId':         ride.rideId         ?? '',
-                      'pickupLat':      ride.pickupLat      ?? 36.8189,
-                      'pickupLon':      ride.pickupLon      ?? 10.1658,
-                      'dropoffLat':     ride.dropoffLat     ?? 36.8300,
-                      'dropoffLon':     ride.dropoffLon     ?? 10.1750,
-                      'pickupAddress':  ride.pickup,
-                      'dropoffAddress': ride.dropoff,
-                      'driverName':     ride.driverName     ?? 'Driver',
-                      'vehicleName':    ride.vehicleName,
-                      'vehicleColor':   ride.vehicleColor   ?? '',
-                      'plateNumber':    ride.plateNumber    ?? '',
-                      'etaMins':        ride.etaMins,
-                    }),
+                onTap: () => AppRouter.push(
+                  context,
+                  AppRouter.trackRide,
+                  args: {
+                    'rideId': ride.rideId ?? '',
+                    'pickupLat': ride.pickupLat ?? 36.8189,
+                    'pickupLon': ride.pickupLon ?? 10.1658,
+                    'dropoffLat': ride.dropoffLat ?? 36.8300,
+                    'dropoffLon': ride.dropoffLon ?? 10.1750,
+                    'pickupAddress': ride.pickup,
+                    'dropoffAddress': ride.dropoff,
+                    'driverName': ride.driverName ?? 'Driver',
+                    'vehicleName': ride.vehicleName,
+                    'vehicleColor': ride.vehicleColor ?? '',
+                    'plateNumber': ride.plateNumber ?? '',
+                    'etaMins': ride.etaMins,
+                  },
+                ),
                 child: Container(
                   height: 46,
                   decoration: BoxDecoration(
@@ -141,11 +151,13 @@ class _ActionButton extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.near_me_rounded,
-                          color: Colors.white, size: 16),
+                      const Icon(
+                        Icons.near_me_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
-                      Text(t('track_ride'),
-                          style: AppTextStyles.buttonPrimary),
+                      Text(t('track_ride'), style: AppTextStyles.buttonPrimary),
                     ],
                   ),
                 ),
@@ -186,7 +198,8 @@ class _ActionButton extends StatelessWidget {
               color: AppColors.primaryPurple.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: AppColors.primaryPurple.withValues(alpha: 0.35)),
+                color: AppColors.primaryPurple.withValues(alpha: 0.35),
+              ),
             ),
             child: Center(
               child: Text(
@@ -213,10 +226,9 @@ class _ActionButton extends StatelessWidget {
           child: Center(
             child: Text(
               t('cancelled'),
-              style: AppTextStyles.bodyLarge(context).copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.error,
-              ),
+              style: AppTextStyles.bodyLarge(
+                context,
+              ).copyWith(fontWeight: FontWeight.w600, color: AppColors.error),
             ),
           ),
         );
@@ -232,13 +244,17 @@ class _ActionButton extends StatelessWidget {
               color: const Color(0xFFFF6B00).withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: const Color(0xFFFF6B00).withValues(alpha: 0.45)),
+                color: const Color(0xFFFF6B00).withValues(alpha: 0.45),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.payment_rounded,
-                    color: Color(0xFFFF6B00), size: 18),
+                const Icon(
+                  Icons.payment_rounded,
+                  color: Color(0xFFFF6B00),
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   t('complete_payment'),
@@ -251,9 +267,6 @@ class _ActionButton extends StatelessWidget {
             ),
           ),
         );
-
-      default:
-        return const SizedBox.shrink();
     }
   }
 }

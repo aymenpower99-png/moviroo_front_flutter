@@ -73,10 +73,7 @@ class AuthOAuth {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/apple'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'idToken': idToken,
-          if (fullName != null) 'fullName': fullName,
-        }),
+        body: jsonEncode({'idToken': idToken, 'fullName': ?fullName}),
       );
 
       if (response.statusCode == 200) {

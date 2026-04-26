@@ -38,6 +38,7 @@ dependencies:
   local_auth: ^2.3.0 # Device biometric (Face ID / Fingerprint / PIN)
   local_auth_android: ^1.0.47
   local_auth_darwin: ^1.4.2
+  flutter_stripe: ^11.3.0 # Stripe payment processing
 
 dev_dependencies:
   flutter_test:

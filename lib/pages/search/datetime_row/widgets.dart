@@ -8,6 +8,7 @@ class PillChip extends StatelessWidget {
   final VoidCallback onTap;
 
   const PillChip({
+    super.key,
     this.icon,
     required this.label,
     required this.showChevron,

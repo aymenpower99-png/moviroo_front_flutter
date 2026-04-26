@@ -81,11 +81,12 @@ class LocationScreenUIHandlers {
     GeocodingService()
         .searchPlaces(query)
         .then((results) {
-          if (state.mounted)
+          if (state.mounted) {
             setState(() {
               suggestions.clear();
               suggestions.addAll(results);
             });
+          }
         })
         .catchError((e) {
           debugPrint('Search error: $e');

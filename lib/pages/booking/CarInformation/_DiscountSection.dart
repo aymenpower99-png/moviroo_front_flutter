@@ -17,12 +17,18 @@ class DiscountSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.confirmation_number_outlined,
-                  color: AppColors.primaryPurple, size: 18),
+              Icon(
+                Icons.confirmation_number_outlined,
+                color: AppColors.primaryPurple,
+                size: 18,
+              ),
               const SizedBox(width: 8),
-              Text(t.translate('discount_code'),
-                  style: AppTextStyles.bodyMedium(context)
-                      .copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                t.translate('discount_code'),
+                style: AppTextStyles.bodyMedium(
+                  context,
+                ).copyWith(fontWeight: FontWeight.w700),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -33,8 +39,9 @@ class DiscountSection extends StatelessWidget {
                   style: AppTextStyles.bodyMedium(context),
                   decoration: InputDecoration(
                     hintText: t.translate('enter_code'),
-                    hintStyle: AppTextStyles.bodyMedium(context)
-                        .copyWith(color: AppColors.subtext(context)),
+                    hintStyle: AppTextStyles.bodyMedium(
+                      context,
+                    ).copyWith(color: AppColors.subtext(context)),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -47,18 +54,23 @@ class DiscountSection extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.surface(context),
-                  foregroundColor: AppColors.text(context),
+                  backgroundColor: AppColors.primaryPurple,
+                  foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
-                child: Text(t.translate('apply'),
-                    style: AppTextStyles.bodySmall(context)
-                        .copyWith(fontWeight: FontWeight.w800)),
+                child: Text(
+                  t.translate('apply'),
+                  style: AppTextStyles.bodySmall(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w800, color: Colors.white),
+                ),
               ),
             ],
           ),

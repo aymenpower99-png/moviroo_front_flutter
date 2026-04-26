@@ -27,10 +27,14 @@ class EmailVerifyModal extends StatefulWidget {
 class _EmailVerifyModalState extends State<EmailVerifyModal> {
   static const int _codeLength = 6;
 
-  final List<TextEditingController> _controllers =
-      List.generate(_codeLength, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes =
-      List.generate(_codeLength, (_) => FocusNode());
+  final List<TextEditingController> _controllers = List.generate(
+    _codeLength,
+    (_) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(
+    _codeLength,
+    (_) => FocusNode(),
+  );
 
   int _resendSeconds = 59;
 
@@ -63,8 +67,12 @@ class _EmailVerifyModalState extends State<EmailVerifyModal> {
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -75,8 +83,9 @@ class _EmailVerifyModalState extends State<EmailVerifyModal> {
       for (int i = 0; i < _codeLength && i < digits.length; i++) {
         _controllers[i].text = digits[i];
       }
-      final next =
-          digits.length < _codeLength ? digits.length : _codeLength - 1;
+      final next = digits.length < _codeLength
+          ? digits.length
+          : _codeLength - 1;
       _focusNodes[next].requestFocus();
       setState(() {});
       return;
@@ -205,22 +214,25 @@ class _EmailVerifyModalState extends State<EmailVerifyModal> {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        style: AppTextStyles.bodyLarge(context).copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 20,
-                        ),
+                        style: AppTextStyles.bodyLarge(
+                          context,
+                        ).copyWith(fontWeight: FontWeight.w600, fontSize: 20),
                         decoration: InputDecoration(
                           counterText: '',
                           filled: true,
                           fillColor: isFocused
-                              ? const Color(0xFF7C3AED).withOpacity(0.10)
-                              : const Color(0xFF7C3AED).withOpacity(0.06),
+                              ? const Color(0xFF7C3AED).withValues(alpha: 0.10)
+                              : const Color(0xFF7C3AED).withValues(alpha: 0.06),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
                               color: isFilled
-                                  ? const Color(0xFF7C3AED).withOpacity(0.6)
-                                  : const Color(0xFF7C3AED).withOpacity(0.2),
+                                  ? const Color(
+                                      0xFF7C3AED,
+                                    ).withValues(alpha: 0.6)
+                                  : const Color(
+                                      0xFF7C3AED,
+                                    ).withValues(alpha: 0.2),
                               width: 1.5,
                             ),
                           ),
@@ -256,7 +268,7 @@ class _EmailVerifyModalState extends State<EmailVerifyModal> {
                   gradient: _isComplete ? AppColors.purpleGradient : null,
                   color: _isComplete
                       ? null
-                      : const Color(0xFF7C3AED).withOpacity(0.4),
+                      : const Color(0xFF7C3AED).withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 alignment: Alignment.center,

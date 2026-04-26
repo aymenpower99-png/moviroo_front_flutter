@@ -6,7 +6,12 @@ class Pill extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const Pill({required this.icon, required this.label, required this.onTap});
+  const Pill({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +26,7 @@ class Pill extends StatelessWidget {
           border: Border.all(color: AppColors.border(context)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),

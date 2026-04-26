@@ -293,7 +293,7 @@ class _SetupViewState extends State<_SetupView> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.error.withOpacity(0.08),
+              color: AppColors.error.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -363,7 +363,7 @@ class _QrView extends StatelessWidget {
         width: 180,
         height: 180,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => placeholder,
+        errorBuilder: (_, _, _) => placeholder,
       );
     } catch (_) {
       return placeholder;
@@ -390,7 +390,7 @@ class _LinkedView extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
-            color: AppColors.success.withOpacity(0.1),
+            color: AppColors.success.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(50),
           ),
           child: Row(
@@ -466,7 +466,7 @@ class _LinkedView extends StatelessWidget {
             width: double.infinity,
             height: 52,
             decoration: BoxDecoration(
-              color: AppColors.error.withOpacity(0.1),
+              color: AppColors.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
             ),
             alignment: Alignment.center,

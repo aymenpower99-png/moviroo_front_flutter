@@ -68,7 +68,7 @@ class _SmartWayAppState extends State<SmartWayApp> {
           _handleDeepLink(uri);
         },
         onError: (err) {
-          print('Deep link error: $err');
+          debugPrint('Deep link error: $err');
         },
       );
     }
@@ -132,6 +132,7 @@ class _SmartWayAppState extends State<SmartWayApp> {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.mode,
+            navigatorObservers: [appRouteObserver],
             locale: localeProvider.locale,
             supportedLocales: const [
               Locale('en'),
@@ -167,7 +168,7 @@ class _SmartWayAppState extends State<SmartWayApp> {
               if (builder == null) return null;
               return PageRouteBuilder(
                 settings: settings,
-                pageBuilder: (context, _, __) => builder(context),
+                pageBuilder: (context, _, _) => builder(context),
                 transitionDuration: Duration.zero,
                 reverseTransitionDuration: Duration.zero,
               );

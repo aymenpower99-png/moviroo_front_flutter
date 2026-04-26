@@ -27,7 +27,7 @@ class _LocationScreenState extends State<LocationScreen>
 
   int? _selectedRider;
   int _passengerCount = 1;
-  List<GeocodingPlace> _suggestions = [];
+  final List<GeocodingPlace> _suggestions = [];
   DateTime _pickedDate = DateTime.now();
   TimeOfDay? _pickedTime;
   bool _isLoadingSuggestions = false;

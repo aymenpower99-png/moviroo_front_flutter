@@ -32,7 +32,7 @@ class RecentSearchTile extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.primaryPurple.withOpacity(0.08),
+                color: AppColors.primaryPurple.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
