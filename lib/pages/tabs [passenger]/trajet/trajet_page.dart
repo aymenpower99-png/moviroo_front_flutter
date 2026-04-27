@@ -16,7 +16,7 @@ class TrajetPage extends StatefulWidget {
   State<TrajetPage> createState() => _TrajetPageState();
 }
 
-class _TrajetPageState extends State<TrajetPage> {
+class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
   int _tabIndex = 1;
   RideTab _rideTab = RideTab.upcoming;
 
@@ -26,7 +26,21 @@ class _TrajetPageState extends State<TrajetPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _ridesFuture = _loadRides();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refresh();
+    }
   }
 
   Future<List<RideModel>> _loadRides() async {

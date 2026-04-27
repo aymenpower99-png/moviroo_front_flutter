@@ -3,57 +3,141 @@ import 'package:moviroo/routing/router.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../models/vehicle_pricing_response.dart';
+import '../../../../services/ride_api/booking_api_service.dart';
 
-class BookingConfirmedPage extends StatelessWidget {
-  final VehicleClassPrice? selectedVehicle;
-  final String? pickupAddress;
-  final String? dropoffAddress;
-  final double? pickupLat;
-  final double? pickupLon;
-  final double? dropoffLat;
-  final double? dropoffLon;
-  final DateTime? scheduledDate;
-  final TimeOfDay? scheduledTime;
-  final String paymentMethod;
+class BookingConfirmedPage extends StatefulWidget {
+  final String? bookingId;
 
-  const BookingConfirmedPage({
-    super.key,
-    this.selectedVehicle,
-    this.pickupAddress,
-    this.dropoffAddress,
-    this.pickupLat,
-    this.pickupLon,
-    this.dropoffLat,
-    this.dropoffLon,
-    this.scheduledDate,
-    this.scheduledTime,
-    this.paymentMethod = 'cash',
-  });
+  const BookingConfirmedPage({super.key, this.bookingId});
+
+  @override
+  State<BookingConfirmedPage> createState() => _BookingConfirmedPageState();
+}
+
+class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
+  final BookingApiService _bookingApi = BookingApiService();
+  Map<String, dynamic>? _bookingData;
+  bool _isCancelling = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.bookingId != null) {
+      _loadBookingData();
+    }
+  }
+
+  Future<void> _loadBookingData() async {
+    if (widget.bookingId == null) return;
+    setState(() => _isLoading = true);
+    try {
+      final data = await _bookingApi.getRideDetails(widget.bookingId!);
+      if (mounted) {
+        setState(() {
+          _bookingData = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load booking data: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ── Backend-first data accessors ─────────────────────────────────────────
+  String? get _pickupAddress => _bookingData?['pickupAddress'] as String?;
+  String? get _dropoffAddress => _bookingData?['dropoffAddress'] as String?;
+
+  TimeOfDay? get _scheduledTime {
+    final raw = _bookingData?['scheduledAt'] as String?;
+    if (raw != null) {
+      final parsed = DateTime.tryParse(raw);
+      if (parsed != null)
+        return TimeOfDay(hour: parsed.hour, minute: parsed.minute);
+    }
+    return null;
+  }
+
+  int? get _durationMin {
+    final v = _bookingData?['durationMin'];
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  String? get _paymentMethod => _bookingData?['paymentMethod'] as String?;
 
   String _formatEta() {
-    if (scheduledTime != null) {
-      return '${scheduledTime!.hour.toString().padLeft(2, '0')}:${scheduledTime!.minute.toString().padLeft(2, '0')}';
+    if (_scheduledTime != null) {
+      return '${_scheduledTime!.hour.toString().padLeft(2, '0')}:${_scheduledTime!.minute.toString().padLeft(2, '0')}';
     }
-    final duration = selectedVehicle?.durationMin ?? 0;
+    final duration = _durationMin ?? 0;
     final now = DateTime.now().add(Duration(minutes: duration));
     return '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
   }
 
   String _formatDistance() {
-    final distance = selectedVehicle?.distanceKm ?? 0;
+    final distance = _bookingData?['distanceKm'] ?? 0;
     return '${distance.toStringAsFixed(0)} KM';
   }
 
   String _formatPax() {
-    final seats = selectedVehicle?.seats ?? 2;
-    return '$seats ${seats == 1 ? "ADULT" : "ADULTS"}';
+    final cls = _bookingData?['vehicleClass'] as Map<String, dynamic>?;
+    final seats = cls?['seats'];
+    if (seats is num) {
+      final seatCount = seats.toInt();
+      return '$seatCount ${seatCount == 1 ? "ADULT" : "ADULTS"}';
+    }
+    return '2 ADULTS';
+  }
+
+  Future<void> _handleCancel() async {
+    if (widget.bookingId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Booking ID not found')));
+      return;
+    }
+
+    setState(() {
+      _isCancelling = true;
+    });
+
+    try {
+      await _bookingApi.cancelRide(widget.bookingId!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Booking cancelled successfully')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to cancel booking: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCancelling = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final isCash = paymentMethod.toLowerCase() == 'cash';
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.bg(context),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final isCash = _paymentMethod?.toLowerCase() == 'cash';
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -133,9 +217,10 @@ class BookingConfirmedPage extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                             child: _RouteRows(
-                              pickupAddress: pickupAddress ?? 'Pickup location',
+                              pickupAddress:
+                                  _pickupAddress ?? 'Pickup location',
                               dropoffAddress:
-                                  dropoffAddress ?? 'Dropoff location',
+                                  _dropoffAddress ?? 'Dropoff location',
                             ),
                           ),
 
@@ -240,13 +325,13 @@ class BookingConfirmedPage extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               child: Column(
                 children: [
-                  // Track Driver button
+                  // Check Booking button
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () =>
-                          AppRouter.push(context, AppRouter.trackRide),
+                          AppRouter.push(context, AppRouter.trajet),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryPurple,
                         foregroundColor: Colors.white,
@@ -262,13 +347,13 @@ class BookingConfirmedPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(
-                            Icons.navigation_rounded,
+                            Icons.list_alt_rounded,
                             size: 18,
                             color: Colors.white,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            t.translate('track_driver'),
+                            'Check Booking',
                             style: AppTextStyles.bodyLarge(context).copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
@@ -286,16 +371,7 @@ class BookingConfirmedPage extends StatelessWidget {
                     width: double.infinity,
                     height: 52,
                     child: OutlinedButton(
-                      onPressed: () {
-                        if (Navigator.canPop(context)) {
-                          Navigator.pop(context);
-                        } else {
-                          Navigator.pushReplacementNamed(
-                            context,
-                            AppRouter.home,
-                          );
-                        }
-                      },
+                      onPressed: _isCancelling ? null : _handleCancel,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primaryPurple,
                         side: BorderSide(
@@ -306,14 +382,25 @@ class BookingConfirmedPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      child: Text(
-                        t.translate('cancel_booking'),
-                        style: AppTextStyles.bodyLarge(context).copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: AppColors.primaryPurple,
-                        ),
-                      ),
+                      child: _isCancelling
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.primaryPurple,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              t.translate('cancel_booking'),
+                              style: AppTextStyles.bodyLarge(context).copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: AppColors.primaryPurple,
+                              ),
+                            ),
                     ),
                   ),
                 ],

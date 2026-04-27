@@ -86,16 +86,50 @@ class VehicleCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      name ?? 'Standard',
+                      name ?? '--',
                       style: AppTextStyles.bodyLarge(
                         context,
                       ).copyWith(fontWeight: FontWeight.w800, fontSize: 16),
                     ),
                     const SizedBox(height: 2),
                     if (seats != null || bags != null)
-                      Text(
-                        '${seats != null ? '$seats seats' : ''}${seats != null && bags != null ? ' • ' : ''}${bags != null ? '$bags bags' : ''}',
-                        style: AppTextStyles.bodySmall(context),
+                      Row(
+                        children: [
+                          if (seats != null) ...[
+                            Icon(
+                              Icons.event_seat_outlined,
+                              size: 12,
+                              color: AppColors.subtext(context),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$seats seats',
+                              style: AppTextStyles.bodySmall(context),
+                            ),
+                          ],
+                          if (seats != null && bags != null) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              '•',
+                              style: AppTextStyles.bodySmall(
+                                context,
+                              ).copyWith(color: AppColors.border(context)),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          if (bags != null) ...[
+                            Icon(
+                              Icons.luggage_outlined,
+                              size: 12,
+                              color: AppColors.subtext(context),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$bags bags',
+                              style: AppTextStyles.bodySmall(context),
+                            ),
+                          ],
+                        ],
                       ),
                   ],
                 ),

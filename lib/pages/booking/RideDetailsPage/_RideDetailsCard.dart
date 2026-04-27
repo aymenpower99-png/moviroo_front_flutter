@@ -65,7 +65,7 @@ class RideDetailsCard extends StatelessWidget {
           child: Column(
             children: [
               _DetailRow(
-                icon: Icons.straighten_outlined,
+                icon: Icons.route_outlined,
                 label: t.translate('distance'),
                 value: formatDistance(),
               ),
@@ -77,7 +77,7 @@ class RideDetailsCard extends StatelessWidget {
               ),
               Divider(height: 24, color: AppColors.border(context)),
               _DetailRow(
-                icon: Icons.person_outline_rounded,
+                icon: Icons.people_outline_rounded,
                 label: t.translate('passengers'),
                 value: passengers?.toString() ?? '--',
               ),

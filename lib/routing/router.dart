@@ -64,33 +64,12 @@ class AppRouter {
     paymentSuccess: (ctx) {
       final args =
           ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
-      return PaymentSuccessPage(
-        selectedVehicle: args?['selectedVehicle'] as VehicleClassPrice?,
-        pickupAddress: args?['pickupAddress'] as String?,
-        dropoffAddress: args?['dropoffAddress'] as String?,
-        pickupLat: (args?['pickupLat'] as num?)?.toDouble(),
-        pickupLon: (args?['pickupLon'] as num?)?.toDouble(),
-        dropoffLat: (args?['dropoffLat'] as num?)?.toDouble(),
-        dropoffLon: (args?['dropoffLon'] as num?)?.toDouble(),
-        scheduledDate: args?['scheduledDate'] as DateTime?,
-        scheduledTime: args?['scheduledTime'] as TimeOfDay?,
-        bookingId: args?['bookingId'] as String?,
-      );
+      return PaymentSuccessPage(bookingId: args?['bookingId'] as String?);
     },
     rideDetails: (ctx) {
       final args =
           ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
-      return RideDetailsPage(
-        selectedVehicle: args?['selectedVehicle'] as VehicleClassPrice?,
-        pickupAddress: args?['pickupAddress'] as String?,
-        dropoffAddress: args?['dropoffAddress'] as String?,
-        pickupLat: (args?['pickupLat'] as num?)?.toDouble(),
-        pickupLon: (args?['pickupLon'] as num?)?.toDouble(),
-        dropoffLat: (args?['dropoffLat'] as num?)?.toDouble(),
-        dropoffLon: (args?['dropoffLon'] as num?)?.toDouble(),
-        scheduledDate: args?['scheduledDate'] as DateTime?,
-        scheduledTime: args?['scheduledTime'] as TimeOfDay?,
-      );
+      return RideDetailsPage(bookingId: args?['bookingId'] as String?);
     },
     chat: (_) => const ChatPage(),
     booking: (ctx) {
@@ -111,33 +90,12 @@ class AppRouter {
     payment: (ctx) {
       final args =
           ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
-      return PaymentPage(
-        selectedVehicle: args?['selectedVehicle'] as VehicleClassPrice?,
-        pickupAddress: args?['pickupAddress'] as String?,
-        dropoffAddress: args?['dropoffAddress'] as String?,
-        pickupLat: (args?['pickupLat'] as num?)?.toDouble(),
-        pickupLon: (args?['pickupLon'] as num?)?.toDouble(),
-        dropoffLat: (args?['dropoffLat'] as num?)?.toDouble(),
-        dropoffLon: (args?['dropoffLon'] as num?)?.toDouble(),
-        scheduledDate: args?['scheduledDate'] as DateTime?,
-        scheduledTime: args?['scheduledTime'] as TimeOfDay?,
-      );
+      return PaymentPage(bookingId: args?['bookingId'] as String?);
     },
     bookingConfirmed: (ctx) {
       final args =
           ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
-      return BookingConfirmedPage(
-        selectedVehicle: args?['selectedVehicle'] as VehicleClassPrice?,
-        pickupAddress: args?['pickupAddress'] as String?,
-        dropoffAddress: args?['dropoffAddress'] as String?,
-        pickupLat: (args?['pickupLat'] as num?)?.toDouble(),
-        pickupLon: (args?['pickupLon'] as num?)?.toDouble(),
-        dropoffLat: (args?['dropoffLat'] as num?)?.toDouble(),
-        dropoffLon: (args?['dropoffLon'] as num?)?.toDouble(),
-        scheduledDate: args?['scheduledDate'] as DateTime?,
-        scheduledTime: args?['scheduledTime'] as TimeOfDay?,
-        paymentMethod: args?['paymentMethod'] as String? ?? 'cash',
-      );
+      return BookingConfirmedPage(bookingId: args?['bookingId'] as String?);
     },
     rideBookingPage: (ctx) {
       final args =

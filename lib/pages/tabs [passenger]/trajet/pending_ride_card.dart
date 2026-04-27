@@ -35,14 +35,16 @@ class PendingRideCard extends StatelessWidget {
                     children: [
                       Text(
                         ride.vehicleType,
-                        style: AppTextStyles.bodyLarge(context)
-                            .copyWith(fontWeight: FontWeight.w700),
+                        style: AppTextStyles.bodyLarge(
+                          context,
+                        ).copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         ride.vehicleName,
-                        style: AppTextStyles.bodySmall(context)
-                            .copyWith(fontSize: 12),
+                        style: AppTextStyles.bodySmall(
+                          context,
+                        ).copyWith(fontSize: 12),
                       ),
                     ],
                   ),
@@ -60,10 +62,14 @@ class PendingRideCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     _IconLabel(
-                        icon: Icons.calendar_today_rounded, label: ride.date),
+                      icon: Icons.calendar_today_rounded,
+                      label: ride.date,
+                    ),
                     const SizedBox(height: 4),
                     _IconLabel(
-                        icon: Icons.access_time_rounded, label: ride.time),
+                      icon: Icons.access_time_rounded,
+                      label: ride.time,
+                    ),
                   ],
                 ),
               ],
@@ -75,7 +81,11 @@ class PendingRideCard extends StatelessWidget {
 
             // ── Complete Payment — full width ──────────────────
             GestureDetector(
-              onTap: () => AppRouter.push(context, AppRouter.rideDetails),
+              onTap: () => AppRouter.push(
+                context,
+                AppRouter.rideDetails,
+                args: {'bookingId': ride.rideId},
+              ),
               child: Container(
                 height: 46,
                 width: double.infinity,
@@ -83,13 +93,17 @@ class PendingRideCard extends StatelessWidget {
                   color: const Color(0xFFFF6B00).withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: const Color(0xFFFF6B00).withValues(alpha: 0.45)),
+                    color: const Color(0xFFFF6B00).withValues(alpha: 0.45),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.schedule_rounded,
-                        color: Color(0xFFFF6B00), size: 16),
+                    const Icon(
+                      Icons.schedule_rounded,
+                      color: Color(0xFFFF6B00),
+                      size: 16,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       t('Pending Payment'),
@@ -123,8 +137,10 @@ class _IconLabel extends StatelessWidget {
       children: [
         Icon(icon, size: 12, color: AppColors.subtext(context)),
         const SizedBox(width: 4),
-        Text(label,
-            style: AppTextStyles.bodySmall(context).copyWith(fontSize: 12)),
+        Text(
+          label,
+          style: AppTextStyles.bodySmall(context).copyWith(fontSize: 12),
+        ),
       ],
     );
   }

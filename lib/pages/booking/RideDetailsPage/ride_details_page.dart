@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:moviroo/routing/router.dart';
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_text_styles.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../../models/vehicle_pricing_response.dart';
+import '../../../../services/ride_api/booking_api_service.dart';
+import '_AppBar.dart';
+import '_ActionButtons.dart';
+import '_CancelDialog.dart';
 import '_BookingCard.dart';
 import '_VehicleCard.dart';
 import '_PassengerCard.dart';
@@ -12,80 +13,192 @@ import '_PriceSummaryCard.dart';
 
 class RideDetailsPage extends StatefulWidget {
   final VoidCallback? onBack;
-  final VehicleClassPrice? selectedVehicle;
-  final String? pickupAddress;
-  final String? dropoffAddress;
-  final double? pickupLat;
-  final double? pickupLon;
-  final double? dropoffLat;
-  final double? dropoffLon;
-  final DateTime? scheduledDate;
-  final TimeOfDay? scheduledTime;
+  final String? bookingId;
 
-  const RideDetailsPage({
-    super.key,
-    this.onBack,
-    this.selectedVehicle,
-    this.pickupAddress,
-    this.dropoffAddress,
-    this.pickupLat,
-    this.pickupLon,
-    this.dropoffLat,
-    this.dropoffLon,
-    this.scheduledDate,
-    this.scheduledTime,
-  });
+  const RideDetailsPage({super.key, this.onBack, this.bookingId});
 
   @override
   State<RideDetailsPage> createState() => _RideDetailsPageState();
 }
 
 class _RideDetailsPageState extends State<RideDetailsPage> {
-  void _showCancelDialog(BuildContext context) {
-    final t = AppLocalizations.of(context);
+  final BookingApiService _bookingApi = BookingApiService();
+  Map<String, dynamic>? _bookingData;
+  bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.bookingId != null) {
+      _loadBookingData();
+    }
+  }
+
+  Future<void> _loadBookingData() async {
+    if (widget.bookingId == null) return;
+    setState(() => _isLoading = true);
+    try {
+      final data = await _bookingApi.getRideDetails(widget.bookingId!);
+      if (mounted) {
+        setState(() {
+          _bookingData = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load booking data: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ── Backend-first data accessors ─────────────────────────────────────────
+  String? get _pickupAddress => _bookingData?['pickupAddress'] as String?;
+  String? get _dropoffAddress => _bookingData?['dropoffAddress'] as String?;
+
+  DateTime? get _scheduledDate {
+    final raw = _bookingData?['scheduledAt'] as String?;
+    if (raw != null) {
+      final parsed = DateTime.tryParse(raw);
+      if (parsed != null) return parsed;
+    }
+    return null;
+  }
+
+  TimeOfDay? get _scheduledTime {
+    final raw = _bookingData?['scheduledAt'] as String?;
+    if (raw != null) {
+      final parsed = DateTime.tryParse(raw);
+      if (parsed != null)
+        return TimeOfDay(hour: parsed.hour, minute: parsed.minute);
+    }
+    return null;
+  }
+
+  double? get _distanceKm {
+    final v = _bookingData?['distanceKm'];
+    if (v is num) return v.toDouble();
+    return null;
+  }
+
+  int? get _durationMin {
+    final v = _bookingData?['durationMin'];
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  int? get _seats {
+    final cls = _bookingData?['vehicleClass'] as Map<String, dynamic>?;
+    final v = cls?['seats'];
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  int? get _bags {
+    final cls = _bookingData?['vehicleClass'] as Map<String, dynamic>?;
+    final v = cls?['bags'];
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  String? get _vehicleName {
+    final cls = _bookingData?['vehicleClass'] as Map<String, dynamic>?;
+    return cls?['name'] as String?;
+  }
+
+  String? get _vehicleImageUrl {
+    final cls = _bookingData?['vehicleClass'] as Map<String, dynamic>?;
+    return cls?['imageUrl'] as String?;
+  }
+
+  String? get _passengerName {
+    final p = _bookingData?['passenger'] as Map<String, dynamic>?;
+    if (p != null) {
+      final first = p['firstName'] as String? ?? '';
+      final last = p['lastName'] as String? ?? '';
+      final full = '$first $last'.trim();
+      if (full.isNotEmpty) return full;
+    }
+    return null;
+  }
+
+  String? get _passengerEmail {
+    final p = _bookingData?['passenger'] as Map<String, dynamic>?;
+    return p?['email'] as String?;
+  }
+
+  String? get _passengerPhone {
+    final p = _bookingData?['passenger'] as Map<String, dynamic>?;
+    return p?['phone'] as String?;
+  }
+
+  String? get _bookingStatus {
+    return _bookingData?['status'] as String?;
+  }
+
+  int? get _priceTnd {
+    final v = _bookingData?['priceFinal'];
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  double? get _exactPrice {
+    final v = _bookingData?['priceFinal'];
+    if (v is num) return v.toDouble();
+    return null;
+  }
+
+  double? get _surgeMultiplier {
+    final v = _bookingData?['surgeMultiplier'];
+    if (v is num) return v.toDouble();
+    return null;
+  }
+
+  int? get _loyaltyPoints {
+    final v = _bookingData?['loyaltyPointsEarned'];
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  bool _isCancelling = false;
+
+  Future<void> _cancelBooking() async {
+    final bookingId = widget.bookingId;
+    if (bookingId == null) return;
+
+    setState(() => _isCancelling = true);
+    try {
+      final success = await _bookingApi.cancelRide(bookingId);
+      if (!mounted) return;
+      setState(() => _isCancelling = false);
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Booking cancelled successfully')),
+        );
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to cancel booking')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isCancelling = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  void _showCancelDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          t.translate('cancel_booking_title'),
-          style: AppTextStyles.bodyLarge(
-            context,
-          ).copyWith(fontWeight: FontWeight.w700),
-        ),
-        content: Text(
-          t.translate('cancel_booking_message'),
-          style: AppTextStyles.bodyMedium(context),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              t.translate('no'),
-              style: TextStyle(color: AppColors.subtext(context)),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade400,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(t.translate('yes_cancel')),
-          ),
-        ],
-      ),
+      builder: (_) => CancelDialog(onConfirm: _cancelBooking),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
@@ -93,164 +206,75 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── App bar ────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap:
-                        widget.onBack ??
-                        () {
-                          if (Navigator.canPop(context)) {
-                            Navigator.pop(context);
-                          } else {
-                            Navigator.pushReplacementNamed(context, '/booking');
-                          }
-                        },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface(context),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 17,
-                        color: AppColors.text(context),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      t.translate('ride_details_title'),
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.bodyLarge(
-                        context,
-                      ).copyWith(fontWeight: FontWeight.w700, fontSize: 17),
-                    ),
-                  ),
-                  // Balance the back button width
-                  const SizedBox(width: 40),
-                ],
-              ),
-            ),
+            RideDetailsAppBar(onBack: widget.onBack),
 
             // ── Scrollable content ─────────────────────────────
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(16, 4, 16, 16 + bottomPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    BookingCard(
-                      pickupAddress: widget.pickupAddress,
-                      dropoffAddress: widget.dropoffAddress,
-                      scheduledDate: widget.scheduledDate,
-                      scheduledTime: widget.scheduledTime,
-                    ),
-                    const SizedBox(height: 12),
-                    RideDetailsCard(
-                      distanceKm: widget.selectedVehicle?.distanceKm,
-                      durationMin: widget.selectedVehicle?.durationMin,
-                      passengers: widget.selectedVehicle?.seats,
-                    ),
-                    const SizedBox(height: 12),
-                    VehicleCard(
-                      imageUrl: widget.selectedVehicle?.imageUrl,
-                      name: widget.selectedVehicle?.name,
-                      seats: widget.selectedVehicle?.seats,
-                      bags: widget.selectedVehicle?.bags,
-                    ),
-                    const SizedBox(height: 12),
-                    PassengerCard(
-                      passengerName: null,
-                      email: null,
-                      phone: null,
-                    ),
-                    const SizedBox(height: 12),
-                    PriceSummaryCard(
-                      priceTnd: widget.selectedVehicle?.priceTnd,
-                      exactPrice: widget.selectedVehicle?.exactPrice,
-                      surgeMultiplier: widget.selectedVehicle?.surgeMultiplier,
-                      loyaltyPoints: widget.selectedVehicle?.loyaltyPoints,
-                    ),
-                    const SizedBox(height: 16),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        4,
+                        16,
+                        16 + bottomPadding,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          BookingCard(
+                            bookingId: widget.bookingId,
+                            status: _bookingStatus,
+                            pickupAddress: _pickupAddress,
+                            dropoffAddress: _dropoffAddress,
+                            scheduledDate: _scheduledDate,
+                            scheduledTime: _scheduledTime,
+                          ),
+                          const SizedBox(height: 12),
+                          RideDetailsCard(
+                            distanceKm: _distanceKm,
+                            durationMin: _durationMin,
+                            passengers: _seats,
+                          ),
+                          const SizedBox(height: 12),
+                          VehicleCard(
+                            imageUrl: _vehicleImageUrl,
+                            name: _vehicleName,
+                            seats: _seats,
+                            bags: _bags,
+                          ),
+                          const SizedBox(height: 12),
+                          PassengerCard(
+                            passengerName: _passengerName,
+                            email: _passengerEmail,
+                            phone: _passengerPhone,
+                          ),
+                          const SizedBox(height: 12),
+                          PriceSummaryCard(
+                            priceTnd: _priceTnd,
+                            exactPrice: _exactPrice,
+                            surgeMultiplier: _surgeMultiplier,
+                            loyaltyPoints: _loyaltyPoints,
+                          ),
+                          const SizedBox(height: 16),
 
-                    // ── Payment button ─────────────────────────
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton.icon(
-                        onPressed: () =>
-                            AppRouter.clearAndGo(context, AppRouter.payment),
-                        icon: Icon(
-                          Icons.credit_card_outlined,
-                          size: 20,
-                          color: AppColors.primaryPurple,
-                        ),
-                        label: Text(
-                          t.translate('payment'),
-                          style: AppTextStyles.bodyLarge(context).copyWith(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: AppColors.primaryPurple,
+                          RideDetailsActionButtons(
+                            bookingStatus: _bookingStatus,
+                            isCancelling: _isCancelling,
+                            onPay: () {
+                              final bId = widget.bookingId;
+                              if (bId == null) return;
+                              AppRouter.push(
+                                context,
+                                AppRouter.payment,
+                                args: {'bookingId': bId},
+                              );
+                            },
+                            onCancel: () => _showCancelDialog(context),
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.surface(context),
-                          foregroundColor: AppColors.primaryPurple,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(color: AppColors.border(context)),
-                          ),
-                        ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 10),
-
-                    // ── Cancel button ──────────────────────────
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: TextButton.icon(
-                        onPressed: () => _showCancelDialog(context),
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: Colors.red.shade400,
-                          size: 18,
-                        ),
-                        label: Text(
-                          t.translate('cancel_booking'),
-                          style: AppTextStyles.bodyLarge(context).copyWith(
-                            color: Colors.red.shade400,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.red.withValues(alpha: 0.08),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(
-                              color: Colors.red.withValues(alpha: 0.25),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),

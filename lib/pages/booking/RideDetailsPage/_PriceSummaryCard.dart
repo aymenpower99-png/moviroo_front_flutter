@@ -31,7 +31,6 @@ class PriceSummaryCard extends StatelessWidget {
     }
 
     final displayPrice = formatPrice();
-    final hasSurge = surgeMultiplier != null && surgeMultiplier! > 1.0;
 
     return Container(
       width: double.infinity,
@@ -55,13 +54,8 @@ class PriceSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          if (hasSurge) ...[
-            _PriceRow(
-              label: t.translate('surge_multiplier'),
-              value: 'x${surgeMultiplier!.toStringAsFixed(1)}',
-            ),
-            const SizedBox(height: 10),
-          ],
+          _PriceRow(label: t.translate('price'), value: displayPrice),
+          const SizedBox(height: 10),
 
           if (loyaltyPoints != null && loyaltyPoints! > 0) ...[
             _PriceRow(

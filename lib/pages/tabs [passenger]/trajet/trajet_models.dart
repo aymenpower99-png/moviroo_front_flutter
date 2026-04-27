@@ -12,8 +12,7 @@ class RideModel {
   final String pickup;
   final String dropoff;
   final RideStatus status;
-
-  // Tracking fields — populated when a driver is assigned
+  final String backendStatus; // Raw backend status for granular UI decisions
   final String? rideId;
   final double? pickupLat;
   final double? pickupLon;
@@ -34,6 +33,7 @@ class RideModel {
     required this.pickup,
     required this.dropoff,
     required this.status,
+    required this.backendStatus,
     this.rideId,
     this.pickupLat,
     this.pickupLon,
@@ -79,6 +79,7 @@ class RideModel {
       pickup: json['pickupAddress'] as String? ?? '',
       dropoff: json['dropoffAddress'] as String? ?? '',
       status: status,
+      backendStatus: backendStatus,
       rideId: json['id'] as String?,
       pickupLat: _toDouble(json['pickupLat']),
       pickupLon: _toDouble(json['pickupLon']),
@@ -102,6 +103,8 @@ class RideModel {
   static RideStatus _mapStatus(String backend) {
     switch (backend) {
       case 'PENDING':
+        return RideStatus.pendingPayment;
+      case 'SCHEDULED':
       case 'SEARCHING_DRIVER':
       case 'ASSIGNED':
       case 'EN_ROUTE_TO_PICKUP':

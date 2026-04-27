@@ -38,7 +38,7 @@ class PassengerCard extends StatelessWidget {
               PassengerRow(
                 icon: Icons.person_outline_rounded,
                 label: t.translate('main_passenger'),
-                value: passengerName ?? 'Aymen Ben Nacer',
+                value: passengerName ?? '--',
                 editable: false,
                 isFirst: true,
               ),
@@ -46,14 +46,14 @@ class PassengerCard extends StatelessWidget {
               PassengerRow(
                 icon: Icons.email_outlined,
                 label: t.translate('email'),
-                value: email ?? 'aymenpower99@gmail.com',
+                value: email ?? '--',
                 editable: false,
               ),
               Divider(height: 1, color: AppColors.border(context)),
               PassengerRow(
                 icon: Icons.phone_outlined,
                 label: t.translate('phone_number'),
-                value: phone ?? '+21694338510',
+                value: phone ?? '--',
                 editable: false,
               ),
             ],

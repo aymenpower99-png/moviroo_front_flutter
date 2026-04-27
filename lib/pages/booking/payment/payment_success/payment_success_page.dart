@@ -3,50 +3,87 @@ import 'package:moviroo/routing/router.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../models/vehicle_pricing_response.dart';
+import '../../../../services/ride_api/booking_api_service.dart';
 import '_SuccessIcon.dart';
 import '_ReceiptCard.dart';
 
-class PaymentSuccessPage extends StatelessWidget {
-  final VehicleClassPrice? selectedVehicle;
-  final String? pickupAddress;
-  final String? dropoffAddress;
-  final double? pickupLat;
-  final double? pickupLon;
-  final double? dropoffLat;
-  final double? dropoffLon;
-  final DateTime? scheduledDate;
-  final TimeOfDay? scheduledTime;
+class PaymentSuccessPage extends StatefulWidget {
   final String? bookingId;
 
-  const PaymentSuccessPage({
-    super.key,
-    this.selectedVehicle,
-    this.pickupAddress,
-    this.dropoffAddress,
-    this.pickupLat,
-    this.pickupLon,
-    this.dropoffLat,
-    this.dropoffLon,
-    this.scheduledDate,
-    this.scheduledTime,
-    this.bookingId,
-  });
+  const PaymentSuccessPage({super.key, this.bookingId});
+
+  @override
+  State<PaymentSuccessPage> createState() => _PaymentSuccessPageState();
+}
+
+class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
+  final BookingApiService _bookingApi = BookingApiService();
+  Map<String, dynamic>? _bookingData;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.bookingId != null) {
+      _loadBookingData();
+    }
+  }
+
+  Future<void> _loadBookingData() async {
+    if (widget.bookingId == null) return;
+    try {
+      final data = await _bookingApi.getRideDetails(widget.bookingId!);
+      if (mounted) {
+        setState(() {
+          _bookingData = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load booking data: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   String _formatAmount() {
-    final price = selectedVehicle?.exactPrice ?? 0.0;
-    return '${price.toStringAsFixed(2)} TND';
+    final price = _bookingData?['priceFinal'];
+    if (price is num) {
+      return '${price.toStringAsFixed(2)} TND';
+    }
+    return '-- TND';
   }
 
   String _formatRefNumber() {
-    if (bookingId != null) {
-      return '#BK-$bookingId';
+    if (widget.bookingId != null) {
+      final shortRef = widget.bookingId!.substring(0, 8).toUpperCase();
+      return '#$shortRef';
     }
     return '#TR-${DateTime.now().millisecondsSinceEpoch.toString().substring(0, 6)}';
   }
 
   String _formatDate() {
-    final date = scheduledDate ?? DateTime.now();
+    final raw = _bookingData?['scheduledAt'] as String?;
+    if (raw != null) {
+      final date = DateTime.tryParse(raw);
+      if (date != null) {
+        final months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
+        return '${months[date.month - 1]} ${date.day}, ${date.year}';
+      }
+    }
+    final date = DateTime.now();
     final months = [
       'Jan',
       'Feb',
@@ -65,7 +102,17 @@ class PaymentSuccessPage extends StatelessWidget {
   }
 
   String _formatTime() {
-    final time = scheduledTime ?? TimeOfDay.now();
+    final raw = _bookingData?['scheduledAt'] as String?;
+    if (raw != null) {
+      final date = DateTime.tryParse(raw);
+      if (date != null) {
+        final hour = date.hour.toString().padLeft(2, '0');
+        final minute = date.minute.toString().padLeft(2, '0');
+        final period = date.hour >= 12 ? 'PM' : 'AM';
+        return '$hour:$minute $period';
+      }
+    }
+    final time = TimeOfDay.now();
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
@@ -75,6 +122,13 @@ class PaymentSuccessPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.bg(context),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),

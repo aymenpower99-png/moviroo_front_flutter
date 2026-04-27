@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
@@ -16,6 +17,9 @@ class StripeService {
   /// Your backend API endpoint for creating payment intents
   static const String _paymentIntentEndpoint =
       '${AppConfig.baseUrl}/payment/create-intent';
+
+  /// Storage key for saved cards
+  static const String _savedCardsKey = 'saved_cards';
 
   /// Initialize Stripe with publishable key
   static Future<void> initialize() async {
@@ -193,5 +197,81 @@ class StripeService {
   /// Validate CVV
   static bool validateCvv(String cvv) {
     return cvv.length == 3 || cvv.length == 4;
+  }
+
+  /// Save a card for future use (test mode - stores locally)
+  /// In production, this would call Stripe to create a SetupIntent
+  static Future<void> saveCard({
+    required String cardNumber,
+    required String expiryMonth,
+    required String expiryYear,
+    required String cardholderName,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastFour = cardNumber.substring(cardNumber.length - 4);
+
+      final cardData = {
+        'lastFour': lastFour,
+        'expiryMonth': expiryMonth,
+        'expiryYear': expiryYear,
+        'cardholderName': cardholderName,
+        'token':
+            'pm_${DateTime.now().millisecondsSinceEpoch}', // Simulated token
+        'savedAt': DateTime.now().toIso8601String(),
+      };
+
+      // Get existing saved cards
+      final existingCardsJson = prefs.getStringList(_savedCardsKey) ?? [];
+      final existingCards = existingCardsJson
+          .map((e) => jsonDecode(e) as Map<String, dynamic>)
+          .toList();
+
+      // Add new card
+      existingCards.add(cardData);
+
+      // Save back
+      final updatedCardsJson = existingCards.map((e) => jsonEncode(e)).toList();
+      await prefs.setStringList(_savedCardsKey, updatedCardsJson);
+    } catch (e) {
+      throw Exception('Failed to save card: $e');
+    }
+  }
+
+  /// Get all saved cards (test mode - retrieves from local storage)
+  static Future<List<Map<String, dynamic>>> getSavedCards() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cardsJson = prefs.getStringList(_savedCardsKey) ?? [];
+      return cardsJson
+          .map((e) => jsonDecode(e) as Map<String, dynamic>)
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Delete a saved card (test mode - removes from local storage)
+  static Future<void> deleteCard(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cardsJson = prefs.getStringList(_savedCardsKey) ?? [];
+      final cards = cardsJson
+          .map((e) => jsonDecode(e) as Map<String, dynamic>)
+          .toList();
+
+      cards.removeWhere((card) => card['token'] == token);
+
+      final updatedCardsJson = cards.map((e) => jsonEncode(e)).toList();
+      await prefs.setStringList(_savedCardsKey, updatedCardsJson);
+    } catch (e) {
+      throw Exception('Failed to delete card: $e');
+    }
+  }
+
+  /// Check if user has any saved cards
+  static Future<bool> hasSavedCards() async {
+    final cards = await getSavedCards();
+    return cards.isNotEmpty;
   }
 }

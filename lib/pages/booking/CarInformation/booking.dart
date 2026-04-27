@@ -44,11 +44,113 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
   final _billingKey = GlobalKey<BillingAddressSectionState>();
   String _selectedPaymentMethod = 'card';
   final BookingApiService _bookingApi = BookingApiService();
+  bool _isProcessing = false;
 
   void _onPaymentMethodChanged(String method) {
     setState(() {
       _selectedPaymentMethod = method;
     });
+  }
+
+  void _onConfirmBooking() async {
+    final billingOk = _billingKey.currentState?.validateAndProceed() ?? true;
+    if (!billingOk) return;
+
+    if (!mounted) return;
+
+    // Route based on payment method
+    if (_selectedPaymentMethod == 'card') {
+      // Card payment → Create booking (PENDING) first, then navigate to Payment Page
+      setState(() {
+        _isProcessing = true;
+      });
+
+      try {
+        final ride = await _bookingApi.createRide(
+          pickupLat: widget.pickupLat ?? 0.0,
+          pickupLon: widget.pickupLon ?? 0.0,
+          dropoffLat: widget.dropoffLat ?? 0.0,
+          dropoffLon: widget.dropoffLon ?? 0.0,
+          pickupAddress: widget.pickupAddress,
+          dropoffAddress: widget.dropoffAddress,
+          classId: widget.selectedVehicle?.id,
+          scheduledDate: widget.scheduledDate,
+          scheduledTime: widget.scheduledTime,
+        );
+
+        final rideId = ride?['id'] as String?;
+        if (rideId == null) {
+          throw Exception('Ride id not returned by backend');
+        }
+
+        if (!mounted) return;
+
+        setState(() {
+          _isProcessing = false;
+        });
+
+        // Navigate to Payment Page with bookingId only
+        AppRouter.push(context, AppRouter.payment, args: {'bookingId': rideId});
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isProcessing = false;
+          });
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error creating booking: $e')));
+        }
+      }
+    } else {
+      // Cash payment → Create + Confirm ride, then go to Booking Confirmed
+      setState(() {
+        _isProcessing = true;
+      });
+
+      try {
+        final ride = await _bookingApi.createRide(
+          pickupLat: widget.pickupLat ?? 0.0,
+          pickupLon: widget.pickupLon ?? 0.0,
+          dropoffLat: widget.dropoffLat ?? 0.0,
+          dropoffLon: widget.dropoffLon ?? 0.0,
+          pickupAddress: widget.pickupAddress,
+          dropoffAddress: widget.dropoffAddress,
+          classId: widget.selectedVehicle?.id,
+          scheduledDate: widget.scheduledDate,
+          scheduledTime: widget.scheduledTime,
+        );
+
+        final rideId = ride?['id'] as String?;
+        if (rideId == null) {
+          throw Exception('Ride id not returned by backend');
+        }
+
+        // Confirm ride (locks price + triggers dispatch)
+        await _bookingApi.confirmRide(rideId);
+
+        if (!mounted) return;
+
+        setState(() {
+          _isProcessing = false;
+        });
+
+        // Navigate to Booking Confirmed Screen - only pass bookingId
+        AppRouter.push(
+          context,
+          AppRouter.bookingConfirmed,
+          args: {'bookingId': rideId},
+        );
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isProcessing = false;
+          });
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error creating ride: $e')));
+        }
+      }
+    }
   }
 
   @override
@@ -163,111 +265,50 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    final billingOk =
-                        _billingKey.currentState?.validateAndProceed() ?? true;
-                    if (!billingOk) return;
-
-                    if (!mounted) return;
-
-                    // Route based on payment method
-                    if (_selectedPaymentMethod == 'card') {
-                      // Card payment → Payment Page
-                      if (mounted) {
-                        AppRouter.push(
-                          context,
-                          AppRouter.payment,
-                          args: {
-                            'selectedVehicle': widget.selectedVehicle,
-                            'pickupAddress': widget.pickupAddress,
-                            'dropoffAddress': widget.dropoffAddress,
-                            'pickupLat': widget.pickupLat,
-                            'pickupLon': widget.pickupLon,
-                            'dropoffLat': widget.dropoffLat,
-                            'dropoffLon': widget.dropoffLon,
-                            'scheduledDate': widget.scheduledDate,
-                            'scheduledTime': widget.scheduledTime,
-                          },
-                        );
-                      }
-                    } else {
-                      // Cash payment → Create + Confirm ride, then go to Booking Confirmed
-                      try {
-                        final ride = await _bookingApi.createRide(
-                          pickupLat: widget.pickupLat ?? 0.0,
-                          pickupLon: widget.pickupLon ?? 0.0,
-                          dropoffLat: widget.dropoffLat ?? 0.0,
-                          dropoffLon: widget.dropoffLon ?? 0.0,
-                          pickupAddress: widget.pickupAddress,
-                          dropoffAddress: widget.dropoffAddress,
-                          classId: widget.selectedVehicle?.id,
-                          scheduledDate: widget.scheduledDate,
-                          scheduledTime: widget.scheduledTime,
-                        );
-
-                        final rideId = ride?['id'] as String?;
-                        if (rideId == null) {
-                          throw Exception('Ride id not returned by backend');
-                        }
-
-                        // Confirm ride (locks price + triggers dispatch)
-                        await _bookingApi.confirmRide(rideId);
-
-                        if (!mounted) return;
-
-                        // Navigate to Booking Confirmed Screen
-                        AppRouter.push(
-                          context,
-                          AppRouter.bookingConfirmed,
-                          args: {
-                            'selectedVehicle': widget.selectedVehicle,
-                            'pickupAddress': widget.pickupAddress,
-                            'dropoffAddress': widget.dropoffAddress,
-                            'pickupLat': widget.pickupLat,
-                            'pickupLon': widget.pickupLon,
-                            'dropoffLat': widget.dropoffLat,
-                            'dropoffLon': widget.dropoffLon,
-                            'scheduledDate': widget.scheduledDate,
-                            'scheduledTime': widget.scheduledTime,
-                            'paymentMethod': 'cash',
-                            'bookingId': rideId,
-                          },
-                        );
-                      } catch (e) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error creating ride: $e')),
-                          );
-                        }
-                      }
-                    }
-                  },
+                  onPressed: _isProcessing ? null : _onConfirmBooking,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPurple,
                     foregroundColor: Colors.white,
                     elevation: 12,
                     shadowColor: AppColors.primaryPurple.withValues(
-                      alpha: 0.45,
+                      alpha: 0.30,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
+                    disabledBackgroundColor: AppColors.primaryPurple.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        t.translate('confirm_booking'),
-                        style: AppTextStyles.bodyLarge(context).copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
+                  child: _isProcessing
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              t.translate('confirm_booking'),
+                              style: AppTextStyles.bodyLarge(context).copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 16,
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                    ],
-                  ),
                 ),
               ),
             ),
