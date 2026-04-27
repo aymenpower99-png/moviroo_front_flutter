@@ -39,12 +39,19 @@ class PendingRideCard extends StatelessWidget {
                           context,
                         ).copyWith(fontWeight: FontWeight.w700),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        ride.vehicleName,
-                        style: AppTextStyles.bodySmall(
-                          context,
-                        ).copyWith(fontSize: 12),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          _IconLabel(
+                            icon: Icons.calendar_today_rounded,
+                            label: ride.date,
+                          ),
+                          const SizedBox(width: 12),
+                          _IconLabel(
+                            icon: Icons.access_time_rounded,
+                            label: ride.time,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -53,22 +60,12 @@ class PendingRideCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '\$${ride.price.toStringAsFixed(2)}',
+                      '${ride.price.toStringAsFixed(2)} TND',
                       style: AppTextStyles.priceMedium(context).copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryPurple,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    _IconLabel(
-                      icon: Icons.calendar_today_rounded,
-                      label: ride.date,
-                    ),
-                    const SizedBox(height: 4),
-                    _IconLabel(
-                      icon: Icons.access_time_rounded,
-                      label: ride.time,
                     ),
                   ],
                 ),

@@ -269,7 +269,9 @@ class _PaymentPageState extends State<PaymentPage> {
                             ),
                           ),
                           Text(
-                            t.translate('booking_ref'),
+                            widget.bookingId != null
+                                ? '${t.translate('booking')} #${widget.bookingId!.substring(0, 8).toUpperCase()}'
+                                : t.translate('booking'),
                             style: AppTextStyles.bodySmall(
                               context,
                             ).copyWith(color: AppColors.subtext(context)),
@@ -351,7 +353,7 @@ class _PaymentPageState extends State<PaymentPage> {
                       icon: const Icon(Icons.credit_card_outlined, size: 20),
                       label: Text(
                         _backendPrice > 0
-                            ? '${t.translate('pay_amount')} · ${_backendPrice.toStringAsFixed(2)} TND'
+                            ? '${t.translate('pay_amount')} ${_backendPrice.toStringAsFixed(2)} TND'
                             : t.translate('pay_amount'),
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
