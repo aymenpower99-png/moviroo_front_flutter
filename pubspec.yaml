@@ -55,16 +55,13 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "images/logo66.jpg"
 
 flutter_native_splash:
-  color: "#ffffff"
-  image: images/logo6.png
-  android: true
-  ios: true
-  android_gravity: center
-  ios_content_mode: scaleAspectFit
+  color: "#FFFFFF"
+  image: images/ls.png
   fullscreen: true
+
   android_12:
-    color: "#ffffff"
-    image: images/logo6.png
+    color: "#FFFFFF"
+    image: images/ls.png
 
 flutter:
   uses-material-design: true
@@ -81,7 +78,8 @@ flutter:
     - images/lsnn.png
     - images/logob.png
     - images/splash.json
-    - images/splash.mp4
+    - images/J.json
+    - images/appanim.mp4
     - images/complete.gif
     - images/map_preview.png
     - images/bmw.png
