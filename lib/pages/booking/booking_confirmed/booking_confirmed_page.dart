@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/booking_provider.dart';
 import '_BookingConfirmedHeader.dart';
 import '_BookingConfirmedCard.dart';
 import '_BookingConfirmedButtons.dart';
@@ -106,6 +108,9 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
     try {
       await _bookingApi.cancelRide(widget.bookingId!);
       if (mounted) {
+        // Notify provider to refresh booking list
+        context.read<BookingProvider>().onBookingCancelled();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Booking cancelled successfully')),
         );

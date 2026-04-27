@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../services/geocoding/geocoding_service.dart';
 import '../../../../services/recent_searches/recent_searches_service.dart';
 import '../../../../services/gps/gps_service.dart';
+import '../../../../services/mapbox/mapbox_service.dart';
 import '../map_location_picker/map_location_picker.dart';
 
 /// Location-related handler methods for LocationScreen
@@ -213,33 +214,55 @@ class LocationScreenLocationHandlers {
       final lon = result['longitude'] as double?;
 
       if (lat != null && lon != null) {
-        if (fillingPickup) {
-          setState(() {
-            setPickupLat(lat);
-            setPickupLon(lon);
-          });
+        // Call reverse geocoding to get the actual address
+        final place = await MapboxService.reverseGeocode(lat, lon);
+
+        if (place != null && state.mounted) {
+          // Update coordinates
+          if (fillingPickup) {
+            setState(() {
+              setPickupLat(lat);
+              setPickupLon(lon);
+            });
+          } else {
+            setState(() {
+              setDropoffLat(lat);
+              setDropoffLon(lon);
+            });
+          }
+
+          // Update input field with the actual address from reverse geocoding
+          setState(() => target.text = place.fullAddress);
+
+          // Add to recent searches
+          final geocodingPlace = GeocodingPlace(
+            id: place.id,
+            placeName: place.placeName,
+            address: place.fullAddress,
+            latitude: lat,
+            longitude: lon,
+            source: 'map_picker',
+          );
+
+          if (fillingPickup) {
+            await RecentSearchesService.addPickupRecentSearch(geocodingPlace);
+            Future.delayed(const Duration(milliseconds: 100), () {
+              if (state.mounted) toFocus.requestFocus();
+            });
+          } else {
+            await RecentSearchesService.addDropoffRecentSearch(geocodingPlace);
+            onMaybeNavigate();
+          }
         } else {
-          setState(() {
-            setDropoffLat(lat);
-            setDropoffLon(lon);
-          });
-        }
-
-        final place = GeocodingPlace(
-          id: 'map-${DateTime.now().millisecondsSinceEpoch}',
-          placeName: 'Selected location',
-          latitude: lat,
-          longitude: lon,
-          source: 'map_picker',
-        );
-        if (state.mounted) {
-          setState(() => target.text = place.placeName);
-        }
-
-        if (fillingPickup) {
-          Future.delayed(const Duration(milliseconds: 100), () {
-            if (state.mounted) toFocus.requestFocus();
-          });
+          // Fallback if reverse geocoding fails
+          if (state.mounted) {
+            ScaffoldMessenger.of(state.context).showSnackBar(
+              const SnackBar(
+                content: Text('Unable to get address for selected location'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
         }
       }
     }

@@ -5,6 +5,8 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
 import '../../../../services/stripe/stripe_service.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/booking_provider.dart';
 import '_PaymentSummaryCard.dart';
 import '_SavedCardSection.dart';
 import '_NewCardForm.dart';
@@ -183,6 +185,11 @@ class _PaymentPageState extends State<PaymentPage> {
         // Confirm ride on backend (locks price + triggers dispatch)
         await _bookingApi.confirmRide(bookingId);
 
+        // Notify provider that payment was completed
+        if (mounted) {
+          context.read<BookingProvider>().onPaymentCompleted();
+        }
+
         if (!mounted) return;
 
         setState(() {
@@ -196,6 +203,11 @@ class _PaymentPageState extends State<PaymentPage> {
           arguments: {'bookingId': bookingId},
         );
       } else {
+        // Notify provider that payment failed
+        if (mounted) {
+          context.read<BookingProvider>().onPaymentFailed();
+        }
+
         setState(() {
           _isProcessing = false;
         });

@@ -4,6 +4,8 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/booking_provider.dart';
 import '_SuccessIcon.dart';
 import '_ReceiptCard.dart';
 
@@ -24,6 +26,11 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
   @override
   void initState() {
     super.initState();
+    // Notify provider that a booking was confirmed
+    Future.microtask(() {
+      context.read<BookingProvider>().onBookingConfirmed();
+    });
+
     if (widget.bookingId != null) {
       _loadBookingData();
     }

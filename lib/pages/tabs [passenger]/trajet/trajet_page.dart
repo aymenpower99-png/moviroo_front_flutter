@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/tab_bar.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../services/ride_api/booking_api_service.dart';
+import '../../../../providers/booking_provider.dart';
 import 'trajet_models.dart';
 import 'trajet_tab_bar.dart';
 import 'ride_card.dart';
@@ -20,14 +21,14 @@ class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
   int _tabIndex = 1;
   RideTab _rideTab = RideTab.upcoming;
 
-  final BookingApiService _api = BookingApiService();
-  late Future<List<RideModel>> _ridesFuture;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _ridesFuture = _loadRides();
+    // Load rides from provider on init
+    Future.microtask(() {
+      context.read<BookingProvider>().loadRides();
+    });
   }
 
   @override
@@ -39,19 +40,8 @@ class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _refresh();
+      context.read<BookingProvider>().refreshRides();
     }
-  }
-
-  Future<List<RideModel>> _loadRides() async {
-    final raw = await _api.getMyRides();
-    return raw.map(RideModel.fromJson).toList();
-  }
-
-  Future<void> _refresh() async {
-    final next = _loadRides();
-    setState(() => _ridesFuture = next);
-    await next;
   }
 
   List<RideModel> _filterByTab(List<RideModel> all) {
@@ -103,12 +93,11 @@ class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
               ),
             ),
 
-            // ── Ride cards (backed by API) ─────────────────────
+            // ── Ride cards (backed by Provider) ─────────────────────
             Expanded(
-              child: FutureBuilder<List<RideModel>>(
-                future: _ridesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+              child: Consumer<BookingProvider>(
+                builder: (context, bookingProvider, child) {
+                  if (bookingProvider.isLoading) {
                     return const Center(
                       child: CircularProgressIndicator(
                         color: AppColors.primaryPurple,
@@ -116,19 +105,19 @@ class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
                     );
                   }
 
-                  if (snapshot.hasError) {
+                  if (bookingProvider.error != null) {
                     return _ErrorState(
-                      message: snapshot.error.toString(),
-                      onRetry: _refresh,
+                      message: bookingProvider.error!,
+                      onRetry: () => bookingProvider.refreshRides(),
                     );
                   }
 
-                  final all = snapshot.data ?? const <RideModel>[];
+                  final all = bookingProvider.rides;
                   final filtered = _filterByTab(all);
 
                   if (filtered.isEmpty) {
                     return RefreshIndicator(
-                      onRefresh: _refresh,
+                      onRefresh: () => bookingProvider.refreshRides(),
                       color: AppColors.primaryPurple,
                       child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -143,7 +132,7 @@ class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
                   }
 
                   return RefreshIndicator(
-                    onRefresh: _refresh,
+                    onRefresh: () => bookingProvider.refreshRides(),
                     color: AppColors.primaryPurple,
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),

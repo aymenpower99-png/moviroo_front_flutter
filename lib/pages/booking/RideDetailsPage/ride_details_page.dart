@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:moviroo/routing/router.dart';
+import 'package:provider/provider.dart';
+import '../../../../routing/router.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
+import '../../../../providers/booking_provider.dart';
 import '_AppBar.dart';
 import '_ActionButtons.dart';
 import '_CancelDialog.dart';
@@ -172,6 +174,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       setState(() => _isCancelling = false);
 
       if (success) {
+        // Notify provider to refresh booking list
+        context.read<BookingProvider>().onBookingCancelled();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Booking cancelled successfully')),
         );

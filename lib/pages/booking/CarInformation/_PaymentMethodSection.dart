@@ -68,7 +68,7 @@ class _PaymentMethodSectionState extends State<PaymentMethodSection> {
           ),
           const SizedBox(height: 10),
           _PaymentOption(
-            icon: Icons.attach_money_outlined,
+            icon: Icons.money,
             label: t.translate('cash'),
             subtitle: t.translate('cash_subtitle'),
             isSelected: _selectedMethod == 'cash',

@@ -151,7 +151,7 @@ class _MapLocationPickerState extends State<MapLocationPicker>
       if (!mounted) return;
       setState(() {
         _isLoadingAddress = false;
-        _addressController.text = place?.placeName ?? '';
+        _addressController.text = place?.fullAddress ?? '';
       });
     } else {
       if (!mounted) return;
