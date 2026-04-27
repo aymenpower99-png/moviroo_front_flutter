@@ -39,6 +39,7 @@ dependencies:
   local_auth_android: ^1.0.47
   local_auth_darwin: ^1.4.2
   flutter_stripe: ^11.3.0 # Stripe payment processing
+  model_viewer_plus: ^1.10.0 # 3D model viewer for GLB/GLTF files
 
 dev_dependencies:
   flutter_test:
@@ -127,3 +128,4 @@ flutter:
     - data/terms/terms_patch_it.json
     - data/terms/terms_patch_pt.json
     - data/terms/terms_patch_tr.json
+    - images/3d/car.glb

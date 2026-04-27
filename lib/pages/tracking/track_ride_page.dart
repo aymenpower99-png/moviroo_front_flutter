@@ -5,11 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import '../../../theme/app_colors.dart';
 import 'widgets/_bottom_panel.dart';
+import 'widgets/driver_3d_car.dart';
 import '_trip_completed_overlay.dart';
 import 'ride_state.dart';
 import '../../services/passenger_tracking/passenger_tracking_socket.dart';
 import '../../services/ride_api/ride_api_service.dart';
 import '../../services/osrm/osrm_route_service.dart';
+import 'map_painters.dart';
 
 // ── OSM tile styles (free, no API key) ───────────────────────────────────────
 const _osmStyleLight = 'https://tiles.openfreemap.org/styles/liberty';
@@ -51,17 +53,17 @@ class TrackRidePage extends StatefulWidget {
 
   const TrackRidePage({
     super.key,
-    this.rideId = '',
-    this.pickupLat = 36.8189,
-    this.pickupLon = 10.1658,
-    this.dropoffLat = 36.8300,
-    this.dropoffLon = 10.1750,
-    this.pickupAddress = 'Pickup',
-    this.dropoffAddress = 'Drop-off',
-    this.driverName = 'Driver',
-    this.vehicleName = 'Vehicle',
-    this.vehicleColor = '',
-    this.plateNumber = '',
+    required this.rideId,
+    required this.pickupLat,
+    required this.pickupLon,
+    required this.dropoffLat,
+    required this.dropoffLon,
+    required this.pickupAddress,
+    required this.dropoffAddress,
+    required this.driverName,
+    required this.vehicleName,
+    required this.vehicleColor,
+    required this.plateNumber,
     this.etaMins,
   });
 
@@ -81,7 +83,7 @@ class _TrackRidePageState extends State<TrackRidePage>
   // ── Driver position ────────────────────────────────────────────────────────
   LatLng? _driverPos;
   double _driverBearing = 0;
-  Circle? _driverCircle;
+  Symbol? _driverSymbol;
 
   // ── Smooth car animation ───────────────────────────────────────────────────
   late AnimationController _moveAnim;
@@ -298,27 +300,36 @@ class _TrackRidePageState extends State<TrackRidePage>
   Future<void> _onStyleLoaded() async {
     if (_mapController == null) return;
 
-    // Pickup marker
+    // Add custom marker images to map style
+    final pickupBitmap = await MapPainters.renderPickupBitmap();
+    final dropoffBitmap = await MapPainters.renderDropoffBitmap();
+    final driverBitmap = await MapPainters.renderDriverBitmap();
+
+    await _mapController!.addImage('pickup-marker', pickupBitmap);
+    await _mapController!.addImage('dropoff-marker', dropoffBitmap);
+    await _mapController!.addImage('driver-marker', driverBitmap);
+
+    // Pickup marker - using custom bitmap
     await _mapController!.addSymbol(
       SymbolOptions(
         geometry: _pickupLatLng,
-        iconImage: 'marker-15',
-        iconSize: 1.8,
-        iconColor: '#22C55E',
+        iconImage: 'pickup-marker',
+        iconSize: 1.0,
+        iconAnchor: 'center',
         textField: 'Pickup',
         textOffset: const Offset(0, 2.0),
-        textColor: '#22C55E',
+        textColor: '#A855F7',
         textSize: 11,
       ),
     );
 
-    // Dropoff marker
+    // Dropoff marker - using custom bitmap
     await _mapController!.addSymbol(
       SymbolOptions(
         geometry: _dropoffLatLng,
-        iconImage: 'marker-15',
-        iconSize: 1.8,
-        iconColor: '#A855F7',
+        iconImage: 'dropoff-marker',
+        iconSize: 1.0,
+        iconAnchor: 'bottom',
         textField: 'Drop-off',
         textOffset: const Offset(0, 2.0),
         textColor: '#A855F7',
@@ -388,18 +399,25 @@ class _TrackRidePageState extends State<TrackRidePage>
   // ── Driver marker ──────────────────────────────────────────────────────────
   Future<void> _updateDriverMarker(LatLng pos) async {
     if (_mapController == null) return;
-    if (_driverCircle != null) {
-      await _mapController!.removeCircle(_driverCircle!);
+
+    // Create symbol if it doesn't exist
+    if (_driverSymbol == null) {
+      _driverSymbol = await _mapController!.addSymbol(
+        SymbolOptions(
+          geometry: pos,
+          iconImage: 'driver-marker',
+          iconSize: 1.0,
+          iconAnchor: 'center',
+          iconRotate: _driverBearing,
+        ),
+      );
+    } else {
+      // Update existing symbol position and rotation
+      await _mapController!.updateSymbol(
+        _driverSymbol!,
+        SymbolOptions(geometry: pos, iconRotate: _driverBearing),
+      );
     }
-    _driverCircle = await _mapController!.addCircle(
-      CircleOptions(
-        geometry: pos,
-        circleRadius: 10,
-        circleColor: '#A855F7',
-        circleStrokeWidth: 3,
-        circleStrokeColor: '#FFFFFF',
-      ),
-    );
   }
 
   // ── Camera ─────────────────────────────────────────────────────────────────
@@ -499,6 +517,15 @@ class _TrackRidePageState extends State<TrackRidePage>
                 trackCameraPosition: true,
               ),
             ),
+
+            // ── 3D Driver Car Overlay ─────────────────────────────────────
+            if (_mapController != null && _driverPos != null)
+              Driver3DCar(
+                mapController: _mapController!,
+                driverPosition: _driverPos!,
+                bearing: _driverBearing,
+                visible: _rideState.phase == RidePhase.rideInProgress,
+              ),
 
             // ── Back button ──────────────────────────────────────────────
             Positioned(
