@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_colors.dart';
-import '_driver_row.dart';
-import '_eta_row.dart';
-import '_im_here_button.dart';
-import '../_pickup_drop_row.dart';
-import '../_trip_summary_card.dart';
-import '../animated_progress_bar.dart';
-import '../ride_state.dart';
+import 'driver_row.dart';
+import 'im_here_button.dart';
+import '../../components/pickup_drop_row.dart';
+import '../../components/trip_summary_card.dart';
+import '../../components/animated_progress_bar.dart';
+import '../../models/ride_state.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BottomPanel
@@ -88,6 +87,7 @@ class _BottomPanelState extends State<BottomPanel> {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DraggableScrollableSheet(
       controller: _sheetCtrl,
@@ -139,7 +139,49 @@ class _BottomPanelState extends State<BottomPanel> {
                     onContinue: widget.onContinue,
                   )
                 else ...[
-                  EtaRow(rideState: widget.rideState),
+                  // ETA display
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${widget.rideState.etaMins} min left',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white : Colors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Arriving at',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.normal,
+                                  color: isDark
+                                      ? Colors.white60
+                                      : Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            widget.rideState.arrivalTime,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
 
                   const SizedBox(height: 16),
 

@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 import 'package:model_viewer_plus/model_viewer_plus.dart' show ModelViewer;
 
 /// 3D car widget overlay for tracking map.
 /// Uses ModelViewerPlus to render the 3D car model at the driver's position.
 class Driver3DCar extends StatefulWidget {
-  final MapLibreMapController mapController;
-  final LatLng driverPosition;
+  final mbx.MapboxMap mapController;
+  final mbx.Point driverPosition;
   final double bearing;
   final bool visible;
 
@@ -47,17 +47,12 @@ class _Driver3DCarState extends State<Driver3DCar> {
     }
 
     try {
-      final screenPoint = await widget.mapController.toScreenLocation(
+      final screenPoint = await widget.mapController.pixelForCoordinate(
         widget.driverPosition,
       );
-      setState(
-        () => _screenPosition = Offset(
-          screenPoint.x.toDouble(),
-          screenPoint.y.toDouble(),
-        ),
-      );
+      setState(() => _screenPosition = Offset(screenPoint.x, screenPoint.y));
     } catch (e) {
-      debugPrint('Error converting LatLng to screen position: $e');
+      debugPrint('Error converting Point to screen position: $e');
     }
   }
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
-import '_pickup_drop_row.dart';
-import 'ride_state.dart';
+import 'pickup_drop_row.dart';
+import '../models/ride_state.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Trip summary card — shown in the bottom sheet when rideEnded

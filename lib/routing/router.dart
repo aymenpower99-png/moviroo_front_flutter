@@ -7,7 +7,7 @@ import 'package:moviroo/pages/chat/chat_page.dart';
 import 'package:moviroo/pages/map_eta/map_eta_page.dart';
 import 'package:moviroo/pages/booking/payment/payment_success/payment_success_page.dart';
 import 'package:moviroo/pages/search/location_screen/location_screen.dart';
-import 'package:moviroo/pages/tracking/track_ride_page.dart';
+import 'package:moviroo/pages/tracking/pages/track_ride_page.dart';
 
 import '../pages/onboarding/onboarding_page.dart';
 import '../pages/auth/login/login_page.dart';

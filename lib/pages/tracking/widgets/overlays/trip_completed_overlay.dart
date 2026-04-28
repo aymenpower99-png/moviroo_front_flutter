@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
-import 'ride_state.dart';
+import '../../models/ride_state.dart';
 
 class TripCompletedOverlay extends StatelessWidget {
   final RideState rideState;
