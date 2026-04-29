@@ -18,6 +18,16 @@ class TrackingMapController {
   bool _driver3DModelReady = false;
   double _currentZoom = 13.0;
 
+  // ── 3D model setup synchronization (prevents duplicate layers) ─────────────
+  Future<void>? _setupFuture;
+
+  // ── Native style update throttling (prevents 60 FPS backpressure) ───────────
+  int _lastNativeUpdateMs = 0;
+  static const int _minNativeUpdateIntervalMs = 33; // ~30 FPS cap
+
+  // ── Model orientation calibration ───────────────────────────────────────────
+  static const double _modelHeadingOffset = 0.0;
+
   // Callbacks
   final Function(mbx.Point, double)? onDriverMarkerUpdated;
   final Function()? onRouteDrawn;
@@ -95,24 +105,34 @@ class TrackingMapController {
   }
 
   /// Set up the 3D car model source + layer (call once after first location).
-  Future<void> _setup3DDriver(mbx.Point initialPos) async {
-    if (_mapController == null || _driver3DModelReady) return;
+  Future<void> _setup3DDriver(mbx.Point initialPos) {
+    if (_mapController == null || _driver3DModelReady) return Future.value();
+    return _setupFuture ??= _doSetup3DDriver(initialPos);
+  }
+
+  Future<void> _doSetup3DDriver(mbx.Point initialPos) async {
     debugPrint('🚗 [3D] Setting up 3D driver model layer...');
-    debugPrint(
-      '🚗 [3D] Initial position: lat=${initialPos.coordinates.lat}, lng=${initialPos.coordinates.lng}',
-    );
 
     try {
-      // 1. Register the 3D model in the style with full asset URI
-      debugPrint('🚗 [3D] Step 1: Registering 3D model in style...');
+      // Clean up any existing layer/source
+      try {
+        if (await _mapController!.style.styleLayerExists(
+          'driver-model-layer',
+        )) {
+          await _mapController!.style.removeStyleLayer('driver-model-layer');
+        }
+        if (await _mapController!.style.styleSourceExists('driver-source')) {
+          await _mapController!.style.removeStyleSource('driver-source');
+        }
+      } catch (_) {}
+
+      // Register the 3D model
       await _mapController!.style.addStyleModel(
         'driver-car',
-        'asset://flutter_assets/images/3d/car2.glb',
+        'asset://flutter_assets/images/3d/car.glb',
       );
-      debugPrint('🚗 [3D] Step 1: Model registered as driver-car ✓');
 
-      // 2. Add GeoJSON source with the driver position
-      debugPrint('🚗 [3D] Step 2: Adding GeoJSON source...');
+      // Add GeoJSON source with driver position
       final geoJson = jsonEncode({
         'type': 'FeatureCollection',
         'features': [
@@ -133,48 +153,39 @@ class TrackingMapController {
       await _mapController!.style.addSource(
         mbx.GeoJsonSource(id: 'driver-source', data: geoJson),
       );
-      debugPrint('🚗 [3D] Step 2: GeoJSON source added ✓');
 
-      // 3. Add ModelLayer WITHOUT modelId (avoid SDK path transform)
-      debugPrint('🚗 [3D] Step 3: Adding ModelLayer...');
+      // Add ModelLayer
       await _mapController!.style.addLayer(
         mbx.ModelLayer(
           id: 'driver-model-layer',
           sourceId: 'driver-source',
-          modelScale: [150, 150, 150],
-          modelRotation: [0, 0, 0],
+          modelScale: [6, 6, 6],
+          modelRotation: [0, 0, _modelHeadingOffset],
+          modelTranslation: [0, 0, 0],
           modelType: mbx.ModelType.COMMON_3D,
         ),
       );
-      debugPrint('🚗 [3D] Step 3: ModelLayer added ✓');
 
-      // 4. Set model-id directly via style property (bypasses SDK path transform)
-      debugPrint('🚗 [3D] Step 4: Setting model-id to driver-car...');
+      // Set model-id
       await _mapController!.style.setStyleLayerProperty(
         'driver-model-layer',
         'model-id',
         'driver-car',
       );
-      debugPrint('🚗 [3D] Step 4: model-id set ✓');
 
       _driver3DModelReady = true;
-      debugPrint('🚗 [3D] Setup COMPLETE — 3D car should be visible now');
+      debugPrint('🚗 [3D] Setup COMPLETE');
     } catch (e, st) {
-      debugPrint('🚗 [3D] ❌ ERROR setting up 3D model: $e');
-      debugPrint('🚗 [3D] Stack: $st');
+      debugPrint('🚗 [3D] ERROR: $e');
       _driver3DModelReady = false;
+      _setupFuture = null;
     }
   }
 
-  /// Update model scale based on zoom level.
-  /// Zoom in → bigger car, zoom out → smaller car.
   Future<void> _updateModelScale() async {
     if (!_driver3DModelReady || _mapController == null) return;
 
-    // Exponential scaling: each zoom level doubles the visual size
-    // At zoom 10 → scale ~5, zoom 13 → ~40, zoom 15 → ~150, zoom 17 → ~600
-    final scale = 5.0 * math.pow(2, (_currentZoom - 10));
-    debugPrint('🚗 [3D] Scale update: zoom=$_currentZoom, scale=$scale');
+    final scale = 0.5 * math.pow(2.0, _currentZoom - 15).clamp(0.3, 2.5);
 
     try {
       await _mapController!.style.setStyleLayerProperty(
@@ -183,36 +194,32 @@ class TrackingMapController {
         [scale, scale, scale],
       );
     } catch (e) {
-      debugPrint('🚗 [3D] ERROR updating model scale: $e');
+      debugPrint('🚗 [3D] ERROR updating scale: $e');
     }
   }
 
   Future<void> updateDriverMarker(mbx.Point pos, double bearing) async {
-    debugPrint(
-      '🗺️ updateDriverMarker: lat=${pos.coordinates.lat}, lng=${pos.coordinates.lng}, bearing=$bearing',
-    );
-
-    if (_mapController == null) {
-      debugPrint('🗺️ updateDriverMarker early return — controller not ready');
-      return;
-    }
+    if (_mapController == null) return;
 
     _driverPos = pos;
     _driverBearing = bearing;
 
-    // Set up 3D model on first call
     if (!_driver3DModelReady) {
-      debugPrint('🚗 [3D] First location — setting up driver model...');
       await _setup3DDriver(pos);
-      debugPrint('🚗 [3D] Setup returned, ready=$_driver3DModelReady');
       if (_driver3DModelReady) {
         await _updateModelScale();
       }
-      return; // first frame handled by setup
+      return;
     }
 
-    // Update 3D model position via GeoJSON source
-    debugPrint('🚗 [3D] Updating 3D model position and rotation...');
+    // Throttle to ~30 FPS
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _lastNativeUpdateMs < _minNativeUpdateIntervalMs) {
+      onDriverMarkerUpdated?.call(pos, bearing);
+      return;
+    }
+    _lastNativeUpdateMs = now;
+
     try {
       final newGeoJson = jsonEncode({
         'type': 'FeatureCollection',
@@ -230,22 +237,40 @@ class TrackingMapController {
           },
         ],
       });
-      await _mapController!.style.setStyleSourceProperty(
+
+      final adjustedBearing = (bearing + _modelHeadingOffset) % 360;
+
+      _mapController!.style.setStyleSourceProperty(
         'driver-source',
         'data',
         newGeoJson,
       );
-      await _mapController!.style.setStyleLayerProperty(
+      _mapController!.style.setStyleLayerProperty(
         'driver-model-layer',
         'model-rotation',
-        [0, 0, bearing],
+        [0, 0, adjustedBearing],
       );
-      debugPrint('🚗 [3D] Position & rotation updated ✓');
     } catch (e) {
-      debugPrint('🚗 [3D] ERROR updating 3D model: $e');
+      debugPrint('🚗 [3D] ERROR updating: $e');
     }
 
     onDriverMarkerUpdated?.call(pos, bearing);
+  }
+
+  double distanceMeters(mbx.Point from, mbx.Point to) {
+    const earthRadius = 6371000.0;
+    final lat1 = _rad(from.coordinates.lat.toDouble());
+    final lat2 = _rad(to.coordinates.lat.toDouble());
+    final dLat = lat2 - lat1;
+    final dLon = _rad((to.coordinates.lng - from.coordinates.lng).toDouble());
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1) *
+            math.cos(lat2) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return earthRadius * c;
   }
 
   void fitBoundsToRoute(mbx.Point pickup, mbx.Point dropoff) {
@@ -257,18 +282,59 @@ class TrackingMapController {
       ),
     );
     _mapController!.setCamera(
-      mbx.CameraOptions(center: center, zoom: 15.0, bearing: 0.0, pitch: 60.0),
+      mbx.CameraOptions(center: center, zoom: 15.0, bearing: 0.0, pitch: 0.0),
     );
   }
 
+  void fitBoundsToPickupAndDropoff(mbx.Point pickup, mbx.Point dropoff) {
+    if (_mapController == null) return;
+    final swLat = math.min(
+      pickup.coordinates.lat.toDouble(),
+      dropoff.coordinates.lat.toDouble(),
+    );
+    final swLng = math.min(
+      pickup.coordinates.lng.toDouble(),
+      dropoff.coordinates.lng.toDouble(),
+    );
+    final neLat = math.max(
+      pickup.coordinates.lat.toDouble(),
+      dropoff.coordinates.lat.toDouble(),
+    );
+    final neLng = math.max(
+      pickup.coordinates.lng.toDouble(),
+      dropoff.coordinates.lng.toDouble(),
+    );
+    _mapController!
+        .cameraForCoordinateBounds(
+          mbx.CoordinateBounds(
+            southwest: mbx.Point(coordinates: mbx.Position(swLng, swLat)),
+            northeast: mbx.Point(coordinates: mbx.Position(neLng, neLat)),
+            infiniteBounds: false,
+          ),
+          mbx.MbxEdgeInsets(top: 80, left: 80, bottom: 300, right: 80),
+          null,
+          null,
+          null,
+          null,
+        )
+        .then(
+          (cam) => _mapController?.flyTo(
+            cam,
+            mbx.MapAnimationOptions(duration: 800),
+          ),
+        )
+        .catchError((_) {});
+  }
+
   void animateCamera(mbx.Point target, {double bearing = 0}) {
-    _mapController?.setCamera(
+    _mapController?.flyTo(
       mbx.CameraOptions(
         center: target,
         zoom: 16.0,
         bearing: bearing,
-        pitch: 45.0,
+        pitch: 0.0,
       ),
+      mbx.MapAnimationOptions(duration: 600),
     );
   }
 

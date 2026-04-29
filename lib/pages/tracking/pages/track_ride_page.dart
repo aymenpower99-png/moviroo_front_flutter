@@ -151,11 +151,21 @@ class _TrackRidePageState extends State<TrackRidePage>
     debugPrint('📍 WebSocket location update: lat=$lat, lng=$lng');
     final newPos = mbx.Point(coordinates: mbx.Position(lng, lat));
 
-    // Calculate bearing if we have a previous position
-    double bearing = 0;
+    // Calculate bearing only if displacement is meaningful (>= 3m).
+    // Tiny GPS deltas amplify into noisy/random bearings → keep previous bearing.
+    double bearing = _driverBearing;
     if (_driverPos != null) {
-      bearing = _mapController.calcBearing(_driverPos!, newPos);
-      debugPrint('🧭 Calculated bearing: $bearing°');
+      final distance = _mapController.distanceMeters(_driverPos!, newPos);
+      if (distance >= 3.0) {
+        bearing = _mapController.calcBearing(_driverPos!, newPos);
+        debugPrint(
+          '🧭 Calculated bearing: $bearing° (distance=${distance.toStringAsFixed(1)}m)',
+        );
+      } else {
+        debugPrint(
+          '🧭 Skip bearing update — displacement too small (${distance.toStringAsFixed(2)}m)',
+        );
+      }
     }
 
     // Use driver animation controller
@@ -193,7 +203,7 @@ class _TrackRidePageState extends State<TrackRidePage>
           center: pos,
           zoom: 15.0,
           bearing: bearing,
-          pitch: 30.0,
+          pitch: 0.0,
         ),
       );
     }
@@ -207,7 +217,7 @@ class _TrackRidePageState extends State<TrackRidePage>
           center: pos,
           zoom: 15.0,
           bearing: _driverBearing,
-          pitch: 30.0,
+          pitch: 0.0,
         ),
       );
     }
@@ -339,7 +349,11 @@ class _TrackRidePageState extends State<TrackRidePage>
     _mapController.controller?.logo.updateSettings(
       mbx.LogoSettings(enabled: false),
     );
-    debugPrint('🗺️ Mapbox controls disabled');
+    // Disable tilt gesture to enforce flat 2D map
+    _mapController.controller?.gestures.updateSettings(
+      mbx.GesturesSettings(pitchEnabled: false),
+    );
+    debugPrint('🗺️ Mapbox controls disabled, pitch gesture disabled');
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -370,6 +384,7 @@ class _TrackRidePageState extends State<TrackRidePage>
                 cameraOptions: mbx.CameraOptions(
                   center: _pickupLatLng,
                   zoom: 13.0,
+                  pitch: 0.0,
                 ),
                 onMapCreated: _onMapCreated,
                 onStyleLoadedListener: (event) => _onStyleLoaded(),
@@ -384,6 +399,39 @@ class _TrackRidePageState extends State<TrackRidePage>
               child: MapBtn(
                 icon: Icons.arrow_back_ios_new_rounded,
                 onTap: () => Navigator.maybePop(context),
+              ),
+            ),
+
+            // ── Right-side map buttons ────────────────────────────────────
+            Positioned(
+              right: 16,
+              top: (MediaQuery.of(context).size.height - 300) / 2,
+              child: Column(
+                children: [
+                  // Driver location button
+                  MapBtn(
+                    icon: Icons.directions_car,
+                    onTap: () {
+                      if (_driverPos != null) {
+                        _mapController.animateCamera(
+                          _driverPos!,
+                          bearing: _driverBearing,
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  // Route overview button
+                  MapBtn(
+                    icon: Icons.map,
+                    onTap: () {
+                      _mapController.fitBoundsToPickupAndDropoff(
+                        _pickupLatLng,
+                        _dropoffLatLng,
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
 

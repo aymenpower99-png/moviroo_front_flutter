@@ -77,6 +77,18 @@ class PassengerTrackingSocket {
       }
     });
 
+    // Also listen for trip:gps (driver's event name) for compatibility
+    _socket!.on('trip:gps', (data) {
+      debugPrint('🔌 Received trip:gps: $data');
+      if (data is Map) {
+        final lat = (data['latitude'] as num?)?.toDouble();
+        final lng = (data['longitude'] as num?)?.toDouble();
+        if (lat != null && lng != null) {
+          onLocationUpdate?.call(lat, lng, Map<String, dynamic>.from(data));
+        }
+      }
+    });
+
     _socket!.on('trip:enroute', (data) {
       debugPrint('🔌 Received trip:enroute: $data');
       final etaMins = data is Map ? data['driver_eta_min'] as int? : null;

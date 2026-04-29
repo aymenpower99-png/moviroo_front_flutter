@@ -14,7 +14,7 @@ class MapConstants {
   static const double driverFollowZoom = 15.0;
 
   /// Camera tilt angle (3D effect)
-  static const double cameraTilt = 30.0;
+  static const double cameraTilt = 0.0;
 
   /// Route line color (purple)
   static const String routeColor = '#A855F7';
