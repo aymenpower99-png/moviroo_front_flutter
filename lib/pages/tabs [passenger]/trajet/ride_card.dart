@@ -222,7 +222,18 @@ class _ActionButton extends StatelessWidget {
             const SizedBox(width: 10),
             // Chat button
             GestureDetector(
-              onTap: () => AppRouter.push(context, AppRouter.chat),
+              onTap: () => AppRouter.push(
+                context,
+                AppRouter.chat,
+                args: {
+                  'rideId': ride.rideId,
+                  'driverName': ride.driverName,
+                  'driverId': null,
+                  'vehicleName': ride.vehicleName,
+                  'vehicleColor': ride.vehicleColor,
+                  'plateNumber': ride.plateNumber,
+                },
+              ),
               child: Container(
                 width: 46,
                 height: 46,
@@ -293,7 +304,18 @@ class _ActionButton extends StatelessWidget {
             const SizedBox(width: 10),
             // Chat button
             GestureDetector(
-              onTap: () => AppRouter.push(context, AppRouter.chat),
+              onTap: () => AppRouter.push(
+                context,
+                AppRouter.chat,
+                args: {
+                  'rideId': ride.rideId,
+                  'driverName': ride.driverName,
+                  'driverId': null,
+                  'vehicleName': ride.vehicleName,
+                  'vehicleColor': ride.vehicleColor,
+                  'plateNumber': ride.plateNumber,
+                },
+              ),
               child: Container(
                 width: 46,
                 height: 46,
@@ -368,7 +390,15 @@ class _ActionButton extends StatelessWidget {
                 const SizedBox(width: 10),
                 // Chat button
                 GestureDetector(
-                  onTap: () => AppRouter.push(context, AppRouter.chat),
+                  onTap: () => AppRouter.push(
+                    context,
+                    AppRouter.chat,
+                    args: {
+                      'rideId': ride.rideId,
+                      'driverName': ride.driverName,
+                      'driverId': null,
+                    },
+                  ),
                   child: Container(
                     width: 46,
                     height: 46,

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../core/config/app_config.dart';
+import '../../core/storage/token_storage.dart';
 import 'auth_storage.dart';
 
 class AuthOAuth {
@@ -39,6 +40,10 @@ class AuthOAuth {
         final refreshToken = data['refreshToken'] as String?;
         if (accessToken != null && refreshToken != null) {
           await AuthStorage.saveTokens(accessToken, refreshToken);
+        }
+        // Save user data for chat functionality
+        if (data['user'] != null) {
+          await TokenStorage.saveUser(jsonEncode(data['user']));
         }
         return data;
       } else {
@@ -82,6 +87,10 @@ class AuthOAuth {
         final refreshToken = data['refreshToken'] as String?;
         if (accessToken != null && refreshToken != null) {
           await AuthStorage.saveTokens(accessToken, refreshToken);
+        }
+        // Save user data for chat functionality
+        if (data['user'] != null) {
+          await TokenStorage.saveUser(jsonEncode(data['user']));
         }
         return data;
       } else {

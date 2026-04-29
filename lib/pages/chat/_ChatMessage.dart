@@ -162,51 +162,54 @@ class ChatBubble extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                message.text,
-                style: AppTextStyles.bodyMedium(
-                  context,
-                ).copyWith(color: textColor, fontSize: 14),
-              ),
-              if (showTranslation && message.translatedText != null) ...[
-                const SizedBox(height: 6),
-                Divider(color: textColor.withValues(alpha: 0.2), height: 1),
-                const SizedBox(height: 6),
+          child: IntrinsicWidth(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  message.translatedText!,
-                  style: AppTextStyles.bodySmall(context).copyWith(
-                    color: textColor.withValues(alpha: 0.75),
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  message.text,
+                  style: AppTextStyles.bodyMedium(
+                    context,
+                  ).copyWith(color: textColor, fontSize: 14),
                 ),
-              ],
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (message.isEdited)
-                    Text(
-                      'edited · ',
-                      style: AppTextStyles.bodySmall(context).copyWith(
-                        fontSize: 10,
-                        color: textColor.withValues(alpha: 0.45),
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
+                if (showTranslation && message.translatedText != null) ...[
+                  const SizedBox(height: 6),
+                  Divider(color: textColor.withValues(alpha: 0.2), height: 1),
+                  const SizedBox(height: 6),
                   Text(
-                    message.time,
+                    message.translatedText!,
                     style: AppTextStyles.bodySmall(context).copyWith(
-                      fontSize: 10,
-                      color: textColor.withValues(alpha: 0.5),
+                      color: textColor.withValues(alpha: 0.75),
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
                 ],
-              ),
-            ],
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (message.isEdited)
+                      Text(
+                        'edited · ',
+                        style: AppTextStyles.bodySmall(context).copyWith(
+                          fontSize: 10,
+                          color: textColor.withValues(alpha: 0.45),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    Text(
+                      message.time,
+                      style: AppTextStyles.bodySmall(context).copyWith(
+                        fontSize: 10,
+                        color: textColor.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

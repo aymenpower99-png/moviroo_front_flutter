@@ -4,8 +4,21 @@ import '../../../../theme/app_colors.dart';
 
 class EtaSheet extends StatelessWidget {
   final int selectedRoute;
+  final String? rideId;
+  final String? driverName;
+  final String? vehicleName;
+  final String? vehicleColor;
+  final String? plateNumber;
 
-  const EtaSheet({super.key, required this.selectedRoute});
+  const EtaSheet({
+    super.key,
+    required this.selectedRoute,
+    this.rideId,
+    this.driverName,
+    this.vehicleName,
+    this.vehicleColor,
+    this.plateNumber,
+  });
 
   static const List<Map<String, String>> _routes = [
     {
@@ -135,7 +148,13 @@ class EtaSheet extends StatelessWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: _DriverRow(),
+                  child: _DriverRow(
+                    rideId: rideId,
+                    driverName: driverName,
+                    vehicleName: vehicleName,
+                    vehicleColor: vehicleColor,
+                    plateNumber: plateNumber,
+                  ),
                 ),
               ),
 
@@ -211,6 +230,20 @@ class EtaSheet extends StatelessWidget {
 
 // ── Driver row ────────────────────────────────────────────────────────────────
 class _DriverRow extends StatelessWidget {
+  final String? rideId;
+  final String? driverName;
+  final String? vehicleName;
+  final String? vehicleColor;
+  final String? plateNumber;
+
+  const _DriverRow({
+    this.rideId,
+    this.driverName,
+    this.vehicleName,
+    this.vehicleColor,
+    this.plateNumber,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -279,7 +312,18 @@ class _DriverRow extends StatelessWidget {
 
         // Chat button
         GestureDetector(
-          onTap: () => AppRouter.push(context, AppRouter.chat),
+          onTap: () => AppRouter.push(
+            context,
+            AppRouter.chat,
+            args: {
+              'rideId': rideId,
+              'driverName': driverName,
+              'driverId': null,
+              'vehicleName': vehicleName,
+              'vehicleColor': vehicleColor,
+              'plateNumber': plateNumber,
+            },
+          ),
           child: Container(
             width: 42,
             height: 42,

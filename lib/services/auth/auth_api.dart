@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
+import '../../core/storage/token_storage.dart';
 import 'auth_storage.dart';
 import 'auth_oauth.dart';
 import 'auth_http.dart';
@@ -34,6 +35,10 @@ class AuthAPI {
         throw Exception('Invalid login response from server.');
       }
       await AuthStorage.saveTokens(accessToken, refreshToken);
+      // Save user data for chat functionality
+      if (data['user'] != null) {
+        await TokenStorage.saveUser(jsonEncode(data['user']));
+      }
       return data;
     } else {
       final error = jsonDecode(response.body);
@@ -59,6 +64,10 @@ class AuthAPI {
         throw Exception('Invalid response from server.');
       }
       await AuthStorage.saveTokens(accessToken, refreshToken);
+      // Save user data for chat functionality
+      if (data['user'] != null) {
+        await TokenStorage.saveUser(jsonEncode(data['user']));
+      }
       return data;
     } else {
       final error = jsonDecode(response.body);
@@ -119,6 +128,10 @@ class AuthAPI {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       await AuthStorage.saveTokens(data['accessToken'], data['refreshToken']);
+      // Save user data for chat functionality
+      if (data['user'] != null) {
+        await TokenStorage.saveUser(jsonEncode(data['user']));
+      }
       return data;
     } else {
       final error = jsonDecode(response.body);

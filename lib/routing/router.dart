@@ -78,6 +78,9 @@ class AppRouter {
         rideId: args?['rideId'] as String? ?? '',
         driverName: args?['driverName'] as String?,
         driverId: args?['driverId'] as String?,
+        vehicleName: args?['vehicleName'] as String?,
+        vehicleColor: args?['vehicleColor'] as String?,
+        plateNumber: args?['plateNumber'] as String?,
       );
     },
     booking: (ctx) {

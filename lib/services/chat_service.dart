@@ -156,7 +156,7 @@ class ChatService {
       final res = await http
           .get(
             Uri.parse(
-              '${AppConfig.baseUrl}/rides/$rideId/messages?limit=$limit',
+              '${AppConfig.baseUrl}/chat/$rideId/messages?limit=$limit',
             ),
             headers: headers,
           )

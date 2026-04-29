@@ -11,12 +11,18 @@ class ChatPage extends StatefulWidget {
   final String rideId;
   final String? driverName;
   final String? driverId;
+  final String? vehicleName;
+  final String? vehicleColor;
+  final String? plateNumber;
 
   const ChatPage({
     super.key,
     required this.rideId,
     this.driverName,
     this.driverId,
+    this.vehicleName,
+    this.vehicleColor,
+    this.plateNumber,
   });
 
   @override
@@ -29,9 +35,99 @@ class _ChatPageState extends State<ChatPage> {
   bool _autoTranslate = true;
   final ChatService _chatService = ChatService();
   String? _currentUserId;
+  bool _loading = true;
 
   // Messages will be loaded from backend via WebSocket
   final List<ChatMessage> _messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initChat();
+  }
+
+  Future<void> _initChat() async {
+    debugPrint(
+      '🔵 [PassengerChat] Initializing chat with rideId: ${widget.rideId}',
+    );
+
+    // Get current user ID from token storage
+    _currentUserId = await TokenStorage.getUserId();
+    debugPrint('🔵 [PassengerChat] User ID: $_currentUserId');
+
+    // Wire socket callbacks
+    _chatService.onMessage = _onNewMessage;
+    _chatService.onEdited = _onMessageEdited;
+    _chatService.onDeleted = _onMessageDeleted;
+
+    // Connect WebSocket
+    try {
+      await _chatService.connect(widget.rideId);
+      debugPrint('✅ [PassengerChat] WebSocket connected');
+    } catch (e) {
+      debugPrint('❌ [PassengerChat] WebSocket connection failed: $e');
+    }
+
+    // Load history
+    try {
+      final history = await _chatService.fetchHistory(widget.rideId);
+      debugPrint('✅ [PassengerChat] Loaded ${history.length} messages');
+      if (mounted) {
+        setState(() {
+          _messages.clear();
+          for (final m in history) {
+            _messages.add(_chatMsgToUI(m));
+          }
+          _loading = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      debugPrint('❌ [PassengerChat] Failed to load history: $e');
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  ChatMessage _chatMsgToUI(ChatMsg m) {
+    return ChatMessage(
+      id: m.id,
+      text: m.text,
+      isMe: m.senderId == _currentUserId,
+      time: _formatTime(m.createdAt),
+      isVoice: m.isVoice,
+      isEdited: m.isEdited,
+    );
+  }
+
+  void _onNewMessage(ChatMsg msg) {
+    // Avoid duplicates (we already added optimistic local messages)
+    if (_messages.any((m) => m.id == msg.id)) return;
+    // Remove optimistic placeholder if this is our own message
+    if (msg.senderId == _currentUserId) {
+      _messages.removeWhere(
+        (m) => m.id.startsWith('local_') && m.text == msg.text,
+      );
+    }
+    if (mounted) {
+      setState(() => _messages.add(_chatMsgToUI(msg)));
+      _scrollToBottom();
+    }
+  }
+
+  void _onMessageEdited(String messageId, String text) {
+    if (!mounted) return;
+    setState(() {
+      final idx = _messages.indexWhere((m) => m.id == messageId);
+      if (idx != -1) {
+        _messages[idx] = _messages[idx].copyWith(text: text, isEdited: true);
+      }
+    });
+  }
+
+  void _onMessageDeleted(String messageId) {
+    if (!mounted) return;
+    setState(() => _messages.removeWhere((m) => m.id == messageId));
+  }
 
   // ── Delete ──────────────────────────────────────────────
   void _deleteMessage(String id) {
@@ -58,58 +154,35 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   // ── Send text ───────────────────────────────────────────
-  void _sendMessage(String text) async {
-    if (text.trim().isEmpty) return;
+  void _sendMessage(String text) {
+    if (text.trim().isEmpty ||
+        widget.rideId.isEmpty ||
+        _currentUserId == null) {
+      return;
+    }
 
-    final userId = _currentUserId;
-    if (userId == null) return;
-
-    // Send via WebSocket
     _chatService.sendMessage(
       rideId: widget.rideId,
-      senderId: userId,
+      senderId: _currentUserId!,
       senderRole: 'passenger',
-      text: text,
+      text: text.trim(),
     );
 
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          text: text,
-          isMe: true,
-          time: _formatTime(DateTime.now()),
-        ),
-      );
-    });
     _input.clear();
     _scrollToBottom();
   }
 
   // ── Send voice ──────────────────────────────────────────
   void _sendVoice(String audioPath) {
-    final userId = _currentUserId;
-    if (userId == null) return;
+    if (widget.rideId.isEmpty || _currentUserId == null) return;
 
     _chatService.sendMessage(
       rideId: widget.rideId,
-      senderId: userId,
+      senderId: _currentUserId!,
       senderRole: 'passenger',
       text: '🎤 Voice message',
       isVoice: true,
     );
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          text: '🎤 Voice message',
-          isMe: true,
-          time: _formatTime(DateTime.now()),
-          isVoice: true,
-          audioPath: audioPath,
-        ),
-      );
-    });
     _scrollToBottom();
   }
 
@@ -148,45 +221,44 @@ class _ChatPageState extends State<ChatPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _ChatTopBar(driverName: widget.driverName),
+            _ChatTopBar(
+              driverName: widget.driverName,
+              vehicleName: widget.vehicleName,
+              vehicleColor: widget.vehicleColor,
+              plateNumber: widget.plateNumber,
+            ),
             TranslationBanner(
               enabled: _autoTranslate,
               onToggle: (v) => setState(() => _autoTranslate = v),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                'Today, 2:41 PM',
-                style: AppTextStyles.bodySmall(
-                  context,
-                ).copyWith(color: AppColors.subtext(context), fontSize: 11),
-              ),
-            ),
-            Expanded(
-              child: _messages.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No messages',
-                        style: AppTextStyles.bodySmall(
-                          context,
-                        ).copyWith(color: AppColors.subtext(context)),
+            if (_loading)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else
+              Expanded(
+                child: _messages.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No messages',
+                          style: AppTextStyles.bodySmall(
+                            context,
+                          ).copyWith(color: AppColors.subtext(context)),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scroll,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _messages.length,
+                        itemBuilder: (context, i) {
+                          final msg = _messages[i];
+                          return ChatBubble(
+                            message: msg,
+                            showTranslation: _autoTranslate,
+                            onDelete: () => _deleteMessage(msg.id),
+                            onEdit: (newText) => _editMessage(msg.id, newText),
+                          );
+                        },
                       ),
-                    )
-                  : ListView.builder(
-                      controller: _scroll,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _messages.length,
-                      itemBuilder: (context, i) {
-                        final msg = _messages[i];
-                        return ChatBubble(
-                          message: msg,
-                          showTranslation: _autoTranslate,
-                          onDelete: () => _deleteMessage(msg.id),
-                          onEdit: (newText) => _editMessage(msg.id, newText),
-                        );
-                      },
-                    ),
-            ),
+              ),
             ChatInputBar(
               controller: _input,
               onSend: _sendMessage,
@@ -201,8 +273,25 @@ class _ChatPageState extends State<ChatPage> {
 
 class _ChatTopBar extends StatelessWidget {
   final String? driverName;
+  final String? vehicleName;
+  final String? vehicleColor;
+  final String? plateNumber;
 
-  const _ChatTopBar({this.driverName});
+  const _ChatTopBar({
+    this.driverName,
+    this.vehicleName,
+    this.vehicleColor,
+    this.plateNumber,
+  });
+
+  String get _vehicleInfo {
+    final parts = <String>[];
+    if (vehicleName != null && vehicleName!.isNotEmpty) parts.add(vehicleName!);
+    if (vehicleColor != null && vehicleColor!.isNotEmpty)
+      parts.add(vehicleColor!);
+    if (plateNumber != null && plateNumber!.isNotEmpty) parts.add(plateNumber!);
+    return parts.isNotEmpty ? parts.join(' • ') : 'Vehicle info';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -235,7 +324,7 @@ class _ChatTopBar extends StatelessWidget {
                   ).copyWith(fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  'Vehicle info',
+                  _vehicleInfo,
                   style: AppTextStyles.bodySmall(
                     context,
                   ).copyWith(color: AppColors.subtext(context)),

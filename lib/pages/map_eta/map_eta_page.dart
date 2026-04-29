@@ -72,7 +72,14 @@ class _MapEtaPageState extends State<MapEtaPage> {
           ),
 
           // ── 4. Draggable bottom sheet ────────────────────
-          EtaSheet(selectedRoute: _selectedRoute),
+          EtaSheet(
+            selectedRoute: _selectedRoute,
+            rideId: '', // TODO: Pass actual rideId from parent
+            driverName: '', // TODO: Pass actual driverName from parent
+            vehicleName: '', // TODO: Pass actual vehicleName from parent
+            vehicleColor: '', // TODO: Pass actual vehicleColor from parent
+            plateNumber: '', // TODO: Pass actual plateNumber from parent
+          ),
         ],
       ),
     );
