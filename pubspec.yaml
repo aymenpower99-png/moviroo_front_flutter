@@ -24,7 +24,7 @@ dependencies:
   flutter_map: ^7.0.2 # OpenStreetMap tile rendering
   latlong2: ^0.9.1 # LatLng type for flutter_map
   maplibre_gl: ^0.25.0 # MapLibre GL for real map rendering
-  mapbox_maps_flutter: ^2.3.0 # Mapbox GL for booking location picker
+  mapbox_maps_flutter: ^2.22.0 # Mapbox GL for booking location picker (supports ModelLayer)
   socket_io_client: ^2.0.3+1 # WebSocket for live driver tracking
   flutter_secure_storage: ^9.2.2 # JWT token storage
   google_sign_in: ^6.2.1 # Google OAuth
@@ -129,3 +129,5 @@ flutter:
     - data/terms/terms_patch_pt.json
     - data/terms/terms_patch_tr.json
     - images/3d/car.glb
+    - images/3d/car2.glb
+    - images/3d/car.png
