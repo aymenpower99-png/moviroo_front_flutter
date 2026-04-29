@@ -5,7 +5,6 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 import '../../../theme/app_colors.dart';
 import '../widgets/ui/bottom_panel.dart';
 import '../widgets/map/map_btn.dart';
-import '../widgets/map/driver_3d_car.dart';
 import '../widgets/overlays/trip_completed_overlay.dart';
 import '../models/ride_state.dart';
 import '../controllers/tracking_map_controller.dart';
@@ -143,25 +142,32 @@ class _TrackRidePageState extends State<TrackRidePage>
 
   // ── Driver location update ─────────────────────────────────────────────────
   void _onDriverLocationUpdate(double lat, double lng) {
+    debugPrint('📍 WebSocket location update: lat=$lat, lng=$lng');
     final newPos = mbx.Point(coordinates: mbx.Position(lng, lat));
 
     // Calculate bearing if we have a previous position
-    double bearing = _driverBearing;
+    double bearing = 0;
     if (_driverPos != null) {
       bearing = _mapController.calcBearing(_driverPos!, newPos);
+      debugPrint('🧭 Calculated bearing: $bearing°');
     }
 
     // Use driver animation controller
+    debugPrint('🎬 Calling setTargetPosition');
     _driverAnimController.setTargetPosition(newPos, bearing);
   }
 
   // ── Driver animation callback ───────────────────────────────────────────────
   void _onDriverPositionUpdate(mbx.Point pos, double bearing) {
+    debugPrint(
+      '🎯 _onDriverPositionUpdate: pos=${pos.coordinates.lat}, ${pos.coordinates.lng}, bearing=$bearing',
+    );
     if (!mounted) return;
     setState(() {
       _driverPos = pos;
       _driverBearing = bearing;
     });
+    debugPrint('🗺️ Calling updateDriverMarker');
     _mapController.updateDriverMarker(pos, bearing);
 
     // Camera follow mode
@@ -229,6 +235,10 @@ class _TrackRidePageState extends State<TrackRidePage>
     }
   }
 
+  void _onCameraChanged(mbx.CameraChangedEventData event) {
+    _mapController.updateZoom(event.cameraState.zoom);
+  }
+
   // ──────────────────────────────────────────────────────────────────────────
   @override
   void initState() {
@@ -293,13 +303,17 @@ class _TrackRidePageState extends State<TrackRidePage>
   }
 
   Future<void> _onStyleLoaded() async {
+    debugPrint('🗺️ _onStyleLoaded called');
     await _mapController.initializeAnnotationManagers();
+    debugPrint('🗺️ Annotation managers initialized');
     await _mapController.initializeMarkers(_pickupLatLng, _dropoffLatLng);
+    debugPrint('🗺️ Pickup/dropoff markers initialized');
     // Route line removed
     // await _mapController.drawRoute(_pickupLatLng, _dropoffLatLng);
     _mapController.fitBoundsToRoute(_pickupLatLng, _dropoffLatLng);
+    debugPrint('🗺️ Camera fit to route');
 
-    // Disable scale bar, compass, and logo
+    // Disable Mapbox built-in controls
     _mapController.controller?.scaleBar.updateSettings(
       mbx.ScaleBarSettings(enabled: false),
     );
@@ -309,6 +323,7 @@ class _TrackRidePageState extends State<TrackRidePage>
     _mapController.controller?.logo.updateSettings(
       mbx.LogoSettings(enabled: false),
     );
+    debugPrint('🗺️ Mapbox controls disabled');
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -342,17 +357,9 @@ class _TrackRidePageState extends State<TrackRidePage>
                 ),
                 onMapCreated: _onMapCreated,
                 onStyleLoadedListener: (event) => _onStyleLoaded(),
+                onCameraChangeListener: _onCameraChanged,
               ),
             ),
-
-            // ── 3D Driver Car Overlay ─────────────────────────────────────
-            if (_mapController.isReady && _driverPos != null)
-              Driver3DCar(
-                mapController: _mapController.controller!,
-                driverPosition: _driverPos!,
-                bearing: _driverBearing,
-                visible: _rideState.phase == RidePhase.rideInProgress,
-              ),
 
             // ── Back button ──────────────────────────────────────────────
             Positioned(
@@ -361,46 +368,6 @@ class _TrackRidePageState extends State<TrackRidePage>
               child: MapBtn(
                 icon: Icons.arrow_back_ios_new_rounded,
                 onTap: () => Navigator.maybePop(context),
-              ),
-            ),
-
-            // ── Fit-bounds button ────────────────────────────────────────
-            Positioned(
-              right: 16,
-              bottom: 380,
-              child: MapBtn(
-                icon: Icons.fit_screen_rounded,
-                onTap: () => _mapController.fitBoundsToRoute(
-                  _pickupLatLng,
-                  _dropoffLatLng,
-                ),
-              ),
-            ),
-
-            // ── Center-on-driver button ──────────────────────────────────
-            Positioned(
-              right: 16,
-              bottom: 324,
-              child: MapBtn(
-                icon: _cameraFollowMode
-                    ? Icons.location_searching_rounded
-                    : Icons.my_location_rounded,
-                onTap: () {
-                  setState(() {
-                    _cameraFollowMode = !_cameraFollowMode;
-                  });
-                  if (_driverPos != null) {
-                    _mapController.animateCamera(
-                      _driverPos!,
-                      bearing: _driverBearing,
-                    );
-                  } else {
-                    _mapController.fitBoundsToRoute(
-                      _pickupLatLng,
-                      _dropoffLatLng,
-                    );
-                  }
-                },
               ),
             ),
 

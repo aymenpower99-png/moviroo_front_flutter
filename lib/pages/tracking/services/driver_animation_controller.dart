@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 
 /// Service for handling driver position animation with interpolation.
@@ -25,6 +26,30 @@ class DriverAnimationController {
   }
 
   void setTargetPosition(mbx.Point pos, double bearing) {
+    debugPrint(
+      '🎬 setTargetPosition called: lat=${pos.coordinates.lat}, lng=${pos.coordinates.lng}, bearing=$bearing',
+    );
+    debugPrint('🎬 _currentPos is null: ${_currentPos == null}');
+
+    // First update: snap immediately so marker is created without waiting
+    // for animation tick (which would early-return because _currentPos was null).
+    if (_currentPos == null) {
+      debugPrint('🎬 FIRST UPDATE - snapping immediately');
+      _currentPos = pos;
+      _currentBearing = bearing;
+      _targetPos = pos;
+      _targetBearing = bearing;
+      onPositionUpdate?.call(pos, bearing);
+      onCameraFollow?.call(pos);
+      return;
+    }
+
+    // Subsequent updates: animate from current → new target.
+    // Snap _currentPos to last target so animation has a clean starting point.
+    debugPrint('🎬 SUBSEQUENT UPDATE - animating');
+    _currentPos = _targetPos ?? _currentPos;
+    _currentBearing = _targetBearing;
+
     _targetPos = pos;
     _targetBearing = bearing;
     _animController.reset();
@@ -32,9 +57,15 @@ class DriverAnimationController {
   }
 
   void _onTick() {
-    if (_currentPos == null || _targetPos == null) return;
+    if (_currentPos == null || _targetPos == null) {
+      debugPrint(
+        '🎬 _onTick early return: _currentPos=${_currentPos == null}, _targetPos=${_targetPos == null}',
+      );
+      return;
+    }
 
     final t = _animController.value;
+    debugPrint('🎬 _onTick: t=$t');
 
     final interpolatedLat = _lerp(
       _currentPos!.coordinates.lat.toDouble(),

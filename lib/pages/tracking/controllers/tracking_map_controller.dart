@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 import '../utils/map_painters.dart';
 
@@ -9,9 +11,11 @@ class TrackingMapController {
   bool _routeDrawn = false;
   mbx.PointAnnotationManager? _pointAnnotationManager;
   mbx.PolylineAnnotationManager? _lineAnnotationManager;
-  mbx.PointAnnotationOptions? _driverAnnotation;
+  mbx.PointAnnotation? _driverAnnotation;
   mbx.Point? _driverPos;
   double _driverBearing = 0;
+  bool _driver3DModelReady = false;
+  double _currentZoom = 13.0;
 
   // Callbacks
   final Function(mbx.Point, double)? onDriverMarkerUpdated;
@@ -26,6 +30,13 @@ class TrackingMapController {
 
   void setMapController(mbx.MapboxMap controller) {
     _mapController = controller;
+  }
+
+  void updateZoom(double zoom) {
+    if (_currentZoom != zoom) {
+      _currentZoom = zoom;
+      _updateModelScale();
+    }
   }
 
   Future<void> initializeAnnotationManagers() async {
@@ -82,33 +93,201 @@ class TrackingMapController {
     onRouteDrawn?.call();
   }
 
+  /// Set up the 3D car model source + layer (call once after style loaded).
+  Future<void> _setup3DDriver(mbx.Point initialPos) async {
+    if (_mapController == null || _driver3DModelReady) return;
+    debugPrint('🚗 [3D] Setting up 3D driver model layer...');
+    debugPrint(
+      '🚗 [3D] Initial position: lat=${initialPos.coordinates.lat}, lng=${initialPos.coordinates.lng}',
+    );
+
+    try {
+      // 1. Add GeoJSON source with the driver position
+      debugPrint('🚗 [3D] Step 1: Adding GeoJSON source...');
+      final geoJson = jsonEncode({
+        'type': 'FeatureCollection',
+        'features': [
+          {
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates': [
+                initialPos.coordinates.lng.toDouble(),
+                initialPos.coordinates.lat.toDouble(),
+              ],
+            },
+            'properties': {},
+          },
+        ],
+      });
+      debugPrint('🚗 [3D] GeoJSON: $geoJson');
+
+      await _mapController!.style.addSource(
+        mbx.GeoJsonSource(id: 'driver-source', data: geoJson),
+      );
+      debugPrint('🚗 [3D] Step 1: GeoJSON source added ✓');
+
+      // 2. Add ModelLayer — pass actual asset path to modelId
+      //    SDK converts modelId via _getFlutterAssetPath, so
+      //    'images/3d/car.glb' → 'asset://flutter_assets/images/3d/car.glb'
+      debugPrint(
+        '🚗 [3D] Step 2: Adding ModelLayer with modelId=images/3d/car.glb...',
+      );
+      debugPrint(
+        '🚗 [3D] Layer config: scale=[50,50,50], rotation=[0,0,0], type=COMMON_3D',
+      );
+      await _mapController!.style.addLayer(
+        mbx.ModelLayer(
+          id: 'driver-model-layer',
+          sourceId: 'driver-source',
+          modelId: 'images/3d/car.glb',
+          modelScale: [50, 50, 50],
+          modelRotation: [0, 0, 0],
+          modelType: mbx.ModelType.COMMON_3D,
+        ),
+      );
+      debugPrint('🚗 [3D] Step 2: ModelLayer added ✓');
+
+      _driver3DModelReady = true;
+      debugPrint('🚗 [3D] Setup COMPLETE — 3D car should be visible now');
+      debugPrint('🚗 [3D] Check if car.glb file exists at images/3d/car.glb');
+    } catch (e, st) {
+      debugPrint('🚗 [3D] ❌ ERROR: $e');
+      debugPrint('🚗 [3D] Stack: $st');
+      _driver3DModelReady = false;
+    }
+  }
+
+  /// Update model scale based on zoom level (inversely proportional)
+  Future<void> _updateModelScale() async {
+    if (!_driver3DModelReady || _mapController == null) {
+      debugPrint(
+        '🚗 [3D] Skip scale update: 3D model ready=$_driver3DModelReady, controller exists=${_mapController != null}',
+      );
+      return;
+    }
+
+    final baseScale = 200.0;
+    final scale = baseScale / _currentZoom;
+    debugPrint(
+      '🚗 [3D] Updating scale: base=$baseScale, zoom=$_currentZoom, result=$scale',
+    );
+
+    try {
+      await _mapController!.style.setStyleLayerProperty(
+        'driver-model-layer',
+        'model-scale',
+        [scale, scale, scale],
+      );
+      debugPrint('🚗 [3D] Scale updated successfully');
+    } catch (e) {
+      debugPrint('🚗 [3D] ERROR updating model scale: $e');
+    }
+  }
+
   Future<void> updateDriverMarker(mbx.Point pos, double bearing) async {
-    if (_mapController == null || _pointAnnotationManager == null) return;
+    debugPrint(
+      '🗺️ updateDriverMarker: lat=${pos.coordinates.lat}, lng=${pos.coordinates.lng}, bearing=$bearing',
+    );
+
+    if (_mapController == null) {
+      debugPrint('🗺️ updateDriverMarker early return — controller not ready');
+      return;
+    }
 
     _driverPos = pos;
     _driverBearing = bearing;
 
-    // Mapbox doesn't have a simple update - we need to delete and recreate
-    // For now, just create/update the annotation
-    if (_driverAnnotation == null) {
-      _driverAnnotation = mbx.PointAnnotationOptions(
-        geometry: pos,
-        iconSize: 1.0,
-        iconAnchor: mbx.IconAnchor.CENTER,
-        iconRotate: bearing,
+    // Set up 3D model on first call
+    if (!_driver3DModelReady) {
+      debugPrint('🚗 [3D] 3D model not ready yet, setting up...');
+      await _setup3DDriver(pos);
+      debugPrint(
+        '🚗 [3D] Setup returned, _driver3DModelReady=$_driver3DModelReady',
       );
-      await _pointAnnotationManager!.create(_driverAnnotation!);
+      // Update scale for current zoom immediately
+      if (_driver3DModelReady) {
+        await _updateModelScale();
+      }
+    }
+
+    if (!_driver3DModelReady) {
+      debugPrint('🚗 [3D] ❌ 3D model failed to set up — will use 2D fallback');
     } else {
-      // Update the annotation options and call update
-      _driverAnnotation = mbx.PointAnnotationOptions(
-        geometry: pos,
-        iconSize: 1.0,
-        iconAnchor: mbx.IconAnchor.CENTER,
-        iconRotate: bearing,
-      );
-      // Mapbox update requires passing the updated options
-      await _pointAnnotationManager!.update(
-        mbx.PointAnnotation(id: 'driver', geometry: pos, iconRotate: bearing),
+      debugPrint('🚗 [3D] 3D model ready, updating position and rotation...');
+      try {
+        // Update source position
+        final newGeoJson = jsonEncode({
+          'type': 'FeatureCollection',
+          'features': [
+            {
+              'type': 'Feature',
+              'geometry': {
+                'type': 'Point',
+                'coordinates': [
+                  pos.coordinates.lng.toDouble(),
+                  pos.coordinates.lat.toDouble(),
+                ],
+              },
+              'properties': {},
+            },
+          ],
+        });
+        debugPrint('🚗 [3D] Updating GeoJSON source with new position');
+
+        await _mapController!.style.setStyleSourceProperty(
+          'driver-source',
+          'data',
+          newGeoJson,
+        );
+        debugPrint('🚗 [3D] Source position updated ✓');
+
+        // Update rotation
+        debugPrint('🚗 [3D] Updating rotation to bearing=$bearing');
+        await _mapController!.style.setStyleLayerProperty(
+          'driver-model-layer',
+          'model-rotation',
+          [0, 0, bearing],
+        );
+        debugPrint('🚗 [3D] Rotation updated ✓');
+      } catch (e) {
+        debugPrint('🚗 [3D] ERROR updating 3D model: $e');
+      }
+    }
+
+    // Fallback: 2D car marker (show this if 3D model not visible)
+    if (_pointAnnotationManager != null) {
+      if (_driverAnnotation == null) {
+        debugPrint('🗺️ Creating 2D car marker as fallback...');
+        try {
+          final bitmap = await MapPainters.renderCarBitmap();
+          _driverAnnotation = await _pointAnnotationManager!.create(
+            mbx.PointAnnotationOptions(
+              geometry: pos,
+              image: bitmap,
+              iconSize: 0.4,
+              iconAnchor: mbx.IconAnchor.CENTER,
+              iconRotate: bearing,
+            ),
+          );
+          debugPrint('🗺️ 2D car marker created (3D fallback)');
+        } catch (e) {
+          debugPrint('🗺️ ERROR creating 2D fallback: $e');
+        }
+      } else {
+        debugPrint('🗺️ Updating 2D car marker...');
+        _driverAnnotation!.geometry = pos;
+        _driverAnnotation!.iconRotate = bearing;
+        try {
+          await _pointAnnotationManager!.update(_driverAnnotation!);
+          debugPrint('🗺️ 2D car marker updated ✓');
+        } catch (e) {
+          debugPrint('🗺️ ERROR updating 2D fallback: $e');
+        }
+      }
+    } else {
+      debugPrint(
+        '🗺️ 2D fallback not available: pointAnnotationManager is null',
       );
     }
 
@@ -124,7 +303,7 @@ class TrackingMapController {
       ),
     );
     _mapController!.setCamera(
-      mbx.CameraOptions(center: center, zoom: 13.0, bearing: 0.0, pitch: 0.0),
+      mbx.CameraOptions(center: center, zoom: 15.0, bearing: 0.0, pitch: 60.0),
     );
   }
 
@@ -132,9 +311,9 @@ class TrackingMapController {
     _mapController?.setCamera(
       mbx.CameraOptions(
         center: target,
-        zoom: 15.0,
+        zoom: 16.0,
         bearing: bearing,
-        pitch: 30.0,
+        pitch: 45.0,
       ),
     );
   }
