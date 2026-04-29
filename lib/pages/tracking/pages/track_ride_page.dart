@@ -13,6 +13,7 @@ import '../services/ride_data_loader.dart';
 import '../services/driver_animation_controller.dart';
 import '../services/ride_connection_service.dart';
 import '../services/ride_phase_manager.dart';
+import '../services/progress_calculator.dart';
 
 class TrackRidePage extends StatefulWidget {
   final String rideId;
@@ -87,6 +88,7 @@ class _TrackRidePageState extends State<TrackRidePage>
   // ── Services ───────────────────────────────────────────────────────────────
   late RideConnectionService _connectionService;
   final RidePhaseManager _phaseManager = RidePhaseManager();
+  final ProgressCalculator _progressCalculator = ProgressCalculator();
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   mbx.Point get _pickupLatLng => mbx.Point(
@@ -141,7 +143,11 @@ class _TrackRidePageState extends State<TrackRidePage>
   }
 
   // ── Driver location update ─────────────────────────────────────────────────
-  void _onDriverLocationUpdate(double lat, double lng) {
+  void _onDriverLocationUpdate(
+    double lat,
+    double lng,
+    Map<String, dynamic> locationData,
+  ) {
     debugPrint('📍 WebSocket location update: lat=$lat, lng=$lng');
     final newPos = mbx.Point(coordinates: mbx.Position(lng, lat));
 
@@ -155,6 +161,16 @@ class _TrackRidePageState extends State<TrackRidePage>
     // Use driver animation controller
     debugPrint('🎬 Calling setTargetPosition');
     _driverAnimController.setTargetPosition(newPos, bearing);
+
+    // Update progress from WebSocket data
+    if (locationData.isNotEmpty && mounted) {
+      setState(() {
+        _rideState = _progressCalculator.updateProgressFromWebSocket(
+          _rideState,
+          locationData,
+        );
+      });
+    }
   }
 
   // ── Driver animation callback ───────────────────────────────────────────────
@@ -197,7 +213,7 @@ class _TrackRidePageState extends State<TrackRidePage>
     }
   }
 
-  // ── Phase transition callbacks ───────────────────────────────────────────────
+  // ── Phase transition callbacks (from WebSocket events) ────────────────
   void _onDriverEnroute(int? etaMins) {
     if (etaMins != null && mounted) {
       setState(() {
@@ -211,8 +227,10 @@ class _TrackRidePageState extends State<TrackRidePage>
 
   void _onDriverArrived() {
     if (_rideState.phase != RidePhase.driverArrived && mounted) {
+      HapticFeedback.mediumImpact();
+      _pulseAnim.repeat(reverse: true);
       setState(() {
-        _rideState = _phaseManager.advanceToArrived(_rideState, _pulseAnim);
+        _rideState = _rideState.copyWith(phase: RidePhase.driverArrived);
       });
     }
   }
@@ -222,15 +240,19 @@ class _TrackRidePageState extends State<TrackRidePage>
         _rideState.phase != RidePhase.rideEnded &&
         mounted) {
       setState(() {
-        _rideState = _phaseManager.advanceToRideStarted(_rideState);
+        _rideState = _rideState.copyWith(phase: RidePhase.rideInProgress);
       });
     }
   }
 
   void _onRideCompleted(Map<String, dynamic> data) {
     if (_rideState.phase != RidePhase.rideEnded && mounted) {
+      HapticFeedback.lightImpact();
       setState(() {
-        _rideState = _phaseManager.advanceToRideEnded(_rideState);
+        _rideState = _rideState.copyWith(
+          phase: RidePhase.rideEnded,
+          progress: 1.0,
+        );
       });
     }
   }
@@ -267,7 +289,8 @@ class _TrackRidePageState extends State<TrackRidePage>
     _connectionService = RideConnectionService(
       rideId: widget.rideId,
       onDriverEnroute: _onDriverEnroute,
-      onLocationUpdate: _onDriverLocationUpdate,
+      onLocationUpdate: (lat, lng, data) =>
+          _onDriverLocationUpdate(lat, lng, data),
       onDriverArrived: _onDriverArrived,
       onRideStarted: _onRideStarted,
       onRideCompleted: _onRideCompleted,
@@ -285,13 +308,6 @@ class _TrackRidePageState extends State<TrackRidePage>
 
         if (widget.rideId.isNotEmpty) {
           _connectionService.connect();
-          _connectionService.startPolling(_rideState, (newState) {
-            if (mounted) {
-              setState(() {
-                _rideState = newState;
-              });
-            }
-          });
         }
       }
     });
@@ -376,8 +392,17 @@ class _TrackRidePageState extends State<TrackRidePage>
               rideState: _rideState,
               pickupLabel: _pickupAddress,
               dropLabel: _dropoffAddress,
-              onImHere: () {}, // passenger acknowledges arrival
               onContinue: () => Navigator.maybePop(context),
+              onChatTap: () {
+                Navigator.pushNamed(
+                  context,
+                  'chat',
+                  arguments: {
+                    'rideId': widget.rideId,
+                    'driverName': _rideState.driverName,
+                  },
+                );
+              },
             ),
 
             // ── Trip-completed overlay ───────────────────────────────────

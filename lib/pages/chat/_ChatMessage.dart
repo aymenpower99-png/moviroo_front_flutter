@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../services/chat_service.dart';
 import '_VoiceMessageBubble.dart';
 
 class ChatMessage {
@@ -13,6 +14,12 @@ class ChatMessage {
   final bool isArabic;
   final bool isVoice;
   final bool isEdited;
+
+  // Backend fields
+  final String? rideId;
+  final String? senderId;
+  final String? senderRole;
+  final DateTime? createdAt;
 
   /// For voice messages: the local file path returned by the recorder.
   final String? audioPath;
@@ -26,14 +33,40 @@ class ChatMessage {
     this.isArabic = false,
     this.isVoice = false,
     this.isEdited = false,
+    this.rideId,
+    this.senderId,
+    this.senderRole,
+    this.createdAt,
     this.audioPath,
   });
 
-  ChatMessage copyWith({
-    String? text,
-    String? translatedText,
-    bool? isEdited,
-  }) {
+  /// Convert from backend ChatMsg to UI ChatMessage
+  factory ChatMessage.fromBackend(ChatMsg msg, String currentUserId) {
+    final isMe = msg.senderId == currentUserId;
+    return ChatMessage(
+      id: msg.id,
+      text: msg.text,
+      isMe: isMe,
+      time: _formatTime(msg.createdAt),
+      isVoice: msg.isVoice,
+      isEdited: msg.isEdited,
+      rideId: msg.rideId,
+      senderId: msg.senderId,
+      senderRole: msg.senderRole,
+      createdAt: msg.createdAt,
+    );
+  }
+
+  static String _formatTime(DateTime? dt) {
+    if (dt == null) return '';
+    final h = dt.hour;
+    final m = dt.minute.toString().padLeft(2, '0');
+    final period = h >= 12 ? 'PM' : 'AM';
+    final hour = h > 12 ? h - 12 : (h == 0 ? 12 : h);
+    return '$hour:$m $period';
+  }
+
+  ChatMessage copyWith({String? text, String? translatedText, bool? isEdited}) {
     return ChatMessage(
       id: id,
       text: text ?? this.text,
@@ -43,6 +76,10 @@ class ChatMessage {
       isArabic: isArabic,
       isVoice: isVoice,
       isEdited: isEdited ?? this.isEdited,
+      rideId: rideId,
+      senderId: senderId,
+      senderRole: senderRole,
+      createdAt: createdAt,
       audioPath: audioPath,
     );
   }
@@ -94,8 +131,9 @@ class ChatBubble extends StatelessWidget {
 
     // ── Text bubble ────────────────────────────────────────
     final isMe = message.isMe;
-    final bubbleColor =
-        isMe ? AppColors.primaryPurple : AppColors.surface(context);
+    final bubbleColor = isMe
+        ? AppColors.primaryPurple
+        : AppColors.surface(context);
     final textColor = isMe ? Colors.white : AppColors.text(context);
 
     return GestureDetector(
@@ -129,10 +167,9 @@ class ChatBubble extends StatelessWidget {
             children: [
               Text(
                 message.text,
-                style: AppTextStyles.bodyMedium(context).copyWith(
-                  color: textColor,
-                  fontSize: 14,
-                ),
+                style: AppTextStyles.bodyMedium(
+                  context,
+                ).copyWith(color: textColor, fontSize: 14),
               ),
               if (showTranslation && message.translatedText != null) ...[
                 const SizedBox(height: 6),
@@ -254,8 +291,7 @@ class _MessageActionsSheet extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Edit message'),
         content: TextField(
           controller: controller,
@@ -263,20 +299,20 @@ class _MessageActionsSheet extends StatelessWidget {
           maxLines: null,
           decoration: InputDecoration(
             hintText: 'Edit your message…',
-            border:
-                OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: AppColors.primaryPurple, width: 2),
+              borderSide: BorderSide(color: AppColors.primaryPurple, width: 2),
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: TextStyle(color: AppColors.subtext(context))),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.subtext(context)),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -286,10 +322,13 @@ class _MessageActionsSheet extends StatelessWidget {
               }
               Navigator.pop(ctx);
             },
-            child: Text('Save',
-                style: TextStyle(
-                    color: AppColors.primaryPurple,
-                    fontWeight: FontWeight.w700)),
+            child: Text(
+              'Save',
+              style: TextStyle(
+                color: AppColors.primaryPurple,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -300,24 +339,26 @@ class _MessageActionsSheet extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Delete message?'),
         content: const Text('This message will be permanently removed.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: TextStyle(color: AppColors.subtext(context))),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.subtext(context)),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               onDelete?.call();
             },
-            child: const Text('Delete',
-                style: TextStyle(
-                    color: Colors.red, fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -350,14 +391,14 @@ class _ActionTile extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 22),
             const SizedBox(width: 16),
-            Text(label,
-                style: AppTextStyles.bodyMedium(context).copyWith(
-                  color: color,
-                  fontSize: 15,
-                  fontWeight: isDestructive
-                      ? FontWeight.w600
-                      : FontWeight.normal,
-                )),
+            Text(
+              label,
+              style: AppTextStyles.bodyMedium(context).copyWith(
+                color: color,
+                fontSize: 15,
+                fontWeight: isDestructive ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
           ],
         ),
       ),

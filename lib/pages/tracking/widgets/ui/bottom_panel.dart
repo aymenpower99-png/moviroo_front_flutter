@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_colors.dart';
 import 'driver_row.dart';
-import 'im_here_button.dart';
 import '../../components/pickup_drop_row.dart';
 import '../../components/trip_summary_card.dart';
 import '../../components/animated_progress_bar.dart';
@@ -14,9 +13,7 @@ import '../../models/ride_state.dart';
 class BottomPanel extends StatefulWidget {
   final RideState rideState;
   final VoidCallback? onContinue;
-
-  /// Called when the passenger taps "I'm Here" during the [RidePhase.driverArrived] phase.
-  final VoidCallback? onImHere;
+  final VoidCallback? onChatTap;
 
   /// Pickup location label shown in the pickup/drop row.
   final String pickupLabel;
@@ -28,7 +25,7 @@ class BottomPanel extends StatefulWidget {
     super.key,
     required this.rideState,
     this.onContinue,
-    this.onImHere,
+    this.onChatTap,
     this.pickupLabel = 'Pickup location',
     this.dropLabel = 'Drop-off location',
   });
@@ -196,14 +193,10 @@ class _BottomPanelState extends State<BottomPanel> {
                     driverName: widget.rideState.driverName,
                     vehicleName: widget.rideState.vehicleName,
                     isArrived: _isArrivalOrLater,
+                    onChatTap: widget.onChatTap,
                   ),
 
                   const SizedBox(height: 20),
-
-                  if (widget.rideState.phase == RidePhase.driverArrived) ...[
-                    ImHereButton(onTap: widget.onImHere ?? () {}),
-                    const SizedBox(height: 20),
-                  ],
 
                   PickupDropRow(
                     pickupLabel: widget.pickupLabel,

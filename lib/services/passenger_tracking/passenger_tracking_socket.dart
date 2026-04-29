@@ -9,7 +9,8 @@ class PassengerTrackingSocket {
   io.Socket? _socket;
 
   // ── Callbacks ──────────────────────────────────────────────────────────────
-  void Function(double lat, double lng)? onLocationUpdate;
+  void Function(double lat, double lng, Map<String, dynamic> data)?
+  onLocationUpdate;
   void Function(int? etaMins)? onDriverEnroute;
   void Function()? onDriverArrived;
   void Function()? onRideStarted;
@@ -70,7 +71,9 @@ class PassengerTrackingSocket {
       if (data is Map) {
         final lat = (data['latitude'] as num?)?.toDouble();
         final lng = (data['longitude'] as num?)?.toDouble();
-        if (lat != null && lng != null) onLocationUpdate?.call(lat, lng);
+        if (lat != null && lng != null) {
+          onLocationUpdate?.call(lat, lng, Map<String, dynamic>.from(data));
+        }
       }
     });
 

@@ -71,7 +71,15 @@ class AppRouter {
           ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
       return RideDetailsPage(bookingId: args?['bookingId'] as String?);
     },
-    chat: (_) => const ChatPage(),
+    chat: (ctx) {
+      final args =
+          ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
+      return ChatPage(
+        rideId: args?['rideId'] as String? ?? '',
+        driverName: args?['driverName'] as String?,
+        driverId: args?['driverId'] as String?,
+      );
+    },
     booking: (ctx) {
       final args =
           ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;

@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../core/storage/token_storage.dart';
+import '../../../../services/chat_service.dart';
 import '_ChatMessage.dart';
 import '_ChatInput.dart';
 import '_TranslationBanner.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({super.key});
+  final String rideId;
+  final String? driverName;
+  final String? driverId;
+
+  const ChatPage({
+    super.key,
+    required this.rideId,
+    this.driverName,
+    this.driverId,
+  });
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -16,47 +27,25 @@ class _ChatPageState extends State<ChatPage> {
   final ScrollController _scroll = ScrollController();
   final TextEditingController _input = TextEditingController();
   bool _autoTranslate = true;
+  final ChatService _chatService = ChatService();
+  String? _currentUserId;
 
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      id: '1',
-      text: 'مرحباً، أنا في طريقي، سأكون هناك خلال 5 دقائق.',
-      translatedText: "Hello, I'm on my way. I'll be there in 5 minutes.",
-      isMe: false,
-      time: '2:41 PM',
-      isArabic: true,
-    ),
-    ChatMessage(
-      id: '2',
-      text: "Great, thanks! I'm waiting near the main entrance.",
-      isMe: true,
-      time: '2:43 PM',
-    ),
-    ChatMessage(
-      id: '3',
-      text: 'حسناً، أراك قريباً.',
-      translatedText: 'Okay, see you soon.',
-      isMe: false,
-      time: '2:44 PM',
-      isArabic: true,
-    ),
-    ChatMessage(
-      id: '4',
-      text: 'وصلت إلى المدخل الرئيسي.',
-      translatedText: "I'll arrive at the main entrance.",
-      isMe: false,
-      time: '2:45 PM',
-      isArabic: true,
-    ),
-  ];
+  // Messages will be loaded from backend via WebSocket
+  final List<ChatMessage> _messages = [];
 
   // ── Delete ──────────────────────────────────────────────
   void _deleteMessage(String id) {
+    _chatService.deleteMessage(rideId: widget.rideId, messageId: id);
     setState(() => _messages.removeWhere((m) => m.id == id));
   }
 
   // ── Edit ────────────────────────────────────────────────
   void _editMessage(String id, String newText) {
+    _chatService.editMessage(
+      rideId: widget.rideId,
+      messageId: id,
+      text: newText,
+    );
     setState(() {
       final index = _messages.indexWhere((m) => m.id == id);
       if (index != -1) {
@@ -69,15 +58,29 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   // ── Send text ───────────────────────────────────────────
-  void _sendMessage(String text) {
+  void _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
+
+    final userId = _currentUserId;
+    if (userId == null) return;
+
+    // Send via WebSocket
+    _chatService.sendMessage(
+      rideId: widget.rideId,
+      senderId: userId,
+      senderRole: 'passenger',
+      text: text,
+    );
+
     setState(() {
-      _messages.add(ChatMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        text: text,
-        isMe: true,
-        time: _formatTime(DateTime.now()),
-      ));
+      _messages.add(
+        ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          text: text,
+          isMe: true,
+          time: _formatTime(DateTime.now()),
+        ),
+      );
     });
     _input.clear();
     _scrollToBottom();
@@ -85,15 +88,27 @@ class _ChatPageState extends State<ChatPage> {
 
   // ── Send voice ──────────────────────────────────────────
   void _sendVoice(String audioPath) {
+    final userId = _currentUserId;
+    if (userId == null) return;
+
+    _chatService.sendMessage(
+      rideId: widget.rideId,
+      senderId: userId,
+      senderRole: 'passenger',
+      text: '🎤 Voice message',
+      isVoice: true,
+    );
     setState(() {
-      _messages.add(ChatMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        text: '🎤 Voice message',
-        isMe: true,
-        time: _formatTime(DateTime.now()),
-        isVoice: true,
-        audioPath: audioPath, // real file path
-      ));
+      _messages.add(
+        ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          text: '🎤 Voice message',
+          isMe: true,
+          time: _formatTime(DateTime.now()),
+          isVoice: true,
+          audioPath: audioPath,
+        ),
+      );
     });
     _scrollToBottom();
   }
@@ -122,6 +137,7 @@ class _ChatPageState extends State<ChatPage> {
   void dispose() {
     _scroll.dispose();
     _input.dispose();
+    _chatService.disconnect();
     super.dispose();
   }
 
@@ -132,7 +148,7 @@ class _ChatPageState extends State<ChatPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _ChatTopBar(),
+            _ChatTopBar(driverName: widget.driverName),
             TranslationBanner(
               enabled: _autoTranslate,
               onToggle: (v) => setState(() => _autoTranslate = v),
@@ -141,10 +157,9 @@ class _ChatPageState extends State<ChatPage> {
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
                 'Today, 2:41 PM',
-                style: AppTextStyles.bodySmall(context).copyWith(
-                  color: AppColors.subtext(context),
-                  fontSize: 11,
-                ),
+                style: AppTextStyles.bodySmall(
+                  context,
+                ).copyWith(color: AppColors.subtext(context), fontSize: 11),
               ),
             ),
             Expanded(
@@ -152,8 +167,9 @@ class _ChatPageState extends State<ChatPage> {
                   ? Center(
                       child: Text(
                         'No messages',
-                        style: AppTextStyles.bodySmall(context)
-                            .copyWith(color: AppColors.subtext(context)),
+                        style: AppTextStyles.bodySmall(
+                          context,
+                        ).copyWith(color: AppColors.subtext(context)),
                       ),
                     )
                   : ListView.builder(
@@ -184,6 +200,10 @@ class _ChatPageState extends State<ChatPage> {
 }
 
 class _ChatTopBar extends StatelessWidget {
+  final String? driverName;
+
+  const _ChatTopBar({this.driverName});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -197,20 +217,29 @@ class _ChatTopBar extends StatelessWidget {
           CircleAvatar(
             radius: 18,
             backgroundColor: AppColors.primaryPurple.withValues(alpha: 0.15),
-            child: Icon(Icons.person_rounded,
-                color: AppColors.primaryPurple, size: 20),
+            child: Icon(
+              Icons.person_rounded,
+              color: AppColors.primaryPurple,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Ahmed H.',
-                    style: AppTextStyles.bodyMedium(context)
-                        .copyWith(fontWeight: FontWeight.w700)),
-                Text('Toyota Camry · 4.9 ★',
-                    style: AppTextStyles.bodySmall(context)
-                        .copyWith(color: AppColors.subtext(context))),
+                Text(
+                  driverName ?? 'Driver',
+                  style: AppTextStyles.bodyMedium(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  'Vehicle info',
+                  style: AppTextStyles.bodySmall(
+                    context,
+                  ).copyWith(color: AppColors.subtext(context)),
+                ),
               ],
             ),
           ),
