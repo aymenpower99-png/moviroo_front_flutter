@@ -166,20 +166,15 @@ class TrackingMapController {
     }
   }
 
-  /// Update model scale based on zoom level (inversely proportional)
+  /// Update model scale based on zoom level.
+  /// Zoom in → bigger car, zoom out → smaller car.
   Future<void> _updateModelScale() async {
-    if (!_driver3DModelReady || _mapController == null) {
-      debugPrint(
-        '🚗 [3D] Skip scale update: 3D model ready=$_driver3DModelReady, controller exists=${_mapController != null}',
-      );
-      return;
-    }
+    if (!_driver3DModelReady || _mapController == null) return;
 
-    final baseScale = 200.0;
-    final scale = baseScale / _currentZoom;
-    debugPrint(
-      '🚗 [3D] Updating scale: base=$baseScale, zoom=$_currentZoom, result=$scale',
-    );
+    // Exponential scaling: each zoom level doubles the visual size
+    // At zoom 10 → scale ~5, zoom 13 → ~40, zoom 15 → ~150, zoom 17 → ~600
+    final scale = 5.0 * math.pow(2, (_currentZoom - 10));
+    debugPrint('🚗 [3D] Scale update: zoom=$_currentZoom, scale=$scale');
 
     try {
       await _mapController!.style.setStyleLayerProperty(
@@ -187,7 +182,6 @@ class TrackingMapController {
         'model-scale',
         [scale, scale, scale],
       );
-      debugPrint('🚗 [3D] Scale updated successfully');
     } catch (e) {
       debugPrint('🚗 [3D] ERROR updating model scale: $e');
     }
