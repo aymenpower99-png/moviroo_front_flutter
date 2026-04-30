@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import '../../../services/ride_api/booking_api_service.dart';
 
 /// Service for loading ride details from backend.
 class RideDataLoader {
+  // Static ride data
   double backendPickupLat = 0;
   double backendPickupLon = 0;
   double backendDropoffLat = 0;
@@ -13,6 +15,14 @@ class RideDataLoader {
   String backendVehicleColor = '';
   String backendPlateNumber = '';
 
+  // Driver location and progress/ETA from REST (computed by RoutingService)
+  double? backendDriverLat;
+  double? backendDriverLon;
+  DateTime? backendDriverLastUpdatedAt;
+  double? backendProgress;
+  int? backendEtaMins;
+  int? backendRemainingDistanceMeters;
+
   /// Load ride details from backend API.
   Future<void> loadRideDetails(String rideId) async {
     try {
@@ -20,6 +30,9 @@ class RideDataLoader {
       final rideDetails = await bookingApiService.getRideDetails(rideId);
 
       if (rideDetails != null) {
+        debugPrint('📡 REST Response: $rideDetails');
+
+        // Extract static ride data
         backendPickupLat = (rideDetails['pickupLat'] as num?)?.toDouble() ?? 0;
         backendPickupLon = (rideDetails['pickupLon'] as num?)?.toDouble() ?? 0;
         backendDropoffLat =
@@ -32,8 +45,33 @@ class RideDataLoader {
         backendVehicleName = rideDetails['vehicleName'] as String? ?? '';
         backendVehicleColor = rideDetails['vehicleColor'] as String? ?? '';
         backendPlateNumber = rideDetails['plateNumber'] as String? ?? '';
+
+        // Extract driver location and progress/ETA from REST (computed by RoutingService)
+        final driverLoc =
+            rideDetails['driver_location'] as Map<String, dynamic>?;
+        debugPrint('📍 Driver location from REST: $driverLoc');
+        if (driverLoc != null) {
+          backendDriverLat = (driverLoc['latitude'] as num?)?.toDouble();
+          backendDriverLon = (driverLoc['longitude'] as num?)?.toDouble();
+          final lastUpdatedAt = driverLoc['last_updated_at'] as String?;
+          if (lastUpdatedAt != null) {
+            backendDriverLastUpdatedAt = DateTime.parse(lastUpdatedAt);
+          }
+        }
+
+        backendProgress = (rideDetails['progress'] as num?)?.toDouble();
+        backendEtaMins = rideDetails['etaMins'] as int?;
+        backendRemainingDistanceMeters =
+            rideDetails['remainingDistanceMeters'] as int?;
+
+        debugPrint(
+          '📊 Progress from REST: $backendProgress, ETA: $backendEtaMins mins',
+        );
+      } else {
+        debugPrint('⚠️ REST response is null');
       }
     } catch (e) {
+      debugPrint('❌ REST load error: $e');
       // Errors are tolerated - caller handles null/empty values
     }
   }

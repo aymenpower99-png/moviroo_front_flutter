@@ -82,6 +82,11 @@ class _TrackRidePageState extends State<TrackRidePage>
   // ── Camera follow mode ───────────────────────────────────────────────────
   bool _cameraFollowMode = false;
 
+  // ── Loading / initialization state ───────────────────────────────────────
+  bool _isInitializing = true;
+  String _initStatus = 'Loading ride details...';
+  bool _hasFirstDriverFix = false;
+
   // ── Pulse animation (arrival) ──────────────────────────────────────────────
   late AnimationController _pulseAnim;
 
@@ -126,13 +131,27 @@ class _TrackRidePageState extends State<TrackRidePage>
 
   // ── Initialize ride state after backend data is loaded ─────────────────────
   void _initializeRideState() {
-    final eta = widget.etaMins ?? 7;
+    // Use REST ETA if available, otherwise fallback to widget ETA or default
+    final eta = _dataLoader.backendEtaMins ?? widget.etaMins ?? 7;
+    // Use REST progress if available, otherwise default to 0
+    final progress = _dataLoader.backendProgress ?? 0.0;
+    // Calculate distance left from REST data if available
+    String distanceLeft = '';
+    if (_dataLoader.backendRemainingDistanceMeters != null) {
+      final meters = _dataLoader.backendRemainingDistanceMeters!;
+      if (meters >= 1000) {
+        distanceLeft = '${(meters / 1000).toStringAsFixed(1)} km';
+      } else {
+        distanceLeft = '${meters.toInt()} m';
+      }
+    }
+
     _rideState = RideState(
       phase: RidePhase.driverOnTheWay,
-      progress: 0.0,
+      progress: progress,
       etaMins: eta,
       arrivalTime: _phaseManager.calcArrivalTime(eta),
-      distanceLeft: '',
+      distanceLeft: distanceLeft,
       driverName: _driverName,
       vehicleName: _vehicleName,
       vehicleColor: _vehicleColor,
@@ -185,18 +204,35 @@ class _TrackRidePageState extends State<TrackRidePage>
 
   // ── Driver animation callback ───────────────────────────────────────────────
   void _onDriverPositionUpdate(mbx.Point pos, double bearing) {
-    debugPrint(
-      '🎯 _onDriverPositionUpdate: pos=${pos.coordinates.lat}, ${pos.coordinates.lng}, bearing=$bearing',
-    );
     if (!mounted) return;
+
+    final isFirstFix = !_hasFirstDriverFix;
+
     setState(() {
       _driverPos = pos;
       _driverBearing = bearing;
+      if (isFirstFix) {
+        _hasFirstDriverFix = true;
+        _isInitializing = false;
+      }
     });
-    debugPrint('🗺️ Calling updateDriverMarker');
     _mapController.updateDriverMarker(pos, bearing);
 
-    // Camera follow mode
+    // First location fix: center camera on driver so user sees them immediately.
+    if (isFirstFix) {
+      debugPrint('🎯 FIRST DRIVER FIX — centering camera');
+      _mapController.controller?.setCamera(
+        mbx.CameraOptions(
+          center: pos,
+          zoom: 15.0,
+          bearing: bearing,
+          pitch: 0.0,
+        ),
+      );
+      return;
+    }
+
+    // Subsequent updates: only follow if camera follow mode is active.
     if (_cameraFollowMode && _rideState.phase == RidePhase.rideInProgress) {
       _mapController.controller?.setCamera(
         mbx.CameraOptions(
@@ -306,19 +342,78 @@ class _TrackRidePageState extends State<TrackRidePage>
       onRideCompleted: _onRideCompleted,
     );
 
-    // Load ride details from backend
-    _loadRideDetails().then((_) {
+    // Pulse anim is needed before any state checks below
+    _pulseAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    // Parallel initialization: fire HTTP + WebSocket simultaneously
+    // so we don't wait for the HTTP round-trip before opening the socket.
+    _initializeInParallel();
+  }
+
+  Future<void> _initializeInParallel() async {
+    // Open WebSocket immediately (independent of ride details).
+    if (widget.rideId.isNotEmpty) {
+      _connectionService.connect();
       if (mounted) {
-        _initializeRideState();
+        setState(() => _initStatus = 'Connecting to driver...');
+      }
+    }
 
-        _pulseAnim = AnimationController(
-          vsync: this,
-          duration: const Duration(milliseconds: 1000),
-        );
+    // In parallel: fetch ride details from backend.
+    try {
+      await _loadRideDetails();
+    } catch (e) {
+      debugPrint('❌ _loadRideDetails failed: $e');
+    }
 
-        if (widget.rideId.isNotEmpty) {
-          _connectionService.connect();
-        }
+    if (!mounted) return;
+    _initializeRideState();
+
+    // Use REST driver location for immediate first render if available
+    if (_dataLoader.backendDriverLat != null &&
+        _dataLoader.backendDriverLon != null) {
+      final initialPos = mbx.Point(
+        coordinates: mbx.Position(
+          _dataLoader.backendDriverLon!,
+          _dataLoader.backendDriverLat!,
+        ),
+      );
+
+      // Trigger FIRST UPDATE path in DriverAnimationController
+      _driverAnimController.setTargetPosition(initialPos, 0.0);
+
+      setState(() {
+        _driverPos = initialPos;
+        _driverBearing = 0.0;
+        _hasFirstDriverFix = true;
+        _isInitializing = false;
+      });
+
+      // Update map marker immediately
+      _mapController.updateDriverMarker(initialPos, 0.0);
+
+      // Center camera on driver position
+      _mapController.controller?.setCamera(
+        mbx.CameraOptions(
+          center: initialPos,
+          zoom: 15.0,
+          bearing: 0.0,
+          pitch: 0.0,
+        ),
+      );
+
+      debugPrint(
+        '🎯 REST INITIAL RENDER — driver location + progress + ETA from RoutingService',
+      );
+    }
+
+    // If no driver location from REST, wait for WebSocket
+    setState(() {
+      if (!_hasFirstDriverFix) {
+        _initStatus = 'Waiting for driver location...';
       }
     });
   }
@@ -391,6 +486,55 @@ class _TrackRidePageState extends State<TrackRidePage>
                 onCameraChangeListener: _onCameraChanged,
               ),
             ),
+
+            // ── Loading overlay (shown until first driver fix) ──────────
+            if (_isInitializing)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 60,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.bg(context).withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primaryPurple,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          _initStatus,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.text(context),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
             // ── Back button ──────────────────────────────────────────────
             Positioned(

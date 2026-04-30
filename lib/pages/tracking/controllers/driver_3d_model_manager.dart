@@ -12,9 +12,9 @@ class Driver3DModelManager {
   // 3D model setup synchronization (prevents duplicate layers)
   Future<void>? _setupFuture;
 
-  // Native style update throttling (prevents 60 FPS backpressure)
+  // Native style update throttling (matches animation tick rate)
   int _lastNativeUpdateMs = 0;
-  static const int _minNativeUpdateIntervalMs = 33; // ~30 FPS cap
+  static const int _minNativeUpdateIntervalMs = 16; // ~60 FPS cap
 
   // Model orientation calibration
   static const double _modelHeadingOffset = 0.0;
