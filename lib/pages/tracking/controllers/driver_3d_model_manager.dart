@@ -125,12 +125,13 @@ class Driver3DModelManager {
     // Zoom 15: 32.0
     // Zoom 14: 64.0
     // Zoom 13: 128.0
-    // Zoom 12: 256.0 → clamped to 250.0
-    // Zoom 10: 1024.0 → clamped to 250.0
+    // Zoom 12: 256.0
+    // Zoom 10: 1024.0 → clamped to 800.0
+    // Zoom 5: 8192.0 → clamped to 800.0 (very visible at world view)
     const baseScale = 4.0; // Scale at zoom 18 (street level)
     const baseZoom = 18.0;
     const minScale = 1.0;
-    const maxScale = 250.0;
+    const maxScale = 800.0;
 
     // Scale doubles when zoom decreases by 1 level
     final scale = (baseScale * math.pow(2.0, baseZoom - _currentZoom)).clamp(
