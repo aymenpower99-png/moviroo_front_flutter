@@ -16,6 +16,7 @@ import 'core/firebase/firebase_service.dart';
 import 'services/auth_service/auth_service.dart';
 import 'services/recent_searches/recent_searches_service.dart';
 import 'providers/booking_provider.dart';
+import 'providers/chat_provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 final themeProvider = ThemeProvider();
@@ -138,8 +139,11 @@ class _SmartWayAppState extends State<SmartWayApp> {
             (_) => _applySystemUI(themeProvider.mode),
           );
 
-          return ChangeNotifierProvider(
-            create: (_) => BookingProvider(),
+          return MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => BookingProvider()),
+              ChangeNotifierProvider(create: (_) => ChatProvider()),
+            ],
             child: MaterialApp(
               title: 'Moviroo',
               debugShowCheckedModeBanner: false,

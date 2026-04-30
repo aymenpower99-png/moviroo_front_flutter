@@ -29,10 +29,10 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
     _loadUser();
   }
 
-  Future<void> _loadUser() async {
+  Future<void> _loadUser({bool force = false}) async {
     setState(() => _isLoading = true);
     try {
-      final user = await _authService.getCurrentUser(forceRefresh: true);
+      final user = await _authService.getCurrentUser(forceRefresh: force);
       if (!mounted) return;
       if (user != null) {
         final rawPhone = (user['phone'] as String?) ?? '';
@@ -59,7 +59,7 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
       context,
       MaterialPageRoute(builder: (_) => page),
     );
-    if (updated == true && mounted) _loadUser();
+    if (updated == true && mounted) _loadUser(force: true);
   }
 
   @override

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../services/chat_service.dart';
-import '_VoiceMessageBubble.dart';
 
 class ChatMessage {
   final String id;
@@ -12,7 +11,6 @@ class ChatMessage {
   final bool isMe;
   final String time;
   final bool isArabic;
-  final bool isVoice;
   final bool isEdited;
 
   // Backend fields
@@ -21,9 +19,6 @@ class ChatMessage {
   final String? senderRole;
   final DateTime? createdAt;
 
-  /// For voice messages: the local file path returned by the recorder.
-  final String? audioPath;
-
   const ChatMessage({
     required this.id,
     required this.text,
@@ -31,13 +26,11 @@ class ChatMessage {
     required this.isMe,
     required this.time,
     this.isArabic = false,
-    this.isVoice = false,
     this.isEdited = false,
     this.rideId,
     this.senderId,
     this.senderRole,
     this.createdAt,
-    this.audioPath,
   });
 
   /// Convert from backend ChatMsg to UI ChatMessage
@@ -48,7 +41,6 @@ class ChatMessage {
       text: msg.text,
       isMe: isMe,
       time: _formatTime(msg.createdAt),
-      isVoice: msg.isVoice,
       isEdited: msg.isEdited,
       rideId: msg.rideId,
       senderId: msg.senderId,
@@ -74,13 +66,11 @@ class ChatMessage {
       isMe: isMe,
       time: time,
       isArabic: isArabic,
-      isVoice: isVoice,
       isEdited: isEdited ?? this.isEdited,
       rideId: rideId,
       senderId: senderId,
       senderRole: senderRole,
       createdAt: createdAt,
-      audioPath: audioPath,
     );
   }
 }
@@ -117,18 +107,6 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── Voice bubble ───────────────────────────────────────
-    if (message.isVoice) {
-      return GestureDetector(
-        onLongPress: () => _showActionSheet(context),
-        child: VoiceMessageBubble(
-          isMe: message.isMe,
-          time: message.time,
-          audioPath: message.audioPath,
-        ),
-      );
-    }
-
     // ── Text bubble ────────────────────────────────────────
     final isMe = message.isMe;
     final bubbleColor = isMe
@@ -258,7 +236,7 @@ class _MessageActionsSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          if (message.isMe && !message.isVoice) ...[
+          if (message.isMe) ...[
             _ActionTile(
               icon: Icons.edit_rounded,
               label: 'Edit',

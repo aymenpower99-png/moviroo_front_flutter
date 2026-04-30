@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../services/chat_service.dart';
+import '../../../../providers/chat_provider.dart';
 import '_ChatMessage.dart';
 import '_ChatInput.dart';
 import '_TranslationBanner.dart';
@@ -35,10 +37,6 @@ class _ChatPageState extends State<ChatPage> {
   bool _autoTranslate = true;
   final ChatService _chatService = ChatService();
   String? _currentUserId;
-  bool _loading = true;
-
-  // Messages will be loaded from backend via WebSocket
-  final List<ChatMessage> _messages = [];
 
   @override
   void initState() {
@@ -68,23 +66,12 @@ class _ChatPageState extends State<ChatPage> {
       debugPrint('❌ [PassengerChat] WebSocket connection failed: $e');
     }
 
-    // Load history
-    try {
-      final history = await _chatService.fetchHistory(widget.rideId);
-      debugPrint('✅ [PassengerChat] Loaded ${history.length} messages');
-      if (mounted) {
-        setState(() {
-          _messages.clear();
-          for (final m in history) {
-            _messages.add(_chatMsgToUI(m));
-          }
-          _loading = false;
-        });
-        _scrollToBottom();
-      }
-    } catch (e) {
-      debugPrint('❌ [PassengerChat] Failed to load history: $e');
-      if (mounted) setState(() => _loading = false);
+    // Load history from provider (uses cache if available)
+    final chatProvider = context.read<ChatProvider>();
+    await chatProvider.fetchMessages(widget.rideId);
+
+    if (mounted) {
+      _scrollToBottom();
     }
   }
 
@@ -94,45 +81,48 @@ class _ChatPageState extends State<ChatPage> {
       text: m.text,
       isMe: m.senderId == _currentUserId,
       time: _formatTime(m.createdAt),
-      isVoice: m.isVoice,
       isEdited: m.isEdited,
     );
   }
 
   void _onNewMessage(ChatMsg msg) {
+    final chatProvider = context.read<ChatProvider>();
     // Avoid duplicates (we already added optimistic local messages)
-    if (_messages.any((m) => m.id == msg.id)) return;
+    if (chatProvider.getMessages(widget.rideId).any((m) => m.id == msg.id))
+      return;
     // Remove optimistic placeholder if this is our own message
     if (msg.senderId == _currentUserId) {
-      _messages.removeWhere(
-        (m) => m.id.startsWith('local_') && m.text == msg.text,
+      chatProvider.deleteMessage(
+        widget.rideId,
+        chatProvider
+            .getMessages(widget.rideId)
+            .firstWhere((m) => m.id.startsWith('local_') && m.text == msg.text)
+            .id,
       );
     }
     if (mounted) {
-      setState(() => _messages.add(_chatMsgToUI(msg)));
+      chatProvider.addMessage(widget.rideId, _chatMsgToUI(msg));
       _scrollToBottom();
     }
   }
 
   void _onMessageEdited(String messageId, String text) {
     if (!mounted) return;
-    setState(() {
-      final idx = _messages.indexWhere((m) => m.id == messageId);
-      if (idx != -1) {
-        _messages[idx] = _messages[idx].copyWith(text: text, isEdited: true);
-      }
-    });
+    final chatProvider = context.read<ChatProvider>();
+    chatProvider.updateMessage(widget.rideId, messageId, text);
   }
 
   void _onMessageDeleted(String messageId) {
     if (!mounted) return;
-    setState(() => _messages.removeWhere((m) => m.id == messageId));
+    final chatProvider = context.read<ChatProvider>();
+    chatProvider.deleteMessage(widget.rideId, messageId);
   }
 
   // ── Delete ──────────────────────────────────────────────
   void _deleteMessage(String id) {
     _chatService.deleteMessage(rideId: widget.rideId, messageId: id);
-    setState(() => _messages.removeWhere((m) => m.id == id));
+    final chatProvider = context.read<ChatProvider>();
+    chatProvider.deleteMessage(widget.rideId, id);
   }
 
   // ── Edit ────────────────────────────────────────────────
@@ -142,15 +132,8 @@ class _ChatPageState extends State<ChatPage> {
       messageId: id,
       text: newText,
     );
-    setState(() {
-      final index = _messages.indexWhere((m) => m.id == id);
-      if (index != -1) {
-        _messages[index] = _messages[index].copyWith(
-          text: newText,
-          isEdited: true,
-        );
-      }
-    });
+    final chatProvider = context.read<ChatProvider>();
+    chatProvider.updateMessage(widget.rideId, id, newText);
   }
 
   // ── Send text ───────────────────────────────────────────
@@ -169,20 +152,6 @@ class _ChatPageState extends State<ChatPage> {
     );
 
     _input.clear();
-    _scrollToBottom();
-  }
-
-  // ── Send voice ──────────────────────────────────────────
-  void _sendVoice(String audioPath) {
-    if (widget.rideId.isEmpty || _currentUserId == null) return;
-
-    _chatService.sendMessage(
-      rideId: widget.rideId,
-      senderId: _currentUserId!,
-      senderRole: 'passenger',
-      text: '🎤 Voice message',
-      isVoice: true,
-    );
     _scrollToBottom();
   }
 
@@ -231,39 +200,73 @@ class _ChatPageState extends State<ChatPage> {
               enabled: _autoTranslate,
               onToggle: (v) => setState(() => _autoTranslate = v),
             ),
-            if (_loading)
-              const Expanded(child: Center(child: CircularProgressIndicator()))
-            else
-              Expanded(
-                child: _messages.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No messages',
-                          style: AppTextStyles.bodySmall(
-                            context,
-                          ).copyWith(color: AppColors.subtext(context)),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scroll,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, i) {
-                          final msg = _messages[i];
-                          return ChatBubble(
-                            message: msg,
-                            showTranslation: _autoTranslate,
-                            onDelete: () => _deleteMessage(msg.id),
-                            onEdit: (newText) => _editMessage(msg.id, newText),
-                          );
-                        },
+            Expanded(
+              child: Consumer<ChatProvider>(
+                builder: (context, chatProvider, child) {
+                  final isLoading = chatProvider.isLoading(widget.rideId);
+                  final messages = chatProvider.getMessages(widget.rideId);
+                  final error = chatProvider.getError(widget.rideId);
+
+                  if (isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (error != null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Error loading messages',
+                            style: AppTextStyles.bodyMedium(context),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            error,
+                            style: AppTextStyles.bodySmall(
+                              context,
+                            ).copyWith(color: AppColors.subtext(context)),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () =>
+                                chatProvider.fetchMessages(widget.rideId),
+                            child: const Text('Retry'),
+                          ),
+                        ],
                       ),
+                    );
+                  }
+
+                  if (messages.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No messages',
+                        style: AppTextStyles.bodySmall(
+                          context,
+                        ).copyWith(color: AppColors.subtext(context)),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    controller: _scroll,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: messages.length,
+                    itemBuilder: (context, i) {
+                      final msg = messages[i];
+                      return ChatBubble(
+                        message: msg,
+                        showTranslation: _autoTranslate,
+                        onDelete: () => _deleteMessage(msg.id),
+                        onEdit: (newText) => _editMessage(msg.id, newText),
+                      );
+                    },
+                  );
+                },
               ),
-            ChatInputBar(
-              controller: _input,
-              onSend: _sendMessage,
-              onVoiceSend: _sendVoice, // <-- wired here
             ),
+            ChatInputBar(controller: _input, onSend: _sendMessage),
           ],
         ),
       ),
