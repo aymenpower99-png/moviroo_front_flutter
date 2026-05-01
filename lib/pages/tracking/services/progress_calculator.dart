@@ -8,16 +8,18 @@ class ProgressCalculator {
   /// The backend sends progress data in trip:location_update:
   /// - progress (0.0-1.0)
   /// - remainingDistanceMeters
-  /// - etaMins (in milliseconds, needs conversion to minutes)
+  /// - etaMins (already in MINUTES — computed by RoutingService)
   RideState updateProgressFromWebSocket(
     RideState currentState,
     Map<String, dynamic> locationData,
   ) {
-    // Extract progress data from WebSocket payload
-    final progress = locationData['progress'] as double?;
+    // Extract progress data from WebSocket payload.
+    // Use `as num?` then `.toDouble()` because JSON serialises whole-number
+    // doubles (e.g. 1.0) as ints and `as double?` would silently fail.
+    final progress = (locationData['progress'] as num?)?.toDouble();
     final remainingDistanceMeters =
-        locationData['remainingDistanceMeters'] as num?;
-    final etaMs = locationData['etaMins'] as int?;
+        (locationData['remainingDistanceMeters'] as num?);
+    final etaMins = (locationData['etaMins'] as num?)?.toInt();
 
     // Convert remaining distance to string for display
     String distanceLeftText = currentState.distanceLeft;
@@ -30,13 +32,7 @@ class ProgressCalculator {
       }
     }
 
-    // Convert milliseconds to minutes for ETA
-    int? etaMins;
-    if (etaMs != null) {
-      etaMins = (etaMs / 60000).round(); // Convert ms to minutes
-    }
-
-    // Calculate arrival time from ETA
+    // Calculate arrival time from ETA (already in minutes)
     String arrivalTimeText = currentState.arrivalTime;
     if (etaMins != null) {
       final arrival = DateTime.now().add(Duration(minutes: etaMins));

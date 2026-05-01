@@ -372,7 +372,10 @@ class _TrackRidePageState extends State<TrackRidePage>
     if (!mounted) return;
     _initializeRideState();
 
-    // Use REST driver location for immediate first render if available
+    // Use REST driver location for immediate first render if available.
+    // We delegate to DriverAnimationController.setTargetPosition() which has
+    // a "first update" branch that calls onPositionUpdate -> _onDriverPositionUpdate,
+    // and that callback handles setState, marker update and camera centering.
     if (_dataLoader.backendDriverLat != null &&
         _dataLoader.backendDriverLon != null) {
       final initialPos = mbx.Point(
@@ -382,32 +385,11 @@ class _TrackRidePageState extends State<TrackRidePage>
         ),
       );
 
-      // Trigger FIRST UPDATE path in DriverAnimationController
-      _driverAnimController.setTargetPosition(initialPos, 0.0);
-
-      setState(() {
-        _driverPos = initialPos;
-        _driverBearing = 0.0;
-        _hasFirstDriverFix = true;
-        _isInitializing = false;
-      });
-
-      // Update map marker immediately
-      _mapController.updateDriverMarker(initialPos, 0.0);
-
-      // Center camera on driver position
-      _mapController.controller?.setCamera(
-        mbx.CameraOptions(
-          center: initialPos,
-          zoom: 15.0,
-          bearing: 0.0,
-          pitch: 0.0,
-        ),
-      );
-
       debugPrint(
         '🎯 REST INITIAL RENDER — driver location + progress + ETA from RoutingService',
       );
+      // Single source of truth: animation controller's first-render path.
+      _driverAnimController.setTargetPosition(initialPos, 0.0);
     }
 
     // If no driver location from REST, wait for WebSocket

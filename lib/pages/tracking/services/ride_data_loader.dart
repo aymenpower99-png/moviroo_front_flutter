@@ -60,9 +60,9 @@ class RideDataLoader {
         }
 
         backendProgress = (rideDetails['progress'] as num?)?.toDouble();
-        backendEtaMins = rideDetails['etaMins'] as int?;
+        backendEtaMins = (rideDetails['etaMins'] as num?)?.toInt();
         backendRemainingDistanceMeters =
-            rideDetails['remainingDistanceMeters'] as int?;
+            (rideDetails['remainingDistanceMeters'] as num?)?.toInt();
 
         debugPrint(
           '📊 Progress from REST: $backendProgress, ETA: $backendEtaMins mins',
