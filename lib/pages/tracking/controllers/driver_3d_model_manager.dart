@@ -16,8 +16,9 @@ class Driver3DModelManager {
   int _lastNativeUpdateMs = 0;
   static const int _minNativeUpdateIntervalMs = 16; // ~60 FPS cap
 
-  // Model orientation calibration
-  static const double _modelHeadingOffset = 0.0;
+  // Model orientation calibration — GLB models typically face +Y or -Z axis,
+  // so we rotate 180° to align the front of the car with the bearing direction.
+  static const double _modelHeadingOffset = 180.0;
 
   /// Set the map controller reference.
   void setMapController(mbx.MapboxMap mapController) {

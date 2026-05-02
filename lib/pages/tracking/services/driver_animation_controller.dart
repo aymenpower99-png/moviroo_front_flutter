@@ -29,16 +29,21 @@ class DriverAnimationController {
 
   // Tunables ────────────────────────────────────────────────────────────────
   /// Ignore GPS deltas smaller than this (meters) — prevents micro-jitter.
-  static const double _jitterThresholdMeters = 1.0;
+  static const double _jitterThresholdMeters = 2.0;
 
   /// Min animation duration (very small movements).
-  static const int _minDurationMs = 250;
+  static const int _minDurationMs = 300;
 
-  /// Max animation duration (large GPS jumps shouldn't take forever).
-  static const int _maxDurationMs = 1500;
+  /// Max animation duration — should be close to GPS update interval (~3s)
+  /// so the car is always moving smoothly between updates.
+  static const int _maxDurationMs = 2500;
 
   /// Assumed average speed for duration calc: ~10 m/s (~36 km/h urban).
   static const double _assumedSpeedMps = 10.0;
+
+  /// Bearing smoothing factor (0 = no smoothing, 1 = freeze bearing).
+  /// Lower = more responsive, higher = smoother rotation.
+  static const double _bearingSmoothFactor = 0.3;
 
   final Function(mbx.Point, double)? onPositionUpdate;
   final Function(mbx.Point)? onCameraFollow;
@@ -127,7 +132,7 @@ class DriverAnimationController {
   void _onTick() {
     if (_segmentStart == null || _segmentEnd == null) return;
 
-    final t = Curves.linear.transform(_animController.value);
+    final t = Curves.easeInOutCubic.transform(_animController.value);
 
     final interpolatedLat = _lerp(
       _segmentStart!.coordinates.lat.toDouble(),
@@ -164,7 +169,10 @@ class DriverAnimationController {
     double diff = b - a;
     if (diff > 180) diff -= 360;
     if (diff < -180) diff += 360;
-    return (a + diff * t) % 360;
+    // Apply smoothing: ease rotation more gently than position
+    final smoothT =
+        t * (1.0 - _bearingSmoothFactor) + (t * t) * _bearingSmoothFactor;
+    return (a + diff * smoothT) % 360;
   }
 
   /// Haversine distance in meters.

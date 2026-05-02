@@ -221,40 +221,31 @@ class _TrackRidePageState extends State<TrackRidePage>
     // First location fix: center camera on driver so user sees them immediately.
     if (isFirstFix) {
       debugPrint('🎯 FIRST DRIVER FIX — centering camera');
-      _mapController.controller?.setCamera(
+      _mapController.controller?.flyTo(
         mbx.CameraOptions(
           center: pos,
           zoom: 15.0,
           bearing: bearing,
           pitch: 0.0,
         ),
+        mbx.MapAnimationOptions(duration: 500),
       );
       return;
     }
-
-    // Subsequent updates: only follow if camera follow mode is active.
-    if (_cameraFollowMode && _rideState.phase == RidePhase.rideInProgress) {
-      _mapController.controller?.setCamera(
-        mbx.CameraOptions(
-          center: pos,
-          zoom: 15.0,
-          bearing: bearing,
-          pitch: 0.0,
-        ),
-      );
-    }
   }
 
-  // ── Camera follow callback ───────────────────────────────────────────────────
+  // ── Camera follow callback (called every animation tick) ─────────────────────
   void _onCameraFollow(mbx.Point pos) {
     if (_cameraFollowMode && _rideState.phase == RidePhase.rideInProgress) {
-      _mapController.controller?.setCamera(
+      // Use flyTo with short duration for smooth camera tracking
+      _mapController.controller?.flyTo(
         mbx.CameraOptions(
           center: pos,
-          zoom: 15.0,
+          zoom: 16.0,
           bearing: _driverBearing,
-          pitch: 0.0,
+          pitch: 45.0,
         ),
+        mbx.MapAnimationOptions(duration: 300),
       );
     }
   }
