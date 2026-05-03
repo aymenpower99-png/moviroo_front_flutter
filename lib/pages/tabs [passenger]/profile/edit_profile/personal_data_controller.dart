@@ -34,7 +34,7 @@ class PersonalDataController {
         firstName.text = user['firstName'] ?? '';
         lastName.text = user['lastName'] ?? '';
         email.text = user['email'] ?? '';
-        // Strip +216 prefix if present (backend stores full international format)
+        // Strip +216 prefix if present (legacy data may still have it)
         final rawPhone = user['phone'] ?? '';
         phone.text = rawPhone.startsWith('+216')
             ? rawPhone.substring(4)
@@ -55,7 +55,7 @@ class PersonalDataController {
       await _authService.updateProfile(
         firstName: firstName.text.trim(),
         lastName: lastName.text.trim(),
-        phone: '+216${phone.text.trim()}',
+        phone: phone.text.trim(), // digits only — backend normalises, no prefix needed
       );
       hasChanges = false;
       return true;

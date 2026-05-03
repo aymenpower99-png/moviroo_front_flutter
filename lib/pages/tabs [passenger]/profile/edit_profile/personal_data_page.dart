@@ -532,7 +532,7 @@ class _EditPhonePageState extends State<_EditPhonePage> {
       _error = null;
     });
     try {
-      await _authService.updateProfile(phone: '+216${_phone.text.trim()}');
+      await _authService.updateProfile(phone: _phone.text.trim());
       if (!mounted) return;
       _showToast(
         context,
