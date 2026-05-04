@@ -90,7 +90,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           scheduledTime: widget.scheduledTime,
           couponCode: _appliedCouponCode.isNotEmpty ? _appliedCouponCode : null,
           discountPercent: _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
-          lockedPrice: widget.selectedVehicle?.exactPrice,
+          lockedPrice: widget.selectedVehicle?.priceTnd.toDouble(),
           lockedLoyaltyPoints: widget.selectedVehicle?.loyaltyPoints,
           lockedDistanceKm: widget.selectedVehicle?.distanceKm,
           lockedDurationMin: widget.selectedVehicle?.durationMin,
@@ -111,7 +111,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
         // Navigate to Payment Page with bookingId, locked price and discount info
         AppRouter.push(context, AppRouter.payment, args: {
           'bookingId': rideId,
-          'lockedPrice': widget.selectedVehicle?.exactPrice,
+          'lockedPrice': widget.selectedVehicle?.priceTnd.toDouble(),
           'discountPercent': _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
         });
       } catch (e) {
@@ -143,7 +143,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           scheduledTime: widget.scheduledTime,
           couponCode: _appliedCouponCode.isNotEmpty ? _appliedCouponCode : null,
           discountPercent: _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
-          lockedPrice: widget.selectedVehicle?.exactPrice,
+          lockedPrice: widget.selectedVehicle?.priceTnd.toDouble(),
           lockedLoyaltyPoints: widget.selectedVehicle?.loyaltyPoints,
           lockedDistanceKm: widget.selectedVehicle?.distanceKm,
           lockedDurationMin: widget.selectedVehicle?.durationMin,
