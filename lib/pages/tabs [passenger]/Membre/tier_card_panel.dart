@@ -4,7 +4,6 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import 'membership_tier.dart';
 
-const int kUserPoints = 2450;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPANDED PANEL  (mounted inside TierCard via SizeTransition)
@@ -15,6 +14,7 @@ class TierExpandedPanel extends StatelessWidget {
   final bool isDark;
   final TierClaimState claimState;
   final VoidCallback onUnlockTap;
+  final int userPoints;
 
   const TierExpandedPanel({
     super.key,
@@ -22,12 +22,13 @@ class TierExpandedPanel extends StatelessWidget {
     required this.isDark,
     required this.claimState,
     required this.onUnlockTap,
+    required this.userPoints,
   });
 
   @override
   Widget build(BuildContext context) {
     final isLocked  = tier.status == TierStatus.locked;
-    final hasEnough = kUserPoints >= tier.pointsRequired;
+    final hasEnough = userPoints >= tier.pointsRequired;
     final claimed   = claimState.claimed;
 
     return Padding(
@@ -55,7 +56,7 @@ class TierExpandedPanel extends StatelessWidget {
                 promoCode: claimState.promoCode!,
                 isDark: isDark)
           else if (!hasEnough)
-            TierProgressBlock(tier: tier, isDark: isDark)
+            TierProgressBlock(tier: tier, isDark: isDark, userPoints: userPoints)
           else
             TierUnlockButton(tier: tier, onTap: onUnlockTap),
         ],
@@ -115,9 +116,10 @@ class _DiscountPill extends StatelessWidget {
 class TierProgressBlock extends StatefulWidget {
   final MembershipTier tier;
   final bool isDark;
+  final int userPoints;
 
   const TierProgressBlock(
-      {super.key, required this.tier, required this.isDark});
+      {super.key, required this.tier, required this.isDark, required this.userPoints});
 
   @override
   State<TierProgressBlock> createState() => _TierProgressBlockState();
@@ -132,7 +134,7 @@ class _TierProgressBlockState extends State<TierProgressBlock>
   void initState() {
     super.initState();
     final target =
-        (kUserPoints / widget.tier.pointsRequired).clamp(0.0, 1.0);
+        (widget.userPoints / widget.tier.pointsRequired).clamp(0.0, 1.0);
     _ctrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 700));
     _prog = Tween<double>(begin: 0, end: target).animate(
@@ -149,7 +151,7 @@ class _TierProgressBlockState extends State<TierProgressBlock>
   @override
   Widget build(BuildContext context) {
     final missing =
-        (widget.tier.pointsRequired - kUserPoints).clamp(0, 99999);
+        (widget.tier.pointsRequired - widget.userPoints).clamp(0, 99999);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,7 +159,7 @@ class _TierProgressBlockState extends State<TierProgressBlock>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('$kUserPoints pts',
+            Text('${widget.userPoints} pts',
                 style: AppTextStyles.bodySmall(context)
                     .copyWith(fontWeight: FontWeight.w600)),
             Text('${widget.tier.pointsRequired} pts',

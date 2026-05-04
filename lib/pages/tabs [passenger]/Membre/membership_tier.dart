@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../services/membership/membership_service.dart';
+
+const List<int> _kTierColors = [
+  0xFF3B82F6,
+  0xFFA855F7,
+  0xFFFB8C00,
+  0xFFF2C94C,
+];
 
 enum TierStatus { locked, unlocked, current, used }
 
@@ -16,38 +24,34 @@ class MembershipTier {
     required this.status,
     required this.accentColor,
   });
-}
 
-const List<MembershipTier> kMembershipTiers = [
-  MembershipTier(
-    name: 'Moviroo Go',
-    pointsRequired: 500,
-    discount: '10% OFF on your next rides',
-    status: TierStatus.used,
-    accentColor: Color(0xFF3B82F6),
-  ),
-  MembershipTier(
-    name: 'Moviroo Max',
-    pointsRequired: 2000,
-    discount: '15% OFF on your next rides',
-    status: TierStatus.current,
-    accentColor: Color(0xFFA855F7),
-  ),
-  MembershipTier(
-    name: 'Moviroo Elite',
-    pointsRequired: 3000,
-    discount: '20% OFF on your next rides',
-    status: TierStatus.locked,
-    accentColor: Color(0xFFFB8C00),
-  ),
-  MembershipTier(
-    name: 'Moviroo VIP',
-    pointsRequired: 5000,
-    discount: '25% OFF on your next rides',
-    status: TierStatus.locked,
-    accentColor: Color(0xFFF2C94C),
-  ),
-];
+  factory MembershipTier.fromLevel(
+    MembershipLevelData level,
+    int index,
+    int userPoints,
+    MembershipLevelData? currentLevel,
+  ) {
+    final TierStatus status;
+    if (currentLevel != null && level.order < currentLevel.order) {
+      status = TierStatus.used;
+    } else if (currentLevel != null && level.order == currentLevel.order) {
+      status = TierStatus.current;
+    } else if (userPoints >= level.requiredPoints) {
+      status = TierStatus.unlocked;
+    } else {
+      status = TierStatus.locked;
+    }
+
+    return MembershipTier(
+      name: level.name,
+      pointsRequired: level.requiredPoints,
+      discount:
+          '${level.discountPercentage.toStringAsFixed(0)}% OFF on your next rides',
+      status: status,
+      accentColor: Color(_kTierColors[index % _kTierColors.length]),
+    );
+  }
+}
 
 /// Runtime mutable state for a tier (claimed + promo code).
 class TierClaimState {

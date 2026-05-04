@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../services/membership/membership_service.dart';
 import '../../widgets/tab_bar.dart';
 import 'membership_tier.dart';
 import 'pass_header_card.dart';
@@ -17,16 +18,19 @@ class MembrePassScreen extends StatefulWidget {
 }
 
 class _MembrePassScreenState extends State<MembrePassScreen> {
-  // ── Constants ────────────────────────────────────────────
-  static const int _userPoints   = 2450;
-  static const int _nextLevel    = 3000;
-  static const int _pointsToNext = 550;
+  // ── API state ─────────────────────────────────────────────
+  MembershipInfo? _membershipInfo;
+  bool _loading = true;
+  String? _error;
+
+  // ── Derived tier list (built from API) ───────────────────
+  List<MembershipTier> _tiers = [];
 
   // ── Expanded accordion index (null = all collapsed) ──────
   int? _expandedIndex;
 
-  // ── Per-tier claim state (indexed parallel to kMembershipTiers) ─
-  late final List<TierClaimState> _claimStates;
+  // ── Per-tier claim state (indexed parallel to _tiers) ────
+  List<TierClaimState> _claimStates = [];
 
   // ── Rewards shown in "My Rewards" strip ──────────────────
   final List<ClaimedReward> _myRewards = [];
@@ -34,10 +38,34 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
   @override
   void initState() {
     super.initState();
-    _claimStates = List.generate(
-      kMembershipTiers.length,
-      (_) => const TierClaimState(),
-    );
+    _fetchMembership();
+  }
+
+  Future<void> _fetchMembership() async {
+    try {
+      final info = await MembershipService.getMembershipInfo();
+      if (!mounted) return;
+      setState(() {
+        _membershipInfo = info;
+        _tiers = List.generate(
+          info.levels.length,
+          (i) => MembershipTier.fromLevel(
+            info.levels[i],
+            i,
+            info.userPoints,
+            info.currentLevel,
+          ),
+        );
+        _claimStates = List.generate(_tiers.length, (_) => const TierClaimState());
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
   }
 
   // ── Accordion ─────────────────────────────────────────────
@@ -49,7 +77,7 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
 
   // ── Unlock → modal flow ───────────────────────────────────
   Future<void> _onUnlockTap(int index) async {
-    final tier = kMembershipTiers[index];
+    final tier = _tiers[index];
 
     final promoCode = await showClaimRewardModal(context, tier);
 
@@ -62,14 +90,6 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
         ClaimedReward(tier: tier, promoCode: promoCode),
       );
     });
-  }
-
-  // ── Derive current level number from tiers ────────────────
-  int get _currentLevelNumber {
-    for (int i = 0; i < kMembershipTiers.length; i++) {
-      if (kMembershipTiers[i].status == TierStatus.current) return i + 1;
-    }
-    return 1;
   }
 
   @override
@@ -101,55 +121,118 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Header card ──────────────────────────
-                    PassHeaderCard(
-                      userPoints: _userPoints,
-                      nextLevel: _nextLevel,
-                      pointsToNext: _pointsToNext,
-                      currentLevelNumber: _currentLevelNumber,
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // ── My Rewards strip (hidden when empty) ─
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOutCubic,
-                      child: MyRewardsSection(rewards: _myRewards),
-                    ),
-
-                    // ── Section label ────────────────────────
-                    Text(
-                      t('membership_levels'),
-                      style: AppTextStyles.sectionLabel(context),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // ── Tier cards ───────────────────────────
-                    ...List.generate(kMembershipTiers.length, (i) {
-                      final isLast = i == kMembershipTiers.length - 1;
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
-                        child: TierCard(
-                          tier: kMembershipTiers[i],
-                          isExpanded: _expandedIndex == i,
-                          onTap: () => _onTierTap(i),
-                          claimState: _claimStates[i],
-                          onUnlockTap: () => _onUnlockTap(i),
+                child: _loading
+                    ? const SizedBox(
+                        height: 300,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFA855F7),
+                          ),
                         ),
-                      );
-                    }),
-                  ],
-                ),
+                      )
+                    : _error != null
+                        ? SizedBox(
+                            height: 300,
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.cloud_off_rounded,
+                                      size: 48,
+                                      color: AppColors.subtext(context)),
+                                  const SizedBox(height: 12),
+                                   Text(
+                                    _error!,
+                                    style: AppTextStyles.bodySmall(context),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _loading = true;
+                                        _error = null;
+                                      });
+                                      _fetchMembership();
+                                    },
+                                    child: Text(
+                                      t('retry'),
+                                      style: const TextStyle(
+                                          color: Color(0xFFA855F7)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : _buildContent(t),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildContent(String Function(String) t) {
+    final info = _membershipInfo!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Header card ──────────────────────────
+        PassHeaderCard(
+          userPoints: info.userPoints,
+          progressPercent: info.progressPercent,
+          pointsToNext: info.pointsToNext,
+          currentLevelName: info.currentLevelName,
+          currentLevelNumber: info.currentLevel?.order ?? 0,
+        ),
+
+        const SizedBox(height: 28),
+
+        // ── My Rewards strip (hidden when empty) ─
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          child: MyRewardsSection(rewards: _myRewards),
+        ),
+
+        // ── Section label ────────────────────────
+        Text(
+          t('membership_levels'),
+          style: AppTextStyles.sectionLabel(context),
+        ),
+
+        const SizedBox(height: 12),
+
+        // ── Tier cards (empty state when no levels) ─
+        if (_tiers.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Text(
+                t('membership_no_levels'),
+                style: AppTextStyles.bodySmall(context),
+              ),
+            ),
+          )
+        else
+          ...List.generate(_tiers.length, (i) {
+            final isLast = i == _tiers.length - 1;
+            return Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
+              child: TierCard(
+                tier: _tiers[i],
+                isExpanded: _expandedIndex == i,
+                onTap: () => _onTierTap(i),
+                claimState: _claimStates[i],
+                onUnlockTap: () => _onUnlockTap(i),
+                userPoints: info.userPoints,
+              ),
+            );
+          }),
+      ],
     );
   }
 }

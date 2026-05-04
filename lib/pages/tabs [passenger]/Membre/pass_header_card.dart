@@ -5,22 +5,23 @@ import '../../../../l10n/app_localizations.dart';
 
 class PassHeaderCard extends StatelessWidget {
   final int userPoints;
-  final int nextLevel;
-  final int pointsToNext;
+  final double progressPercent;
+  final int? pointsToNext;
+  final String currentLevelName;
   final int currentLevelNumber;
 
   const PassHeaderCard({
     super.key,
     required this.userPoints,
-    required this.nextLevel,
-    required this.pointsToNext,
-    this.currentLevelNumber = 1,
+    required this.progressPercent,
+    required this.currentLevelName,
+    this.pointsToNext,
+    this.currentLevelNumber = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final progress = (userPoints / nextLevel).clamp(0.0, 1.0);
     final t        = AppLocalizations.of(context).translate;
 
     return Container(
@@ -79,7 +80,7 @@ class PassHeaderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    t('pass_tier_name'),
+                    currentLevelName,
                     style: AppTextStyles.bodyLarge(context).copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -114,7 +115,7 @@ class PassHeaderCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: progress,
+              value: progressPercent,
               minHeight: 8,
               backgroundColor: isDark
                   ? const Color(0xFF222228)
@@ -128,7 +129,9 @@ class PassHeaderCard extends StatelessWidget {
 
           // ✅ Small hint below bar: X pts to next level
           Text(
-            '$pointsToNext ${t('pass_pts_to_next')}',
+            pointsToNext != null
+                ? '$pointsToNext ${t('pass_pts_to_next')}'
+                : t('pass_top_level'),
             style: AppTextStyles.bodySmall(context),
           ),
 

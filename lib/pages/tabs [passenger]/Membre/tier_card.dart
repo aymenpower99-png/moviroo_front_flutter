@@ -14,6 +14,7 @@ class TierCard extends StatefulWidget {
   final VoidCallback onTap;
   final TierClaimState claimState;
   final VoidCallback onUnlockTap;
+  final int userPoints;
 
   const TierCard({
     super.key,
@@ -22,6 +23,7 @@ class TierCard extends StatefulWidget {
     required this.onTap,
     required this.claimState,
     required this.onUnlockTap,
+    required this.userPoints,
   });
 
   @override
@@ -150,6 +152,7 @@ class _TierCardState extends State<TierCard>
                   isDark: isDark,
                   claimState: widget.claimState,
                   onUnlockTap: widget.onUnlockTap,
+                  userPoints: widget.userPoints,
                 ),
               ),
             ),
