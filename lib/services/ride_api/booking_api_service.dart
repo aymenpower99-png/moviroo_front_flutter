@@ -21,11 +21,13 @@ class BookingApiService {
     TimeOfDay? scheduledTime,
     String? couponCode,
     double? discountPercent,
-    double? priceOverride,
-    int? loyaltyPointsOverride,
-    double? distanceKmOverride,
-    int? durationMinOverride,
-    double? surgeOverride,
+    /// ML price + values locked at vehicle selection.
+    /// Sent to backend so it reuses them directly without a second ML call.
+    double? lockedPrice,
+    int? lockedLoyaltyPoints,
+    double? lockedDistanceKm,
+    int? lockedDurationMin,
+    double? lockedSurge,
   }) async {
     try {
       final token = await TokenStorage.getAccess();
@@ -63,16 +65,16 @@ class BookingApiService {
           'coupon_code': couponCode,
         if (discountPercent != null && discountPercent > 0)
           'discount_percent': discountPercent,
-        if (priceOverride != null && priceOverride > 0)
-          'price_override': priceOverride,
-        if (loyaltyPointsOverride != null)
-          'loyalty_points_override': loyaltyPointsOverride,
-        if (distanceKmOverride != null)
-          'distance_km_override': distanceKmOverride,
-        if (durationMinOverride != null)
-          'duration_min_override': durationMinOverride,
-        if (surgeOverride != null)
-          'surge_override': surgeOverride,
+        if (lockedPrice != null && lockedPrice > 0)
+          'locked_price': lockedPrice,
+        if (lockedLoyaltyPoints != null)
+          'locked_loyalty_points': lockedLoyaltyPoints,
+        if (lockedDistanceKm != null)
+          'locked_distance_km': lockedDistanceKm,
+        if (lockedDurationMin != null)
+          'locked_duration_min': lockedDurationMin,
+        if (lockedSurge != null)
+          'locked_surge': lockedSurge,
       };
 
       final response = await http

@@ -229,6 +229,7 @@ class SupportService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
+        print('[SupportService] getTicket - raw data: $data');
         final ticket = SupportTicket.fromJson(data);
         final currentUserId = await TokenStorage.getUserId();
         final messages =
@@ -241,11 +242,15 @@ class SupportService {
                 )
                 .toList() ??
             [];
+        print(
+          '[SupportService] getTicket - parsed messages count: ${messages.length}',
+        );
         return {'ticket': ticket, 'messages': messages};
       } else {
         throw Exception('Failed to fetch ticket: ${response.statusCode}');
       }
     } catch (e) {
+      print('[SupportService] getTicket - error: $e');
       throw Exception('Failed to fetch ticket: $e');
     }
   }

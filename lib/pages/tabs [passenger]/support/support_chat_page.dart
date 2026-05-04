@@ -34,15 +34,19 @@ class _SupportChatPageState extends State<SupportChatPage> {
 
   Future<void> _loadTicket() async {
     try {
+      print('[SupportChatPage] Loading ticket: ${widget.ticketId}');
       final data = await _supportService.getTicket(widget.ticketId);
+      print('[SupportChatPage] Received data: $data');
       if (mounted) {
         setState(() {
           _messages = data['messages'] as List<TicketMessage>;
           _isLoading = false;
         });
+        print('[SupportChatPage] Messages loaded: ${_messages.length}');
         _scrollToBottom();
       }
     } catch (e) {
+      print('[SupportChatPage] Error loading ticket: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(
