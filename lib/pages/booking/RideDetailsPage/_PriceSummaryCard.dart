@@ -25,8 +25,8 @@ class PriceSummaryCard extends StatelessWidget {
     final hasDiscount = discountPercent != null && discountPercent! > 0;
 
     double? discountedPrice;
-    if (exactPrice != null) discountedPrice = exactPrice;
     if (priceTnd != null) discountedPrice = priceTnd!.toDouble();
+    if (exactPrice != null) discountedPrice = exactPrice; // precise double wins
 
     double? originalPrice;
     if (hasDiscount && discountedPrice != null) {

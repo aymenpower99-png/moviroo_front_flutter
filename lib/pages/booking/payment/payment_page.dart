@@ -14,8 +14,10 @@ import '_NewCardForm.dart';
 
 class PaymentPage extends StatefulWidget {
   final String? bookingId;
+  final double? lockedPrice;
+  final double? discountPercent;
 
-  const PaymentPage({super.key, this.bookingId});
+  const PaymentPage({super.key, this.bookingId, this.lockedPrice, this.discountPercent});
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
@@ -100,7 +102,22 @@ class _PaymentPageState extends State<PaymentPage> {
     ).pushNamedAndRemoveUntil(AppRouter.trajet, (route) => false);
   }
 
-  // ── Backend price accessor ─────────────────────────────────────────
+  // ── Price accessor — prefer client-locked price for display consistency ──
+  double get _displayPrice {
+    // Use the locked price passed from booking summary (vehicle selection price).
+    // Fall back to backend price only if locked price wasn't provided.
+    if (widget.lockedPrice != null && widget.lockedPrice! > 0) {
+      final discount = widget.discountPercent ?? _discountPercentFromBackend ?? 0;
+      if (discount > 0) {
+        return double.parse(
+          (widget.lockedPrice! * (1 - discount / 100)).toStringAsFixed(2),
+        );
+      }
+      return widget.lockedPrice!;
+    }
+    return _backendPrice;
+  }
+
   double get _backendPrice {
     final pf = _bookingData?['priceFinal'];
     if (pf is num) return pf.toDouble();
@@ -109,10 +126,17 @@ class _PaymentPageState extends State<PaymentPage> {
     return 0.0;
   }
 
-  double? get _discountPercent {
+  double? get _discountPercentFromBackend {
     final dp = _bookingData?['discountPercent'];
     if (dp is num && dp > 0) return dp.toDouble();
     return null;
+  }
+
+  double? get _discountPercent {
+    if (widget.discountPercent != null && widget.discountPercent! > 0) {
+      return widget.discountPercent;
+    }
+    return _discountPercentFromBackend;
   }
 
   String? get _vehicleClassName {
@@ -138,7 +162,7 @@ class _PaymentPageState extends State<PaymentPage> {
       return;
     }
 
-    if (_backendPrice <= 0) {
+    if (_displayPrice <= 0) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Price not loaded yet')));
@@ -159,8 +183,8 @@ class _PaymentPageState extends State<PaymentPage> {
       final expiryMonth = expiryParts.isNotEmpty ? expiryParts[0] : '';
       final expiryYear = expiryParts.length > 1 ? expiryParts[1] : '';
 
-      // Use backend price only — TND uses millimes (1 TND = 1000 millimes)
-      final amountInMillimes = (_backendPrice * 1000).toInt();
+      // Use display price (locked from vehicle selection) — TND uses millimes (1 TND = 1000 millimes)
+      final amountInMillimes = (_displayPrice * 1000).toInt();
 
       final paymentSuccess = await StripeService.processCardPayment(
         amount: amountInMillimes,
@@ -189,8 +213,8 @@ class _PaymentPageState extends State<PaymentPage> {
           }
         }
 
-        // Confirm ride on backend (locks price + triggers dispatch)
-        await _bookingApi.confirmRide(bookingId);
+        // Confirm ride on backend (locks price + triggers dispatch) — card payment
+        await _bookingApi.confirmRide(bookingId, paymentMethod: 'CARD');
 
         // Mark coupon as used now that payment + ride confirmation succeeded
         final couponCode = _bookingData?['couponCode'] as String?;
@@ -320,7 +344,7 @@ class _PaymentPageState extends State<PaymentPage> {
                           child: Column(
                             children: [
                               PaymentSummaryCard(
-                                subtotal: _backendPrice,
+                                subtotal: _displayPrice,
                                 rideLabel: _vehicleClassName,
                                 discountPercent: _discountPercent,
                               ),
@@ -382,8 +406,8 @@ class _PaymentPageState extends State<PaymentPage> {
                       onPressed: _isProcessing ? null : _onPay,
                       icon: const Icon(Icons.credit_card_outlined, size: 20),
                       label: Text(
-                        _backendPrice > 0
-                            ? '${t.translate('pay_amount')} ${_backendPrice.toStringAsFixed(2)} TND'
+                        _displayPrice > 0
+                            ? '${t.translate('pay_amount')} ${_displayPrice.toStringAsFixed(2)} TND'
                             : t.translate('pay_amount'),
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,

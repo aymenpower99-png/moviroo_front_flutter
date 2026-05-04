@@ -18,6 +18,7 @@ import '../pages/auth/otp/otp.dart';
 import '../pages/auth/check_email/check_email_page.dart';
 import '../pages/tabs [passenger]/home/home_page.dart' as home_tab;
 import '../pages/tabs [passenger]/support/support_page.dart';
+import '../pages/tabs [passenger]/support/support_chat_page.dart';
 import '../pages/tabs [passenger]/profile/settings_page.dart';
 import '../pages/tabs [passenger]/trajet/trajet_page.dart';
 import '../pages/tabs [passenger]/membre/membre_pass_screen.dart';
@@ -52,6 +53,7 @@ class AppRouter {
   static const String completeProfile = '/complete-profile';
   static const String home = '/home';
   static const String support = '/support';
+  static const String supportChat = '/support-chat';
   static const String profile = '/profile';
   static const String rideDetails = '/ride-details';
   static const String trajet = '/trajet';
@@ -101,7 +103,11 @@ class AppRouter {
     payment: (ctx) {
       final args =
           ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
-      return PaymentPage(bookingId: args?['bookingId'] as String?);
+      return PaymentPage(
+        bookingId: args?['bookingId'] as String?,
+        lockedPrice: (args?['lockedPrice'] as num?)?.toDouble(),
+        discountPercent: (args?['discountPercent'] as num?)?.toDouble(),
+      );
     },
     bookingConfirmed: (ctx) {
       final args =
@@ -131,6 +137,14 @@ class AppRouter {
     completeProfile: (_) => const CompleteProfilePage(),
     home: (_) => const home_tab.HomePage(),
     support: (_) => const SupportPage(),
+    supportChat: (ctx) {
+      final args =
+          ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
+      return SupportChatPage(
+        ticketId: args?['ticketId'] as String? ?? '',
+        subject: args?['subject'] as String? ?? '',
+      );
+    },
     profile: (_) => const SettingsPage(),
     nextDestinationSearchRoute: (_) => const LocationScreen(),
     mapEtaPage: (_) => const MapEtaPage(),

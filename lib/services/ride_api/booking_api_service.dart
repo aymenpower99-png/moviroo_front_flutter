@@ -21,6 +21,11 @@ class BookingApiService {
     TimeOfDay? scheduledTime,
     String? couponCode,
     double? discountPercent,
+    double? priceOverride,
+    int? loyaltyPointsOverride,
+    double? distanceKmOverride,
+    int? durationMinOverride,
+    double? surgeOverride,
   }) async {
     try {
       final token = await TokenStorage.getAccess();
@@ -58,6 +63,16 @@ class BookingApiService {
           'coupon_code': couponCode,
         if (discountPercent != null && discountPercent > 0)
           'discount_percent': discountPercent,
+        if (priceOverride != null && priceOverride > 0)
+          'price_override': priceOverride,
+        if (loyaltyPointsOverride != null)
+          'loyalty_points_override': loyaltyPointsOverride,
+        if (distanceKmOverride != null)
+          'distance_km_override': distanceKmOverride,
+        if (durationMinOverride != null)
+          'duration_min_override': durationMinOverride,
+        if (surgeOverride != null)
+          'surge_override': surgeOverride,
       };
 
       final response = await http
@@ -79,7 +94,7 @@ class BookingApiService {
 
   /// Confirm a ride (locks price and triggers dispatch).
   /// Backend route: PATCH /rides/:id/confirm
-  Future<Map<String, dynamic>?> confirmRide(String rideId) async {
+  Future<Map<String, dynamic>?> confirmRide(String rideId, {String? paymentMethod}) async {
     try {
       final token = await TokenStorage.getAccess();
       final headers = <String, String>{
@@ -87,10 +102,16 @@ class BookingApiService {
         if (token != null) 'Authorization': 'Bearer $token',
       };
 
+      final body = <String, dynamic>{};
+      if (paymentMethod != null) {
+        body['paymentMethod'] = paymentMethod;
+      }
+
       final response = await http
           .patch(
             Uri.parse('${AppConfig.baseUrl}/rides/$rideId/confirm'),
             headers: headers,
+            body: jsonEncode(body),
           )
           .timeout(const Duration(seconds: 15));
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../../services/support_service.dart';
 import 'support_widgets.dart';
 
 class SubmitTicketPage extends StatefulWidget {
@@ -15,6 +16,8 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
   final _subjectController = TextEditingController();
   final _descriptionController = TextEditingController();
   String _selectedCategoryKey = 'cat_ride_issue';
+  bool _isSubmitting = false;
+  final _supportService = SupportService();
 
   static const _categoryKeys = [
     'cat_ride_issue',
@@ -28,10 +31,49 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
   void dispose() {
     _subjectController.dispose();
     _descriptionController.dispose();
+    _supportService.dispose();
     super.dispose();
   }
 
-  void _onSubmit() {}
+  void _onSubmit() async {
+    final subject = _subjectController.text.trim();
+    final description = _descriptionController.text.trim();
+
+    if (subject.isEmpty || description.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all required fields')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final category = SupportTicketCategory.fromKey(_selectedCategoryKey);
+      await _supportService.createTicket(
+        subject: subject,
+        description: description,
+        category: category,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ticket submitted successfully')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to submit ticket: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
 
   void _handleAttachFiles() {
     debugPrint('Attach files tapped');
@@ -90,8 +132,9 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
                     const SizedBox(height: 4),
                     Text(
                       t.translate('submit_a_ticket'),
-                      style: AppTextStyles.sectionLabel(context)
-                          .copyWith(color: AppColors.primaryPurple),
+                      style: AppTextStyles.sectionLabel(
+                        context,
+                      ).copyWith(color: AppColors.primaryPurple),
                     ),
                     const SizedBox(height: 20),
 
@@ -117,8 +160,8 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
                     TicketCategoryDropdown(
                       value: _selectedCategoryKey,
                       onChanged: (val) => setState(
-                        () => _selectedCategoryKey =
-                            val ?? _selectedCategoryKey,
+                        () =>
+                            _selectedCategoryKey = val ?? _selectedCategoryKey,
                       ),
                       items: _categoryKeys,
                       labelBuilder: (key) => t.translate(key),
@@ -148,7 +191,9 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
                       onTap: _handleAttachFiles,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 16),
+                          vertical: 16,
+                          horizontal: 16,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.surface(context),
                           borderRadius: BorderRadius.circular(12),
@@ -168,9 +213,9 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
                             Expanded(
                               child: Text(
                                 t.translate('attach_files_hint'),
-                                style: AppTextStyles.bodyMedium(context)
-                                    .copyWith(
-                                        color: AppColors.subtext(context)),
+                                style: AppTextStyles.bodyMedium(
+                                  context,
+                                ).copyWith(color: AppColors.subtext(context)),
                               ),
                             ),
                             Icon(
@@ -188,24 +233,35 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _onSubmit,
+                        onPressed: _isSubmitting ? null : _onSubmit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryPurple,
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           elevation: 0,
                         ),
-                        child: Text(
-                          t.translate('submit_ticket_btn'),
-                          style: AppTextStyles.bodyMedium(context).copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                t.translate('submit_ticket_btn'),
+                                style: AppTextStyles.bodyMedium(context)
+                                    .copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 24),

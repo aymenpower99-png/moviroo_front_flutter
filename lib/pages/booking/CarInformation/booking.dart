@@ -90,6 +90,11 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           scheduledTime: widget.scheduledTime,
           couponCode: _appliedCouponCode.isNotEmpty ? _appliedCouponCode : null,
           discountPercent: _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
+          priceOverride: widget.selectedVehicle?.exactPrice,
+          loyaltyPointsOverride: widget.selectedVehicle?.loyaltyPoints,
+          distanceKmOverride: widget.selectedVehicle?.distanceKm,
+          durationMinOverride: widget.selectedVehicle?.durationMin,
+          surgeOverride: widget.selectedVehicle?.surgeMultiplier,
         );
 
         final rideId = ride?['id'] as String?;
@@ -103,9 +108,10 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           _isProcessing = false;
         });
 
-        // Navigate to Payment Page with bookingId and discount info
+        // Navigate to Payment Page with bookingId, locked price and discount info
         AppRouter.push(context, AppRouter.payment, args: {
           'bookingId': rideId,
+          'lockedPrice': widget.selectedVehicle?.exactPrice,
           'discountPercent': _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
         });
       } catch (e) {
@@ -137,6 +143,11 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           scheduledTime: widget.scheduledTime,
           couponCode: _appliedCouponCode.isNotEmpty ? _appliedCouponCode : null,
           discountPercent: _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
+          priceOverride: widget.selectedVehicle?.exactPrice,
+          loyaltyPointsOverride: widget.selectedVehicle?.loyaltyPoints,
+          distanceKmOverride: widget.selectedVehicle?.distanceKm,
+          durationMinOverride: widget.selectedVehicle?.durationMin,
+          surgeOverride: widget.selectedVehicle?.surgeMultiplier,
         );
 
         final rideId = ride?['id'] as String?;
@@ -144,8 +155,8 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           throw Exception('Ride id not returned by backend');
         }
 
-        // Confirm ride (locks price + triggers dispatch)
-        await _bookingApi.confirmRide(rideId);
+        // Confirm ride (locks price + triggers dispatch) — cash payment
+        await _bookingApi.confirmRide(rideId, paymentMethod: 'CASH');
 
         // Mark coupon as used if one was applied
         if (_appliedCouponCode.isNotEmpty) {

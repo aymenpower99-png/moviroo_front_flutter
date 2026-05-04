@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/tab_bar.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../services/support_service.dart';
+import '../../../../services/support_websocket_service.dart';
+import '../../../../routing/router.dart';
 import 'support_data.dart';
 import 'faq_widgets.dart';
 import 'Sumbit Ticket/support_page.dart' as ticket;
 import 'AI/ai_agent_page.dart';
+import 'messages_modal.dart';
 
 class SupportPage extends StatefulWidget {
   const SupportPage({super.key});
@@ -17,6 +22,87 @@ class SupportPage extends StatefulWidget {
 
 class _SupportPageState extends State<SupportPage> {
   int _tabIndex = 3;
+  final SupportService _supportService = SupportService();
+  final SupportWebSocketService _wsService = SupportWebSocketService();
+  List<SupportTicket> _tickets = [];
+  bool _isLoadingTickets = false;
+  int _unreadCount = 0;
+
+  @override
+  void dispose() {
+    _supportService.dispose();
+    super.dispose();
+  }
+
+  void _showMessagesModal() {
+    setState(() => _unreadCount = 0);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => MessagesModal(
+        tickets: _tickets,
+        isLoading: _isLoadingTickets,
+        onRefresh: _loadTickets,
+        onTicketTap: (ticket) {
+          Navigator.pop(context);
+          AppRouter.push(
+            context,
+            AppRouter.supportChat,
+            args: {'ticketId': ticket.id, 'subject': ticket.subject},
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _loadTickets() async {
+    setState(() => _isLoadingTickets = true);
+    try {
+      final tickets = await _supportService.listTickets();
+      if (mounted) {
+        setState(() {
+          _tickets = tickets;
+          _isLoadingTickets = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingTickets = false);
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTickets();
+    _connectWebSocket();
+  }
+
+  Future<void> _connectWebSocket() async {
+    await _wsService.connect();
+    _wsService.onUnreadCountChanged = (count) {
+      if (mounted) {
+        setState(() => _unreadCount += count);
+      }
+    };
+  }
+
+  Future<void> _callSupport() async {
+    final Uri telUri = Uri(scheme: 'tel', path: '+21694338510');
+    if (await canLaunchUrl(telUri)) {
+      await launchUrl(telUri);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cannot make phone calls on this device'),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,22 +134,55 @@ class _SupportPageState extends State<SupportPage> {
                             ),
                           ),
                         ),
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.iconBg(context),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.primaryPurple
-                                  .withValues(alpha: 0.35),
-                              width: 1,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.notifications_none_rounded,
-                            color: AppColors.primaryPurple,
-                            size: 20,
+                        GestureDetector(
+                          onTap: _showMessagesModal,
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: AppColors.iconBg(context),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.primaryPurple.withValues(
+                                      alpha: 0.35,
+                                    ),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.message_rounded,
+                                  color: AppColors.primaryPurple,
+                                  size: 20,
+                                ),
+                              ),
+                              if (_unreadCount > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      _unreadCount > 9 ? '9+' : '$_unreadCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ],
@@ -71,15 +190,16 @@ class _SupportPageState extends State<SupportPage> {
                     const SizedBox(height: 28),
 
                     // ── Quick Actions ──────────────────────────────
-                    Text(t('quick_actions'),
-                        style: AppTextStyles.sectionLabel(context)),
+                    Text(
+                      t('quick_actions'),
+                      style: AppTextStyles.sectionLabel(context),
+                    ),
                     const SizedBox(height: 14),
 
                     _AiBanner(
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => const AiAgentPage()),
+                        MaterialPageRoute(builder: (_) => const AiAgentPage()),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -108,7 +228,7 @@ class _SupportPageState extends State<SupportPage> {
                               icon: Icons.phone_outlined,
                               title: t('call_support'),
                               sub: t('call_support_sub'),
-                              onTap: () {},
+                              onTap: _callSupport,
                             ),
                           ),
                         ],
@@ -120,15 +240,16 @@ class _SupportPageState extends State<SupportPage> {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(t('frequently_asked'),
-                              style: AppTextStyles.sectionLabel(context)),
+                          child: Text(
+                            t('frequently_asked'),
+                            style: AppTextStyles.sectionLabel(context),
+                          ),
                         ),
                         GestureDetector(
                           onTap: () {},
                           child: Text(
                             t('view_all'),
-                            style:
-                                AppTextStyles.bodyMedium(context).copyWith(
+                            style: AppTextStyles.bodyMedium(context).copyWith(
                               fontWeight: FontWeight.w600,
                               color: AppColors.primaryPurple,
                             ),
@@ -179,8 +300,7 @@ class _AiBanner extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         decoration: BoxDecoration(
           gradient: AppColors.purpleGradient,
           borderRadius: BorderRadius.circular(16),
@@ -209,9 +329,9 @@ class _AiBanner extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     t('ai_assistant_sub'),
-                    style: AppTextStyles.bodySmall(context).copyWith(
-                      color: const Color(0xFFDDB8FF),
-                    ),
+                    style: AppTextStyles.bodySmall(
+                      context,
+                    ).copyWith(color: const Color(0xFFDDB8FF)),
                   ),
                 ],
               ),
@@ -276,25 +396,23 @@ class _ActionCard extends StatelessWidget {
                 color: AppColors.iconBg(context),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child:
-                  Icon(icon, color: AppColors.primaryPurple, size: 24),
+              child: Icon(icon, color: AppColors.primaryPurple, size: 24),
             ),
             const SizedBox(height: 14),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: AppTextStyles.bodyLarge(context).copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.bodyLarge(
+                context,
+              ).copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(
               sub,
               textAlign: TextAlign.center,
-              style: AppTextStyles.sectionLabel(context).copyWith(
-                fontSize: 10,
-                letterSpacing: 1.2,
-              ),
+              style: AppTextStyles.sectionLabel(
+                context,
+              ).copyWith(fontSize: 10, letterSpacing: 1.2),
             ),
           ],
         ),

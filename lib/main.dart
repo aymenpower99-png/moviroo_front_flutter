@@ -17,6 +17,7 @@ import 'services/auth_service/auth_service.dart';
 import 'services/recent_searches/recent_searches_service.dart';
 import 'providers/booking_provider.dart';
 import 'providers/chat_provider.dart';
+import 'providers/membership_provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 final themeProvider = ThemeProvider();
@@ -143,6 +144,7 @@ class _SmartWayAppState extends State<SmartWayApp> {
             providers: [
               ChangeNotifierProvider(create: (_) => BookingProvider()),
               ChangeNotifierProvider(create: (_) => ChatProvider()),
+              ChangeNotifierProvider(create: (_) => MembershipProvider()),
             ],
             child: MaterialApp(
               title: 'Moviroo',

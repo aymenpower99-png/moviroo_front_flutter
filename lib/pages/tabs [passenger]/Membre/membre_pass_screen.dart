@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/membership/membership_service.dart';
+import '../../../../providers/membership_provider.dart';
 import '../../widgets/tab_bar.dart';
 import 'membership_tier.dart';
 import 'pass_header_card.dart';
@@ -38,39 +40,60 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchMembership();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFromProvider();
+    });
   }
 
-  Future<void> _fetchMembership() async {
-    try {
-      final info = await MembershipService.getMembershipInfo();
-      if (!mounted) return;
-      setState(() {
-        _membershipInfo = info;
-        _tiers = List.generate(
-          info.levels.length,
-          (i) => MembershipTier.fromLevel(
-            info.levels[i],
-            info.userPoints,
-            info.currentLevel,
-          ),
-        );
-        // Restore claimed state from backend — preserve active coupon codes
-        _claimStates = List.generate(_tiers.length, (i) {
-          final levelId = info.levels[i].id;
-          final isClaimed = info.claimedLevelIds.contains(levelId);
-          final promoCode = info.activeCouponCodes[levelId];
-          return TierClaimState(claimed: isClaimed, promoCode: promoCode);
-        });
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
+  Future<void> _loadFromProvider({bool force = false}) async {
+    final provider = context.read<MembershipProvider>();
+
+    // Use cached data immediately if available and not forcing refresh
+    if (!force && provider.hasLoaded && provider.info != null) {
+      _applyInfo(provider.info!);
+      return;
     }
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    await provider.loadMembership(force: force);
+
+    if (!mounted) return;
+
+    final info = provider.info;
+    if (info == null) {
+      setState(() {
+        _error = provider.error ?? 'Unknown error';
+        _loading = false;
+      });
+      return;
+    }
+
+    _applyInfo(info);
+  }
+
+  void _applyInfo(MembershipInfo info) {
+    setState(() {
+      _membershipInfo = info;
+      _tiers = List.generate(
+        info.levels.length,
+        (i) => MembershipTier.fromLevel(
+          info.levels[i],
+          info.userPoints,
+          info.currentLevel,
+        ),
+      );
+      _claimStates = List.generate(_tiers.length, (i) {
+        final levelId = info.levels[i].id;
+        final isClaimed = info.claimedLevelIds.contains(levelId);
+        final promoCode = info.activeCouponCodes[levelId];
+        return TierClaimState(claimed: isClaimed, promoCode: promoCode);
+      });
+      _loading = false;
+    });
   }
 
   // ── Accordion ─────────────────────────────────────────────
@@ -88,13 +111,13 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
 
     if (promoCode == null || !mounted) return;
 
-    // Update local state immediately; _fetchMembership will restore code from activeCouponCodes
+    // Update local state immediately; provider refresh will restore code from activeCouponCodes
     setState(() {
       _claimStates[index] = TierClaimState(claimed: true, promoCode: promoCode);
       _myRewards.insert(0, ClaimedReward(tier: tier, promoCode: promoCode));
     });
-    // Refresh points/level in header — activeCouponCodes will restore the code above
-    _fetchMembership();
+    // Force refresh so points/level in header update
+    await _loadFromProvider(force: true);
   }
 
   @override
@@ -153,13 +176,7 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
                                   ),
                                   const SizedBox(height: 16),
                                   TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        _loading = true;
-                                        _error = null;
-                                      });
-                                      _fetchMembership();
-                                    },
+                                   onPressed: () => _loadFromProvider(force: true),
                                     child: Text(
                                       t('retry'),
                                       style: const TextStyle(
