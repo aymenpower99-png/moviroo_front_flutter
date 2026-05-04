@@ -106,6 +106,26 @@ class PassHeaderCard extends StatelessWidget {
                   ),
                 ],
               ),
+              const Spacer(),
+              // ── Points count (top-right) ────────────────────
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$userPoints',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFA855F7),
+                    ),
+                  ),
+                  Text(
+                    'pts',
+                    style: AppTextStyles.bodySmall(context),
+                  ),
+                ],
+              ),
             ],
           ),
 

@@ -7,30 +7,37 @@ class PriceSummaryCard extends StatelessWidget {
   final int? priceTnd;
   final double? exactPrice;
   final double? surgeMultiplier;
-  final int? loyaltyPoints;
+  final int? membershipPoints;
+  final double? discountPercent;
 
   const PriceSummaryCard({
     super.key,
     this.priceTnd,
     this.exactPrice,
     this.surgeMultiplier,
-    this.loyaltyPoints,
+    this.membershipPoints,
+    this.discountPercent,
   });
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final hasDiscount = discountPercent != null && discountPercent! > 0;
 
-    String formatPrice() {
-      if (priceTnd != null) {
-        return '$priceTnd TND';
-      } else if (exactPrice != null) {
-        return '${exactPrice!.toStringAsFixed(2)} TND';
-      }
-      return '-- TND';
+    double? discountedPrice;
+    if (exactPrice != null) discountedPrice = exactPrice;
+    if (priceTnd != null) discountedPrice = priceTnd!.toDouble();
+
+    double? originalPrice;
+    if (hasDiscount && discountedPrice != null) {
+      originalPrice = discountedPrice / (1 - discountPercent! / 100);
     }
 
-    final displayPrice = formatPrice();
+    String formatPrice(double? v) {
+      if (v != null) return '${v.toStringAsFixed(2)} TND';
+      if (priceTnd != null) return '$priceTnd TND';
+      return '-- TND';
+    }
 
     return Container(
       width: double.infinity,
@@ -54,13 +61,93 @@ class PriceSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          _PriceRow(label: t.translate('price'), value: displayPrice),
+          if (hasDiscount && originalPrice != null) ...[
+            // Strikethrough original price
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  t.translate('price'),
+                  style: AppTextStyles.bodyMedium(context).copyWith(
+                    color: AppColors.subtext(context),
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      formatPrice(originalPrice),
+                      style: AppTextStyles.bodySmall(context).copyWith(
+                        color: AppColors.subtext(context),
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                    Text(
+                      formatPrice(discountedPrice),
+                      style: AppTextStyles.bodyMedium(context).copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryPurple,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Discount badge
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryPurple.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${discountPercent!.toStringAsFixed(0)}% OFF',
+                        style: AppTextStyles.bodySmall(context).copyWith(
+                          color: AppColors.primaryPurple,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      t.translate('coupon_applied'),
+                      style: AppTextStyles.bodySmall(context).copyWith(
+                        color: AppColors.subtext(context),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '-${formatPrice(originalPrice! - discountedPrice!)}',
+                  style: AppTextStyles.bodyMedium(context).copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            _PriceRow(
+              label: t.translate('price'),
+              value: formatPrice(discountedPrice),
+            ),
+          ],
           const SizedBox(height: 10),
 
-          if (loyaltyPoints != null && loyaltyPoints! > 0) ...[
+          if (membershipPoints != null && membershipPoints! > 0) ...[
             _PriceRow(
-              label: t.translate('loyalty_points'),
-              value: '+$loyaltyPoints pts',
+              label: t.translate('membership_points'),
+              value: '+$membershipPoints pts',
             ),
             const SizedBox(height: 10),
           ],
@@ -79,7 +166,7 @@ class PriceSummaryCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                displayPrice,
+                formatPrice(discountedPrice),
                 style: AppTextStyles.bodyLarge(context).copyWith(
                   fontWeight: FontWeight.w800,
                   fontSize: 18,

@@ -4,7 +4,7 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class PaymentSummaryCard extends StatelessWidget {
-  /// Base price of the ride in TND (before fees).
+  /// Base price of the ride in TND (already discounted if coupon applied).
   final double subtotal;
 
   /// Fixed service fee in TND.
@@ -13,11 +13,15 @@ class PaymentSummaryCard extends StatelessWidget {
   /// Optional label override for the main line (e.g. vehicle class name).
   final String? rideLabel;
 
+  /// Discount percentage (0–100). Shows strikethrough original price when > 0.
+  final double? discountPercent;
+
   const PaymentSummaryCard({
     super.key,
     required this.subtotal,
     this.serviceFee = 0.0,
     this.rideLabel,
+    this.discountPercent,
   });
 
   String _fmt(double v) => '${v.toStringAsFixed(2)} TND';
@@ -25,6 +29,10 @@ class PaymentSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final hasDiscount = discountPercent != null && discountPercent! > 0;
+    final originalPrice = hasDiscount
+        ? subtotal / (1 - discountPercent! / 100)
+        : null;
     final total = subtotal + serviceFee;
 
     return Container(
@@ -48,10 +56,85 @@ class PaymentSummaryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          _PriceRow(
-            label: rideLabel ?? t.translate('standard_transfer'),
-            value: _fmt(subtotal),
-          ),
+          if (hasDiscount) ...[
+            // Ride row: strikethrough original → discounted
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  rideLabel ?? t.translate('standard_transfer'),
+                  style: AppTextStyles.bodyMedium(context),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _fmt(originalPrice!),
+                      style: AppTextStyles.bodySmall(context).copyWith(
+                        color: AppColors.subtext(context),
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                    Text(
+                      _fmt(subtotal),
+                      style: AppTextStyles.bodyMedium(context).copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryPurple,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Discount badge row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryPurple.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${discountPercent!.toStringAsFixed(0)}% OFF',
+                        style: AppTextStyles.bodySmall(context).copyWith(
+                          color: AppColors.primaryPurple,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      t.translate('coupon_applied'),
+                      style: AppTextStyles.bodySmall(context).copyWith(
+                        color: AppColors.subtext(context),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '-${_fmt(originalPrice! - subtotal)}',
+                  style: AppTextStyles.bodyMedium(context).copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            _PriceRow(
+              label: rideLabel ?? t.translate('standard_transfer'),
+              value: _fmt(subtotal),
+            ),
+          ],
           if (serviceFee > 0) ...[
             const SizedBox(height: 8),
             _PriceRow(

@@ -37,7 +37,7 @@ class TierExpandedPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Divider(
-              color: tier.accentColor.withValues(alpha: 0.25), height: 1),
+              color: AppColors.primaryPurple.withValues(alpha: 0.25), height: 1),
           const SizedBox(height: 14),
 
           // ── Discount pill ──────────────────────────────────
@@ -80,10 +80,10 @@ class _DiscountPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        dim ? AppColors.subtext(context) : tier.accentColor;
+        dim ? AppColors.subtext(context) : AppColors.primaryPurple;
     final bg = dim
         ? AppColors.border(context).withValues(alpha: 0.5)
-        : tier.accentColor.withValues(alpha: isDark ? 0.18 : 0.12);
+        : AppColors.primaryPurple.withValues(alpha: isDark ? 0.18 : 0.12);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -178,7 +178,7 @@ class _TierProgressBlockState extends State<TierProgressBlock>
                   ? const Color(0xFF222228)
                   : const Color(0xFFE5E7EB),
               valueColor: AlwaysStoppedAnimation<Color>(
-                  widget.tier.accentColor),
+                  AppColors.primaryPurple),
             ),
           ),
         ),
@@ -223,7 +223,7 @@ class TierUnlockButton extends StatelessWidget {
               fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: tier.accentColor,
+          backgroundColor: AppColors.primaryPurple,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(
@@ -268,7 +268,7 @@ class _TierClaimedCodeBlockState extends State<TierClaimedCodeBlock> {
 
   @override
   Widget build(BuildContext context) {
-    final accent = widget.tier.accentColor;
+    final accent = AppColors.primaryPurple;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

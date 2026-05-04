@@ -68,11 +68,11 @@ class _TierCardState extends State<TierCard>
     final tier    = widget.tier;
 
     final borderColor = widget.isExpanded
-        ? tier.accentColor.withValues(alpha: 0.6)
+        ? AppColors.primaryPurple.withValues(alpha: 0.6)
         : AppColors.border(context);
 
     final bgColor = widget.isExpanded
-        ? tier.accentColor.withValues(alpha: isDark ? 0.07 : 0.04)
+        ? AppColors.primaryPurple.withValues(alpha: isDark ? 0.07 : 0.04)
         : AppColors.surface(context);
 
     return GestureDetector(
@@ -90,7 +90,7 @@ class _TierCardState extends State<TierCard>
           boxShadow: widget.isExpanded && isDark
               ? [
                   BoxShadow(
-                    color: tier.accentColor.withValues(alpha: 0.14),
+                    color: AppColors.primaryPurple.withValues(alpha: 0.14),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   )
@@ -107,8 +107,6 @@ class _TierCardState extends State<TierCard>
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(
                   children: [
-                    _TierIconBubble(tier: tier, isDark: isDark),
-                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -132,7 +130,7 @@ class _TierCardState extends State<TierCard>
                       child: Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: widget.isExpanded
-                            ? tier.accentColor
+                            ? AppColors.primaryPurple
                             : AppColors.subtext(context),
                         size: 20,
                       ),
@@ -157,47 +155,6 @@ class _TierCardState extends State<TierCard>
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ICON BUBBLE
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _TierIconBubble extends StatelessWidget {
-  final MembershipTier tier;
-  final bool isDark;
-
-  const _TierIconBubble({required this.tier, required this.isDark});
-
-  IconData _icon(TierStatus s) {
-    switch (s) {
-      case TierStatus.locked:   return Icons.lock_outline_rounded;
-      case TierStatus.unlocked: return Icons.lock_open_rounded;
-      case TierStatus.current:  return Icons.stars_rounded;
-      case TierStatus.used:     return Icons.check_circle_outline_rounded;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isLocked = tier.status == TierStatus.locked;
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: tier.accentColor.withValues(alpha: isDark ? 0.15 : 0.1),
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Icon(
-          _icon(tier.status),
-          color:
-              isLocked ? AppColors.subtext(context) : tier.accentColor,
-          size: 20,
         ),
       ),
     );

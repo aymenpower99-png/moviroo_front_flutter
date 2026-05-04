@@ -51,12 +51,17 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
           info.levels.length,
           (i) => MembershipTier.fromLevel(
             info.levels[i],
-            i,
             info.userPoints,
             info.currentLevel,
           ),
         );
-        _claimStates = List.generate(_tiers.length, (_) => const TierClaimState());
+        // Restore claimed state from backend — preserve active coupon codes
+        _claimStates = List.generate(_tiers.length, (i) {
+          final levelId = info.levels[i].id;
+          final isClaimed = info.claimedLevelIds.contains(levelId);
+          final promoCode = info.activeCouponCodes[levelId];
+          return TierClaimState(claimed: isClaimed, promoCode: promoCode);
+        });
         _loading = false;
       });
     } catch (e) {
@@ -83,13 +88,13 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
 
     if (promoCode == null || !mounted) return;
 
+    // Update local state immediately; _fetchMembership will restore code from activeCouponCodes
     setState(() {
       _claimStates[index] = TierClaimState(claimed: true, promoCode: promoCode);
-      _myRewards.insert(
-        0,
-        ClaimedReward(tier: tier, promoCode: promoCode),
-      );
+      _myRewards.insert(0, ClaimedReward(tier: tier, promoCode: promoCode));
     });
+    // Refresh points/level in header — activeCouponCodes will restore the code above
+    _fetchMembership();
   }
 
   @override
@@ -186,7 +191,7 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
           progressPercent: info.progressPercent,
           pointsToNext: info.pointsToNext,
           currentLevelName: info.currentLevelName,
-          currentLevelNumber: info.currentLevel?.order ?? 0,
+          currentLevelNumber: info.currentLevel?.level ?? 0,
         ),
 
         const SizedBox(height: 28),

@@ -34,11 +34,11 @@ class ClaimConfirmView extends StatelessWidget {
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            color: tier.accentColor.withValues(alpha: isDark ? 0.18 : 0.12),
+            color: AppColors.primaryPurple.withValues(alpha: isDark ? 0.18 : 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.card_giftcard_rounded,
-              color: tier.accentColor, size: 32),
+              color: AppColors.primaryPurple, size: 32),
         ),
         const SizedBox(height: 16),
 
@@ -61,7 +61,7 @@ class ClaimConfirmView extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: tier.accentColor.withValues(alpha: isDark ? 0.14 : 0.09),
+            color: AppColors.primaryPurple.withValues(alpha: isDark ? 0.14 : 0.09),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
@@ -72,7 +72,7 @@ class ClaimConfirmView extends StatelessWidget {
                   fontFamily: 'Inter',
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
-                  color: tier.accentColor,
+                  color: AppColors.primaryPurple,
                 ),
               ),
               const SizedBox(height: 2),
@@ -105,7 +105,7 @@ class ClaimConfirmView extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: onClaim,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: tier.accentColor,
+                  backgroundColor: AppColors.primaryPurple,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
@@ -147,7 +147,7 @@ class ClaimLoadingView extends StatelessWidget {
             width: 48,
             height: 48,
             child: CircularProgressIndicator(
-              color: tier.accentColor,
+              color: AppColors.primaryPurple,
               strokeWidth: 3,
             ),
           ),
@@ -190,11 +190,11 @@ class ClaimRevealedView extends StatelessWidget {
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            color: tier.accentColor.withValues(alpha: isDark ? 0.18 : 0.12),
+            color: AppColors.primaryPurple.withValues(alpha: isDark ? 0.18 : 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.check_circle_rounded,
-              color: tier.accentColor, size: 34),
+              color: AppColors.primaryPurple, size: 34),
         ),
         const SizedBox(height: 16),
         Text(
@@ -220,11 +220,11 @@ class ClaimRevealedView extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
             decoration: BoxDecoration(
-              color: tier.accentColor
+              color: AppColors.primaryPurple
                   .withValues(alpha: isDark ? 0.14 : 0.09),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: tier.accentColor.withValues(alpha: 0.35)),
+                  color: AppColors.primaryPurple.withValues(alpha: 0.35)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -235,14 +235,14 @@ class ClaimRevealedView extends StatelessWidget {
                     fontFamily: 'monospace',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: tier.accentColor,
+                    color: AppColors.primaryPurple,
                     letterSpacing: 1.5,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Icon(
                   copied ? Icons.check_rounded : Icons.copy_rounded,
-                  color: tier.accentColor,
+                  color: AppColors.primaryPurple,
                   size: 18,
                 ),
               ],
@@ -257,8 +257,8 @@ class ClaimRevealedView extends StatelessWidget {
             onPressed: onCopy,
             style: ElevatedButton.styleFrom(
               backgroundColor:
-                  tier.accentColor.withValues(alpha: 0.15),
-              foregroundColor: tier.accentColor,
+                  AppColors.primaryPurple.withValues(alpha: 0.15),
+              foregroundColor: AppColors.primaryPurple,
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
@@ -279,7 +279,7 @@ class ClaimRevealedView extends StatelessWidget {
           child: ElevatedButton(
             onPressed: onDone,
             style: ElevatedButton.styleFrom(
-              backgroundColor: tier.accentColor,
+              backgroundColor: AppColors.primaryPurple,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(

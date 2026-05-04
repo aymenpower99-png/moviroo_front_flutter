@@ -19,6 +19,8 @@ class BookingApiService {
     String? classId,
     DateTime? scheduledDate,
     TimeOfDay? scheduledTime,
+    String? couponCode,
+    double? discountPercent,
   }) async {
     try {
       final token = await TokenStorage.getAccess();
@@ -52,6 +54,10 @@ class BookingApiService {
           'pickup_address': pickupAddress,
         if (dropoffAddress != null && dropoffAddress.isNotEmpty)
           'dropoff_address': dropoffAddress,
+        if (couponCode != null && couponCode.isNotEmpty)
+          'coupon_code': couponCode,
+        if (discountPercent != null && discountPercent > 0)
+          'discount_percent': discountPercent,
       };
 
       final response = await http

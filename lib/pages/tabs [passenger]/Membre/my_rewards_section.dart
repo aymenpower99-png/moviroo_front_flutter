@@ -59,7 +59,7 @@ class _MyRewardsSectionState extends State<MyRewardsSection> {
             itemBuilder: (context, i) {
               final reward  = widget.rewards[i];
               final copied  = _copiedIndices.contains(i);
-              final accent  = reward.tier.accentColor;
+              final accent  = AppColors.primaryPurple;
               final discount = reward.tier.discount.split(' ').first;
 
               return GestureDetector(

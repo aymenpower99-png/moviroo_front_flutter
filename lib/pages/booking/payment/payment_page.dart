@@ -5,6 +5,7 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
 import '../../../../services/stripe/stripe_service.dart';
+import '../../../../services/membership/membership_service.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/booking_provider.dart';
 import '_PaymentSummaryCard.dart';
@@ -108,6 +109,12 @@ class _PaymentPageState extends State<PaymentPage> {
     return 0.0;
   }
 
+  double? get _discountPercent {
+    final dp = _bookingData?['discountPercent'];
+    if (dp is num && dp > 0) return dp.toDouble();
+    return null;
+  }
+
   String? get _vehicleClassName {
     final cls = _bookingData?['vehicleClass'] as Map<String, dynamic>?;
     return cls?['name'] as String?;
@@ -184,6 +191,16 @@ class _PaymentPageState extends State<PaymentPage> {
 
         // Confirm ride on backend (locks price + triggers dispatch)
         await _bookingApi.confirmRide(bookingId);
+
+        // Mark coupon as used now that payment + ride confirmation succeeded
+        final couponCode = _bookingData?['couponCode'] as String?;
+        if (couponCode != null && couponCode.isNotEmpty) {
+          try {
+            await MembershipService.useCoupon(couponCode);
+          } catch (_) {
+            // Non-blocking — don't fail if coupon mark fails
+          }
+        }
 
         // Notify provider that payment was completed
         if (mounted) {
@@ -305,6 +322,7 @@ class _PaymentPageState extends State<PaymentPage> {
                               PaymentSummaryCard(
                                 subtotal: _backendPrice,
                                 rideLabel: _vehicleClassName,
+                                discountPercent: _discountPercent,
                               ),
                               const SizedBox(height: 16),
 

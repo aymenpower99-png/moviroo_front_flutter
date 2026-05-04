@@ -5,6 +5,7 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../models/vehicle_pricing_response.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
+import '../../../../services/membership/membership_service.dart';
 import '_BookingSummaryCard.dart';
 import '_RouteSection.dart';
 import '_DiscountSection.dart';
@@ -46,9 +47,20 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
   final BookingApiService _bookingApi = BookingApiService();
   bool _isProcessing = false;
 
+  // ── Discount state ─────────────────────────────────────────
+  double _appliedDiscountPercent = 0;
+  String _appliedCouponCode      = '';
+
   void _onPaymentMethodChanged(String method) {
     setState(() {
       _selectedPaymentMethod = method;
+    });
+  }
+
+  void _onDiscountApplied(double percent, String code) {
+    setState(() {
+      _appliedDiscountPercent = percent;
+      _appliedCouponCode      = code;
     });
   }
 
@@ -76,6 +88,8 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           classId: widget.selectedVehicle?.id,
           scheduledDate: widget.scheduledDate,
           scheduledTime: widget.scheduledTime,
+          couponCode: _appliedCouponCode.isNotEmpty ? _appliedCouponCode : null,
+          discountPercent: _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
         );
 
         final rideId = ride?['id'] as String?;
@@ -89,8 +103,11 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           _isProcessing = false;
         });
 
-        // Navigate to Payment Page with bookingId only
-        AppRouter.push(context, AppRouter.payment, args: {'bookingId': rideId});
+        // Navigate to Payment Page with bookingId and discount info
+        AppRouter.push(context, AppRouter.payment, args: {
+          'bookingId': rideId,
+          'discountPercent': _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
+        });
       } catch (e) {
         if (mounted) {
           setState(() {
@@ -118,6 +135,8 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           classId: widget.selectedVehicle?.id,
           scheduledDate: widget.scheduledDate,
           scheduledTime: widget.scheduledTime,
+          couponCode: _appliedCouponCode.isNotEmpty ? _appliedCouponCode : null,
+          discountPercent: _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
         );
 
         final rideId = ride?['id'] as String?;
@@ -127,6 +146,15 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
 
         // Confirm ride (locks price + triggers dispatch)
         await _bookingApi.confirmRide(rideId);
+
+        // Mark coupon as used if one was applied
+        if (_appliedCouponCode.isNotEmpty) {
+          try {
+            await MembershipService.useCoupon(_appliedCouponCode);
+          } catch (_) {
+            // Non-blocking
+          }
+        }
 
         if (!mounted) return;
 
@@ -238,7 +266,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                       durationMin: widget.selectedVehicle?.durationMin,
                     ),
                     const SizedBox(height: 12),
-                    const DiscountSection(),
+                    DiscountSection(onDiscountApplied: _onDiscountApplied),
                     const SizedBox(height: 12),
                     BillingAddressSection(key: _billingKey),
                     const SizedBox(height: 12),
@@ -252,6 +280,9 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                       exactPrice: widget.selectedVehicle?.exactPrice,
                       surgeMultiplier: widget.selectedVehicle?.surgeMultiplier,
                       loyaltyPoints: widget.selectedVehicle?.loyaltyPoints,
+                      appliedDiscountPercent: _appliedDiscountPercent > 0
+                          ? _appliedDiscountPercent
+                          : null,
                     ),
                   ],
                 ),

@@ -285,6 +285,8 @@
   "payment": "Payment",
   "payment_summary": "SUMMARY",
   "pay_amount": "Pay",
+  "coupon_applied": "Coupon applied",
+  "membership_points": "Membership Points",
   "secured_encryption": "Secured with 256-bit encryption",
   "billing_address": "Billing address",
   "new_billing_address": "New billing address",

@@ -155,9 +155,15 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     return null;
   }
 
-  int? get _loyaltyPoints {
+  int? get _membershipPoints {
     final v = _bookingData?['loyaltyPointsEarned'];
     if (v is num) return v.toInt();
+    return null;
+  }
+
+  double? get _discountPercent {
+    final v = _bookingData?['discountPercent'];
+    if (v is num && v > 0) return v.toDouble();
     return null;
   }
 
@@ -259,7 +265,8 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                             priceTnd: _priceTnd,
                             exactPrice: _exactPrice,
                             surgeMultiplier: _surgeMultiplier,
-                            loyaltyPoints: _loyaltyPoints,
+                            membershipPoints: _membershipPoints,
+                            discountPercent: _discountPercent,
                           ),
                           const SizedBox(height: 16),
 
@@ -272,7 +279,11 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                               AppRouter.push(
                                 context,
                                 AppRouter.payment,
-                                args: {'bookingId': bId},
+                                args: {
+                                  'bookingId': bId,
+                                  if (_discountPercent != null)
+                                    'discountPercent': _discountPercent,
+                                },
                               );
                             },
                             onCancel: () => _showCancelDialog(context),
