@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,8 @@ class StripeService {
   static const String _publishableKey =
       'pk_test_51TQUuDPm6vo1FQzebQQuzSCCFgFwVE7UVwNb211WGYVuXGoFmKX1IG5Nylu9P4JuwnNAP3PW9u5u5YedZj44M9x100bg4KmXGE';
 
+  static bool _initialized = false;
+
   /// Your backend API endpoint for creating payment intents
   static const String _paymentIntentEndpoint =
       '${AppConfig.baseUrl}/payment/create-intent';
@@ -23,8 +26,26 @@ class StripeService {
 
   /// Initialize Stripe with publishable key
   static Future<void> initialize() async {
+    if (_initialized) return;
     Stripe.publishableKey = _publishableKey;
     await Stripe.instance.applySettings();
+    _initialized = true;
+  }
+
+  /// Present the Stripe PaymentSheet for a given [clientSecret].
+  ///
+  /// Lazily initializes Stripe if not already done.
+  /// Throws [StripeException] if the user cancels or payment fails.
+  static Future<void> presentPaymentSheet(String clientSecret) async {
+    await initialize(); // lazy — safe to call multiple times
+    await Stripe.instance.initPaymentSheet(
+      paymentSheetParameters: SetupPaymentSheetParameters(
+        paymentIntentClientSecret: clientSecret,
+        merchantDisplayName: 'Moviroo',
+        style: ThemeMode.system,
+      ),
+    );
+    await Stripe.instance.presentPaymentSheet();
   }
 
   /// Create a payment intent on your backend

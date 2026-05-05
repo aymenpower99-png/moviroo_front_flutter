@@ -16,6 +16,7 @@ class _SplashPageState extends State<SplashPage> {
   final AuthService _authService = AuthService();
 
   late VideoPlayerController _controller;
+  bool _controllerReady = false;
 
   bool _sessionOk = false;
   bool _videoReady = false;
@@ -28,35 +29,42 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _init() async {
-    await Future.wait([
-      _loadVideo(),
-      _checkSession(),
-    ]);
-  }
-
-  // 🎥 VIDEO
-  Future<void> _loadVideo() async {
-    _controller = VideoPlayerController.asset('images/appanim.mp4');
-
-    await _controller.initialize();
-
-    // 🔥 IMPORTANT: REMOVE SPLASH FIRST (no fade)
+    // Remove native splash immediately — never block on video init
     FlutterNativeSplash.remove();
 
-    setState(() {
-      _videoReady = true;
-    });
+    // Run both in parallel; Future.wait ensures session is set before we handle fallback
+    final results = await Future.wait([
+      _tryLoadVideo(),
+      _checkSession(),
+    ]);
 
-    _controller
-      ..setLooping(false)
-      ..play();
+    // If video failed (returns false), navigate now — session is guaranteed set
+    if (!(results[0] as bool)) {
+      _goNext();
+    }
+  }
 
-    // Navigate when video ends
-    _controller.addListener(() {
-      if (_controller.value.position >= _controller.value.duration) {
-        _goNext();
-      }
-    });
+  // 🎥 VIDEO — returns true if video loaded, false on failure
+  Future<bool> _tryLoadVideo() async {
+    try {
+      _controller = VideoPlayerController.asset('images/appanim.mp4');
+      await _controller.initialize().timeout(const Duration(seconds: 5));
+
+      setState(() => _videoReady = true);
+      _controllerReady = true;
+      _controller
+        ..setLooping(false)
+        ..play();
+
+      _controller.addListener(() {
+        if (_controller.value.position >= _controller.value.duration) {
+          _goNext();
+        }
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   // 🔐 SESSION
@@ -78,7 +86,7 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (_controllerReady) _controller.dispose();
     super.dispose();
   }
 

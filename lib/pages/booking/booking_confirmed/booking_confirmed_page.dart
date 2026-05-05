@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../../../theme/app_colors.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
 import 'package:provider/provider.dart';
@@ -21,6 +22,7 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
   Map<String, dynamic>? _bookingData;
   bool _isCancelling = false;
   bool _isLoading = true;
+  Timer? _pollTimer;
 
   @override
   void initState() {
@@ -28,6 +30,12 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
     if (widget.bookingId != null) {
       _loadBookingData();
     }
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadBookingData() async {
@@ -40,11 +48,34 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
           _bookingData = data;
           _isLoading = false;
         });
+        // For card rides in PENDING state, poll until status changes
+        final status = data?['status'] as String?;
+        final method = (data?['paymentMethod'] as String?)?.toUpperCase();
+        if (status == 'PENDING' && method == 'CARD') {
+          _startPolling();
+        }
       }
     } catch (e) {
       debugPrint('Failed to load booking data: $e');
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      if (!mounted || widget.bookingId == null) {
+        _pollTimer?.cancel();
+        return;
+      }
+      final data = await _bookingApi.getRideDetails(widget.bookingId!);
+      if (!mounted) return;
+      final status = data?['status'] as String?;
+      if (status != null && status != 'PENDING') {
+        _pollTimer?.cancel();
+        setState(() => _bookingData = data);
+      }
+    });
   }
 
   // ── Backend-first data accessors ─────────────────────────────────────────
@@ -108,13 +139,38 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
     try {
       await _bookingApi.cancelRide(widget.bookingId!);
       if (mounted) {
-        // Notify provider to refresh booking list
+        _pollTimer?.cancel();
         context.read<BookingProvider>().onBookingCancelled();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Booking cancelled successfully')),
-        );
-        Navigator.pop(context);
+        final wasCard =
+            (_bookingData?['paymentMethod'] as String?)?.toUpperCase() ==
+                'CARD';
+        if (wasCard) {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Booking Cancelled'),
+              content: const Text(
+                'Your booking has been cancelled. If a payment was charged, '
+                'a full refund will be processed to your card within 5–10 business days.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Booking cancelled successfully')),
+          );
+          Navigator.pop(context);
+        }
       }
     } catch (e) {
       if (mounted) {

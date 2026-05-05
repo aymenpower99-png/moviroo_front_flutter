@@ -120,6 +120,10 @@ class BookingApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       }
+      // 409 = already confirmed — treat as no-op so callers can safely retry
+      if (response.statusCode == 409) {
+        return null;
+      }
       throw Exception('Failed to confirm ride: ${response.body}');
     } catch (e) {
       throw Exception('Error confirming ride: $e');
@@ -206,5 +210,31 @@ class BookingApiService {
       // Non-critical — caller handles null
     }
     return null;
+  }
+
+  /// Get or create a Stripe PaymentIntent for a CARD ride.
+  /// Backend route: POST /billing/payments/ride/:rideId/stripe-intent
+  /// Returns { clientSecret, paymentIntentId } on success.
+  Future<Map<String, dynamic>> createStripeIntentForRide(String rideId) async {
+    final token = await TokenStorage.getAccess();
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    final response = await http
+        .post(
+          Uri.parse(
+            '${AppConfig.baseUrl}/billing/payments/ride/$rideId/stripe-intent',
+          ),
+          headers: headers,
+          body: jsonEncode({}),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to create Stripe intent: ${response.body}');
   }
 }

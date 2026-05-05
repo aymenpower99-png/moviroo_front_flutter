@@ -6,11 +6,10 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
 import '../../../../services/stripe/stripe_service.dart';
 import '../../../../services/membership/membership_service.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/booking_provider.dart';
 import '_PaymentSummaryCard.dart';
-import '_SavedCardSection.dart';
-import '_NewCardForm.dart';
 
 class PaymentPage extends StatefulWidget {
   final String? bookingId;
@@ -24,22 +23,14 @@ class PaymentPage extends StatefulWidget {
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-  bool _hasSavedCard = false;
-  bool _useNewCard = true;
   bool _isProcessing = false;
-  bool _saveCard = false;
   final BookingApiService _bookingApi = BookingApiService();
-  List<Map<String, dynamic>> _savedCards = [];
   Map<String, dynamic>? _bookingData;
   bool _isLoadingBooking = false;
-
-  final _savedCardKey = GlobalKey<SavedCardSectionState>();
-  final _newCardKey = GlobalKey<NewCardFormState>();
 
   @override
   void initState() {
     super.initState();
-    _loadSavedCards();
     if (widget.bookingId != null) {
       _loadBookingData();
     }
@@ -59,38 +50,6 @@ class _PaymentPageState extends State<PaymentPage> {
     } catch (e) {
       debugPrint('Failed to load booking data: $e');
       if (mounted) setState(() => _isLoadingBooking = false);
-    }
-  }
-
-  Future<void> _loadSavedCards() async {
-    final hasCards = await StripeService.hasSavedCards();
-    final cards = await StripeService.getSavedCards();
-    if (mounted) {
-      setState(() {
-        _hasSavedCard = hasCards;
-        _savedCards = cards;
-        if (hasCards) {
-          _useNewCard = false;
-        }
-      });
-    }
-  }
-
-  Future<void> _onDeleteCard(String token) async {
-    try {
-      await StripeService.deleteCard(token);
-      await _loadSavedCards();
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Card removed')));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to remove card: $e')));
-      }
     }
   }
 
@@ -145,15 +104,6 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   void _onPay() async {
-    bool valid = false;
-    if (_hasSavedCard && !_useNewCard) {
-      valid = _savedCardKey.currentState?.validate() ?? false;
-    } else {
-      valid = _newCardKey.currentState?.validate() ?? false;
-      _saveCard = _newCardKey.currentState?.saveCard ?? false;
-    }
-    if (!valid) return;
-
     final bookingId = widget.bookingId;
     if (bookingId == null) {
       ScaffoldMessenger.of(
@@ -169,99 +119,50 @@ class _PaymentPageState extends State<PaymentPage> {
       return;
     }
 
-    setState(() {
-      _isProcessing = true;
-    });
+    setState(() => _isProcessing = true);
 
     try {
-      // Read card details from the form
-      final cardState = _newCardKey.currentState;
-      final cardNumber = cardState?.cardNumber ?? '';
-      final cvv = cardState?.cvv ?? '';
-      final cardholder = cardState?.cardholderName;
-      final expiryParts = (cardState?.expiry ?? '/').split('/');
-      final expiryMonth = expiryParts.isNotEmpty ? expiryParts[0] : '';
-      final expiryYear = expiryParts.length > 1 ? expiryParts[1] : '';
+      // 1. Confirm ride with CARD (409 = already confirmed, treated as no-op)
+      await _bookingApi.confirmRide(bookingId, paymentMethod: 'CARD');
 
-      // Use display price (locked from vehicle selection) — TND uses millimes (1 TND = 1000 millimes)
-      final amountInMillimes = (_displayPrice * 1000).toInt();
+      // 2. Get/create Stripe PaymentIntent for this ride
+      final intentData = await _bookingApi.createStripeIntentForRide(bookingId);
+      final clientSecret = intentData['clientSecret'] as String?;
+      if (clientSecret == null) throw Exception('No client secret received');
 
-      final paymentSuccess = await StripeService.processCardPayment(
-        amount: amountInMillimes,
-        currency: 'tnd',
-        bookingId: bookingId,
-        cardNumber: cardNumber,
-        expiryMonth: expiryMonth,
-        expiryYear: expiryYear,
-        cvv: cvv,
-        cardholderName: cardholder,
-      );
+      // 3. Present Stripe PaymentSheet (handles card entry securely)
+      await StripeService.presentPaymentSheet(clientSecret);
+
+      // 4. Mark coupon used now that payment succeeded
+      final couponCode = _bookingData?['couponCode'] as String?;
+      if (couponCode != null && couponCode.isNotEmpty) {
+        try {
+          await MembershipService.useCoupon(couponCode);
+        } catch (_) {
+          // Non-blocking
+        }
+      }
 
       if (!mounted) return;
+      context.read<BookingProvider>().onPaymentCompleted();
+      setState(() => _isProcessing = false);
 
-      if (paymentSuccess) {
-        if (_saveCard && _useNewCard) {
-          try {
-            await StripeService.saveCard(
-              cardNumber: cardNumber,
-              expiryMonth: expiryMonth,
-              expiryYear: expiryYear,
-              cardholderName: cardholder ?? '',
-            );
-          } catch (e) {
-            debugPrint('Failed to save card: $e');
-          }
-        }
-
-        // Confirm ride on backend (locks price + triggers dispatch) — card payment
-        await _bookingApi.confirmRide(bookingId, paymentMethod: 'CARD');
-
-        // Mark coupon as used now that payment + ride confirmation succeeded
-        final couponCode = _bookingData?['couponCode'] as String?;
-        if (couponCode != null && couponCode.isNotEmpty) {
-          try {
-            await MembershipService.useCoupon(couponCode);
-          } catch (_) {
-            // Non-blocking — don't fail if coupon mark fails
-          }
-        }
-
-        // Notify provider that payment was completed
-        if (mounted) {
-          context.read<BookingProvider>().onPaymentCompleted();
-        }
-
-        if (!mounted) return;
-
-        setState(() {
-          _isProcessing = false;
-        });
-
-        // Navigate to Payment Success — only pass bookingId
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRouter.paymentSuccess,
-          (route) => false,
-          arguments: {'bookingId': bookingId},
-        );
-      } else {
-        // Notify provider that payment failed
-        if (mounted) {
-          context.read<BookingProvider>().onPaymentFailed();
-        }
-
-        setState(() {
-          _isProcessing = false;
-        });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Card declined')));
-      }
+      // Navigate to Payment Success
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRouter.paymentSuccess,
+        (route) => false,
+        arguments: {'bookingId': bookingId},
+      );
+    } on StripeException catch (e) {
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+      final msg = e.error.localizedMessage ?? 'Payment cancelled';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (!mounted) return;
-
-      setState(() {
-        _isProcessing = false;
-      });
+      setState(() => _isProcessing = false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Payment failed: $e')));
@@ -350,26 +251,77 @@ class _PaymentPageState extends State<PaymentPage> {
                               ),
                               const SizedBox(height: 16),
 
-                              if (_hasSavedCard && !_useNewCard) ...[
-                                SavedCardSection(
-                                  key: _savedCardKey,
-                                  onUseNewCard: () =>
-                                      setState(() => _useNewCard = true),
-                                  savedCards: _savedCards,
-                                  onDeleteCard: _onDeleteCard,
+                              // ── Stripe payment notice ──────────────────
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface(context),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: AppColors.border(context),
+                                  ),
                                 ),
-                              ] else ...[
-                                NewCardForm(
-                                  key: _newCardKey,
-                                  onBackToSaved: _hasSavedCard
-                                      ? () =>
-                                            setState(() => _useNewCard = false)
-                                      : null,
-                                  onSaved: () => setState(() {
-                                    _useNewCard = false;
-                                  }),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryPurple
+                                                .withValues(alpha: 0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(
+                                            Icons.credit_card_rounded,
+                                            color: AppColors.primaryPurple,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Secure Card Payment',
+                                              style: AppTextStyles.bodyMedium(
+                                                context,
+                                              ).copyWith(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Powered by Stripe',
+                                              style: AppTextStyles.bodySmall(
+                                                context,
+                                              ).copyWith(
+                                                color:
+                                                    AppColors.subtext(context),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 14),
+                                    Text(
+                                      'Tap "Pay" to enter your card details securely. '
+                                      'Your card information is never stored on our servers.',
+                                      style: AppTextStyles.bodySmall(
+                                        context,
+                                      ).copyWith(
+                                        color: AppColors.subtext(context),
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
 
                               const SizedBox(height: 12),
 
@@ -384,10 +336,11 @@ class _PaymentPageState extends State<PaymentPage> {
                                   const SizedBox(width: 6),
                                   Text(
                                     t.translate('secured_encryption'),
-                                    style: AppTextStyles.bodySmall(context)
-                                        .copyWith(
-                                          color: AppColors.subtext(context),
-                                        ),
+                                    style: AppTextStyles.bodySmall(
+                                      context,
+                                    ).copyWith(
+                                      color: AppColors.subtext(context),
+                                    ),
                                   ),
                                 ],
                               ),

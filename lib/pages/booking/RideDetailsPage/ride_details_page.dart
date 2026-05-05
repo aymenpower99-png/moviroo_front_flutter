@@ -180,13 +180,37 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       setState(() => _isCancelling = false);
 
       if (success) {
-        // Notify provider to refresh booking list
         context.read<BookingProvider>().onBookingCancelled();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Booking cancelled successfully')),
-        );
-        Navigator.pop(context, true);
+        final wasCard =
+            (_bookingData?['paymentMethod'] as String?)?.toUpperCase() ==
+                'CARD';
+        if (wasCard && mounted) {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Booking Cancelled'),
+              content: const Text(
+                'Your booking has been cancelled. If a payment was charged, '
+                'a full refund will be processed to your card within 5–10 business days.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Booking cancelled successfully')),
+          );
+          Navigator.pop(context, true);
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to cancel booking')),
