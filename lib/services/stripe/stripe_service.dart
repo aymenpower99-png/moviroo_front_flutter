@@ -34,15 +34,41 @@ class StripeService {
 
   /// Present the Stripe PaymentSheet for a given [clientSecret].
   ///
-  /// Lazily initializes Stripe if not already done.
-  /// Throws [StripeException] if the user cancels or payment fails.
-  static Future<void> presentPaymentSheet(String clientSecret) async {
+  /// Pass [customerId] and [ephemeralKey] to enable saved-card listing inside
+  /// the PaymentSheet (passenger sees their saved cards + can add a new one).
+  static Future<void> presentPaymentSheet(
+    String clientSecret, {
+    String? customerId,
+    String? ephemeralKey,
+  }) async {
     await initialize(); // lazy — safe to call multiple times
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName: 'Moviroo',
         style: ThemeMode.system,
+        customerId: customerId?.isNotEmpty == true ? customerId : null,
+        customerEphemeralKeySecret: ephemeralKey?.isNotEmpty == true ? ephemeralKey : null,
+      ),
+    );
+    await Stripe.instance.presentPaymentSheet();
+  }
+
+  /// Present the Stripe PaymentSheet in SetupIntent mode to save a card
+  /// without charging it.
+  static Future<void> presentSetupSheet({
+    required String setupIntentClientSecret,
+    required String customerId,
+    required String ephemeralKey,
+  }) async {
+    await initialize();
+    await Stripe.instance.initPaymentSheet(
+      paymentSheetParameters: SetupPaymentSheetParameters(
+        setupIntentClientSecret: setupIntentClientSecret,
+        merchantDisplayName: 'Moviroo',
+        style: ThemeMode.system,
+        customerId: customerId,
+        customerEphemeralKeySecret: ephemeralKey,
       ),
     );
     await Stripe.instance.presentPaymentSheet();

@@ -2,33 +2,59 @@ import 'package:flutter/material.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
+import '../../../../../services/ride_api/booking_api_service.dart';
 import 'add_card_page.dart';
 
 // ── Model ─────────────────────────────────────────────────────────────────────
 
 class PaymentCard {
   final String id;
-  final String holder;
+  final String brand;
   final String last4;
-  final String expiry;
-  final CardType type;
+  final int expMonth;
+  final int expYear;
   final bool isDefault;
 
   const PaymentCard({
     required this.id,
-    required this.holder,
+    required this.brand,
     required this.last4,
-    required this.expiry,
-    required this.type,
+    required this.expMonth,
+    required this.expYear,
     this.isDefault = false,
   });
 
+  factory PaymentCard.fromJson(Map<String, dynamic> json) => PaymentCard(
+    id: json['id'] as String,
+    brand: json['brand'] as String,
+    last4: json['last4'] as String,
+    expMonth: json['expMonth'] as int,
+    expYear: json['expYear'] as int,
+    isDefault: json['isDefault'] as bool? ?? false,
+  );
+
+  String get expiryFormatted =>
+      '${expMonth.toString().padLeft(2, '0')}/${expYear.toString().substring(2)}';
+
+  CardType get cardType {
+    switch (brand.toLowerCase()) {
+      case 'visa':
+        return CardType.visa;
+      case 'mastercard':
+        return CardType.mastercard;
+      case 'amex':
+        return CardType.amex;
+      default:
+        return CardType.other;
+    }
+  }
+
   PaymentCard copyWith({bool? isDefault}) => PaymentCard(
     id: id,
-    holder: holder,
+    brand: brand,
     last4: last4,
-    expiry: expiry,
-    type: type,
+    expMonth: expMonth,
+    expYear: expYear,
     isDefault: isDefault ?? this.isDefault,
   );
 }
@@ -46,25 +72,62 @@ class PaymentMethodPage extends StatefulWidget {
 
 class _PaymentMethodPageState extends State<PaymentMethodPage> {
   List<PaymentCard> _cards = [];
+  bool _isLoading = false;
+  final _api = BookingApiService();
 
-  void _setDefault(String id) {
-    setState(() {
-      _cards = _cards.map((c) => c.copyWith(isDefault: c.id == id)).toList();
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadCards();
   }
 
-  void _deleteCard(String id) {
-    setState(() => _cards.removeWhere((c) => c.id == id));
+  Future<void> _loadCards() async {
+    setState(() => _isLoading = true);
+    try {
+      final raw = await _api.getSavedCards();
+      if (mounted) {
+        setState(() {
+          _cards = raw.map(PaymentCard.fromJson).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _setDefault(String id) async {
+    try {
+      await _api.setDefaultCard(id);
+      setState(() {
+        _cards = _cards.map((c) => c.copyWith(isDefault: c.id == id)).toList();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to set default: $e')),
+      );
+    }
+  }
+
+  Future<void> _deleteCard(String id) async {
+    try {
+      await _api.deleteCard(id);
+      setState(() => _cards.removeWhere((c) => c.id == id));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to remove card: $e')),
+      );
+    }
   }
 
   Future<void> _openAddCard() async {
-    final card = await Navigator.push<PaymentCard>(
+    final added = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const AddCardPage()),
     );
-    if (card != null) {
-      setState(() => _cards.add(card));
-    }
+    if (added == true) _loadCards();
   }
 
   @override
@@ -78,7 +141,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
           children: [
             _SubPageTopBar(title: t('payment_methods')),
             Expanded(
-              child: SingleChildScrollView(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +272,7 @@ class _CardTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignment: Alignment.center,
-                  child: _CardBrandIcon(type: card.type),
+                  child: _CardBrandIcon(type: card.cardType),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -220,7 +285,7 @@ class _CardTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${card.holder}  •  ${t('expires')} ${card.expiry}',
+                        '${card.brand[0].toUpperCase()}${card.brand.substring(1)}  •  ${t('expires')} ${card.expiryFormatted}',
                         style: AppTextStyles.bodySmall(context),
                       ),
                     ],

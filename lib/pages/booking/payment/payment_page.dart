@@ -134,9 +134,14 @@ class _PaymentPageState extends State<PaymentPage> {
       final clientSecret = intentData['clientSecret'] as String?;
       if (clientSecret == null) throw Exception('No client secret received');
 
-      // 2. Present Stripe PaymentSheet — charges the card. Throws
-      //    StripeException on cancel/failure (ride stays PENDING).
-      await StripeService.presentPaymentSheet(clientSecret);
+      // 2. Present Stripe PaymentSheet — charges the card. The sheet shows
+      //    saved cards if customerId + ephemeralKey are present.
+      //    Throws StripeException on cancel/failure (ride stays PENDING).
+      await StripeService.presentPaymentSheet(
+        clientSecret,
+        customerId: intentData['customerId'] as String?,
+        ephemeralKey: intentData['ephemeralKey'] as String?,
+      );
 
       // 3. Card captured successfully → confirm ride. Backend marks
       //    TripPayment=PAID and transitions ride to SCHEDULED / SEARCHING_DRIVER.

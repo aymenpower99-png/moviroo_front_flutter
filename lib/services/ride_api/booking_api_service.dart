@@ -214,7 +214,7 @@ class BookingApiService {
 
   /// Get or create a Stripe PaymentIntent for a CARD ride.
   /// Backend route: POST /billing/payments/ride/:rideId/stripe-intent
-  /// Returns { clientSecret, paymentIntentId } on success.
+  /// Returns { clientSecret, paymentIntentId, customerId, ephemeralKey }.
   Future<Map<String, dynamic>> createStripeIntentForRide(String rideId) async {
     final token = await TokenStorage.getAccess();
     final headers = <String, String>{
@@ -236,5 +236,96 @@ class BookingApiService {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
     throw Exception('Failed to create Stripe intent: ${response.body}');
+  }
+
+  /// Create a Stripe SetupIntent to add a card without charging.
+  /// Backend route: POST /billing/setup-intent
+  /// Returns { setupIntentClientSecret, customerId, ephemeralKey }.
+  Future<Map<String, dynamic>> createSetupIntent() async {
+    final token = await TokenStorage.getAccess();
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    final response = await http
+        .post(
+          Uri.parse('${AppConfig.baseUrl}/billing/setup-intent'),
+          headers: headers,
+          body: jsonEncode({}),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to create setup intent: ${response.body}');
+  }
+
+  /// Fetch the passenger's saved cards from Stripe.
+  /// Backend route: GET /billing/saved-cards
+  Future<List<Map<String, dynamic>>> getSavedCards() async {
+    final token = await TokenStorage.getAccess();
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    final response = await http
+        .get(
+          Uri.parse('${AppConfig.baseUrl}/billing/saved-cards'),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is List) return decoded.cast<Map<String, dynamic>>();
+      return const [];
+    }
+    throw Exception('Failed to fetch saved cards: ${response.body}');
+  }
+
+  /// Delete a saved card by Stripe PaymentMethod ID.
+  /// Backend route: DELETE /billing/saved-cards/:pmId
+  Future<void> deleteCard(String pmId) async {
+    final token = await TokenStorage.getAccess();
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    final response = await http
+        .delete(
+          Uri.parse('${AppConfig.baseUrl}/billing/saved-cards/$pmId'),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception('Failed to delete card: ${response.body}');
+    }
+  }
+
+  /// Set a card as the passenger's default payment method.
+  /// Backend route: PATCH /billing/saved-cards/:pmId/default
+  Future<void> setDefaultCard(String pmId) async {
+    final token = await TokenStorage.getAccess();
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    final response = await http
+        .patch(
+          Uri.parse('${AppConfig.baseUrl}/billing/saved-cards/$pmId/default'),
+          headers: headers,
+          body: jsonEncode({}),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception('Failed to set default card: ${response.body}');
+    }
   }
 }
