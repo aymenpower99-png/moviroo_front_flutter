@@ -527,12 +527,22 @@ class _EditPhonePageState extends State<_EditPhonePage> {
   bool get _hasChanges => _phone.text.trim() != widget.phone;
 
   Future<void> _save() async {
+    final digits = _phone.text.trim();
+    if (digits.isEmpty) {
+      setState(() => _error = 'Phone number is required');
+      return;
+    }
+    if (!RegExp(r'^\d{8}$').hasMatch(digits)) {
+      setState(() => _error = 'Enter a valid 8-digit Tunisian number');
+      return;
+    }
     setState(() {
       _isSaving = true;
       _error = null;
     });
     try {
-      await _authService.updateProfile(phone: _phone.text.trim());
+      // Always send full E.164 format to backend
+      await _authService.updateProfile(phone: '+216$digits');
       if (!mounted) return;
       _showToast(
         context,

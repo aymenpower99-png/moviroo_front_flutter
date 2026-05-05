@@ -38,6 +38,30 @@ class _DateTimeRowState extends State<DateTimeRow> {
 
   String get _timeLabel => formatTimeLabel(_pickedTime);
 
+  void _showPastDateTimeToast() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        backgroundColor: const Color(0xFF323232),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+        content: const Row(
+          children: [
+            Icon(Icons.access_time_filled_rounded, color: Colors.orangeAccent, size: 18),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Selected date and time cannot be in the past. Please choose a future time.',
+                style: TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -153,11 +177,23 @@ class _DateTimeRowState extends State<DateTimeRow> {
                         const Spacer(),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(ctx);
                             final picked = TimeOfDay(
                               hour: tempHour,
                               minute: minuteSlots[tempMinuteIndex],
                             );
+                            // Combine selected date + time and reject if in the past
+                            final combined = DateTime(
+                              _pickedDate.year,
+                              _pickedDate.month,
+                              _pickedDate.day,
+                              picked.hour,
+                              picked.minute,
+                            );
+                            Navigator.pop(ctx);
+                            if (combined.isBefore(DateTime.now())) {
+                              _showPastDateTimeToast();
+                              return;
+                            }
                             setState(() => _pickedTime = picked);
                             widget.onTimeChanged?.call(picked);
                           },

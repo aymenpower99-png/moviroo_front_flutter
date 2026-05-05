@@ -90,11 +90,29 @@ Future<void> handleGoogleSignIn({
   });
 
   try {
-    await authService.googleSignIn();
-    // Pre-cache user data so profile page doesn't refetch
-    await authService.getCurrentUser(forceRefresh: true);
-    if (context.mounted) {
-      AppRouter.clearAndGo(context, AppRouter.home);
+    final result = await authService.googleSignIn();
+    final isProfileComplete = result['isProfileComplete'] == true;
+    final user = result['user'] as Map<String, dynamic>?;
+
+    if (!context.mounted) return;
+
+    if (!isProfileComplete) {
+      // New user — force profile completion before entering the app
+      AppRouter.clearAndGo(
+        context,
+        AppRouter.completeProfile,
+        args: {
+          'email': user?['email'] ?? '',
+          'firstName': user?['firstName'] ?? '',
+          'lastName': user?['lastName'] ?? '',
+        },
+      );
+    } else {
+      // Existing user with full profile — go straight to home
+      await authService.getCurrentUser(forceRefresh: true);
+      if (context.mounted) {
+        AppRouter.clearAndGo(context, AppRouter.home);
+      }
     }
   } catch (e) {
     batchSetState(() {
