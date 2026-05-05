@@ -16,7 +16,12 @@ class PaymentPage extends StatefulWidget {
   final double? lockedPrice;
   final double? discountPercent;
 
-  const PaymentPage({super.key, this.bookingId, this.lockedPrice, this.discountPercent});
+  const PaymentPage({
+    super.key,
+    this.bookingId,
+    this.lockedPrice,
+    this.discountPercent,
+  });
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
@@ -66,7 +71,8 @@ class _PaymentPageState extends State<PaymentPage> {
     // Use the locked price passed from booking summary (vehicle selection price).
     // Fall back to backend price only if locked price wasn't provided.
     if (widget.lockedPrice != null && widget.lockedPrice! > 0) {
-      final discount = widget.discountPercent ?? _discountPercentFromBackend ?? 0;
+      final discount =
+          widget.discountPercent ?? _discountPercentFromBackend ?? 0;
       if (discount > 0) {
         return double.parse(
           (widget.lockedPrice! * (1 - discount / 100)).toStringAsFixed(2),
@@ -122,16 +128,20 @@ class _PaymentPageState extends State<PaymentPage> {
     setState(() => _isProcessing = true);
 
     try {
-      // 1. Confirm ride with CARD (409 = already confirmed, treated as no-op)
-      await _bookingApi.confirmRide(bookingId, paymentMethod: 'CARD');
-
-      // 2. Get/create Stripe PaymentIntent for this ride
+      // 1. Get/create Stripe PaymentIntent for this ride (ride still PENDING,
+      //    TripPayment still PENDING — safe to create the intent).
       final intentData = await _bookingApi.createStripeIntentForRide(bookingId);
       final clientSecret = intentData['clientSecret'] as String?;
       if (clientSecret == null) throw Exception('No client secret received');
 
-      // 3. Present Stripe PaymentSheet (handles card entry securely)
+      // 2. Present Stripe PaymentSheet — charges the card. Throws
+      //    StripeException on cancel/failure (ride stays PENDING).
       await StripeService.presentPaymentSheet(clientSecret);
+
+      // 3. Card captured successfully → confirm ride. Backend marks
+      //    TripPayment=PAID and transitions ride to SCHEDULED / SEARCHING_DRIVER.
+      //    409 = already confirmed, treated as no-op.
+      await _bookingApi.confirmRide(bookingId, paymentMethod: 'CARD');
 
       // 4. Mark coupon used now that payment succeeded
       final couponCode = _bookingData?['couponCode'] as String?;
@@ -157,9 +167,7 @@ class _PaymentPageState extends State<PaymentPage> {
       if (!mounted) return;
       setState(() => _isProcessing = false);
       final msg = e.error.localizedMessage ?? 'Payment cancelled';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (!mounted) return;
       setState(() => _isProcessing = false);
@@ -273,8 +281,9 @@ class _PaymentPageState extends State<PaymentPage> {
                                           decoration: BoxDecoration(
                                             color: AppColors.primaryPurple
                                                 .withValues(alpha: 0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
                                           child: const Icon(
                                             Icons.credit_card_rounded,
@@ -289,20 +298,23 @@ class _PaymentPageState extends State<PaymentPage> {
                                           children: [
                                             Text(
                                               'Secure Card Payment',
-                                              style: AppTextStyles.bodyMedium(
-                                                context,
-                                              ).copyWith(
-                                                fontWeight: FontWeight.w700,
-                                              ),
+                                              style:
+                                                  AppTextStyles.bodyMedium(
+                                                    context,
+                                                  ).copyWith(
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
                                             ),
                                             Text(
                                               'Powered by Stripe',
-                                              style: AppTextStyles.bodySmall(
-                                                context,
-                                              ).copyWith(
-                                                color:
-                                                    AppColors.subtext(context),
-                                              ),
+                                              style:
+                                                  AppTextStyles.bodySmall(
+                                                    context,
+                                                  ).copyWith(
+                                                    color: AppColors.subtext(
+                                                      context,
+                                                    ),
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -312,12 +324,11 @@ class _PaymentPageState extends State<PaymentPage> {
                                     Text(
                                       'Tap "Pay" to enter your card details securely. '
                                       'Your card information is never stored on our servers.',
-                                      style: AppTextStyles.bodySmall(
-                                        context,
-                                      ).copyWith(
-                                        color: AppColors.subtext(context),
-                                        height: 1.5,
-                                      ),
+                                      style: AppTextStyles.bodySmall(context)
+                                          .copyWith(
+                                            color: AppColors.subtext(context),
+                                            height: 1.5,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -336,11 +347,10 @@ class _PaymentPageState extends State<PaymentPage> {
                                   const SizedBox(width: 6),
                                   Text(
                                     t.translate('secured_encryption'),
-                                    style: AppTextStyles.bodySmall(
-                                      context,
-                                    ).copyWith(
-                                      color: AppColors.subtext(context),
-                                    ),
+                                    style: AppTextStyles.bodySmall(context)
+                                        .copyWith(
+                                          color: AppColors.subtext(context),
+                                        ),
                                   ),
                                 ],
                               ),
