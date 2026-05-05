@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 //    • data/privacy/privacy_patch_{lang}.json  → privacy overrides
 //    • data/terms/terms_patch_{lang}.json      → terms overrides
 //
-//  Supported languages: en, fr, ar, de, es, it, pt, tr
+//  Supported languages: en, fr, ar
 //  Falls back to 'en' for any unsupported locale.
 //
 //  Usage anywhere in the widget tree:
@@ -27,27 +27,27 @@ class LegalLocalizations {
 
   // ── Supported languages ───────────────────────────────────────────────────
 
-  static const Set<String> supportedCodes = {
-    'en', 'fr', 'ar', 'de', 'es', 'it', 'pt', 'tr',
-  };
+  static const Set<String> supportedCodes = {'en', 'fr', 'ar'};
 
   // ── Accessors ─────────────────────────────────────────────────────────────
 
   Map<String, dynamic> get privacy => _privacy;
-  Map<String, dynamic> get terms   => _terms;
+  Map<String, dynamic> get terms => _terms;
 
   // ── Loader ────────────────────────────────────────────────────────────────
 
   Future<void> load() async {
     final code = _resolvedCode(locale.languageCode);
 
-    final rawPrivacy = await rootBundle
-        .loadString('data/privacy/privacy_patch_$code.json');
-    final rawTerms = await rootBundle
-        .loadString('data/terms/terms_patch_$code.json');
+    final rawPrivacy = await rootBundle.loadString(
+      'data/privacy/privacy_patch_$code.json',
+    );
+    final rawTerms = await rootBundle.loadString(
+      'data/terms/terms_patch_$code.json',
+    );
 
     _privacy = json.decode(rawPrivacy) as Map<String, dynamic>;
-    _terms   = json.decode(rawTerms)   as Map<String, dynamic>;
+    _terms = json.decode(rawTerms) as Map<String, dynamic>;
   }
 
   static String _resolvedCode(String code) =>

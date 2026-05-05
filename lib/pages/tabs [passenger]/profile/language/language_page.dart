@@ -49,54 +49,6 @@ class _LanguagePageState extends State<LanguagePage> {
         subtitle: 'العربية',
         code: 'ar',
       ),
-      _LangConfig(
-        flagAsset: 'images/flags/german.png',
-        label: t.translate('german'),
-        subtitle: 'Deutsch',
-        code: 'de',
-      ),
-      _LangConfig(
-        flagAsset: 'images/flags/spain.png',
-        label: t.translate('spanish'),
-        subtitle: 'Español',
-        code: 'es',
-      ),
-      _LangConfig(
-        flagAsset: 'images/flags/italy.png',
-        label: t.translate('italian'),
-        subtitle: 'Italiano',
-        code: 'it',
-      ),
-      _LangConfig(
-        flagAsset: 'images/flags/pt.png',
-        label: t.translate('portuguese'),
-        subtitle: 'Português',
-        code: 'pt',
-      ),
-      _LangConfig(
-        flagAsset: 'images/flags/turkey.png',
-        label: t.translate('turkish'),
-        subtitle: 'Türkçe',
-        code: 'tr',
-      ),
-      _LangConfig(
-        flagAsset: 'images/flags/china.png',
-        label: t.translate('chinese'),
-        subtitle: '中文',
-        code: 'zh',
-      ),
-      _LangConfig(
-        flagAsset: 'images/flags/japan.png',
-        label: t.translate('japanese'),
-        subtitle: '日本語',
-        code: 'ja',
-      ),
-      _LangConfig(
-        flagAsset: 'images/flags/russia.png',
-        label: t.translate('russian'),
-        subtitle: 'Русский',
-        code: 'ru',
-      ),
     ];
 
     return Scaffold(
@@ -213,8 +165,9 @@ class _LanguageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = _isSelected;
-    final radioBorderColor =
-        isSelected ? AppColors.primaryPurple : AppColors.subtext(context);
+    final radioBorderColor = isSelected
+        ? AppColors.primaryPurple
+        : AppColors.subtext(context);
 
     return GestureDetector(
       onTap: onTap,
@@ -282,8 +235,11 @@ class _LanguageCard extends StatelessWidget {
                     : Colors.transparent,
               ),
               child: isSelected
-                  ? const Icon(Icons.check_rounded,
-                      color: Colors.white, size: 14)
+                  ? const Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    )
                   : null,
             ),
           ],

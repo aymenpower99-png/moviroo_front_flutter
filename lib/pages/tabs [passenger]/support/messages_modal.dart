@@ -44,9 +44,9 @@ class MessagesModal extends StatelessWidget {
               children: [
                 Text(
                   'Messages',
-                  style: AppTextStyles.pageTitle(context).copyWith(
-                    fontSize: 20,
-                  ),
+                  style: AppTextStyles.pageTitle(
+                    context,
+                  ).copyWith(fontSize: 20),
                 ),
                 const Spacer(),
                 if (!isLoading)
@@ -63,25 +63,25 @@ class MessagesModal extends StatelessWidget {
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : tickets.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No messages yet',
-                          style: AppTextStyles.bodyMedium(context).copyWith(
-                            color: AppColors.subtext(context),
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: tickets.length,
-                        itemBuilder: (context, index) {
-                          final ticket = tickets[index];
-                          return _TicketThreadItem(
-                            ticket: ticket,
-                            onTap: () => onTicketTap(ticket),
-                          );
-                        },
-                      ),
+                ? Center(
+                    child: Text(
+                      'No messages yet',
+                      style: AppTextStyles.bodyMedium(
+                        context,
+                      ).copyWith(color: AppColors.subtext(context)),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: tickets.length,
+                    itemBuilder: (context, index) {
+                      final ticket = tickets[index];
+                      return _TicketThreadItem(
+                        ticket: ticket,
+                        onTap: () => onTicketTap(ticket),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -93,10 +93,14 @@ class _TicketThreadItem extends StatelessWidget {
   final SupportTicket ticket;
   final VoidCallback onTap;
 
-  const _TicketThreadItem({
-    required this.ticket,
-    required this.onTap,
-  });
+  const _TicketThreadItem({required this.ticket, required this.onTap});
+
+  void _handleTap() {
+    print(
+      '[MessagesModal] Ticket tapped - id: ${ticket.id}, subject: ${ticket.subject}',
+    );
+    onTap();
+  }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -112,7 +116,7 @@ class _TicketThreadItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: _handleTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.all(16),
@@ -144,18 +148,18 @@ class _TicketThreadItem extends StatelessWidget {
                 children: [
                   Text(
                     ticket.subject,
-                    style: AppTextStyles.bodyLarge(context).copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTextStyles.bodyLarge(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     ticket.lastMessage ?? ticket.description,
-                    style: AppTextStyles.bodySmall(context).copyWith(
-                      color: AppColors.subtext(context),
-                    ),
+                    style: AppTextStyles.bodySmall(
+                      context,
+                    ).copyWith(color: AppColors.subtext(context)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -169,15 +173,17 @@ class _TicketThreadItem extends StatelessWidget {
               children: [
                 Text(
                   _formatDate(ticket.lastMessageAt ?? ticket.createdAt),
-                  style: AppTextStyles.bodySmall(context).copyWith(
-                    color: AppColors.subtext(context),
-                    fontSize: 11,
-                  ),
+                  style: AppTextStyles.bodySmall(
+                    context,
+                  ).copyWith(color: AppColors.subtext(context), fontSize: 11),
                 ),
                 if (ticket.hasUnread)
                   Container(
                     margin: const EdgeInsets.only(top: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primaryPurple,
                       borderRadius: BorderRadius.circular(10),

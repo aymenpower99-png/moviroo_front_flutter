@@ -6,9 +6,12 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/support_service.dart';
 import '../../../../services/support_websocket_service.dart';
+import '../../../../services/help_center_service.dart';
 import '../../../../routing/router.dart';
-import 'support_data.dart';
-import 'faq_widgets.dart';
+import 'help_center_models.dart';
+import 'help_center_widgets.dart';
+import 'help_category_page.dart';
+import 'help_all_articles_page.dart';
 import 'Sumbit Ticket/support_page.dart' as ticket;
 import 'AI/ai_agent_page.dart';
 import 'messages_modal.dart';
@@ -24,9 +27,11 @@ class _SupportPageState extends State<SupportPage> {
   int _tabIndex = 3;
   final SupportService _supportService = SupportService();
   final SupportWebSocketService _wsService = SupportWebSocketService();
+  final HelpCenterService _helpCenterService = HelpCenterService();
   List<SupportTicket> _tickets = [];
   bool _isLoadingTickets = false;
   int _unreadCount = 0;
+  late Future<List<HelpCategory>> _categoriesFuture;
 
   @override
   void dispose() {
@@ -36,6 +41,9 @@ class _SupportPageState extends State<SupportPage> {
 
   void _showMessagesModal() {
     setState(() => _unreadCount = 0);
+    print(
+      '[SupportPage] Opening messages modal with ${_tickets.length} tickets',
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -45,6 +53,9 @@ class _SupportPageState extends State<SupportPage> {
         isLoading: _isLoadingTickets,
         onRefresh: _loadTickets,
         onTicketTap: (ticket) {
+          print(
+            '[SupportPage] Ticket tapped, navigating to chat - ticketId: ${ticket.id}',
+          );
           Navigator.pop(context);
           AppRouter.push(
             context,
@@ -59,7 +70,9 @@ class _SupportPageState extends State<SupportPage> {
   Future<void> _loadTickets() async {
     setState(() => _isLoadingTickets = true);
     try {
+      print('[SupportPage] Loading tickets...');
       final tickets = await _supportService.listTickets();
+      print('[SupportPage] Loaded ${tickets.length} tickets');
       if (mounted) {
         setState(() {
           _tickets = tickets;
@@ -67,6 +80,7 @@ class _SupportPageState extends State<SupportPage> {
         });
       }
     } catch (e) {
+      print('[SupportPage] Error loading tickets: $e');
       if (mounted) {
         setState(() => _isLoadingTickets = false);
       }
@@ -78,6 +92,7 @@ class _SupportPageState extends State<SupportPage> {
     super.initState();
     _loadTickets();
     _connectWebSocket();
+    _categoriesFuture = _helpCenterService.fetchCategories();
   }
 
   Future<void> _connectWebSocket() async {
@@ -236,17 +251,22 @@ class _SupportPageState extends State<SupportPage> {
                     ),
                     const SizedBox(height: 32),
 
-                    // ── Frequently Asked ───────────────────────────
+                    // ── Help Center ────────────────────────────────────────
                     Row(
                       children: [
                         Expanded(
                           child: Text(
-                            t('frequently_asked'),
+                            t('help_center'),
                             style: AppTextStyles.sectionLabel(context),
                           ),
                         ),
                         GestureDetector(
-                          onTap: () {},
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const HelpAllArticlesPage(),
+                            ),
+                          ),
                           child: Text(
                             t('view_all'),
                             style: AppTextStyles.bodyMedium(context).copyWith(
@@ -259,15 +279,35 @@ class _SupportPageState extends State<SupportPage> {
                     ),
                     const SizedBox(height: 14),
 
-                    ...List.generate(
-                      kFaqCategories.length,
-                      (i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: FaqItem(
-                          category: kFaqCategories[i],
-                          icon: kFaqIcons[i],
-                        ),
-                      ),
+                    FutureBuilder<List<HelpCategory>>(
+                      future: _categoriesFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 32),
+                              child: CircularProgressIndicator(
+                                color: AppColors.primaryPurple,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          );
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return HelpCenterGrid(
+                          categories: snapshot.data!,
+                          onCategoryTap: (category) => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  HelpCategoryPage(category: category),
+                            ),
+                          ),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 24),

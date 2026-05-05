@@ -193,18 +193,22 @@ class SupportService {
     int limit = 20,
   }) async {
     try {
+      print('[SupportService] listTickets - fetching tickets...');
       final headers = await _getHeaders();
+      final url =
+          '${AppConfig.baseUrl}/support/tickets?page=$page&limit=$limit';
+      print('[SupportService] listTickets - URL: $url');
       final response = await _client
-          .get(
-            Uri.parse(
-              '${AppConfig.baseUrl}/support/tickets?page=$page&limit=$limit',
-            ),
-            headers: headers,
-          )
+          .get(Uri.parse(url), headers: headers)
           .timeout(const Duration(seconds: 10));
 
+      print('[SupportService] listTickets - status: ${response.statusCode}');
+      print('[SupportService] listTickets - body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
+        final responseJson = jsonDecode(response.body) as Map<String, dynamic>;
+        final data = responseJson['data'] as List<dynamic>;
+        print('[SupportService] listTickets - parsed ${data.length} tickets');
         return data
             .map((e) => SupportTicket.fromJson(e as Map<String, dynamic>))
             .toList();
@@ -212,6 +216,7 @@ class SupportService {
         throw Exception('Failed to fetch tickets: ${response.statusCode}');
       }
     } catch (e) {
+      print('[SupportService] listTickets - error: $e');
       throw Exception('Failed to fetch tickets: $e');
     }
   }
