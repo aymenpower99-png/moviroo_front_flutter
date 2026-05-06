@@ -22,6 +22,7 @@ class RideModel {
   final String? vehicleColor;
   final String? plateNumber;
   final int? etaMins;
+  final String? paymentMethod; // 'CARD' | 'CASH' — raw backend value
 
   const RideModel({
     required this.vehicleType,
@@ -43,6 +44,7 @@ class RideModel {
     this.vehicleColor,
     this.plateNumber,
     this.etaMins,
+    this.paymentMethod,
   });
 
   /// Build a [RideModel] from the JSON shape returned by `GET /rides`.
@@ -90,6 +92,7 @@ class RideModel {
           : null,
       vehicleColor: vehicle?['color'] as String?,
       plateNumber: vehicle?['plateNumber'] as String?,
+      paymentMethod: (json['paymentMethod'] as String?)?.toUpperCase(),
     );
   }
 

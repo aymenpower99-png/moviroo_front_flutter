@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../routing/router.dart';
+import '../../../../services/currency/currency_service.dart';
 import 'trajet_models.dart';
 import 'ride_route_column.dart';
 
@@ -12,6 +14,7 @@ class RideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currency = context.watch<CurrencyService>();
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface(context),
@@ -58,7 +61,7 @@ class RideCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '${ride.price.toStringAsFixed(2)} TND',
+                      currency.format(ride.price),
                       style: AppTextStyles.priceMedium(context).copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -112,12 +115,52 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context).translate;
+    final t        = AppLocalizations.of(context).translate;
+    final currency = context.watch<CurrencyService>();
 
     // Use backendStatus for granular button visibility decisions
     switch (ride.backendStatus) {
-      // ── PENDING: Pending Payment button (no Track/Chat) ─────────────────────
+      // ── PENDING: CARD → Pay Now (go to payment); CASH → Pending Payment ───
       case 'PENDING':
+        if (ride.paymentMethod == 'CARD') {
+          return GestureDetector(
+            onTap: () => AppRouter.push(
+              context,
+              AppRouter.payment,
+              args: {'bookingId': ride.rideId},
+            ),
+            child: Container(
+              height: 46,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.primaryPurple.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primaryPurple.withValues(alpha: 0.45),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.credit_card_rounded,
+                    color: AppColors.primaryPurple,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    t('pay_now'),
+                    style: AppTextStyles.bodyLarge(context).copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryPurple,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        // CASH pending — navigate to ride details
         return GestureDetector(
           onTap: () => AppRouter.push(
             context,

@@ -5,12 +5,31 @@ import '../../../../l10n/app_localizations.dart';
 
 class BookingConfirmedHeader extends StatelessWidget {
   final bool isCash;
+  final bool isPendingCard;
 
-  const BookingConfirmedHeader({required this.isCash});
+  const BookingConfirmedHeader({
+    required this.isCash,
+    this.isPendingCard = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+
+    final Color circleColor = isPendingCard
+        ? const Color(0xFFFF6B00)
+        : AppColors.primaryPurple;
+    final IconData circleIcon = isPendingCard
+        ? Icons.payment_rounded
+        : Icons.local_taxi_rounded;
+    final String title = isPendingCard
+        ? 'Complete Your Payment'
+        : t.translate('booking_confirmed');
+    final String subtitle = isPendingCard
+        ? 'Your ride is confirmed. Tap "Pay Now" to complete payment and get your driver assigned.'
+        : isCash
+            ? 'Your driver is being assigned. You will pay in cash upon arrival.'
+            : 'Your driver is being assigned. Your card has been charged.';
 
     return Column(
       children: [
@@ -19,27 +38,23 @@ class BookingConfirmedHeader extends StatelessWidget {
           width: 96,
           height: 96,
           decoration: BoxDecoration(
-            color: AppColors.primaryPurple,
+            color: circleColor,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryPurple.withValues(alpha: 0.30),
+                color: circleColor.withValues(alpha: 0.30),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
-          child: const Icon(
-            Icons.local_taxi_rounded,
-            size: 48,
-            color: Colors.white,
-          ),
+          child: Icon(circleIcon, size: 48, color: Colors.white),
         ),
         const SizedBox(height: 24),
 
         // ── Title ───────────────────────────────────
         Text(
-          t.translate('booking_confirmed'),
+          title,
           style: AppTextStyles.bodyLarge(
             context,
           ).copyWith(fontWeight: FontWeight.w800, fontSize: 24),
@@ -48,9 +63,7 @@ class BookingConfirmedHeader extends StatelessWidget {
 
         // ── Subtitle ───────────────────────────────
         Text(
-          isCash
-              ? 'Your driver is being assigned. You will pay in cash upon arrival.'
-              : 'Your driver is being assigned. Your card has been charged.',
+          subtitle,
           textAlign: TextAlign.center,
           style: AppTextStyles.bodyMedium(
             context,

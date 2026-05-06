@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../services/currency/currency_service.dart';
 
 class PriceSummaryCard extends StatelessWidget {
   final int? priceTnd;
@@ -21,12 +23,13 @@ class PriceSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
+    final t        = AppLocalizations.of(context);
+    final currency = context.watch<CurrencyService>();
     final hasDiscount = discountPercent != null && discountPercent! > 0;
 
     double? discountedPrice;
     if (priceTnd != null) discountedPrice = priceTnd!.toDouble();
-    if (exactPrice != null) discountedPrice = exactPrice; // precise double wins
+    if (exactPrice != null) discountedPrice = exactPrice;
 
     double? originalPrice;
     if (hasDiscount && discountedPrice != null) {
@@ -34,9 +37,9 @@ class PriceSummaryCard extends StatelessWidget {
     }
 
     String formatPrice(double? v) {
-      if (v != null) return '${v.toStringAsFixed(2)} TND';
-      if (priceTnd != null) return '$priceTnd TND';
-      return '-- TND';
+      if (v != null) return currency.format(v);
+      if (priceTnd != null) return currency.format(priceTnd!.toDouble());
+      return currency.formatOrDash();
     }
 
     return Container(

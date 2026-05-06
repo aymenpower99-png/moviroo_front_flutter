@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../routing/router.dart';
+import '../../../../services/currency/currency_service.dart';
 import 'trajet_models.dart';
 import 'ride_route_column.dart';
 
@@ -12,7 +14,9 @@ class PendingRideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context).translate;
+    final t        = AppLocalizations.of(context).translate;
+    final currency = context.watch<CurrencyService>();
+    final isCard   = ride.paymentMethod == 'CARD';
 
     return Container(
       decoration: BoxDecoration(
@@ -60,7 +64,7 @@ class PendingRideCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '${ride.price.toStringAsFixed(2)} TND',
+                      currency.format(ride.price),
                       style: AppTextStyles.priceMedium(context).copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -80,33 +84,43 @@ class PendingRideCard extends StatelessWidget {
             GestureDetector(
               onTap: () => AppRouter.push(
                 context,
-                AppRouter.rideDetails,
+                isCard ? AppRouter.payment : AppRouter.rideDetails,
                 args: {'bookingId': ride.rideId},
               ),
               child: Container(
                 height: 46,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00).withValues(alpha: 0.10),
+                  color: isCard
+                      ? AppColors.primaryPurple.withValues(alpha: 0.10)
+                      : const Color(0xFFFF6B00).withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xFFFF6B00).withValues(alpha: 0.45),
+                    color: isCard
+                        ? AppColors.primaryPurple.withValues(alpha: 0.45)
+                        : const Color(0xFFFF6B00).withValues(alpha: 0.45),
                   ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.schedule_rounded,
-                      color: Color(0xFFFF6B00),
+                    Icon(
+                      isCard
+                          ? Icons.credit_card_rounded
+                          : Icons.schedule_rounded,
+                      color: isCard
+                          ? AppColors.primaryPurple
+                          : const Color(0xFFFF6B00),
                       size: 16,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      t('Pending Payment'),
+                      isCard ? t('pay_now') : t('Pending Payment'),
                       style: AppTextStyles.bodyMedium(context).copyWith(
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFFFF6B00),
+                        color: isCard
+                            ? AppColors.primaryPurple
+                            : const Color(0xFFFF6B00),
                       ),
                     ),
                   ],

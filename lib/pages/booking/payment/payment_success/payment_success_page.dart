@@ -6,6 +6,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/booking_provider.dart';
+import '../../../../services/currency/currency_service.dart';
 import '_SuccessIcon.dart';
 import '_ReceiptCard.dart';
 
@@ -52,12 +53,10 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
     }
   }
 
-  String _formatAmount() {
+  String _formatAmount(CurrencyService currency) {
     final price = _bookingData?['priceFinal'];
-    if (price is num) {
-      return '${price.toStringAsFixed(2)} TND';
-    }
-    return '-- TND';
+    if (price is num) return currency.format(price.toDouble());
+    return currency.formatOrDash();
   }
 
   String _formatRefNumber() {
@@ -128,7 +127,8 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
+    final t        = AppLocalizations.of(context);
+    final currency = context.watch<CurrencyService>();
 
     if (_isLoading) {
       return Scaffold(
@@ -174,7 +174,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
 
               // ── Receipt card ───────────────────────────────
               ReceiptCard(
-                amount: _formatAmount(),
+                amount: _formatAmount(currency),
                 refNumber: _formatRefNumber(),
                 date: _formatDate(),
                 time: _formatTime(),

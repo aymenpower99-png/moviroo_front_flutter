@@ -4,6 +4,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/booking_provider.dart';
+import '../../../../routing/router.dart';
 import '_BookingConfirmedHeader.dart';
 import '_BookingConfirmedCard.dart';
 import '_BookingConfirmedButtons.dart';
@@ -79,6 +80,12 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
   }
 
   // ── Backend-first data accessors ─────────────────────────────────────────
+  bool get _isPendingCard {
+    final status = _bookingData?['status'] as String?;
+    final method = (_bookingData?['paymentMethod'] as String?)?.toUpperCase();
+    return status == 'PENDING' && method == 'CARD';
+  }
+
   String? get _pickupAddress => _bookingData?['pickupAddress'] as String?;
   String? get _dropoffAddress => _bookingData?['dropoffAddress'] as String?;
 
@@ -122,6 +129,15 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
       return '$seatCount ${seatCount == 1 ? "ADULT" : "ADULTS"}';
     }
     return '2 ADULTS';
+  }
+
+  void _handlePayNow() {
+    if (widget.bookingId == null) return;
+    _pollTimer?.cancel();
+    Navigator.of(context).pushReplacementNamed(
+      AppRouter.payment,
+      arguments: {'bookingId': widget.bookingId},
+    );
   }
 
   Future<void> _handleCancel() async {
@@ -196,7 +212,8 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
       );
     }
 
-    final isCash = _paymentMethod?.toLowerCase() == 'cash';
+    final isCash       = _paymentMethod?.toLowerCase() == 'cash';
+    final isPendingCard = _isPendingCard;
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -210,7 +227,10 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
                 child: Column(
                   children: [
                     // ── Header ─────────────────────────────
-                    BookingConfirmedHeader(isCash: isCash),
+                    BookingConfirmedHeader(
+                      isCash: isCash,
+                      isPendingCard: isPendingCard,
+                    ),
 
                     // ── Main Card ─────────────────────────────
                     BookingConfirmedCard(
@@ -231,7 +251,9 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               child: BookingConfirmedButtons(
                 isCancelling: _isCancelling,
+                isPendingCard: isPendingCard,
                 onCancel: _handleCancel,
+                onPayNow: isPendingCard ? _handlePayNow : null,
               ),
             ),
           ],

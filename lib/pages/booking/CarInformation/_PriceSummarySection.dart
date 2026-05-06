@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../services/currency/currency_service.dart';
 import '_SummaryCard.dart';
 
 class PriceSummarySection extends StatefulWidget {
@@ -88,9 +90,13 @@ class _PriceSummarySectionState extends State<PriceSummarySection>
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final hasSurge = widget.surgeMultiplier != null && widget.surgeMultiplier! > 1.0;
-    final rawDisplay = _rawPrice() == 0 ? '-- TND' : _formatPrice(_rawPrice());
+    final t        = AppLocalizations.of(context);
+    final currency = context.watch<CurrencyService>();
+    // Local helper so AnimatedBuilder closure can access the same instance
+    String fmt(double price) => currency.format(price);
+
+    final hasSurge   = widget.surgeMultiplier != null && widget.surgeMultiplier! > 1.0;
+    final rawDisplay = _rawPrice() == 0 ? currency.formatOrDash() : fmt(_rawPrice());
 
     return SummaryCard(
       child: Column(
@@ -167,7 +173,7 @@ class _PriceSummarySectionState extends State<PriceSummarySection>
                     AnimatedBuilder(
                       animation: _priceAnim,
                       builder: (_, __) => Text(
-                        _formatPrice(_priceAnim.value == 0
+                        fmt(_priceAnim.value == 0
                             ? _discountedPrice()
                             : _priceAnim.value),
                         style: AppTextStyles.bodyLarge(context).copyWith(

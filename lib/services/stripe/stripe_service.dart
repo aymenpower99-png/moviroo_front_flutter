@@ -1,30 +1,16 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import '../../core/config/app_config.dart';
-import '../../core/storage/token_storage.dart';
 
-/// Stripe service for payment processing.
-/// Handles payment intent creation and confirmation.
+/// Stripe service — handles PaymentSheet and SetupSheet presentation.
+/// Payment intent creation and saved-card management are handled server-side
+/// via [BookingApiService].
 class StripeService {
-  /// Your Stripe publishable key (test mode)
-  /// Replace with your actual Stripe test publishable key
   static const String _publishableKey =
       'pk_test_51TQUuDPm6vo1FQzebQQuzSCCFgFwVE7UVwNb211WGYVuXGoFmKX1IG5Nylu9P4JuwnNAP3PW9u5u5YedZj44M9x100bg4KmXGE';
 
   static bool _initialized = false;
 
-  /// Your backend API endpoint for creating payment intents
-  static const String _paymentIntentEndpoint =
-      '${AppConfig.baseUrl}/payment/create-intent';
-
-  /// Storage key for saved cards
-  static const String _savedCardsKey = 'saved_cards';
-
-  /// Initialize Stripe with publishable key
+  /// Lazy initialisation — safe to call multiple times.
   static Future<void> initialize() async {
     if (_initialized) return;
     Stripe.publishableKey = _publishableKey;
@@ -34,21 +20,21 @@ class StripeService {
 
   /// Present the Stripe PaymentSheet for a given [clientSecret].
   ///
-  /// Pass [customerId] and [ephemeralKey] to enable saved-card listing inside
-  /// the PaymentSheet (passenger sees their saved cards + can add a new one).
+  /// Pass [customerId] and [ephemeralKey] to show saved cards inside the sheet.
   static Future<void> presentPaymentSheet(
     String clientSecret, {
     String? customerId,
     String? ephemeralKey,
   }) async {
-    await initialize(); // lazy — safe to call multiple times
+    await initialize();
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName: 'Moviroo',
         style: ThemeMode.system,
         customerId: customerId?.isNotEmpty == true ? customerId : null,
-        customerEphemeralKeySecret: ephemeralKey?.isNotEmpty == true ? ephemeralKey : null,
+        customerEphemeralKeySecret:
+            ephemeralKey?.isNotEmpty == true ? ephemeralKey : null,
       ),
     );
     await Stripe.instance.presentPaymentSheet();
@@ -73,252 +59,5 @@ class StripeService {
     );
     await Stripe.instance.presentPaymentSheet();
   }
-
-  /// Create a payment intent on your backend
-  /// Returns the client secret needed to confirm the payment
-  static Future<String> createPaymentIntent({
-    required int amount, // Amount in smallest currency unit (e.g., cents)
-    required String currency, // Currency code (e.g., 'usd', 'eur', 'tnd')
-    required String bookingId,
-    Map<String, dynamic>? metadata,
-  }) async {
-    try {
-      final token = await TokenStorage.getAccess();
-      final headers = <String, String>{
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
-
-      final response = await http
-          .post(
-            Uri.parse(_paymentIntentEndpoint),
-            headers: headers,
-            body: jsonEncode({
-              'amount': amount,
-              'currency': currency,
-              'bookingId': bookingId,
-              ...?metadata,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final clientSecret = data['client_secret'];
-        if (clientSecret == null) {
-          throw Exception('No client secret in response');
-        }
-        return clientSecret;
-      } else {
-        throw Exception('Failed to create payment intent: ${response.body}');
-      }
-    } catch (e) {
-      throw Exception('Error creating payment intent: $e');
-    }
-  }
-
-  /// Confirm payment with payment method details
-  /// For test mode, this simulates a successful payment
-  static Future<void> confirmPayment({
-    required String paymentIntentClientSecret,
-    required String paymentMethodId,
-  }) async {
-    try {
-      // In production, use Stripe.instance.confirmPayment()
-      // For test mode, we simulate success
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Production code:
-      // await Stripe.instance.confirmPayment(
-      //   paymentIntentClientSecret: paymentIntentClientSecret,
-      //   data: PaymentMethodParams.card(
-      //     paymentMethodData: PaymentMethodData(
-      //       billingDetails: billingDetails,
-      //     ),
-      //   ),
-      // );
-    } catch (e) {
-      throw Exception('Payment confirmation failed: $e');
-    }
-  }
-
-  /// Process a card payment end-to-end.
-  ///
-  /// Test-mode behaviour:
-  /// - Validates card details locally (Luhn + expiry + CVV).
-  /// - Simulates Stripe success after a short delay.
-  /// - Does NOT hit the backend `/payment/create-intent` endpoint (it does not
-  ///   exist yet — the backend uses `/billing/payments/:tripPaymentId/stripe-intent`
-  ///   which requires a TripPayment row created by the ride confirmation flow).
-  /// Once the backend exposes a `POST /rides/:id/stripe-intent` endpoint, swap
-  /// the simulated block for the real `createPaymentIntent` call.
-  ///
-  /// Returns `true` on success, `false` only when the card details fail validation.
-  static Future<bool> processCardPayment({
-    required int amount,
-    required String currency,
-    required String bookingId,
-    required String cardNumber,
-    required String expiryMonth,
-    required String expiryYear,
-    required String cvv,
-    String? cardholderName,
-    Map<String, dynamic>? metadata,
-  }) async {
-    // 1. Local validation of test card details
-    if (!validateCardNumber(cardNumber)) {
-      return false;
-    }
-    if (!validateCvv(cvv)) {
-      return false;
-    }
-
-    // 2. Simulate Stripe network round-trip (test mode)
-    await Future.delayed(const Duration(seconds: 2));
-
-    // 3. Test card 4242 4242 4242 4242 always succeeds in Stripe test mode
-    return true;
-  }
-
-  /// Get payment method from card details (for testing)
-  static String getTestPaymentMethodId() {
-    // Stripe test card IDs
-    return 'pm_card_visa';
-  }
-
-  /// Validate card number using Luhn algorithm
-  static bool validateCardNumber(String cardNumber) {
-    // Remove spaces
-    final cleanNumber = cardNumber.replaceAll(' ', '');
-
-    if (cleanNumber.length < 13 || cleanNumber.length > 19) {
-      return false;
-    }
-
-    // Luhn algorithm
-    int sum = 0;
-    bool isEven = false;
-
-    for (int i = cleanNumber.length - 1; i >= 0; i--) {
-      int digit = int.parse(cleanNumber[i]);
-
-      if (isEven) {
-        digit *= 2;
-        if (digit > 9) {
-          digit -= 9;
-        }
-      }
-
-      sum += digit;
-      isEven = !isEven;
-    }
-
-    return sum % 10 == 0;
-  }
-
-  /// Validate expiry date
-  static bool validateExpiry(String expiry) {
-    if (!expiry.contains('/') || expiry.length != 5) {
-      return false;
-    }
-
-    final parts = expiry.split('/');
-    final month = int.tryParse(parts[0]);
-    final year = int.tryParse(parts[1]);
-
-    if (month == null || year == null) {
-      return false;
-    }
-
-    if (month < 1 || month > 12) {
-      return false;
-    }
-
-    // Check if expiry is in the past
-    final now = DateTime.now();
-    final expiryDate = DateTime(2000 + year, month);
-
-    return expiryDate.isAfter(now);
-  }
-
-  /// Validate CVV
-  static bool validateCvv(String cvv) {
-    return cvv.length == 3 || cvv.length == 4;
-  }
-
-  /// Save a card for future use (test mode - stores locally)
-  /// In production, this would call Stripe to create a SetupIntent
-  static Future<void> saveCard({
-    required String cardNumber,
-    required String expiryMonth,
-    required String expiryYear,
-    required String cardholderName,
-  }) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final lastFour = cardNumber.substring(cardNumber.length - 4);
-
-      final cardData = {
-        'lastFour': lastFour,
-        'expiryMonth': expiryMonth,
-        'expiryYear': expiryYear,
-        'cardholderName': cardholderName,
-        'token':
-            'pm_${DateTime.now().millisecondsSinceEpoch}', // Simulated token
-        'savedAt': DateTime.now().toIso8601String(),
-      };
-
-      // Get existing saved cards
-      final existingCardsJson = prefs.getStringList(_savedCardsKey) ?? [];
-      final existingCards = existingCardsJson
-          .map((e) => jsonDecode(e) as Map<String, dynamic>)
-          .toList();
-
-      // Add new card
-      existingCards.add(cardData);
-
-      // Save back
-      final updatedCardsJson = existingCards.map((e) => jsonEncode(e)).toList();
-      await prefs.setStringList(_savedCardsKey, updatedCardsJson);
-    } catch (e) {
-      throw Exception('Failed to save card: $e');
-    }
-  }
-
-  /// Get all saved cards (test mode - retrieves from local storage)
-  static Future<List<Map<String, dynamic>>> getSavedCards() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final cardsJson = prefs.getStringList(_savedCardsKey) ?? [];
-      return cardsJson
-          .map((e) => jsonDecode(e) as Map<String, dynamic>)
-          .toList();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  /// Delete a saved card (test mode - removes from local storage)
-  static Future<void> deleteCard(String token) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final cardsJson = prefs.getStringList(_savedCardsKey) ?? [];
-      final cards = cardsJson
-          .map((e) => jsonDecode(e) as Map<String, dynamic>)
-          .toList();
-
-      cards.removeWhere((card) => card['token'] == token);
-
-      final updatedCardsJson = cards.map((e) => jsonEncode(e)).toList();
-      await prefs.setStringList(_savedCardsKey, updatedCardsJson);
-    } catch (e) {
-      throw Exception('Failed to delete card: $e');
-    }
-  }
-
-  /// Check if user has any saved cards
-  static Future<bool> hasSavedCards() async {
-    final cards = await getSavedCards();
-    return cards.isNotEmpty;
-  }
 }
+

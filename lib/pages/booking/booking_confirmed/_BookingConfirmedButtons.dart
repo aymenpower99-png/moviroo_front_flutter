@@ -6,11 +6,15 @@ import '../../../../routing/router.dart';
 
 class BookingConfirmedButtons extends StatelessWidget {
   final bool isCancelling;
+  final bool isPendingCard;
   final VoidCallback onCancel;
+  final VoidCallback? onPayNow;
 
   const BookingConfirmedButtons({
     required this.isCancelling,
     required this.onCancel,
+    this.isPendingCard = false,
+    this.onPayNow,
   });
 
   @override
@@ -19,43 +23,69 @@ class BookingConfirmedButtons extends StatelessWidget {
 
     return Column(
       children: [
-        // Check Booking button
+        // Primary action button
         SizedBox(
           width: double.infinity,
           height: 56,
-          child: ElevatedButton(
-            onPressed: () => AppRouter.push(context, AppRouter.trajet),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryPurple,
-              foregroundColor: Colors.white,
-              elevation: 12,
-              shadowColor: AppColors.primaryPurple.withValues(
-                alpha: 0.45,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.list_alt_rounded,
-                  size: 18,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Check Booking',
-                  style: AppTextStyles.bodyLarge(context).copyWith(
+          child: isPendingCard
+              // ── Pay Now ────────────────────────────────────────────
+              ? ElevatedButton.icon(
+                  onPressed: onPayNow,
+                  icon: const Icon(
+                    Icons.credit_card_rounded,
+                    size: 18,
                     color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                  ),
+                  label: Text(
+                    'Pay Now',
+                    style: AppTextStyles.bodyLarge(context).copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryPurple,
+                    foregroundColor: Colors.white,
+                    elevation: 12,
+                    shadowColor: AppColors.primaryPurple.withValues(alpha: 0.45),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                )
+              // ── Check Booking ──────────────────────────────────────
+              : ElevatedButton(
+                  onPressed: () => AppRouter.push(context, AppRouter.trajet),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryPurple,
+                    foregroundColor: Colors.white,
+                    elevation: 12,
+                    shadowColor: AppColors.primaryPurple.withValues(alpha: 0.45),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.list_alt_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Check Booking',
+                        style: AppTextStyles.bodyLarge(context).copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
         ),
         const SizedBox(height: 10),
 

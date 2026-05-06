@@ -268,7 +268,11 @@ class ConfirmBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
+    final t            = AppLocalizations.of(context);
+    final currency     = context.watch<CurrencyService>();
+    final displayPrice = car.priceTndRaw > 0
+        ? currency.format(car.priceTndRaw)
+        : car.price;
 
     return Container(
       padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad + 12),
@@ -300,7 +304,7 @@ class ConfirmBar extends StatelessWidget {
                 style: AppTextStyles.buttonPrimary,
               ),
               Text(
-                car.price,
+                displayPrice,
                 style: AppTextStyles.buttonPrimary.copyWith(
                   fontWeight: FontWeight.w800,
                 ),

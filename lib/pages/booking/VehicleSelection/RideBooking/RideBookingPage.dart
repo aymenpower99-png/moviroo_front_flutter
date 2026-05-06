@@ -210,6 +210,7 @@ class _RideBookingPageState extends State<RideBookingPage> with RouteAware {
             seats: vc.seats,
             bags: vc.bags,
             price: '${vc.priceTnd} TND',
+            priceTndRaw: vc.priceTnd.toDouble(),
             eta: '${vc.durationMin} min',
             duration: '${vc.durationMin} min',
             classCategory: 'All',

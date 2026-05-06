@@ -9,6 +9,7 @@ import '../../../../services/membership/membership_service.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/booking_provider.dart';
+import '../../../../services/currency/currency_service.dart';
 import '_PaymentSummaryCard.dart';
 
 class PaymentPage extends StatefulWidget {
@@ -128,43 +129,39 @@ class _PaymentPageState extends State<PaymentPage> {
     setState(() => _isProcessing = true);
 
     try {
-      // 1. Get/create Stripe PaymentIntent for this ride (ride still PENDING,
-      //    TripPayment still PENDING — safe to create the intent).
+      // 1. Confirm ride with CARD method → creates TripPayment(PENDING) row.
+      //    409 = already confirmed — safe to ignore and proceed.
+      await _bookingApi.confirmRide(bookingId, paymentMethod: 'CARD');
+
+      // 2. Get/create Stripe PaymentIntent for this ride's TripPayment row.
       final intentData = await _bookingApi.createStripeIntentForRide(bookingId);
       final clientSecret = intentData['clientSecret'] as String?;
       if (clientSecret == null) throw Exception('No client secret received');
 
-      // 2. Present Stripe PaymentSheet — charges the card. The sheet shows
-      //    saved cards if customerId + ephemeralKey are present.
-      //    Throws StripeException on cancel/failure (ride stays PENDING).
+      // 3. Present Stripe PaymentSheet — charges the card.
+      //    Throws StripeException on cancel/failure.
       await StripeService.presentPaymentSheet(
         clientSecret,
         customerId: intentData['customerId'] as String?,
         ephemeralKey: intentData['ephemeralKey'] as String?,
       );
 
-      // 3. Card captured successfully → confirm ride. Backend marks
-      //    TripPayment=PAID and transitions ride to SCHEDULED / SEARCHING_DRIVER.
-      //    409 = already confirmed, treated as no-op.
-      await _bookingApi.confirmRide(bookingId, paymentMethod: 'CARD');
-
-      // 4. Mark coupon used now that payment succeeded
+      // 4. Mark coupon used now that payment succeeded.
       final couponCode = _bookingData?['couponCode'] as String?;
       if (couponCode != null && couponCode.isNotEmpty) {
         try {
           await MembershipService.useCoupon(couponCode);
-        } catch (_) {
-          // Non-blocking
-        }
+        } catch (_) {}
       }
 
       if (!mounted) return;
       context.read<BookingProvider>().onPaymentCompleted();
       setState(() => _isProcessing = false);
 
-      // Navigate to Payment Success
+      // 5. Navigate to booking confirmed (awaiting driver assignment).
+      //    The booking_confirmed page polls and updates UI when driver is assigned.
       Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRouter.paymentSuccess,
+        AppRouter.bookingConfirmed,
         (route) => false,
         arguments: {'bookingId': bookingId},
       );
@@ -184,7 +181,8 @@ class _PaymentPageState extends State<PaymentPage> {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
+    final t        = AppLocalizations.of(context);
+    final currency = context.watch<CurrencyService>();
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -375,7 +373,7 @@ class _PaymentPageState extends State<PaymentPage> {
                       icon: const Icon(Icons.credit_card_outlined, size: 20),
                       label: Text(
                         _displayPrice > 0
-                            ? '${t.translate('pay_amount')} ${_displayPrice.toStringAsFixed(2)} TND'
+                            ? '${t.translate('pay_amount')} ${currency.format(_displayPrice)}'
                             : t.translate('pay_amount'),
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,

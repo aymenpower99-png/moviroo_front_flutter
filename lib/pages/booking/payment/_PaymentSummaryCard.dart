@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../services/currency/currency_service.dart';
 
 class PaymentSummaryCard extends StatelessWidget {
   /// Base price of the ride in TND (already discounted if coupon applied).
@@ -24,11 +26,11 @@ class PaymentSummaryCard extends StatelessWidget {
     this.discountPercent,
   });
 
-  String _fmt(double v) => '${v.toStringAsFixed(2)} TND';
-
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
+    final t        = AppLocalizations.of(context);
+    final currency = context.watch<CurrencyService>();
+    String fmt(double v) => currency.format(v);
     final hasDiscount = discountPercent != null && discountPercent! > 0;
     final originalPrice = hasDiscount
         ? subtotal / (1 - discountPercent! / 100)
@@ -69,14 +71,14 @@ class PaymentSummaryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      _fmt(originalPrice!),
+                      fmt(originalPrice!),
                       style: AppTextStyles.bodySmall(context).copyWith(
                         color: AppColors.subtext(context),
                         decoration: TextDecoration.lineThrough,
                       ),
                     ),
                     Text(
-                      _fmt(subtotal),
+                      fmt(subtotal),
                       style: AppTextStyles.bodyMedium(context).copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.primaryPurple,
@@ -121,7 +123,7 @@ class PaymentSummaryCard extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  '-${_fmt(originalPrice! - subtotal)}',
+                  '-${fmt(originalPrice! - subtotal)}',
                   style: AppTextStyles.bodyMedium(context).copyWith(
                     fontWeight: FontWeight.w600,
                     color: Colors.green,
@@ -132,14 +134,14 @@ class PaymentSummaryCard extends StatelessWidget {
           ] else ...[
             _PriceRow(
               label: rideLabel ?? t.translate('standard_transfer'),
-              value: _fmt(subtotal),
+              value: fmt(subtotal),
             ),
           ],
           if (serviceFee > 0) ...[
             const SizedBox(height: 8),
             _PriceRow(
               label: t.translate('service_fee'),
-              value: _fmt(serviceFee),
+              value: fmt(serviceFee),
             ),
           ],
           const SizedBox(height: 14),
@@ -155,7 +157,7 @@ class PaymentSummaryCard extends StatelessWidget {
                 ).copyWith(fontWeight: FontWeight.w800),
               ),
               Text(
-                _fmt(total),
+                fmt(total),
                 style: AppTextStyles.bodyLarge(context).copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.primaryPurple,
