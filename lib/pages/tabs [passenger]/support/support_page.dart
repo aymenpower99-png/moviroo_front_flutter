@@ -31,7 +31,10 @@ class _SupportPageState extends State<SupportPage> {
   List<SupportTicket> _tickets = [];
   bool _isLoadingTickets = false;
   int _unreadCount = 0;
-  late Future<List<HelpCategory>> _categoriesFuture;
+
+  // ── Help Center categories ─────────────────────────────────────────────────
+  List<HelpCategory>? _categories;
+  bool _loadingCategories = false;
 
   @override
   void dispose() {
@@ -92,7 +95,38 @@ class _SupportPageState extends State<SupportPage> {
     super.initState();
     _loadTickets();
     _connectWebSocket();
-    _categoriesFuture = _helpCenterService.fetchCategories();
+
+    // Use cache if warm → instant render, no spinner
+    final cached = HelpCenterService.cachedCategories;
+    if (cached != null) {
+      _categories = cached;
+      // Silently refresh in background so counts stay up-to-date
+      _refreshCategories();
+    } else {
+      _loadingCategories = true;
+      _fetchCategories();
+    }
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final categories = await _helpCenterService.fetchCategories();
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+          _loadingCategories = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingCategories = false);
+    }
+  }
+
+  Future<void> _refreshCategories() async {
+    try {
+      final categories = await _helpCenterService.fetchCategories();
+      if (mounted) setState(() => _categories = categories);
+    } catch (_) {}
   }
 
   Future<void> _connectWebSocket() async {
@@ -279,36 +313,28 @@ class _SupportPageState extends State<SupportPage> {
                     ),
                     const SizedBox(height: 14),
 
-                    FutureBuilder<List<HelpCategory>>(
-                      future: _categoriesFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 32),
-                              child: CircularProgressIndicator(
-                                color: AppColors.primaryPurple,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                          );
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-                        return HelpCenterGrid(
-                          categories: snapshot.data!,
-                          onCategoryTap: (category) => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  HelpCategoryPage(category: category),
-                            ),
+                    // ── Help Center grid ───────────────────────────────────
+                    if (_loadingCategories)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryPurple,
+                            strokeWidth: 2,
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      )
+                    else if (_categories != null && _categories!.isNotEmpty)
+                      HelpCenterGrid(
+                        categories: _categories!,
+                        onCategoryTap: (category) => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                HelpCategoryPage(category: category),
+                          ),
+                        ),
+                      ),
 
                     const SizedBox(height: 24),
                   ],

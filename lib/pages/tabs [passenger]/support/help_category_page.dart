@@ -19,13 +19,38 @@ class HelpCategoryPage extends StatefulWidget {
 
 class _HelpCategoryPageState extends State<HelpCategoryPage> {
   final _service = HelpCenterService();
-  late Future<List<HelpArticle>> _articlesFuture;
+  List<HelpArticle>? _articles;
+  bool _loading = false;
 
   @override
   void initState() {
     super.initState();
-    _articlesFuture =
-        _service.fetchArticlesByCategory(widget.category.id);
+    // Use cache if warm → instant render, no spinner
+    final cached = HelpCenterService.cachedArticlesByCategory(widget.category.id);
+    if (cached != null) {
+      _articles = cached;
+      // Silently refresh in background
+      _refresh();
+    } else {
+      _loading = true;
+      _fetch();
+    }
+  }
+
+  Future<void> _fetch() async {
+    try {
+      final articles = await _service.fetchArticlesByCategory(widget.category.id);
+      if (mounted) setState(() { _articles = articles; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _refresh() async {
+    try {
+      final articles = await _service.fetchArticlesByCategory(widget.category.id);
+      if (mounted) setState(() => _articles = articles);
+    } catch (_) {}
   }
 
   @override
@@ -81,82 +106,71 @@ class _HelpCategoryPageState extends State<HelpCategoryPage> {
           ],
         ),
       ),
-      body: FutureBuilder<List<HelpArticle>>(
-        future: _articlesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+      body: _loading
+          ? const Center(
               child: CircularProgressIndicator(
                 color: AppColors.primaryPurple,
                 strokeWidth: 2,
               ),
-            );
-          }
-
-          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Text(
-                  'No articles available yet.',
-                  style: AppTextStyles.bodyMedium(context),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
-
-          final articles = snapshot.data!;
-
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: articles.length,
-            separatorBuilder: (_, __) => Divider(
-              height: 1,
-              color: AppColors.border(context),
-              indent: 20,
-              endIndent: 20,
-            ),
-            itemBuilder: (context, i) {
-              final article = articles[i];
-              return InkWell(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => HelpArticlePage(article: article),
+            )
+          : (_articles == null || _articles!.isEmpty)
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Text(
+                      'No articles available yet.',
+                      style: AppTextStyles.bodyMedium(context),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 18,
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _articles!.length,
+                  separatorBuilder: (_, __) => Divider(
+                    height: 1,
+                    color: AppColors.border(context),
+                    indent: 20,
+                    endIndent: 20,
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          article.question,
-                          style: AppTextStyles.bodyMedium(context).copyWith(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            height: 1.4,
-                          ),
+                  itemBuilder: (context, i) {
+                    final article = _articles![i];
+                    return InkWell(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => HelpArticlePage(article: article),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColors.subtext(context),
-                        size: 22,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 18,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                article.question,
+                                style: AppTextStyles.bodyMedium(context).copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.subtext(context),
+                              size: 22,
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
-          );
-        },
-      ),
     );
   }
 }

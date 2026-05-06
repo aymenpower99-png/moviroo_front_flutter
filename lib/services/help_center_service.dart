@@ -5,21 +5,42 @@ import 'auth/auth_http.dart';
 
 /// Fetches Help Center data from the backend.
 ///
-/// The 6 category cards are STATIC — they always render.
-/// Only [articleCount] is dynamic, fetched from the backend by counting
-/// published articles per categoryKey.
-///
-/// Endpoints used (JWT-authenticated):
-///   GET /help-center?lang=en  → all published articles (used to count per category)
+/// Uses a static in-memory TTL cache (5 min) so that subsequent opens of
+/// the Support page or Category page are instant — no spinner on re-entry.
 class HelpCenterService {
-  /// Language to request from the backend (defaults to English).
   final String lang;
 
   const HelpCenterService({this.lang = 'en'});
 
+  // ── Static in-memory cache ────────────────────────────────────────────────
+
+  static List<HelpArticle>? _cachedArticles;
+  static DateTime? _cacheTime;
+  static const Duration _cacheTtl = Duration(minutes: 5);
+
+  /// Synchronously returns the 6 categories from cache (null if cache is cold).
+  /// Use this in initState to skip the loading spinner on re-entry.
+  static List<HelpCategory>? get cachedCategories {
+    if (_cachedArticles == null) return null;
+    return _fixedCategories
+        .map((def) => HelpCategory(
+              id: def.key,
+              name: def.label,
+              icon: iconForCategory(def.key),
+              articleCount:
+                  _cachedArticles!.where((a) => a.categoryId == def.key).length,
+            ))
+        .toList();
+  }
+
+  /// Synchronously returns articles for [categoryId] from cache (null if cold).
+  static List<HelpArticle>? cachedArticlesByCategory(String categoryId) {
+    if (_cachedArticles == null) return null;
+    return _cachedArticles!.where((a) => a.categoryId == categoryId).toList();
+  }
+
   // ── Static category definitions ───────────────────────────────────────────
 
-  /// The 6 fixed categories. Order and icons never change.
   static const List<_CategoryDef> _fixedCategories = [
     _CategoryDef(key: 'account',   label: 'Account'),
     _CategoryDef(key: 'payments',  label: 'Payments'),
@@ -31,13 +52,8 @@ class HelpCenterService {
 
   // ── Public API ────────────────────────────────────────────────────────────
 
-  /// Always returns all 6 category cards.
-  /// Article counts are fetched live from the backend; 0 is shown if the
-  /// backend is unreachable or a category has no published articles yet.
   Future<List<HelpCategory>> fetchCategories() async {
-    // Fetch live article counts, fallback to empty map on error.
     final counts = await _fetchCountsPerCategory();
-
     return _fixedCategories
         .map((def) => HelpCategory(
               id: def.key,
@@ -48,41 +64,31 @@ class HelpCenterService {
         .toList();
   }
 
-  /// Returns all published articles for [categoryId].
   Future<List<HelpArticle>> fetchArticlesByCategory(String categoryId) async {
     final all = await _fetchAllFromBackend();
     return all.where((a) => a.categoryId == categoryId).toList();
   }
 
-  /// Returns every published article (used by "View All").
   Future<List<HelpArticle>> fetchAllArticles() async {
     return _fetchAllFromBackend();
   }
 
   // ── Icon mapping ──────────────────────────────────────────────────────────
 
-  /// Maps a backend category key to a Flutter [IconData].
   static IconData iconForCategory(String key) {
     switch (key) {
-      case 'account':
-        return Icons.manage_accounts_rounded;
-      case 'payments':
-        return Icons.credit_card_rounded;
-      case 'trips':
-        return Icons.location_on_rounded;
-      case 'safety':
-        return Icons.health_and_safety_rounded;
-      case 'technical':
-        return Icons.build_rounded;
+      case 'account':   return Icons.manage_accounts_rounded;
+      case 'payments':  return Icons.credit_card_rounded;
+      case 'trips':     return Icons.location_on_rounded;
+      case 'safety':    return Icons.health_and_safety_rounded;
+      case 'technical': return Icons.build_rounded;
       case 'other':
-      default:
-        return Icons.grid_view_rounded;
+      default:          return Icons.grid_view_rounded;
     }
   }
 
   // ── Private ───────────────────────────────────────────────────────────────
 
-  /// Fetches all articles and returns a map of categoryKey → count.
   Future<Map<String, int>> _fetchCountsPerCategory() async {
     try {
       final articles = await _fetchAllFromBackend();
@@ -97,29 +103,38 @@ class HelpCenterService {
     }
   }
 
-  /// Calls GET /help-center?lang= and parses the article list.
+  /// Returns cached articles instantly if fresh; otherwise fetches from API.
   Future<List<HelpArticle>> _fetchAllFromBackend() async {
+    // Return cache if still fresh
+    if (_cachedArticles != null &&
+        _cacheTime != null &&
+        DateTime.now().difference(_cacheTime!) < _cacheTtl) {
+      return _cachedArticles!;
+    }
+
     try {
       final res = await AuthHTTP.authenticatedGet('/help-center?lang=$lang');
       if (res.statusCode == 200) {
         final list = jsonDecode(res.body) as List<dynamic>;
-        return list
+        _cachedArticles = list
             .map((j) => HelpArticle.fromJson(j as Map<String, dynamic>))
             .toList();
+        _cacheTime = DateTime.now();
+        return _cachedArticles!;
       }
     } catch (e) {
       debugPrint('HelpCenterService._fetchAllFromBackend error: $e');
     }
-    return [];
+    return _cachedArticles ?? [];   // return stale cache on error rather than []
   }
 }
 
 // ── Internal helper ───────────────────────────────────────────────────────────
 
-/// Lightweight struct for the static category definitions.
 class _CategoryDef {
   final String key;
   final String label;
   const _CategoryDef({required this.key, required this.label});
 }
+
 

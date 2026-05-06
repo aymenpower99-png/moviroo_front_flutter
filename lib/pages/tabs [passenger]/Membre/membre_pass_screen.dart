@@ -40,9 +40,38 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Pre-populate from provider cache synchronously — avoids first-frame spinner
+    final provider = context.read<MembershipProvider>();
+    if (provider.hasLoaded && provider.info != null) {
+      _populateFromInfo(provider.info!);   // sets fields + _loading = false
+    }
+
+    // Always schedule a background load/refresh (silent if already cached)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadFromProvider();
     });
+  }
+
+  /// Sets state fields directly — safe to call from initState (no setState).
+  void _populateFromInfo(MembershipInfo info) {
+    _membershipInfo = info;
+    _tiers = List.generate(
+      info.levels.length,
+      (i) => MembershipTier.fromLevel(
+        info.levels[i],
+        info.userPoints,
+        info.currentLevel,
+      ),
+    );
+    _claimStates = List.generate(_tiers.length, (i) {
+      final levelId = info.levels[i].id;
+      return TierClaimState(
+        claimed: info.claimedLevelIds.contains(levelId),
+        promoCode: info.activeCouponCodes[levelId],
+      );
+    });
+    _loading = false;
   }
 
   Future<void> _loadFromProvider({bool force = false}) async {
@@ -76,24 +105,7 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
   }
 
   void _applyInfo(MembershipInfo info) {
-    setState(() {
-      _membershipInfo = info;
-      _tiers = List.generate(
-        info.levels.length,
-        (i) => MembershipTier.fromLevel(
-          info.levels[i],
-          info.userPoints,
-          info.currentLevel,
-        ),
-      );
-      _claimStates = List.generate(_tiers.length, (i) {
-        final levelId = info.levels[i].id;
-        final isClaimed = info.claimedLevelIds.contains(levelId);
-        final promoCode = info.activeCouponCodes[levelId];
-        return TierClaimState(claimed: isClaimed, promoCode: promoCode);
-      });
-      _loading = false;
-    });
+    setState(() => _populateFromInfo(info));
   }
 
   // ── Accordion ─────────────────────────────────────────────
