@@ -19,6 +19,7 @@ import 'services/notification_service.dart';
 import 'providers/booking_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/membership_provider.dart';
+import 'services/currency/currency_service.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 final themeProvider = ThemeProvider();
@@ -41,6 +42,7 @@ void main() async {
   await FirebaseService.initialize();
   await NotificationService().initialize();
   await RecentSearchesService.clearOldCache();
+  await CurrencyService.instance.init();
 
   // Lock orientation
   await SystemChrome.setPreferredOrientations([
@@ -149,6 +151,7 @@ class _SmartWayAppState extends State<SmartWayApp> {
               ChangeNotifierProvider(create: (_) => BookingProvider()),
               ChangeNotifierProvider(create: (_) => ChatProvider()),
               ChangeNotifierProvider(create: (_) => MembershipProvider()),
+              ChangeNotifierProvider.value(value: CurrencyService.instance),
             ],
             child: MaterialApp(
               title: 'Moviroo',

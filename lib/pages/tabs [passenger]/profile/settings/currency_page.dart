@@ -1,34 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
-
-// ── Currency model ────────────────────────────────────────────────────────────
-
-class _Currency {
-  final String code;
-  final String name;
-  final String symbol;
-
-  const _Currency({
-    required this.code,
-    required this.name,
-    required this.symbol,
-  });
-}
-
-const List<_Currency> _currencies = [
-  _Currency(code: 'USD', name: 'US Dollar',         symbol: '\$'),
-  _Currency(code: 'EUR', name: 'Euro',               symbol: '€'),
-  _Currency(code: 'GBP', name: 'British Pound',      symbol: '£'),
-  _Currency(code: 'TND', name: 'Tunisian Dinar',     symbol: 'د.ت'),
-  _Currency(code: 'DZD', name: 'Algerian Dinar',     symbol: 'د.ج'),
-  _Currency(code: 'LYD', name: 'Libyan Dinar',       symbol: 'ل.د'),
-  _Currency(code: 'MAD', name: 'Moroccan Dirham',    symbol: 'د.م.'),
-  _Currency(code: 'SAR', name: 'Saudi Riyal',        symbol: '﷼'),
-  _Currency(code: 'AED', name: 'UAE Dirham',         symbol: 'د.إ'),
-  _Currency(code: 'EGP', name: 'Egyptian Pound',     symbol: 'ج.م'),
-];
+import '../../../../../services/currency/currency_service.dart';
 
 // ── Currency page ─────────────────────────────────────────────────────────────
 
@@ -40,10 +15,9 @@ class CurrencyPage extends StatefulWidget {
 }
 
 class _CurrencyPageState extends State<CurrencyPage> {
-  String _selectedCode = 'USD';
   String _searchQuery = '';
 
-  List<_Currency> get _filtered => _currencies
+  List<CurrencyInfo> _filtered(List<CurrencyInfo> all) => all
       .where((c) =>
           c.code.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           c.name.toLowerCase().contains(_searchQuery.toLowerCase()))
@@ -51,7 +25,10 @@ class _CurrencyPageState extends State<CurrencyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context).translate;
+    final t            = AppLocalizations.of(context).translate;
+    final service      = context.watch<CurrencyService>();
+    final selectedCode = service.selectedCode;
+    final filtered     = _filtered(CurrencyService.currencies);
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -132,17 +109,15 @@ class _CurrencyPageState extends State<CurrencyPage> {
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _filtered.length,
+                itemCount: filtered.length,
                 separatorBuilder: (_, _) =>
                     Divider(height: 1, color: AppColors.border(context)),
                 itemBuilder: (context, index) {
-                  final currency = _filtered[index];
-                  final isSelected = currency.code == _selectedCode;
+                  final currency   = filtered[index];
+                  final isSelected = currency.code == selectedCode;
 
                   return GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedCode = currency.code);
-                    },
+                    onTap: () => context.read<CurrencyService>().setCode(currency.code),
                     behavior: HitTestBehavior.opaque,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),

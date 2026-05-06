@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../services/currency/currency_service.dart';
 
 // ── Model ─────────────────────────────────────────────────────────────────────
 class CarOption {
@@ -9,7 +11,8 @@ class CarOption {
   final String image;
   final int seats;
   final int bags;
-  final String price;
+  final String price;       // fallback string for static/sample data
+  final double priceTndRaw; // raw TND amount for live conversion
   final String classCategory;
   final String? eta;
   final String? duration;
@@ -22,6 +25,7 @@ class CarOption {
     required this.seats,
     required this.bags,
     required this.price,
+    this.priceTndRaw = 0.0,
     required this.classCategory,
     this.eta,
     this.duration,
@@ -136,7 +140,11 @@ class _CarCardState extends State<CarCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark       = Theme.of(context).brightness == Brightness.dark;
+    final currency     = context.watch<CurrencyService>();
+    final displayPrice = widget.car.priceTndRaw > 0
+        ? currency.format(widget.car.priceTndRaw)
+        : widget.car.price;
 
     return GestureDetector(
       onTap: _handleTap,
@@ -214,7 +222,7 @@ class _CarCardState extends State<CarCard> {
 
             // ── Price ─────────────────────────────────────────
             Text(
-              widget.car.price,
+              displayPrice,
               style: AppTextStyles.priceMedium(
                 context,
               ).copyWith(fontWeight: FontWeight.w700, fontSize: 16),

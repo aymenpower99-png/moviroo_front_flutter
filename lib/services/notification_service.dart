@@ -99,16 +99,17 @@ class NotificationService {
     );
 
     await (_localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>())
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >())
         ?.createNotificationChannel(channel);
   }
 
   Future<void> _registerToken(String token) async {
     try {
-      await _authService.authenticatedPost(
-        '/notifications/fcm-token',
-        {'token': token},
-      );
+      await _authService.authenticatedPost('/notifications/fcm-token', {
+        'token': token,
+      });
       debugPrint(
         '✅ FCM token registered with backend: ${token.substring(0, 20)}...',
       );
@@ -136,7 +137,9 @@ class NotificationService {
             importance: Importance.max,
             priority: Priority.high,
             icon: '@mipmap/ic_stat_notification',
-            largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+            largeIcon: DrawableResourceAndroidBitmap(
+              '@mipmap/ic_notification_large',
+            ),
           ),
           iOS: DarwinNotificationDetails(),
         ),
