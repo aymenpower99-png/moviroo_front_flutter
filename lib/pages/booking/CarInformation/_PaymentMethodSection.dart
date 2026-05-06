@@ -62,15 +62,13 @@ class _PaymentMethodSectionState extends State<PaymentMethodSection> {
           _PaymentOption(
             icon: Icons.credit_card_outlined,
             label: t.translate('card'),
-            subtitle: t.translate('card_subtitle'),
             isSelected: _selectedMethod == 'card',
             onTap: () => _onMethodChanged('card'),
           ),
           const SizedBox(height: 10),
           _PaymentOption(
-            icon: Icons.money,
+            icon: Icons.payments,
             label: t.translate('cash'),
-            subtitle: t.translate('cash_subtitle'),
             isSelected: _selectedMethod == 'cash',
             onTap: () => _onMethodChanged('cash'),
           ),
@@ -83,14 +81,12 @@ class _PaymentMethodSectionState extends State<PaymentMethodSection> {
 class _PaymentOption extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String subtitle;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _PaymentOption({
     required this.icon,
     required this.label,
-    required this.subtitle,
     required this.isSelected,
     required this.onTap,
   });
@@ -149,13 +145,6 @@ class _PaymentOption extends StatelessWidget {
                           ? AppColors.primaryPurple
                           : AppColors.text(context),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: AppTextStyles.bodySmall(
-                      context,
-                    ).copyWith(color: AppColors.subtext(context)),
                   ),
                 ],
               ),

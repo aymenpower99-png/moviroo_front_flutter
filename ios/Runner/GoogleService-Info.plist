@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>72379381319-64ovt4m0pabc811l392udkaeof4007dr.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.72379381319-64ovt4m0pabc811l392udkaeof4007dr</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>72379381319-u35h630eiqgjubdifbbfkdva7ck0vhoj.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCPwNKahAZlITrnrp8DC0Q7Fo-ebZsUyQM</string>
+	<key>GCM_SENDER_ID</key>
+	<string>72379381319</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.moviroo</string>
+	<key>PROJECT_ID</key>
+	<string>moviroo-system</string>
+	<key>STORAGE_BUCKET</key>
+	<string>moviroo-system.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:72379381319:ios:a0a9c9efb6b590c909e362</string>
+</dict>
+</plist>

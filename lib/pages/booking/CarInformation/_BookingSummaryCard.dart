@@ -8,7 +8,7 @@ class BookingSummaryCard extends StatelessWidget {
   final int pax;
   final int bags;
   final String vehicleName;
-  final String carName;
+  final String? carName;
   final String? imageUrl;
 
   const BookingSummaryCard({
@@ -16,13 +16,14 @@ class BookingSummaryCard extends StatelessWidget {
     required this.pax,
     required this.bags,
     required this.vehicleName,
-    required this.carName,
+    this.carName,
     this.imageUrl,
   });
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final carNameValue = carName;
 
     return SummaryCard(
       child: Row(
@@ -58,10 +59,10 @@ class BookingSummaryCard extends StatelessWidget {
                       context,
                     ).copyWith(fontWeight: FontWeight.w800, fontSize: 18),
                   ),
-                if (carName.isNotEmpty) ...[
+                if (carNameValue != null && carNameValue.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    carName,
+                    carNameValue,
                     style: AppTextStyles.bodyMedium(context).copyWith(
                       color: AppColors.subtext(context),
                       fontWeight: FontWeight.w500,

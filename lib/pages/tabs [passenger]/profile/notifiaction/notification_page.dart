@@ -31,7 +31,9 @@ class _NotificationPageState extends State<NotificationPage> {
 
   Future<void> _loadPreferences() async {
     try {
-      final response = await _authService.authenticatedGet('/passengers/me');
+      final response = await _authService.authenticatedGet(
+        '/passengers/me/notifications',
+      );
       if (!mounted) return;
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;

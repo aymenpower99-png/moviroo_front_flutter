@@ -17,15 +17,15 @@ class DiscountSection extends StatefulWidget {
 class _DiscountSectionState extends State<DiscountSection>
     with SingleTickerProviderStateMixin {
   final _controller = TextEditingController();
-  bool _loading  = false;
-  bool _applied  = false;
+  bool _loading = false;
+  bool _applied = false;
   String? _error;
   String? _appliedCode;
   double _appliedPercent = 0;
 
   late final AnimationController _badgeCtrl;
-  late final Animation<double>   _badgeScale;
-  late final Animation<double>   _badgeFade;
+  late final Animation<double> _badgeScale;
+  late final Animation<double> _badgeFade;
 
   @override
   void initState() {
@@ -34,9 +34,10 @@ class _DiscountSectionState extends State<DiscountSection>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _badgeScale = Tween<double>(begin: 0.6, end: 1.0).animate(
-      CurvedAnimation(parent: _badgeCtrl, curve: Curves.elasticOut),
-    );
+    _badgeScale = Tween<double>(
+      begin: 0.6,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _badgeCtrl, curve: Curves.elasticOut));
     _badgeFade = CurvedAnimation(parent: _badgeCtrl, curve: Curves.easeIn);
   }
 
@@ -53,7 +54,7 @@ class _DiscountSectionState extends State<DiscountSection>
 
     setState(() {
       _loading = true;
-      _error   = null;
+      _error = null;
     });
 
     try {
@@ -61,10 +62,10 @@ class _DiscountSectionState extends State<DiscountSection>
       if (!mounted) return;
 
       setState(() {
-        _applied        = true;
-        _appliedCode    = result.code;
+        _applied = true;
+        _appliedCode = result.code;
         _appliedPercent = result.discountPercentage;
-        _loading        = false;
+        _loading = false;
       });
 
       _badgeCtrl.forward(from: 0);
@@ -72,7 +73,7 @@ class _DiscountSectionState extends State<DiscountSection>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error   = e.toString().replaceFirst('Exception: ', '');
+        _error = e.toString().replaceFirst('Exception: ', '');
         _loading = false;
       });
     }
@@ -80,10 +81,10 @@ class _DiscountSectionState extends State<DiscountSection>
 
   void _clear() {
     setState(() {
-      _applied        = false;
-      _appliedCode    = null;
+      _applied = false;
+      _appliedCode = null;
       _appliedPercent = 0;
-      _error          = null;
+      _error = null;
       _controller.clear();
     });
     _badgeCtrl.reset();
@@ -101,13 +102,17 @@ class _DiscountSectionState extends State<DiscountSection>
           // ── Header ──────────────────────────────────────────
           Row(
             children: [
-              Icon(Icons.confirmation_number_outlined,
-                  color: AppColors.primaryPurple, size: 18),
+              Icon(
+                Icons.confirmation_number_outlined,
+                color: AppColors.primaryPurple,
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(
                 t.translate('discount_code'),
-                style: AppTextStyles.bodyMedium(context)
-                    .copyWith(fontWeight: FontWeight.w700),
+                style: AppTextStyles.bodyMedium(
+                  context,
+                ).copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -125,20 +130,59 @@ class _DiscountSectionState extends State<DiscountSection>
                     enabled: !_loading,
                     decoration: InputDecoration(
                       hintText: t.translate('enter_code'),
-                      hintStyle: AppTextStyles.bodyMedium(context)
-                          .copyWith(color: AppColors.subtext(context)),
-                      border:             InputBorder.none,
-                      enabledBorder:      InputBorder.none,
-                      focusedBorder:      InputBorder.none,
-                      disabledBorder:     InputBorder.none,
-                      errorBorder:        InputBorder.none,
-                      focusedErrorBorder: InputBorder.none,
+                      hintStyle: AppTextStyles.bodyMedium(
+                        context,
+                      ).copyWith(color: AppColors.subtext(context)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.border(context),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.border(context),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.primaryPurple,
+                          width: 1.5,
+                        ),
+                      ),
+                      disabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.border(context),
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.redAccent),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.redAccent,
+                          width: 1.5,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.surface(context),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 _loading
                     ? const SizedBox(
-                        width: 36, height: 36,
+                        width: 36,
+                        height: 36,
                         child: Padding(
                           padding: EdgeInsets.all(8),
                           child: CircularProgressIndicator(
@@ -156,15 +200,19 @@ class _DiscountSectionState extends State<DiscountSection>
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                         ),
                         child: Text(
                           t.translate('apply'),
                           style: AppTextStyles.bodySmall(context).copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white),
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
               ],
@@ -175,14 +223,18 @@ class _DiscountSectionState extends State<DiscountSection>
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    size: 14, color: Colors.redAccent),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 14,
+                  color: Colors.redAccent,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     _error!,
-                    style: AppTextStyles.bodySmall(context)
-                        .copyWith(color: Colors.redAccent, fontSize: 12),
+                    style: AppTextStyles.bodySmall(
+                      context,
+                    ).copyWith(color: Colors.redAccent, fontSize: 12),
                   ),
                 ),
               ],
@@ -198,21 +250,27 @@ class _DiscountSectionState extends State<DiscountSection>
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryPurple
-                        .withValues(alpha: Theme.of(context).brightness ==
-                                Brightness.dark
-                            ? 0.18
-                            : 0.10),
+                    color: AppColors.primaryPurple.withValues(
+                      alpha: Theme.of(context).brightness == Brightness.dark
+                          ? 0.18
+                          : 0.10,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: AppColors.primaryPurple.withValues(alpha: 0.35)),
+                      color: AppColors.primaryPurple.withValues(alpha: 0.35),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.check_circle_rounded,
-                          color: AppColors.primaryPurple, size: 18),
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.primaryPurple,
+                        size: 18,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -239,8 +297,11 @@ class _DiscountSectionState extends State<DiscountSection>
                       ),
                       GestureDetector(
                         onTap: _clear,
-                        child: Icon(Icons.close_rounded,
-                            size: 16, color: AppColors.subtext(context)),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 16,
+                          color: AppColors.subtext(context),
+                        ),
                       ),
                     ],
                   ),
@@ -252,4 +313,3 @@ class _DiscountSectionState extends State<DiscountSection>
     );
   }
 }
-

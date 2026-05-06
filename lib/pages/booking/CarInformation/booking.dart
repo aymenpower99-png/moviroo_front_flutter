@@ -9,7 +9,6 @@ import '../../../../services/membership/membership_service.dart';
 import '_BookingSummaryCard.dart';
 import '_RouteSection.dart';
 import '_DiscountSection.dart';
-import '_BillingAddressSection.dart';
 import '_PaymentMethodSection.dart';
 import '_PriceSummarySection.dart';
 
@@ -42,14 +41,13 @@ class BookingSummaryPage extends StatefulWidget {
 }
 
 class _BookingSummaryPageState extends State<BookingSummaryPage> {
-  final _billingKey = GlobalKey<BillingAddressSectionState>();
   String _selectedPaymentMethod = 'card';
   final BookingApiService _bookingApi = BookingApiService();
   bool _isProcessing = false;
 
   // ── Discount state ─────────────────────────────────────────
   double _appliedDiscountPercent = 0;
-  String _appliedCouponCode      = '';
+  String _appliedCouponCode = '';
 
   void _onPaymentMethodChanged(String method) {
     setState(() {
@@ -60,14 +58,11 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
   void _onDiscountApplied(double percent, String code) {
     setState(() {
       _appliedDiscountPercent = percent;
-      _appliedCouponCode      = code;
+      _appliedCouponCode = code;
     });
   }
 
   void _onConfirmBooking() async {
-    final billingOk = _billingKey.currentState?.validateAndProceed() ?? true;
-    if (!billingOk) return;
-
     if (!mounted) return;
 
     // Route based on payment method
@@ -89,7 +84,9 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           scheduledDate: widget.scheduledDate,
           scheduledTime: widget.scheduledTime,
           couponCode: _appliedCouponCode.isNotEmpty ? _appliedCouponCode : null,
-          discountPercent: _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
+          discountPercent: _appliedDiscountPercent > 0
+              ? _appliedDiscountPercent
+              : null,
           lockedPrice: widget.selectedVehicle?.priceTnd.toDouble(),
           lockedLoyaltyPoints: widget.selectedVehicle?.loyaltyPoints,
           lockedDistanceKm: widget.selectedVehicle?.distanceKm,
@@ -109,11 +106,17 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
         });
 
         // Navigate to Payment Page with bookingId, locked price and discount info
-        AppRouter.push(context, AppRouter.payment, args: {
-          'bookingId': rideId,
-          'lockedPrice': widget.selectedVehicle?.priceTnd.toDouble(),
-          'discountPercent': _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
-        });
+        AppRouter.push(
+          context,
+          AppRouter.payment,
+          args: {
+            'bookingId': rideId,
+            'lockedPrice': widget.selectedVehicle?.priceTnd.toDouble(),
+            'discountPercent': _appliedDiscountPercent > 0
+                ? _appliedDiscountPercent
+                : null,
+          },
+        );
       } catch (e) {
         if (mounted) {
           setState(() {
@@ -142,7 +145,9 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           scheduledDate: widget.scheduledDate,
           scheduledTime: widget.scheduledTime,
           couponCode: _appliedCouponCode.isNotEmpty ? _appliedCouponCode : null,
-          discountPercent: _appliedDiscountPercent > 0 ? _appliedDiscountPercent : null,
+          discountPercent: _appliedDiscountPercent > 0
+              ? _appliedDiscountPercent
+              : null,
           lockedPrice: widget.selectedVehicle?.priceTnd.toDouble(),
           lockedLoyaltyPoints: widget.selectedVehicle?.loyaltyPoints,
           lockedDistanceKm: widget.selectedVehicle?.distanceKm,
@@ -262,8 +267,6 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                       pax: widget.selectedVehicle?.seats ?? 2,
                       bags: widget.selectedVehicle?.bags ?? 3,
                       vehicleName: widget.selectedVehicle?.name ?? 'Economy',
-                      carName:
-                          '${widget.selectedVehicle?.name ?? 'Economy'} or similar',
                       imageUrl: widget.selectedVehicle?.imageUrl,
                     ),
                     const SizedBox(height: 12),
@@ -278,8 +281,6 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                     ),
                     const SizedBox(height: 12),
                     DiscountSection(onDiscountApplied: _onDiscountApplied),
-                    const SizedBox(height: 12),
-                    BillingAddressSection(key: _billingKey),
                     const SizedBox(height: 12),
                     PaymentMethodSection(
                       initialMethod: _selectedPaymentMethod,

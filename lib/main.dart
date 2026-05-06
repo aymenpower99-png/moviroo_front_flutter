@@ -15,6 +15,7 @@ import 'l10n/app_localizations.dart';
 import 'core/firebase/firebase_service.dart';
 import 'services/auth_service/auth_service.dart';
 import 'services/recent_searches/recent_searches_service.dart';
+import 'services/notification_service.dart';
 import 'providers/booking_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/membership_provider.dart';
@@ -24,10 +25,12 @@ final themeProvider = ThemeProvider();
 final localeProvider = LocaleProvider();
 
 void main() async {
+  debugPrint('🚀 App starting...');
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
   // 🔥 KEEP native splash until we manually remove it
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  debugPrint('🚀 Splash preserved...');
 
   // Mapbox token
   MapboxOptions.setAccessToken(
@@ -36,6 +39,7 @@ void main() async {
 
   // Init services BEFORE app start
   await FirebaseService.initialize();
+  await NotificationService().initialize();
   await RecentSearchesService.clearOldCache();
 
   // Lock orientation

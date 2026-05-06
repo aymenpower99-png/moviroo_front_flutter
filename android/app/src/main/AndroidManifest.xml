@@ -9,6 +9,8 @@
     <!-- Biometric / device credential for Passkey sensitive actions -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
+    <!-- FCM Notification permissions -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:label="Moviroo"
@@ -38,6 +40,10 @@
         <meta-data
             android:name="com.mapbox.token"
             android:value="@string/mapbox_access_token" />
+        <!-- FCM Notification Channel -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="high_importance_channel" />
     </application>
 
     <queries>
