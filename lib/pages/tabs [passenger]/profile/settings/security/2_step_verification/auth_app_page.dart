@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../../theme/app_text_styles.dart';
-import '../../../../../l10n/app_localizations.dart';
-import '../../../../../theme/app_colors.dart';
-import '../../../../../services/auth_service/auth_service.dart';
-import '2_step_ver_modal/auth_app_confirm_modal.dart'; // ← import the extracted modal
+import '../../../../../../../../../theme/app_text_styles.dart';
+import '../../../../../../../../../l10n/app_localizations.dart';
+import '../../../../../../../../../theme/app_colors.dart';
+import '../../../../../../../../../services/auth_service/auth_service.dart';
 
 class AuthAppPage extends StatefulWidget {
   const AuthAppPage({super.key});
@@ -94,20 +93,19 @@ class _AuthAppPageState extends State<AuthAppPage> {
   }
 
   Future<void> _handleUnlink() async {
-    final confirmed =
-        await showDialog<bool>(
-          context: context,
-          builder: (_) => const AuthAppConfirmModal(),
-        ) ??
-        false;
+    // Ask the user to confirm by entering their current TOTP code.
+    final code = await showDialog<String>(
+      context: context,
+      builder: (_) => const _ConfirmUnlinkDialog(),
+    );
 
-    if (!confirmed || !mounted) return;
+    if (code == null || !mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
-      await _authService.disableTotp();
+      await _authService.disableTotp(code);
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -651,6 +649,142 @@ class _SubPageTopBar extends StatelessWidget {
           ),
           const SizedBox(width: 36),
         ],
+      ),
+    );
+  }
+}
+
+// ── Confirm unlink dialog — requires current TOTP code ────────────────────────
+
+class _ConfirmUnlinkDialog extends StatefulWidget {
+  const _ConfirmUnlinkDialog();
+
+  @override
+  State<_ConfirmUnlinkDialog> createState() => _ConfirmUnlinkDialogState();
+}
+
+class _ConfirmUnlinkDialogState extends State<_ConfirmUnlinkDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
+
+    return Dialog(
+      backgroundColor: AppColors.surface(context),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              t('Remove Authentication App'),
+              style: AppTextStyles.bodyLarge(context).copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 17,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              t('Enter the 6-digit code from your authenticator app to confirm removal.'),
+              style: AppTextStyles.bodySmall(context),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _controller,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              textAlign: TextAlign.center,
+              autofocus: true,
+              style: AppTextStyles.bookingId(context).copyWith(letterSpacing: 8),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                counterText: '',
+                hintText: '000000',
+                hintStyle: AppTextStyles.bodyLarge(context).copyWith(
+                  letterSpacing: 8,
+                  color: AppColors.subtext(context),
+                ),
+                filled: true,
+                fillColor: AppColors.bg(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.border(context)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.border(context)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryPurple,
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: AppColors.bg(context),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border(context)),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        t('Cancel'),
+                        style: AppTextStyles.bodyMedium(context),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      final code = _controller.text.trim();
+                      if (code.length == 6) Navigator.pop(context, code);
+                    },
+                    child: Container(
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        t('Remove'),
+                        style: AppTextStyles.bodyMedium(context).copyWith(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

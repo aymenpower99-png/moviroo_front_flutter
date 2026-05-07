@@ -80,8 +80,13 @@ class SecurityApi {
   }
 
   /// DELETE /auth/2fa/totp — unlinks the authenticator app.
-  static Future<Map<String, dynamic>> disableTotp() async {
-    final response = await AuthHTTP.authenticatedDelete('/auth/2fa/totp');
+  /// Requires [actionToken]: a passkey-issued action token with purpose
+  /// 'disable-totp' to confirm the user's identity before removing TOTP.
+  static Future<Map<String, dynamic>> disableTotp(String actionToken) async {
+    final response = await AuthHTTP.authenticatedDelete(
+      '/auth/2fa/totp',
+      extraHeaders: {'X-Action-Token': actionToken},
+    );
     _ensureOk(response, 'Failed to disable authenticator');
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -131,15 +136,46 @@ class SecurityApi {
   /// POST /auth/passkey/verify — must be called AFTER a successful local
   /// biometric prompt (Face ID / Fingerprint / Device PIN).
   ///
+  /// [purpose] scopes the token to a specific operation so it cannot be
+  /// reused for a different sensitive action (e.g. 'disable-totp',
+  /// 'delete-account'). Defaults to 'general'.
+  ///
   /// Returns `{ actionToken, expiresInSeconds }`. The action token proves a
   /// fresh re-auth and can be sent to sensitive endpoints (delete account, etc.).
-  static Future<Map<String, dynamic>> verifyPasskey(String method) async {
+  static Future<Map<String, dynamic>> verifyPasskey(
+    String method, {
+    String purpose = 'general',
+  }) async {
     final response = await AuthHTTP.authenticatedPost(
       '/auth/passkey/verify',
-      {'method': method},
+      {'method': method, 'purpose': purpose},
     );
     _ensureOk(response, 'Passkey verification failed');
     return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  // ─── Active Sessions ──────────────────────────────────────────────────────
+
+  /// GET /auth/sessions — list the user's recent login sessions.
+  static Future<List<Map<String, dynamic>>> getSessions() async {
+    final response = await AuthHTTP.authenticatedGet('/auth/sessions');
+    _ensureOk(response, 'Failed to load sessions');
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list.cast<Map<String, dynamic>>();
+  }
+
+  /// DELETE /auth/sessions — sign out all devices (clears refresh token).
+  static Future<void> revokeAllSessions() async {
+    final response =
+        await AuthHTTP.authenticatedDelete('/auth/sessions');
+    _ensureOk(response, 'Failed to sign out all devices');
+  }
+
+  /// DELETE /auth/sessions/:id — remove a single session record.
+  static Future<void> deleteSession(String sessionId) async {
+    final response =
+        await AuthHTTP.authenticatedDelete('/auth/sessions/$sessionId');
+    _ensureOk(response, 'Failed to remove session');
   }
 
   // ─── Delete account ───────────────────────────────────────────────────────
@@ -174,6 +210,15 @@ class SecurityApi {
   static void _ensureOk(dynamic response, String fallback) {
     final status = response.statusCode as int;
     if (status >= 200 && status < 300) return;
+
+    // Rate limit — surface a clear human message
+    if (status == 429) {
+      throw SecurityApiException(
+        'Too many attempts. Please wait a minute and try again.',
+        429,
+      );
+    }
+
     String message = fallback;
     try {
       final body = jsonDecode(response.body) as Map<String, dynamic>;

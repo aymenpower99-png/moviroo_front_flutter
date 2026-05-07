@@ -125,25 +125,3 @@ Future<void> handleGoogleSignIn({
   }
 }
 
-Future<void> handleAppleSignIn({
-  required Function(String?) setError,
-  required Function(bool) setAppleLoading,
-  required AuthService authService,
-  required BuildContext context,
-}) async {
-  setAppleLoading(true);
-  setError(null);
-
-  try {
-    await authService.appleSignIn();
-    if (context.mounted) {
-      AppRouter.clearAndGo(context, AppRouter.home);
-    }
-  } catch (e) {
-    setError(e.toString().replaceAll('Exception: ', ''));
-  } finally {
-    if (context.mounted) {
-      setAppleLoading(false);
-    }
-  }
-}

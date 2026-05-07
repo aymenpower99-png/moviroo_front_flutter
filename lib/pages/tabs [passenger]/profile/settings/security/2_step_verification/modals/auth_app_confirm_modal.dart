@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../../../theme/app_colors.dart';
-import '../../../../../../theme/app_text_styles.dart';
-import '../../../../../../l10n/app_localizations.dart';
-
+import '../../../../../../../../../../theme/app_colors.dart';
+import '../../../../../../../../../../theme/app_text_styles.dart';
+import '../../../../../../../../../../l10n/app_localizations.dart';
 
 /// Confirmation modal shown before removing the linked authentication app.
 ///
@@ -62,7 +61,9 @@ class AuthAppConfirmModal extends StatelessWidget {
 
             // ── Body ──
             Text(
-              t('This will remove your authentication app. You may lose access to 2-step verification.'),
+              t(
+                'This will remove your authentication app. You may lose access to 2-step verification.',
+              ),
               style: AppTextStyles.bodySmall(context),
               textAlign: TextAlign.center,
             ),
@@ -107,8 +108,9 @@ class AuthAppConfirmModal extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(
                         t('Remove'),
-                        style: AppTextStyles.bodyLarge(context)
-                            .copyWith(color: AppColors.error),
+                        style: AppTextStyles.bodyLarge(
+                          context,
+                        ).copyWith(color: AppColors.error),
                       ),
                     ),
                   ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../main.dart';
-import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_text_styles.dart';
-import '../../../../l10n/app_localizations.dart';
+import '../../../../../main.dart';
+import '../../../../../theme/app_colors.dart';
+import '../../../../../theme/app_text_styles.dart';
+import '../../../../../l10n/app_localizations.dart';
 
 class AppearancePage extends StatefulWidget {
   const AppearancePage({super.key});

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
@@ -9,13 +10,30 @@ import 'auth_http.dart';
 class AuthAPI {
   static const String baseUrl = AppConfig.baseUrl;
 
+  // ─── Shared error parser ──────────────────────────────────────────────────
+  static Exception _parseError(http.Response response, String fallback) {
+    if (response.statusCode == 429) {
+      return Exception('Too many attempts. Please wait a minute and try again.');
+    }
+    try {
+      final error = jsonDecode(response.body) as Map<String, dynamic>;
+      final raw = error['message'];
+      if (raw is String) return Exception(raw);
+      if (raw is List && raw.isNotEmpty) return Exception(raw.first.toString());
+    } catch (_) {}
+    return Exception(fallback);
+  }
+
   static Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Device-Name': Platform.operatingSystem,
+      },
       body: jsonEncode({
         'email': email,
         'password': password,
@@ -45,8 +63,7 @@ class AuthAPI {
       }
       return data;
     } else {
-      final error = jsonDecode(response.body);
-      throw Exception(error['message'] ?? 'Login failed');
+      throw _parseError(response, 'Login failed');
     }
   }
 
@@ -56,7 +73,10 @@ class AuthAPI {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login/verify-otp'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Device-Name': Platform.operatingSystem,
+      },
       body: jsonEncode({'preAuthToken': preAuthToken, 'code': code}),
     );
 
@@ -74,8 +94,7 @@ class AuthAPI {
       }
       return data;
     } else {
-      final error = jsonDecode(response.body);
-      throw Exception(error['message'] ?? 'OTP verification failed');
+      throw _parseError(response, 'OTP verification failed');
     }
   }
 
@@ -87,8 +106,7 @@ class AuthAPI {
     );
 
     if (response.statusCode != 200) {
-      final error = jsonDecode(response.body);
-      throw Exception(error['message'] ?? 'Failed to resend code');
+      throw _parseError(response, 'Failed to resend code');
     }
   }
 
@@ -114,8 +132,7 @@ class AuthAPI {
     if (response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
-      final error = jsonDecode(response.body);
-      throw Exception(error['message'] ?? 'Registration failed');
+      throw _parseError(response, 'Registration failed');
     }
   }
 

@@ -9,7 +9,7 @@ import 'settings_data.dart';
 import 'settings_widgets.dart';
 import 'edit_profile/personal_data_page.dart';
 import 'notifiaction/notification_page.dart';
-import 'settings/settings_sub_page.dart';
+import 'settings/account/settings_sub_page.dart';
 import 'saved_places/saved_places_page.dart';
 
 class SettingsPage extends StatefulWidget {

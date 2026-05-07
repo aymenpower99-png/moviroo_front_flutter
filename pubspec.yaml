@@ -28,7 +28,6 @@ dependencies:
   socket_io_client: ^2.0.3+1 # WebSocket for live driver tracking
   flutter_secure_storage: ^9.2.2 # JWT token storage
   google_sign_in: ^6.2.1 # Google OAuth
-  sign_in_with_apple: ^6.1.0 # Apple Sign-In
   url_launcher: ^6.3.1 # Phone dialer
   http: ^1.2.0 # HTTP client for API calls
   geolocator: ^12.0.0 # GPS location fetching
@@ -72,7 +71,6 @@ flutter:
   assets:
     - images/logo6.png
     - images/google.png
-    - images/apple.png
     - images/ls.png
     - images/bg.png
     - images/trip.png

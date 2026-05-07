@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
-import 'security_page.dart';
+import '../security/security_page.dart';
 import 'currency_page.dart';
-import 'security/payment_method_page.dart';
-import '../../profile/settings/privacy_terms/privacy_policy_page.dart';
-import '../../profile/settings/privacy_terms/TermsOfUsePage.dart';
+import '../payment/payment_method_page.dart';
+import '../privacy_terms/privacy_policy_page.dart';
+import '../privacy_terms/TermsOfUsePage.dart';
 
 // ── Settings sub page ─────────────────────────────────────────────────────────
 

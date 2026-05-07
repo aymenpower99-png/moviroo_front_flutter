@@ -95,10 +95,6 @@ class AuthService {
 
   Future<Map<String, dynamic>> googleSignIn() => AuthOAuth.googleSignIn();
 
-  // ─── OAuth: Apple ───────────────────────────────────────────────────────────
-
-  Future<Map<String, dynamic>> appleSignIn() => AuthOAuth.appleSignIn();
-
   // ─── Update Profile ────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> updateProfile({
@@ -195,8 +191,8 @@ class AuthService {
     return result;
   }
 
-  Future<Map<String, dynamic>> disableTotp() async {
-    final result = await SecurityApi.disableTotp();
+  Future<Map<String, dynamic>> disableTotp(String actionToken) async {
+    final result = await SecurityApi.disableTotp(actionToken);
     _cachedUser = null;
     return result;
   }
@@ -226,8 +222,11 @@ class AuthService {
     _cachedUser = null;
   }
 
-  Future<Map<String, dynamic>> verifyPasskey(String method) =>
-      SecurityApi.verifyPasskey(method);
+  Future<Map<String, dynamic>> verifyPasskey(
+    String method, {
+    String purpose = 'general',
+  }) =>
+      SecurityApi.verifyPasskey(method, purpose: purpose);
 
   Future<void> requestDeleteOtp() => SecurityApi.requestDeleteOtp();
 
@@ -244,4 +243,18 @@ class AuthService {
     await AuthStorage.clearTokens();
     _cachedUser = null;
   }
+
+  // ─── Active Sessions ───────────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getSessions() =>
+      SecurityApi.getSessions();
+
+  Future<void> revokeAllSessions() async {
+    await SecurityApi.revokeAllSessions();
+    await AuthStorage.clearTokens();
+    _cachedUser = null;
+  }
+
+  Future<void> deleteSession(String sessionId) =>
+      SecurityApi.deleteSession(sessionId);
 }

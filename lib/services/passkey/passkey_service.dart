@@ -109,12 +109,21 @@ class PasskeyService {
 
   /// Prompts biometric; on success asks the backend for a short-lived
   /// `actionToken` that can be passed to sensitive endpoints.
-  Future<PasskeyResult> challenge({required String reason}) async {
+  ///
+  /// [purpose] scopes the token so it cannot be reused for a different
+  /// sensitive action (e.g. 'disable-totp', 'delete-account').
+  Future<PasskeyResult> challenge({
+    required String reason,
+    String purpose = 'general',
+  }) async {
     final prompt = await _prompt(reason);
     if (!prompt.success) return prompt;
 
     try {
-      final response = await _authService.verifyPasskey(prompt.method!);
+      final response = await _authService.verifyPasskey(
+        prompt.method!,
+        purpose: purpose,
+      );
       final token = response['actionToken'] as String?;
       return PasskeyResult.success(method: prompt.method, actionToken: token);
     } catch (e) {

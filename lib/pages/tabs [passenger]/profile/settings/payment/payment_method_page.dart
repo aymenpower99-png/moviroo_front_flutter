@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_colors.dart';
-import '../../../../../theme/app_text_styles.dart';
-import '../../../../../l10n/app_localizations.dart';
-import '../../../../../services/ride_api/booking_api_service.dart';
+import '../../../../../../../theme/app_colors.dart';
+import '../../../../../../../theme/app_text_styles.dart';
+import '../../../../../../../l10n/app_localizations.dart';
+import '../../../../../../../services/ride_api/booking_api_service.dart';
 import 'add_card_page.dart';
 
 // ── Model ─────────────────────────────────────────────────────────────────────
@@ -104,9 +104,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to set default: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to set default: $e')));
     }
   }
 
@@ -116,9 +116,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       setState(() => _cards.removeWhere((c) => c.id == id));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to remove card: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to remove card: $e')));
     }
   }
 
@@ -144,48 +144,48 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
 
-                    if (_cards.isNotEmpty) ...[
-                      Text(
-                        t('saved_cards'),
-                        style: AppTextStyles.sectionLabel(context),
+                          if (_cards.isNotEmpty) ...[
+                            Text(
+                              t('saved_cards'),
+                              style: AppTextStyles.sectionLabel(context),
+                            ),
+                            const SizedBox(height: 16),
+                            ...List.generate(_cards.length, (i) {
+                              final card = _cards[i];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _CardTile(
+                                  card: card,
+                                  onSetDefault: () => _setDefault(card.id),
+                                  onDelete: () => _confirmDelete(card),
+                                ),
+                              );
+                            }),
+                            const SizedBox(height: 8),
+                          ],
+
+                          if (_cards.isEmpty) _EmptyState(),
+
+                          const SizedBox(height: 16),
+
+                          // ── Add new card button ──
+                          _AddCardButton(onTap: _openAddCard),
+
+                          const SizedBox(height: 24),
+
+                          // ── Security note ──
+                          _InfoNote(text: t('card_security_note')),
+
+                          const SizedBox(height: 24),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      ...List.generate(_cards.length, (i) {
-                        final card = _cards[i];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _CardTile(
-                            card: card,
-                            onSetDefault: () => _setDefault(card.id),
-                            onDelete: () => _confirmDelete(card),
-                          ),
-                        );
-                      }),
-                      const SizedBox(height: 8),
-                    ],
-
-                    if (_cards.isEmpty) _EmptyState(),
-
-                    const SizedBox(height: 16),
-
-                    // ── Add new card button ──
-                    _AddCardButton(onTap: _openAddCard),
-
-                    const SizedBox(height: 24),
-
-                    // ── Security note ──
-                    _InfoNote(text: t('card_security_note')),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
+                    ),
             ),
           ],
         ),

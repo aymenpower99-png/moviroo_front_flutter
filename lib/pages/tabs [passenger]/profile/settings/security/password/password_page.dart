@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import '../../../../../theme/app_colors.dart';
-import '../../../../../theme/app_text_styles.dart';
-import '../../../../../l10n/app_localizations.dart';
-import '../../../../../widgets/password_strength_indicator.dart';
-import '../../../../../services/auth_service/auth_service.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../../../../../../../theme/app_colors.dart';
+import '../../../../../../../../../theme/app_text_styles.dart';
+import '../../../../../../../../../l10n/app_localizations.dart';
+import '../../../../../../../../../widgets/password_strength_indicator.dart';
+import '../../../../../../../../../services/auth_service/auth_service.dart';
 
 class PasswordPage extends StatefulWidget {
   const PasswordPage({super.key});
@@ -118,14 +118,14 @@ class _PasswordPageState extends State<PasswordPage> {
                   children: [
                     const SizedBox(height: 8),
 
-                    // ── Section label ──
+                    // â”€â”€ Section label â”€â”€
                     Text(
                       t('change_password'),
                       style: AppTextStyles.sectionLabel(context),
                     ),
                     const SizedBox(height: 16),
 
-                    // ── Current Password ──
+                    // â”€â”€ Current Password â”€â”€
                     _PasswordField(
                       controller: _currentPasswordController,
                       label: t('current_password'),
@@ -136,7 +136,7 @@ class _PasswordPageState extends State<PasswordPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ── New Password ──
+                    // â”€â”€ New Password â”€â”€
                     _PasswordField(
                       controller: _newPasswordController,
                       label: t('new_password'),
@@ -160,7 +160,7 @@ class _PasswordPageState extends State<PasswordPage> {
 
                     const SizedBox(height: 12),
 
-                    // ── Password rules checklist ──
+                    // â”€â”€ Password rules checklist â”€â”€
                     _PasswordRules(
                       hasMinLength: _hasMinLength,
                       hasUppercase: _hasUppercase,
@@ -171,7 +171,7 @@ class _PasswordPageState extends State<PasswordPage> {
 
                     const SizedBox(height: 16),
 
-                    // ── Confirm New Password ──
+                    // â”€â”€ Confirm New Password â”€â”€
                     _PasswordField(
                       controller: _confirmPasswordController,
                       label: t('confirm_new_password'),
@@ -225,7 +225,7 @@ class _PasswordPageState extends State<PasswordPage> {
 
                     const SizedBox(height: 32),
 
-                    // ── Save Button ──
+                    // â”€â”€ Save Button â”€â”€
                     _PrimaryButton(
                       label: t('change_password_btn'),
                       isLoading: _isLoading,
@@ -245,7 +245,7 @@ class _PasswordPageState extends State<PasswordPage> {
   }
 }
 
-// ── Password Rules Checklist ──────────────────────────────────────────────────
+// â”€â”€ Password Rules Checklist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _PasswordRules extends StatelessWidget {
   final bool hasMinLength;
@@ -320,7 +320,7 @@ class _RuleRow extends StatelessWidget {
   }
 }
 
-// ── Password Field ────────────────────────────────────────────────────────────
+// â”€â”€ Password Field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _PasswordField extends StatelessWidget {
   final TextEditingController controller;
@@ -356,29 +356,22 @@ class _PasswordField extends StatelessWidget {
               horizontal: 16,
               vertical: 14,
             ),
+            prefixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              color: AppColors.primaryPurple,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.border(context)),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: hasError ? AppColors.error : AppColors.border(context),
+            suffixIcon: IconButton(
+              icon: Icon(
+                obscure
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: AppColors.subtext(context),
               ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: hasError ? AppColors.error : AppColors.border(context),
-              ),
-            ),
-            suffixIcon: GestureDetector(
-              onTap: onToggle,
-              child: Icon(
-                obscure ? Icons.visibility_off : Icons.visibility,
-                size: 22,
-                color: AppColors.text(context),
-              ),
+              onPressed: onToggle,
             ),
           ),
         ),
@@ -387,7 +380,7 @@ class _PasswordField extends StatelessWidget {
   }
 }
 
-// ── Primary Button ────────────────────────────────────────────────────────────
+// â”€â”€ Primary Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _PrimaryButton extends StatelessWidget {
   final String label;
@@ -436,7 +429,7 @@ class _PrimaryButton extends StatelessWidget {
   }
 }
 
-// ── Top Bar ───────────────────────────────────────────────────────────────────
+// â”€â”€ Top Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _SubPageTopBar extends StatelessWidget {
   final String title;

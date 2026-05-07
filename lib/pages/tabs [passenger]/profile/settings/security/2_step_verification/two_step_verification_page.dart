@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_colors.dart';
-import '../../../../../theme/app_text_styles.dart';
-import '../../../../../l10n/app_localizations.dart';
-import '../../../../../services/auth_service/auth_service.dart';
+import '../../../../../../../../../theme/app_colors.dart';
+import '../../../../../../../../../theme/app_text_styles.dart';
+import '../../../../../../../../../l10n/app_localizations.dart';
+import '../../../../../../../../../services/auth_service/auth_service.dart';
+import '../../../../../../../../../services/passkey/passkey_service.dart';
 import 'auth_app_page.dart';
-import '2_step_ver_modal/email_send_modal.dart';
+import 'modals/email_send_modal.dart';
 
 class TwoStepVerificationPage extends StatefulWidget {
   const TwoStepVerificationPage({super.key});
@@ -16,6 +17,7 @@ class TwoStepVerificationPage extends StatefulWidget {
 
 class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
   final _authService = AuthService();
+  final _passkey = PasskeyService();
 
   bool _emailEnabled = false;
   bool _authAppEnabled = false;
@@ -172,7 +174,16 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
         _errorMessage = null;
       });
       try {
-        final result = await _authService.disableTotp();
+        // Require passkey re-auth to disable TOTP (P7: purpose-scoped token)
+        final challenge = await _passkey.challenge(
+          reason: 'Confirm your identity to disable the authenticator app.',
+          purpose: 'disable-totp',
+        );
+        if (!challenge.success || challenge.actionToken == null) {
+          _showError(challenge.errorMessage ?? 'Passkey verification failed.');
+          return;
+        }
+        final result = await _authService.disableTotp(challenge.actionToken!);
         if (!mounted) return;
         setState(() {
           _authAppEnabled = (result['totpEnabled'] as bool?) ?? false;
@@ -465,7 +476,9 @@ class _VerificationMethodTile extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryPurple.withValues(alpha: 0.12),
+                              color: AppColors.primaryPurple.withValues(
+                                alpha: 0.12,
+                              ),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text(

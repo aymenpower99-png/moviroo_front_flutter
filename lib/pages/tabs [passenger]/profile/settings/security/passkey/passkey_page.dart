@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../../theme/app_colors.dart';
-import '../../../../../theme/app_text_styles.dart';
-import '../../../../../l10n/app_localizations.dart';
-import '../../../../../services/passkey/passkey_service.dart';
-import '../../../../../services/auth_service/auth_service.dart';
+import '../../../../../../../../../theme/app_colors.dart';
+import '../../../../../../../../../theme/app_text_styles.dart';
+import '../../../../../../../../../l10n/app_localizations.dart';
+import '../../../../../../../../../services/passkey/passkey_service.dart';
+import '../../../../../../../../../services/auth_service/auth_service.dart';
 
 class PasskeyPage extends StatefulWidget {
   const PasskeyPage({super.key});

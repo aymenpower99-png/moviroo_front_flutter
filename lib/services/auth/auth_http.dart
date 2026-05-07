@@ -120,6 +120,7 @@ class AuthHTTP {
   static Future<http.Response> authenticatedDelete(
     String path, {
     Map<String, dynamic>? body,
+    Map<String, String>? extraHeaders,
   }) async {
     String? accessToken = await AuthStorage.getAccessToken();
 
@@ -137,6 +138,7 @@ class AuthHTTP {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $accessToken',
+        if (extraHeaders != null) ...extraHeaders,
       },
       body: body != null ? jsonEncode(body) : null,
     ).timeout(
@@ -147,7 +149,7 @@ class AuthHTTP {
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
       if (refreshed != null) {
-        return authenticatedDelete(path, body: body);
+        return authenticatedDelete(path, body: body, extraHeaders: extraHeaders);
       }
       throw Exception('Authentication failed');
     }

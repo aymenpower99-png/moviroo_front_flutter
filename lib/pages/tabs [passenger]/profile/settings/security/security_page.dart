@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_text_styles.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../../services/auth_service/auth_service.dart';
-import '../../../tabs [passenger]/profile/settings/security/password_page.dart';
-import '../../../tabs [passenger]/profile/settings/security/two_step_verification_page.dart';
-import '../../../tabs [passenger]/profile/settings/security/passkey_page.dart';
-import 'delete_account_page.dart';
+import '../../../../../theme/app_colors.dart';
+import '../../../../../theme/app_text_styles.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../../../../services/auth_service/auth_service.dart';
+import 'password/password_page.dart';
+import '2_step_verification/two_step_verification_page.dart';
+import 'passkey/passkey_page.dart';
+import 'sessions/active_sessions_page.dart';
+import '../account/delete_account_page.dart';
 
 class SecurityPage extends StatefulWidget {
   const SecurityPage({super.key});
@@ -31,7 +32,7 @@ class _SecurityPageState extends State<SecurityPage> {
       final user = await _authService.getCurrentUser();
       if (!mounted) return;
       setState(() {
-        _authProvider = (user?['authProvider'] as String?)?.toLowerCase();
+        _authProvider = (user?['provider'] as String?)?.toLowerCase();
         _loading = false;
       });
     } catch (_) {
@@ -73,16 +74,18 @@ class _SecurityPageState extends State<SecurityPage> {
                               ),
                             ),
 
-                          // ── Two-Factor Authentication (all users) ──
-                          _SecurityNavTile(
-                            title: t('two_factor_authentication'),
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const TwoStepVerificationPage(),
+                          // ── Two-Factor Authentication (email users only) ──
+                          if (!_isGoogleUser)
+                            _SecurityNavTile(
+                              title: t('two_factor_authentication'),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const TwoStepVerificationPage(),
+                                ),
                               ),
                             ),
-                          ),
 
                           // ── Passkeys (all users) ────────────────────
                           _SecurityNavTile(
@@ -91,6 +94,17 @@ class _SecurityPageState extends State<SecurityPage> {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const PasskeyPage(),
+                              ),
+                            ),
+                          ),
+
+                          // ── Active Sessions (all users) ─────────────
+                          _SecurityNavTile(
+                            title: 'Active Sessions',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ActiveSessionsPage(),
                               ),
                             ),
                           ),

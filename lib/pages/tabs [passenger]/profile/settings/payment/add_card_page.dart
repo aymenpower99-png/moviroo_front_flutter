@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import '../../../../../theme/app_colors.dart';
-import '../../../../../theme/app_text_styles.dart';
-import '../../../../../l10n/app_localizations.dart';
-import '../../../../../services/ride_api/booking_api_service.dart';
-import '../../../../../services/stripe/stripe_service.dart';
+import '../../../../../../../theme/app_colors.dart';
+import '../../../../../../../theme/app_text_styles.dart';
+import '../../../../../../../l10n/app_localizations.dart';
+import '../../../../../../../services/ride_api/booking_api_service.dart';
+import '../../../../../../../services/stripe/stripe_service.dart';
 
 class AddCardPage extends StatefulWidget {
   const AddCardPage({super.key});
@@ -44,17 +44,25 @@ class _AddCardPageState extends State<AddCardPage> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
               const SizedBox(width: 10),
               Text(
-                AppLocalizations.of(context).translate('card_added_successfully'),
+                AppLocalizations.of(
+                  context,
+                ).translate('card_added_successfully'),
                 style: const TextStyle(color: Colors.white),
               ),
             ],
           ),
           backgroundColor: AppColors.primaryPurple,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -64,15 +72,13 @@ class _AddCardPageState extends State<AddCardPage> {
       if (!mounted) return;
       setState(() => _isLoading = false);
       final msg = e.error.localizedMessage ?? 'Card setup cancelled';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add card: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to add card: $e')));
     }
   }
 
@@ -124,9 +130,9 @@ class _AddCardPageState extends State<AddCardPage> {
                     Center(
                       child: Text(
                         t('add_card_description'),
-                        style: AppTextStyles.bodySmall(context).copyWith(
-                          color: AppColors.subtext(context),
-                        ),
+                        style: AppTextStyles.bodySmall(
+                          context,
+                        ).copyWith(color: AppColors.subtext(context)),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -178,7 +184,10 @@ class _AddCardPageState extends State<AddCardPage> {
                                     size: 20,
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(t('add_card'), style: AppTextStyles.buttonPrimary),
+                                  Text(
+                                    t('add_card'),
+                                    style: AppTextStyles.buttonPrimary,
+                                  ),
                                 ],
                               ),
                       ),

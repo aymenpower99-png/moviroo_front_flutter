@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../routing/router.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../../services/auth_service/auth_service.dart';
-import '../../../../services/passkey/passkey_service.dart';
-import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_text_styles.dart';
+import '../../../../../routing/router.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../../../../services/auth_service/auth_service.dart';
+import '../../../../../services/passkey/passkey_service.dart';
+import '../../../../../theme/app_colors.dart';
+import '../../../../../theme/app_text_styles.dart';
 
 /// ReAuth method the user picks to prove identity before hard delete.
 enum _ReAuthMethod { password, emailOtp, passkey }
@@ -157,6 +157,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
         case _ReAuthMethod.passkey:
           final challenge = await _passkey.challenge(
             reason: 'Confirm your identity to delete your account.',
+            purpose: 'delete-account',
           );
           if (!challenge.success || challenge.actionToken == null) {
             throw Exception(challenge.errorMessage ?? 'Passkey cancelled.');
@@ -674,7 +675,9 @@ class _DeleteButton extends StatelessWidget {
         width: double.infinity,
         height: 52,
         decoration: BoxDecoration(
-          color: enabled ? AppColors.error : AppColors.error.withValues(alpha: 0.4),
+          color: enabled
+              ? AppColors.error
+              : AppColors.error.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(14),
         ),
         alignment: Alignment.center,

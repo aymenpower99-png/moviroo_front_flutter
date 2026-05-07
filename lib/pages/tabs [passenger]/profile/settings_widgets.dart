@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import 'settings_models.dart';
-import 'appearance.dart';
+import 'appearance/appearance.dart';
 import '../profile/language/language_page.dart';
 import '../../../../main.dart';
 import '../../../../l10n/app_localizations.dart';

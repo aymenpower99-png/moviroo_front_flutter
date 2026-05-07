@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../services/currency/currency_service.dart';
+import '../../../../services/vehicle_classes/vehicle_classes_service.dart';
 
 // ── Model ─────────────────────────────────────────────────────────────────────
 class CarOption {
@@ -11,7 +12,7 @@ class CarOption {
   final String image;
   final int seats;
   final int bags;
-  final String price;       // fallback string for static/sample data
+  final String price; // fallback string for static/sample data
   final double priceTndRaw; // raw TND amount for live conversion
   final String classCategory;
   final String? eta;
@@ -140,8 +141,8 @@ class _CarCardState extends State<CarCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark       = Theme.of(context).brightness == Brightness.dark;
-    final currency     = context.watch<CurrencyService>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currency = context.watch<CurrencyService>();
     final displayPrice = widget.car.priceTndRaw > 0
         ? currency.format(widget.car.priceTndRaw)
         : widget.car.price;
@@ -281,9 +282,78 @@ class _CarImagePod extends StatelessWidget {
 }
 
 // ── Detail Bottom Sheet ───────────────────────────────────────────────────────
-class _CarDetailSheet extends StatelessWidget {
+class _CarDetailSheet extends StatefulWidget {
   final CarOption car;
   const _CarDetailSheet({required this.car});
+
+  @override
+  State<_CarDetailSheet> createState() => _CarDetailSheetState();
+}
+
+class _CarDetailSheetState extends State<_CarDetailSheet> {
+  final VehicleClassesService _vehicleClassesService = VehicleClassesService();
+  VehicleClassDetail? _classDetails;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadClassDetails();
+  }
+
+  Future<void> _loadClassDetails() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    // Try to find class ID by matching class category name
+    final details = await _vehicleClassesService.getClassDetails(
+      widget.car.classCategory,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _classDetails = details;
+      _isLoading = false;
+      if (details == null) {
+        _error = 'Failed to load vehicle details';
+      }
+    });
+  }
+
+  List<String> _getFeatureLabels() {
+    if (_classDetails == null) return [];
+
+    final features = <String>[];
+    final f = _classDetails!.features;
+
+    if (f.wifi) features.add('Free WiFi onboard');
+    if (f.water) features.add('Complimentary water');
+    if (f.meetAndGreet) features.add('Meet & greet service');
+    if (f.doorToDoor) features.add('Door-to-door service');
+    if (f.freeWaitingTime > 0) {
+      features.add('${f.freeWaitingTime} min free waiting time');
+    }
+
+    // Add extra features that are enabled
+    for (final extra in f.extraFeatures) {
+      if (extra.enabled && extra.name.isNotEmpty) {
+        features.add(extra.name);
+      }
+    }
+
+    // Add extra services that are enabled
+    for (final extra in f.extraServices) {
+      if (extra.enabled && extra.name.isNotEmpty) {
+        features.add(extra.name);
+      }
+    }
+
+    return features;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +381,7 @@ class _CarDetailSheet extends StatelessWidget {
             child: SizedBox(
               height: 120,
               child: Image.asset(
-                car.image,
+                widget.car.image,
                 fit: BoxFit.contain,
                 errorBuilder: (_, _, _) => Icon(
                   Icons.directions_car,
@@ -323,63 +393,83 @@ class _CarDetailSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            car.name,
+            widget.car.name,
             style: AppTextStyles.bookingId(context).copyWith(fontSize: 22),
           ),
           const SizedBox(height: 4),
-          if (car.subtitle.isNotEmpty)
-            Text(car.subtitle, style: AppTextStyles.vehicleClassDesc(context)),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _SpecPill(
-                  icon: Icons.person_outline_rounded,
-                  label: '${car.seats}',
-                ),
-                const SizedBox(width: 12),
-                _SpecPill(icon: Icons.luggage_outlined, label: '${car.bags}'),
-                const SizedBox(width: 12),
-                const _SpecPill(icon: Icons.ac_unit_outlined, label: 'A/C'),
-              ],
+          if (widget.car.subtitle.isNotEmpty)
+            Text(
+              widget.car.subtitle,
+              style: AppTextStyles.vehicleClassDesc(context),
             ),
-          ),
           const SizedBox(height: 24),
-          Divider(
-            height: 1,
-            color: AppColors.border(context),
-            indent: 24,
-            endIndent: 24,
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: const [
-                _FeatureRow(
-                  icon: Icons.wifi_outlined,
-                  label: 'Free WiFi onboard',
-                ),
-                SizedBox(height: 10),
-                _FeatureRow(
-                  icon: Icons.water_drop_outlined,
-                  label: 'Complimentary water',
-                ),
-                SizedBox(height: 10),
-                _FeatureRow(
-                  icon: Icons.child_care_outlined,
-                  label: 'Child seat available on request',
-                ),
-                SizedBox(height: 10),
-                _FeatureRow(
-                  icon: Icons.flight_outlined,
-                  label: 'Flight tracking included',
-                ),
-              ],
+
+          // Loading state
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(40),
+              child: CircularProgressIndicator(),
             ),
-          ),
+
+          // Error state
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                _error!,
+                style: AppTextStyles.bodySmall(
+                  context,
+                ).copyWith(color: AppColors.error),
+              ),
+            ),
+
+          // Data loaded
+          if (!_isLoading && _classDetails != null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _SpecPill(
+                    icon: Icons.person_outline_rounded,
+                    label: '${_classDetails!.features.seats}',
+                  ),
+                  const SizedBox(width: 12),
+                  _SpecPill(
+                    icon: Icons.luggage_outlined,
+                    label: '${_classDetails!.features.bags}',
+                  ),
+                  const SizedBox(width: 12),
+                  _SpecPill(
+                    icon: Icons.ac_unit_outlined,
+                    label: _classDetails!.features.ac ? 'A/C' : 'No A/C',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Divider(
+              height: 1,
+              color: AppColors.border(context),
+              indent: 24,
+              endIndent: 24,
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: _getFeatureLabels()
+                    .map(
+                      (label) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _FeatureRow(label: label),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          ],
+
           const SizedBox(height: 28),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -473,15 +563,22 @@ class _SpecPill extends StatelessWidget {
 }
 
 class _FeatureRow extends StatelessWidget {
-  final IconData icon;
   final String label;
-  const _FeatureRow({required this.icon, required this.label});
+  const _FeatureRow({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 17, color: AppColors.primaryPurple),
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: AppColors.primaryPurple,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.check, size: 14, color: Colors.white),
+        ),
         const SizedBox(width: 10),
         Text(
           label,
