@@ -18,7 +18,6 @@ class _NotificationPageState extends State<NotificationPage> {
   final _authService = AuthService();
 
   bool _pushEnabled = true;
-  bool _smsEnabled = false; // local-only — no backend column
   bool _emailEnabled = true;
   bool _isLoading = false;
   bool _isSaving = false;
@@ -114,12 +113,6 @@ class _NotificationPageState extends State<NotificationPage> {
                                   setState(() => _pushEnabled = v);
                                   _updatePref(push: v);
                                 },
-                              ),
-                              _NotificationToggleItem(
-                                label: t('sms_messages'),
-                                value: _smsEnabled,
-                                onChanged: (v) =>
-                                    setState(() => _smsEnabled = v),
                               ),
                               _NotificationToggleItem(
                                 label: t('email_notifications'),

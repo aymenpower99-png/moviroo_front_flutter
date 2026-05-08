@@ -6,6 +6,7 @@ import '../../../../../services/auth_service/auth_service.dart';
 import 'password/password_page.dart';
 import '2_step_verification/two_step_verification_page.dart';
 import 'passkey/passkey_page.dart';
+import '../passkey_management_page.dart';
 import 'sessions/active_sessions_page.dart';
 import '../account/delete_account_page.dart';
 
@@ -103,6 +104,17 @@ class _SecurityPageState extends State<SecurityPage> {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const BiometricAuthPage(),
+                              ),
+                            ),
+                          ),
+
+                          // ── Passkeys (all users) ────────────────────
+                          _SecurityNavTile(
+                            title: 'Passkeys',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PasskeyManagementPage(),
                               ),
                             ),
                           ),

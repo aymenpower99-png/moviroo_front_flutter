@@ -3,6 +3,8 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth_service/auth_service.dart';
+import '../../../../services/auth/webauthn_service.dart';
+import '../../../../routing/router.dart';
 import 'login_handlers.dart';
 import 'login_widgets.dart';
 
@@ -17,14 +19,16 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   bool _isLoginLoading = false;
   bool _isGoogleLoading = false;
+  bool _isPasskeyLoading = false;
   String? _errorMessage;
 
-  bool get _isAnyLoading => _isLoginLoading || _isGoogleLoading;
+  bool get _isAnyLoading => _isLoginLoading || _isGoogleLoading || _isPasskeyLoading;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final AuthService _authService = AuthService();
+  final WebAuthnService _webauthnService = WebAuthnService();
 
   @override
   void dispose() {
@@ -38,6 +42,7 @@ class _LoginPageState extends State<LoginPage> {
   void _setError(String? msg) => _errorMessage = msg;
   void _setLoginLoading(bool loading) => _isLoginLoading = loading;
   void _setGoogleLoading(bool loading) => _isGoogleLoading = loading;
+  void _setPasskeyLoading(bool loading) => _isPasskeyLoading = loading;
 
   void _batchSetState(VoidCallback fn) => setState(fn);
 
@@ -63,6 +68,30 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Future<void> _handlePasskeySignIn() async {
+    setState(() {
+      _isPasskeyLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final result = await _webauthnService.authenticateWithPasskey(
+        email: _emailController.text.trim().isNotEmpty
+            ? _emailController.text.trim()
+            : null,
+      );
+      if (!mounted) return;
+      if (result['accessToken'] != null) {
+        AppRouter.clearAndGo(context, AppRouter.home);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = e.toString().replaceFirst('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _isPasskeyLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -70,6 +99,7 @@ class _LoginPageState extends State<LoginPage> {
       obscurePassword: _obscurePassword,
       isLoginLoading: _isLoginLoading,
       isGoogleLoading: _isGoogleLoading,
+      isPasskeyLoading: _isPasskeyLoading,
       errorMessage: _errorMessage,
       emailController: _emailController,
       passwordController: _passwordController,
@@ -77,6 +107,7 @@ class _LoginPageState extends State<LoginPage> {
           setState(() => _obscurePassword = !_obscurePassword),
       onLogin: _isAnyLoading ? null : _handleLogin,
       onGoogleSignIn: _isAnyLoading ? null : _handleGoogleSignIn,
+      onPasskeySignIn: _isAnyLoading ? null : _handlePasskeySignIn,
       emailFocus: _emailFocus,
       passwordFocus: _passwordFocus,
       setState: () => setState(() {}),

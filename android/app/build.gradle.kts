@@ -41,5 +41,8 @@ flutter {
 
 dependencies {
     implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.credentials:credentials:1.2.2")
+    implementation("androidx.credentials:credentials-play-services-auth:1.2.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }

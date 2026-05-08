@@ -23,6 +23,7 @@ import '../pages/tabs [passenger]/support/support_chat_page.dart';
 import '../pages/tabs [passenger]/profile/settings_page.dart';
 import '../pages/tabs [passenger]/trajet/trajet_page.dart';
 import '../pages/tabs [passenger]/membre/membre_pass_screen.dart';
+import '../pages/tabs [passenger]/profile/settings/passkey_management_page.dart';
 import '../pages/booking/VehicleSelection/RideBooking/RideBookingPage.dart';
 import '../pages/splash/splash_page.dart';
 import '../models/vehicle_pricing_response.dart';
@@ -59,6 +60,7 @@ class AppRouter {
   static const String rideDetails = '/ride-details';
   static const String trajet = '/trajet';
   static const String membre = '/membre';
+  static const String passkeys = '/passkeys';
   static const String voiceAssistant = '/voice-assistant';
 
   static const String initialRoute = splash;
@@ -152,6 +154,7 @@ class AppRouter {
     mapEtaPage: (_) => const MapEtaPage(),
     trajet: (_) => const TrajetPage(),
     membre: (_) => const MembrePassScreen(),
+    passkeys: (_) => const PasskeyManagementPage(),
     voiceAssistant: (_) => const VoiceAssistantScreen(),
     trackRide: (ctx) {
       final args =

@@ -103,14 +103,12 @@ class _TicketThreadItem extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${date.day}/${date.month}/${date.year}';
+    // Return exact time in 12-hour format (e.g., "8:03 PM")
+    final hour = date.hour;
+    final minute = date.minute.toString().padLeft(2, '0');
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour % 12 == 0 ? 12 : hour % 12;
+    return '$displayHour:$minute $period';
   }
 
   @override
@@ -157,9 +155,12 @@ class _TicketThreadItem extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     ticket.lastMessage ?? ticket.description,
-                    style: AppTextStyles.bodySmall(
-                      context,
-                    ).copyWith(color: AppColors.subtext(context)),
+                    style: AppTextStyles.bodySmall(context).copyWith(
+                      color: AppColors.subtext(context),
+                      fontWeight: ticket.hasUnread
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

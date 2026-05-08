@@ -175,6 +175,36 @@ class _ChatPageState extends State<ChatPage> {
     return '$hour:$m $period';
   }
 
+  String _formatDateLabel(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(dt.year, dt.month, dt.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    if (messageDate == today) {
+      return 'Today';
+    } else if (messageDate == yesterday) {
+      return 'Yesterday';
+    } else {
+      // Format as "May 6, 2026"
+      final months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+      return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+    }
+  }
+
   @override
   void dispose() {
     _scroll.dispose();
@@ -255,11 +285,76 @@ class _ChatPageState extends State<ChatPage> {
                     itemCount: messages.length,
                     itemBuilder: (context, i) {
                       final msg = messages[i];
-                      return ChatBubble(
-                        message: msg,
-                        showTranslation: _autoTranslate,
-                        onDelete: () => _deleteMessage(msg.id),
-                        onEdit: (newText) => _editMessage(msg.id, newText),
+
+                      // Check if we need to show a date separator
+                      bool showDateSeparator = false;
+                      String dateLabel = '';
+
+                      if (i == 0) {
+                        // Always show date for first message
+                        showDateSeparator = true;
+                        if (msg.createdAt != null) {
+                          dateLabel = _formatDateLabel(msg.createdAt!);
+                        }
+                      } else {
+                        // Check if date changed from previous message
+                        final prevMsg = messages[i - 1];
+                        if (msg.createdAt != null &&
+                            prevMsg.createdAt != null) {
+                          final currentDate = DateTime(
+                            msg.createdAt!.year,
+                            msg.createdAt!.month,
+                            msg.createdAt!.day,
+                          );
+                          final prevDate = DateTime(
+                            prevMsg.createdAt!.year,
+                            prevMsg.createdAt!.month,
+                            prevMsg.createdAt!.day,
+                          );
+                          if (currentDate != prevDate) {
+                            showDateSeparator = true;
+                            dateLabel = _formatDateLabel(msg.createdAt!);
+                          }
+                        }
+                      }
+
+                      return Column(
+                        children: [
+                          if (showDateSeparator && dateLabel.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface(context),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.border(context),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    dateLabel,
+                                    style: AppTextStyles.bodySmall(context)
+                                        .copyWith(
+                                          color: AppColors.subtext(context),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ChatBubble(
+                            message: msg,
+                            showTranslation: _autoTranslate,
+                            onDelete: () => _deleteMessage(msg.id),
+                            onEdit: (newText) => _editMessage(msg.id, newText),
+                          ),
+                        ],
                       );
                     },
                   );

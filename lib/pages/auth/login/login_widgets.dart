@@ -72,12 +72,14 @@ class LoginWidgets {
   final bool obscurePassword;
   final bool isLoginLoading;
   final bool isGoogleLoading;
+  final bool isPasskeyLoading;
   final String? errorMessage;
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final VoidCallback togglePassword;
   final Future<void> Function()? onLogin;
   final Future<void> Function()? onGoogleSignIn;
+  final Future<void> Function()? onPasskeySignIn;
   final FocusNode emailFocus;
   final FocusNode passwordFocus;
   final VoidCallback setState;
@@ -86,12 +88,14 @@ class LoginWidgets {
     required this.obscurePassword,
     required this.isLoginLoading,
     required this.isGoogleLoading,
+    required this.isPasskeyLoading,
     required this.errorMessage,
     required this.emailController,
     required this.passwordController,
     required this.togglePassword,
     required this.onLogin,
     required this.onGoogleSignIn,
+    required this.onPasskeySignIn,
     required this.emailFocus,
     required this.passwordFocus,
     required this.setState,
@@ -322,6 +326,41 @@ class LoginWidgets {
                     const SizedBox(width: 12),
                     Text(
                       t.translate('continue_with_google'),
+                      style: AppTextStyles.bodyMedium(context),
+                    ),
+                  ],
+                ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // ── Passkey ───────────────────────────────────────────
+        socialButton(
+          backgroundColor: AppColors.surface(context),
+          borderColor: AppColors.border(context),
+          onPressed: isPasskeyLoading ? null : onPasskeySignIn,
+          child: isPasskeyLoading
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.text(context),
+                    ),
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.key_rounded,
+                      color: AppColors.primaryPurple,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Sign in with Passkey',
                       style: AppTextStyles.bodyMedium(context),
                     ),
                   ],
