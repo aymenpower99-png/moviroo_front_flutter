@@ -17,7 +17,7 @@ class _AuthAppPageState extends State<AuthAppPage> {
   final _authService = AuthService();
 
   bool _isLinked = false;
-  bool _isBootstrapping = true;
+  bool _isBootstrapping = false; // ← never default to true
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -28,21 +28,29 @@ class _AuthAppPageState extends State<AuthAppPage> {
   @override
   void initState() {
     super.initState();
-    _bootstrap();
+
+    // 1. Populate from cached user synchronously — no spinner, no setState
+    final cached = _authService.getCachedUser();
+    final alreadyLinked = (cached?['totpEnabled'] as bool?) ?? false;
+    if (alreadyLinked) {
+      _isLinked = true;
+    }
+
+    // 2. Refresh in background (fetch QR + secret if not linked)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _bootstrap();
+    });
   }
 
   Future<void> _bootstrap() async {
     try {
-      // Read cached user to know if TOTP already linked
+      // Re-read cached user to know if TOTP already linked
       final cached = _authService.getCachedUser();
       final alreadyLinked = (cached?['totpEnabled'] as bool?) ?? false;
 
       if (alreadyLinked) {
         if (!mounted) return;
-        setState(() {
-          _isLinked = true;
-          _isBootstrapping = false;
-        });
+        setState(() => _isLinked = true);
         return;
       }
 
@@ -52,13 +60,11 @@ class _AuthAppPageState extends State<AuthAppPage> {
       setState(() {
         _setupSecret = data['secret'] as String?;
         _qrDataUrl = data['qrCodeUrl'] as String?;
-        _isBootstrapping = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
-        _isBootstrapping = false;
       });
     }
   }

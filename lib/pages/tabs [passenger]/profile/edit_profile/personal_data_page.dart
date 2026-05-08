@@ -99,53 +99,35 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
                           const SizedBox(height: 32),
                           SectionLabel(t('personal_details')),
                           const SizedBox(height: 12),
-                          // Tappable rows card
-                          Material(
-                            color: AppColors.surface(context),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: AppColors.border(context),
+                          // Tappable rows — each in its own card with spacing
+                          _InfoCard(
+                            child: _InfoRow(
+                              label: t('name'),
+                              value: _displayName,
+                              onTap: () => _open(
+                                _EditNamePage(
+                                  firstName: _firstName,
+                                  lastName: _lastName,
+                                ),
                               ),
                             ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Column(
-                              children: [
-                                _InfoRow(
-                                  label: t('name'),
-                                  value: _displayName,
-                                  onTap: () => _open(
-                                    _EditNamePage(
-                                      firstName: _firstName,
-                                      lastName: _lastName,
-                                    ),
-                                  ),
-                                ),
-                                Divider(
-                                  height: 1,
-                                  thickness: 1,
-                                  color: AppColors.border(context),
-                                  indent: 16,
-                                ),
-                                _InfoRow(
-                                  label: t('email_address'),
-                                  value: _email.isEmpty ? '—' : _email,
-                                  onTap: () =>
-                                      _open(_EditEmailPage(email: _email)),
-                                ),
-                                Divider(
-                                  height: 1,
-                                  thickness: 1,
-                                  color: AppColors.border(context),
-                                  indent: 16,
-                                ),
-                                _InfoRow(
-                                  label: t('phone_number'),
-                                  value: _phone.isEmpty ? '—' : '+216 $_phone',
-                                  onTap: () =>
-                                      _open(_EditPhonePage(phone: _phone)),
-                                ),
-                              ],
+                          ),
+                          const SizedBox(height: 12),
+                          _InfoCard(
+                            child: _InfoRow(
+                              label: t('email_address'),
+                              value: _email.isEmpty ? '—' : _email,
+                              onTap: () =>
+                                  _open(_EditEmailPage(email: _email)),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _InfoCard(
+                            child: _InfoRow(
+                              label: t('phone_number'),
+                              value: _phone.isEmpty ? '—' : '+216 $_phone',
+                              onTap: () =>
+                                  _open(_EditPhonePage(phone: _phone)),
                             ),
                           ),
                         ],
@@ -155,6 +137,26 @@ class _PersonalDataPageState extends State<PersonalDataPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─── Info Card ────────────────────────────────────────────────────────────────
+
+class _InfoCard extends StatelessWidget {
+  final Widget child;
+  const _InfoCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface(context),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: AppColors.border(context)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: child,
     );
   }
 }

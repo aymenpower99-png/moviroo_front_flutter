@@ -78,21 +78,27 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   @override
   void initState() {
     super.initState();
-    _loadCards();
+
+    // 1. Populate from cache synchronously — no spinner
+    final cached = _api.cachedSavedCards;
+    if (cached != null) {
+      _cards = cached.map(PaymentCard.fromJson).toList();
+    }
+
+    // 2. Always refresh in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshCards();
+    });
   }
 
-  Future<void> _loadCards() async {
-    setState(() => _isLoading = true);
+  Future<void> _refreshCards() async {
     try {
       final raw = await _api.getSavedCards();
       if (mounted) {
-        setState(() {
-          _cards = raw.map(PaymentCard.fromJson).toList();
-          _isLoading = false;
-        });
+        setState(() => _cards = raw.map(PaymentCard.fromJson).toList());
       }
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      // silent fail — keep showing cached/empty state
     }
   }
 
@@ -127,7 +133,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       context,
       MaterialPageRoute(builder: (_) => const AddCardPage()),
     );
-    if (added == true) _loadCards();
+    if (added == true) _refreshCards();
   }
 
   @override

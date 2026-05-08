@@ -4,8 +4,8 @@ import 'package:local_auth/error_codes.dart' as auth_error;
 
 import '../auth_service/auth_service.dart';
 
-/// Result of a local passkey challenge.
-class PasskeyResult {
+/// Result of a local biometric authentication challenge.
+class BiometricResult {
   /// The biometric method that succeeded, or null on failure.
   final String? method; // 'face' | 'fingerprint' | 'pin'
 
@@ -16,28 +16,30 @@ class PasskeyResult {
   final bool success;
   final String? errorMessage;
 
-  const PasskeyResult.success({required this.method, required this.actionToken})
-    : success = true,
-      errorMessage = null;
+  const BiometricResult.success({
+    required this.method,
+    required this.actionToken,
+  }) : success = true,
+       errorMessage = null;
 
-  const PasskeyResult.failure(this.errorMessage)
+  const BiometricResult.failure(this.errorMessage)
     : success = false,
       method = null,
       actionToken = null;
 }
 
-/// Passkey = device-level biometric layer (Face ID / Fingerprint / Device PIN).
+/// Biometric Authentication = device-level biometric layer (Face ID / Fingerprint / Device PIN).
 ///
 /// Usage:
-///   1. `PasskeyService.isSupported()` — check device capability before showing UI.
-///   2. `PasskeyService.enable()` — register passkey on this device + backend flag.
-///   3. `PasskeyService.challenge(reason: ...)` — before sensitive action.
+///   1. `BiometricService.isSupported()` — check device capability before showing UI.
+///   2. `BiometricService.enable()` — register biometric on this device + backend flag.
+///   3. `BiometricService.challenge(reason: ...)` — before sensitive action.
 ///      Returns an `actionToken` the caller passes to the backend.
 ///
 /// The backend NEVER receives or stores biometric data. It only:
 ///   - toggles a `passkeyEnabled` flag on the user
 ///   - issues a short-lived JWT (`actionToken`) after a successful local prompt
-class PasskeyService {
+class BiometricService {
   final LocalAuthentication _localAuth = LocalAuthentication();
   final AuthService _authService = AuthService();
 
@@ -83,13 +85,13 @@ class PasskeyService {
     return 'pin';
   }
 
-  // ─── Enable / Disable passkey ─────────────────────────────────────────────
+  // ─── Enable / Disable biometric ─────────────────────────────────────────────
 
-  /// Prompts biometric; on success tells the backend to flag passkey as enabled.
-  Future<PasskeyResult> enable({String? localizedReason}) async {
+  /// Prompts biometric; on success tells the backend to flag biometric as enabled.
+  Future<BiometricResult> enable({String? localizedReason}) async {
     final authenticated = await _prompt(
       localizedReason ??
-          'Confirm your identity to enable passkey on this device.',
+          'Confirm your identity to enable biometric authentication on this device.',
     );
     if (!authenticated.success) return authenticated;
 
@@ -97,11 +99,11 @@ class PasskeyService {
       await _authService.enablePasskey();
       return authenticated;
     } catch (e) {
-      return PasskeyResult.failure(e.toString());
+      return BiometricResult.failure(e.toString());
     }
   }
 
-  /// Removes passkey from the backend (no biometric required to disable,
+  /// Removes biometric from the backend (no biometric required to disable,
   /// since user already holds a valid session).
   Future<void> disable() => _authService.disablePasskey();
 
@@ -112,7 +114,7 @@ class PasskeyService {
   ///
   /// [purpose] scopes the token so it cannot be reused for a different
   /// sensitive action (e.g. 'disable-totp', 'delete-account').
-  Future<PasskeyResult> challenge({
+  Future<BiometricResult> challenge({
     required String reason,
     String purpose = 'general',
   }) async {
@@ -125,20 +127,20 @@ class PasskeyService {
         purpose: purpose,
       );
       final token = response['actionToken'] as String?;
-      return PasskeyResult.success(method: prompt.method, actionToken: token);
+      return BiometricResult.success(method: prompt.method, actionToken: token);
     } catch (e) {
-      return PasskeyResult.failure(e.toString());
+      return BiometricResult.failure(e.toString());
     }
   }
 
   // ─── Internal: prompt the OS biometric dialog ─────────────────────────────
 
-  Future<PasskeyResult> _prompt(String reason) async {
+  Future<BiometricResult> _prompt(String reason) async {
     final List<BiometricType> types;
     try {
       types = await _localAuth.getAvailableBiometrics();
     } on PlatformException {
-      return const PasskeyResult.failure(
+      return const BiometricResult.failure(
         'Biometric authentication is not available on this device.',
       );
     }
@@ -154,14 +156,14 @@ class PasskeyService {
         ),
       );
       if (!ok) {
-        return const PasskeyResult.failure('Authentication cancelled.');
+        return const BiometricResult.failure('Authentication cancelled.');
       }
-      return PasskeyResult.success(
+      return BiometricResult.success(
         method: _methodTagFor(types),
         actionToken: null,
       );
     } on PlatformException catch (e) {
-      return PasskeyResult.failure(_prettyError(e));
+      return BiometricResult.failure(_prettyError(e));
     }
   }
 

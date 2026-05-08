@@ -17,13 +17,13 @@ class TwoStepVerificationPage extends StatefulWidget {
 
 class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
   final _authService = AuthService();
-  final _passkey = PasskeyService();
+  final _biometric = BiometricService();
 
   bool _emailEnabled = false;
   bool _authAppEnabled = false;
   TwoFactorMethod? _primary;
 
-  bool _isBootstrapping = true;
+  bool _isBootstrapping = false; // ← never default to true
   bool _busyEmail = false;
   bool _busyTotp = false;
   bool _busyPrimary = false;
@@ -32,23 +32,24 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
   @override
   void initState() {
     super.initState();
-    _bootstrap();
+
+    // 1. Populate from cached user synchronously — no spinner, no setState
+    final cached = _authService.getCachedUser();
+    if (cached != null) {
+      _emailEnabled = (cached['is2faEnabled'] as bool?) ?? false;
+      _authAppEnabled = (cached['totpEnabled'] as bool?) ?? false;
+      _primary = twoFactorMethodFromString(
+        cached['primary2faMethod'] as String?,
+      );
+    }
+
+    // 2. Refresh from backend in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _bootstrap();
+    });
   }
 
   Future<void> _bootstrap() async {
-    // Show cached data immediately to avoid the 1-2s spinner
-    final cached = _authService.getCachedUser();
-    if (cached != null && mounted) {
-      setState(() {
-        _emailEnabled = (cached['is2faEnabled'] as bool?) ?? false;
-        _authAppEnabled = (cached['totpEnabled'] as bool?) ?? false;
-        _primary = twoFactorMethodFromString(
-          cached['primary2faMethod'] as String?,
-        );
-        _isBootstrapping = false;
-      });
-    }
-    // Then refresh from backend in background
     try {
       final user = await _authService.getCurrentUser(forceRefresh: true);
       if (!mounted) return;
@@ -58,15 +59,11 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
         _primary = twoFactorMethodFromString(
           user?['primary2faMethod'] as String?,
         );
-        _isBootstrapping = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        if (_isBootstrapping) {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
-        }
-        _isBootstrapping = false;
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
       });
     }
   }
@@ -174,13 +171,15 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
         _errorMessage = null;
       });
       try {
-        // Require passkey re-auth to disable TOTP (P7: purpose-scoped token)
-        final challenge = await _passkey.challenge(
+        // Require biometric re-auth to disable TOTP (P7: purpose-scoped token)
+        final challenge = await _biometric.challenge(
           reason: 'Confirm your identity to disable the authenticator app.',
           purpose: 'disable-totp',
         );
         if (!challenge.success || challenge.actionToken == null) {
-          _showError(challenge.errorMessage ?? 'Passkey verification failed.');
+          _showError(
+            challenge.errorMessage ?? 'Biometric authentication failed.',
+          );
           return;
         }
         final result = await _authService.disableTotp(challenge.actionToken!);

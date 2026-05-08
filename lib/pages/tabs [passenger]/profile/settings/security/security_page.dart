@@ -19,12 +19,22 @@ class SecurityPage extends StatefulWidget {
 class _SecurityPageState extends State<SecurityPage> {
   final AuthService _authService = AuthService();
   String? _authProvider;
-  bool _loading = true;
+  bool _loading = false; // ← never default to true
 
   @override
   void initState() {
     super.initState();
-    _loadUser();
+
+    // 1. Populate from cached user synchronously — no spinner
+    final cached = _authService.getCachedUser();
+    if (cached != null) {
+      _authProvider = (cached['provider'] as String?)?.toLowerCase();
+    }
+
+    // 2. Refresh from backend in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUser();
+    });
   }
 
   Future<void> _loadUser() async {
@@ -33,10 +43,9 @@ class _SecurityPageState extends State<SecurityPage> {
       if (!mounted) return;
       setState(() {
         _authProvider = (user?['provider'] as String?)?.toLowerCase();
-        _loading = false;
       });
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      // silent fail — keep showing cached state
     }
   }
 
@@ -87,13 +96,13 @@ class _SecurityPageState extends State<SecurityPage> {
                               ),
                             ),
 
-                          // ── Passkeys (all users) ────────────────────
+                          // ── Biometric Authentication (all users) ────────────────────
                           _SecurityNavTile(
-                            title: t('passkeys'),
+                            title: 'Biometric Authentication',
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const PasskeyPage(),
+                                builder: (_) => const BiometricAuthPage(),
                               ),
                             ),
                           ),

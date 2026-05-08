@@ -20,13 +20,16 @@ class _NotificationPageState extends State<NotificationPage> {
   bool _pushEnabled = true;
   bool _smsEnabled = false; // local-only — no backend column
   bool _emailEnabled = true;
-  bool _isLoading = true;
+  bool _isLoading = false;
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _loadPreferences();
+    // Background refresh — UI shows defaults immediately, no spinner
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPreferences();
+    });
   }
 
   Future<void> _loadPreferences() async {
@@ -40,13 +43,10 @@ class _NotificationPageState extends State<NotificationPage> {
         setState(() {
           _pushEnabled = (data['pushNotificationsEnabled'] as bool?) ?? true;
           _emailEnabled = (data['emailNotificationsEnabled'] as bool?) ?? true;
-          _isLoading = false;
         });
-      } else {
-        setState(() => _isLoading = false);
       }
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      // silent fail — keep showing current toggle values
     }
   }
 

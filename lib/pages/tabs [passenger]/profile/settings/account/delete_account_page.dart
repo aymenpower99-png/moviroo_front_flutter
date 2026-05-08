@@ -9,7 +9,7 @@ import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 
 /// ReAuth method the user picks to prove identity before hard delete.
-enum _ReAuthMethod { password, emailOtp, passkey }
+enum _ReAuthMethod { password, emailOtp, biometric }
 
 class DeleteAccountPage extends StatefulWidget {
   const DeleteAccountPage({super.key});
@@ -20,7 +20,7 @@ class DeleteAccountPage extends StatefulWidget {
 
 class _DeleteAccountPageState extends State<DeleteAccountPage> {
   final _auth = AuthService();
-  final _passkey = PasskeyService();
+  final _biometric = BiometricService();
 
   final _passwordCtrl = TextEditingController();
   final _otpCtrl = TextEditingController();
@@ -28,20 +28,31 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   _ReAuthMethod _method = _ReAuthMethod.password;
 
   bool _obscure = true;
-  bool _isBootstrapping = true;
+  bool _isBootstrapping = false; // ← never default to true
   bool _isBusy = false;
   bool _otpSent = false;
 
   bool _has2fa = false;
-  bool _hasPasskey = false;
-  bool _passkeyDeviceSupported = false;
+  bool _hasBiometric = false;
+  bool _biometricDeviceSupported = false;
 
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _bootstrap();
+
+    // 1. Populate from cached user synchronously — no spinner, no setState
+    final cached = _auth.getCachedUser();
+    if (cached != null) {
+      _hasBiometric = (cached['passkeyEnabled'] as bool?) ?? false;
+      _has2fa = (cached['email2faEnabled'] as bool?) ?? false;
+    }
+
+    // 2. Refresh device support + user flags in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _bootstrap();
+    });
   }
 
   @override
@@ -53,18 +64,17 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
 
   Future<void> _bootstrap() async {
     try {
+      final supported = await _biometric.isSupported();
       final user = await _auth.getCurrentUser(forceRefresh: true);
-      final supported = await _passkey.isSupported();
       if (!mounted) return;
+
       setState(() {
-        _has2fa = (user?['is2faEnabled'] as bool?) ?? false;
-        _hasPasskey = (user?['passkeyEnabled'] as bool?) ?? false;
-        _passkeyDeviceSupported = supported;
-        _isBootstrapping = false;
+        _hasBiometric = (user?['passkeyEnabled'] as bool?) ?? false;
+        _biometricDeviceSupported = supported;
+        _has2fa = (user?['email2faEnabled'] as bool?) ?? false;
       });
     } catch (_) {
-      if (!mounted) return;
-      setState(() => _isBootstrapping = false);
+      // silent fail — keep showing cached/empty state
     }
   }
 
@@ -154,13 +164,15 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           await _auth.deleteAccount(otp: _otpCtrl.text);
           break;
 
-        case _ReAuthMethod.passkey:
-          final challenge = await _passkey.challenge(
+        case _ReAuthMethod.biometric:
+          final challenge = await _biometric.challenge(
             reason: 'Confirm your identity to delete your account.',
             purpose: 'delete-account',
           );
           if (!challenge.success || challenge.actionToken == null) {
-            throw Exception(challenge.errorMessage ?? 'Passkey cancelled.');
+            throw Exception(
+              challenge.errorMessage ?? 'Biometric authentication cancelled.',
+            );
           }
           await _auth.deleteAccount(passkeyToken: challenge.actionToken);
           break;
@@ -188,8 +200,8 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
         return _passwordCtrl.text.isNotEmpty;
       case _ReAuthMethod.emailOtp:
         return _otpSent && _otpCtrl.text.length == 6;
-      case _ReAuthMethod.passkey:
-        return _passkeyDeviceSupported;
+      case _ReAuthMethod.biometric:
+        return _biometricDeviceSupported;
     }
   }
 
@@ -249,15 +261,15 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                           }),
                         ),
                       ],
-                      if (_hasPasskey && _passkeyDeviceSupported) ...[
+                      if (_hasBiometric && _biometricDeviceSupported) ...[
                         const SizedBox(height: 10),
                         _MethodTile(
                           icon: Icons.fingerprint_rounded,
-                          title: 'Passkey',
+                          title: 'Biometric Authentication',
                           subtitle: 'Use Face ID, Fingerprint, or device PIN',
-                          selected: _method == _ReAuthMethod.passkey,
+                          selected: _method == _ReAuthMethod.biometric,
                           onTap: () => setState(() {
-                            _method = _ReAuthMethod.passkey;
+                            _method = _ReAuthMethod.biometric;
                             _errorMessage = null;
                           }),
                         ),
@@ -625,7 +637,7 @@ class _MethodInput extends StatelessWidget {
           ],
         );
 
-      case _ReAuthMethod.passkey:
+      case _ReAuthMethod.biometric:
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(

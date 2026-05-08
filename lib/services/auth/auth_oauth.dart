@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
+import '../device_info/device_info_service.dart';
 import 'auth_storage.dart';
 
 class AuthOAuth {
@@ -27,9 +28,13 @@ class AuthOAuth {
         throw Exception('Failed to get Google ID token');
       }
 
+      final deviceName = await DeviceInfoService().getDeviceName();
       final response = await http.post(
         Uri.parse('$baseUrl/auth/google'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Device-Name': deviceName,
+        },
         body: jsonEncode({'idToken': idToken}),
       );
 

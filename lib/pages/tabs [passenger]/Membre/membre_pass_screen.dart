@@ -22,7 +22,7 @@ class MembrePassScreen extends StatefulWidget {
 class _MembrePassScreenState extends State<MembrePassScreen> {
   // ── API state ─────────────────────────────────────────────
   MembershipInfo? _membershipInfo;
-  bool _loading = true;
+  bool _loading = false; // ← never default to true
   String? _error;
 
   // ── Derived tier list (built from API) ───────────────────
@@ -199,7 +199,9 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
                               ),
                             ),
                           )
-                        : _buildContent(t),
+                        : _membershipInfo != null
+                            ? _buildContent(t)
+                            : const SizedBox.shrink(),
               ),
             ),
           ],

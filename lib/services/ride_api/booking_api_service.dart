@@ -7,6 +7,10 @@ import '../../core/storage/token_storage.dart';
 /// Service for ride/booking-related API operations.
 /// Talks to the backend `rides` controller (POST /rides, PATCH /rides/:id/confirm, etc.).
 class BookingApiService {
+  // ── In-memory cache for saved cards ─────────────────────────────────────────
+  static List<Map<String, dynamic>>? _cachedSavedCards;
+
+  List<Map<String, dynamic>>? get cachedSavedCards => _cachedSavedCards;
   /// Create a new ride (booking) with status PENDING.
   /// Returns the ride object if successful (includes id, status, etc.).
   Future<Map<String, dynamic>?> createRide({
@@ -280,8 +284,11 @@ class BookingApiService {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
-      if (decoded is List) return decoded.cast<Map<String, dynamic>>();
-      return const [];
+      final list = decoded is List
+          ? decoded.cast<Map<String, dynamic>>()
+          : const <Map<String, dynamic>>[];
+      _cachedSavedCards = list;
+      return list;
     }
     throw Exception('Failed to fetch saved cards: ${response.body}');
   }

@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
+import '../device_info/device_info_service.dart';
 import 'auth_storage.dart';
 import 'auth_oauth.dart';
 import 'auth_http.dart';
@@ -13,7 +13,9 @@ class AuthAPI {
   // ─── Shared error parser ──────────────────────────────────────────────────
   static Exception _parseError(http.Response response, String fallback) {
     if (response.statusCode == 429) {
-      return Exception('Too many attempts. Please wait a minute and try again.');
+      return Exception(
+        'Too many attempts. Please wait a minute and try again.',
+      );
     }
     try {
       final error = jsonDecode(response.body) as Map<String, dynamic>;
@@ -28,11 +30,12 @@ class AuthAPI {
     required String email,
     required String password,
   }) async {
+    final deviceName = await DeviceInfoService().getDeviceName();
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: {
         'Content-Type': 'application/json',
-        'X-Device-Name': Platform.operatingSystem,
+        'X-Device-Name': deviceName,
       },
       body: jsonEncode({
         'email': email,
@@ -71,11 +74,12 @@ class AuthAPI {
     required String preAuthToken,
     required String code,
   }) async {
+    final deviceName = await DeviceInfoService().getDeviceName();
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login/verify-otp'),
       headers: {
         'Content-Type': 'application/json',
-        'X-Device-Name': Platform.operatingSystem,
+        'X-Device-Name': deviceName,
       },
       body: jsonEncode({'preAuthToken': preAuthToken, 'code': code}),
     );

@@ -13,28 +13,35 @@ class ActiveSessionsPage extends StatefulWidget {
 class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
   final _auth = AuthService();
   List<Map<String, dynamic>> _sessions = [];
-  bool _loading = true;
+  bool _loading = false; // ← never default to true
   bool _revoking = false;
   String? _error;
+
+  // ── In-memory cache ─────────────────────────────────────────────────────────
+  static List<Map<String, dynamic>>? _cachedSessions;
 
   @override
   void initState() {
     super.initState();
-    _load();
+
+    // 1. Populate from cache synchronously — no spinner
+    if (_cachedSessions != null) {
+      _sessions = _cachedSessions!;
+    }
+
+    // 2. Always refresh in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _load();
+    });
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
     try {
       final sessions = await _auth.getSessions();
-      setState(() => _sessions = sessions);
+      _cachedSessions = sessions;
+      if (mounted) setState(() => _sessions = sessions);
     } catch (e) {
-      setState(() => _error = e.toString());
-    } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _error = e.toString());
     }
   }
 
@@ -67,14 +74,14 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
     try {
       await _auth.revokeAllSessions();
       if (!mounted) return;
-      // Tokens cleared — navigate to login root
-      Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+      // Tokens cleared — navigate to login screen
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
     } catch (e) {
       setState(() => _revoking = false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -106,7 +113,9 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
       return Icons.phone_iphone;
     }
     if (label.contains('android')) return Icons.phone_android;
-    if (label.contains('windows') || label.contains('linux') || label.contains('macos')) {
+    if (label.contains('windows') ||
+        label.contains('linux') ||
+        label.contains('macos')) {
       return Icons.computer;
     }
     return Icons.devices;
@@ -137,8 +146,8 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _buildError()
-              : _buildContent(),
+          ? _buildError()
+          : _buildContent(),
     );
   }
 
@@ -173,8 +182,11 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline,
-                    size: 18, color: AppColors.primaryPurple),
+                Icon(
+                  Icons.info_outline,
+                  size: 18,
+                  color: AppColors.primaryPurple,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -220,7 +232,8 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _sessions.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, indent: 64),
+                separatorBuilder: (_, __) =>
+                    const Divider(height: 1, indent: 64),
                 itemBuilder: (_, i) => _SessionTile(
                   session: _sessions[i],
                   icon: _deviceIcon(_sessions[i]),
@@ -228,8 +241,7 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
                   ip: _sessions[i]['ipAddress'] as String? ?? '—',
                   createdAt: _formatDate(_sessions[i]['createdAt'] as String?),
                   lastSeen: _formatDate(_sessions[i]['lastSeenAt'] as String?),
-                  onRemove: () =>
-                      _removeSession(_sessions[i]['id'] as String),
+                  onRemove: () => _removeSession(_sessions[i]['id'] as String),
                 ),
               ),
             ),
@@ -248,8 +260,7 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.logout_rounded, size: 18),
-              label:
-                  Text(_revoking ? 'Signing out…' : 'Sign out all devices'),
+              label: Text(_revoking ? 'Signing out…' : 'Sign out all devices'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red,
                 side: const BorderSide(color: Colors.red),
@@ -333,8 +344,11 @@ class _SessionTile extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon:
-                const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 20,
+              color: Colors.grey,
+            ),
             onPressed: onRemove,
             tooltip: 'Remove record',
             padding: EdgeInsets.zero,

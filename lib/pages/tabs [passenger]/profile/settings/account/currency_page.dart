@@ -119,8 +119,19 @@ class _CurrencyPageState extends State<CurrencyPage> {
                   return GestureDetector(
                     onTap: () => context.read<CurrencyService>().setCode(currency.code),
                     behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface(context),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primaryPurple
+                              : AppColors.border(context),
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
                       child: Row(
                         children: [
                           // Symbol badge
@@ -168,8 +179,8 @@ class _CurrencyPageState extends State<CurrencyPage> {
                           if (isSelected)
                             Icon(
                               Icons.check_rounded,
-                              color: AppColors.text(context),
-                              size: 20,
+                              color: AppColors.primaryPurple,
+                              size: 22,
                             ),
                         ],
                       ),

@@ -71,7 +71,6 @@ class _SupportPageState extends State<SupportPage> {
   }
 
   Future<void> _loadTickets() async {
-    setState(() => _isLoadingTickets = true);
     try {
       print('[SupportPage] Loading tickets...');
       final tickets = await _supportService.listTickets();
@@ -93,7 +92,10 @@ class _SupportPageState extends State<SupportPage> {
   @override
   void initState() {
     super.initState();
-    _loadTickets();
+    // Load tickets silently in background — no spinner on first open
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadTickets();
+    });
     _connectWebSocket();
 
     // Use cache if warm → instant render, no spinner

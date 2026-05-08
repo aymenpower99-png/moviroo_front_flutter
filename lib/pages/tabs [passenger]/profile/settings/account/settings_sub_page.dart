@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -97,7 +98,26 @@ class SettingsSubPage extends StatelessWidget {
                     _SectionLabel(t('about')),
                     const SizedBox(height: 12),
 
-                    _NavTile(title: t('app_version'), onTap: () {}),
+                    FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, snapshot) {
+                        final version = snapshot.hasData
+                            ? '${snapshot.data!.version}+${snapshot.data!.buildNumber}'
+                            : '';
+                        return _NavTile(
+                          title: t('app_version'),
+                          trailing: version.isNotEmpty
+                              ? Text(
+                                  version,
+                                  style: AppTextStyles.settingsItem(context).copyWith(
+                                    color: AppColors.subtext(context),
+                                  ),
+                                )
+                              : null,
+                          onTap: () {},
+                        );
+                      },
+                    ),
 
                     const SizedBox(height: 24),
                   ],
@@ -116,8 +136,9 @@ class SettingsSubPage extends StatelessWidget {
 class _NavTile extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
+  final Widget? trailing;
 
-  const _NavTile({required this.title, required this.onTap});
+  const _NavTile({required this.title, required this.onTap, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -132,11 +153,12 @@ class _NavTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(title, style: AppTextStyles.settingsItem(context)),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.subtext(context),
-                  size: 20,
-                ),
+                trailing ??
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.subtext(context),
+                      size: 20,
+                    ),
               ],
             ),
           ),

@@ -5,15 +5,15 @@ import '../../../../../../../../../l10n/app_localizations.dart';
 import '../../../../../../../../../services/passkey/passkey_service.dart';
 import '../../../../../../../../../services/auth_service/auth_service.dart';
 
-class PasskeyPage extends StatefulWidget {
-  const PasskeyPage({super.key});
+class BiometricAuthPage extends StatefulWidget {
+  const BiometricAuthPage({super.key});
 
   @override
-  State<PasskeyPage> createState() => _PasskeyPageState();
+  State<BiometricAuthPage> createState() => _BiometricAuthPageState();
 }
 
-class _PasskeyPageState extends State<PasskeyPage> {
-  final _passkey = PasskeyService();
+class _BiometricAuthPageState extends State<BiometricAuthPage> {
+  final _biometric = BiometricService();
   final _auth = AuthService();
 
   bool _isBusy = false;
@@ -29,8 +29,8 @@ class _PasskeyPageState extends State<PasskeyPage> {
   }
 
   Future<void> _bootstrap() async {
-    final supported = await _passkey.isSupported();
-    final label = await _passkey.availableMethodLabel();
+    final supported = await _biometric.isSupported();
+    final label = await _biometric.availableMethodLabel();
     // Always fetch fresh user data so passkeyEnabled is accurate
     final user = await _auth.getCurrentUser(forceRefresh: true);
     final alreadyEnabled = (user?['passkeyEnabled'] as bool?) ?? false;
@@ -48,9 +48,9 @@ class _PasskeyPageState extends State<PasskeyPage> {
       _isBusy = true;
       _errorMessage = null;
     });
-    final result = await _passkey.enable(
+    final result = await _biometric.enable(
       localizedReason:
-          'Confirm your identity to enable passkey on this device.',
+          'Confirm your identity to enable biometric authentication on this device.',
     );
     if (!mounted) return;
     if (!result.success) {
@@ -68,7 +68,9 @@ class _PasskeyPageState extends State<PasskeyPage> {
       _alreadyEnabled = true;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Passkey enabled on this device.')),
+      const SnackBar(
+        content: Text('Biometric Authentication enabled on this device.'),
+      ),
     );
     Navigator.of(context).maybePop(true);
   }
@@ -80,7 +82,7 @@ class _PasskeyPageState extends State<PasskeyPage> {
       _errorMessage = null;
     });
     try {
-      await _passkey.disable();
+      await _biometric.disable();
       if (!mounted) return;
       // Refresh user data to reflect updated passkeyEnabled flag
       await _auth.getCurrentUser(forceRefresh: true);
@@ -177,8 +179,8 @@ class _PasskeyPageState extends State<PasskeyPage> {
                     // ── Title ─────────────────────────────────────────
                     Text(
                       _alreadyEnabled
-                          ? 'Passkey is enabled'
-                          : t('create_a_passkey'),
+                          ? 'Biometric Authentication is enabled'
+                          : 'Enable Biometric Authentication',
                       textAlign: TextAlign.center,
                       style: AppTextStyles.pageTitle(
                         context,
@@ -192,7 +194,7 @@ class _PasskeyPageState extends State<PasskeyPage> {
                       _isSupported
                           ? (_alreadyEnabled
                                 ? 'This device will prompt $_methodLabel before sensitive actions.'
-                                : t('passkey_subtitle'))
+                                : 'Use Face ID, Fingerprint, or Device PIN to verify your identity for sensitive actions.')
                           : 'This device does not support biometric or device PIN authentication.',
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodySmall(
@@ -288,8 +290,8 @@ class _PasskeyPageState extends State<PasskeyPage> {
                             )
                           : Text(
                               _alreadyEnabled
-                                  ? 'Disable Passkey'
-                                  : t('create_passkey'),
+                                  ? 'Disable Biometric Authentication'
+                                  : 'Enable',
                               style: AppTextStyles.buttonPrimary,
                             ),
                     ),
