@@ -7,6 +7,7 @@ import 'package:moviroo/pages/chat/chat_page.dart';
 import 'package:moviroo/pages/map_eta/map_eta_page.dart';
 import 'package:moviroo/pages/booking/payment/payment_success/payment_success_page.dart';
 import 'package:moviroo/pages/search/location_screen/location_screen.dart';
+import 'package:moviroo/pages/search/voice/voice_assistant_screen.dart';
 import 'package:moviroo/pages/tracking/pages/track_ride_page.dart';
 
 import '../pages/onboarding/onboarding_page.dart';
@@ -58,6 +59,7 @@ class AppRouter {
   static const String rideDetails = '/ride-details';
   static const String trajet = '/trajet';
   static const String membre = '/membre';
+  static const String voiceAssistant = '/voice-assistant';
 
   static const String initialRoute = splash;
 
@@ -150,6 +152,7 @@ class AppRouter {
     mapEtaPage: (_) => const MapEtaPage(),
     trajet: (_) => const TrajetPage(),
     membre: (_) => const MembrePassScreen(),
+    voiceAssistant: (_) => const VoiceAssistantScreen(),
     trackRide: (ctx) {
       final args =
           ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;

@@ -1,0 +1,70 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
+
+import 'voice_constants.dart';
+import 'voice_logger.dart';
+
+// ─────────────────────────────────────────────────────────────
+// API Service
+// ─────────────────────────────────────────────────────────────
+class VoiceApiService {
+  static Future<Map<String, dynamic>> transcribe(String filePath) {
+    voiceLog('API', 'POST /transcribe  →  $filePath');
+    return _sendFile(Uri.parse('$kBackendUrl/transcribe'), filePath);
+  }
+
+  static Future<Map<String, dynamic>> answer(
+    String filePath, {
+    required String field,
+    required String language,
+    String? destination,
+    String? departure,
+    String? date,
+    String? time,
+  }) {
+    final params = {
+      'field': field,
+      'language': language,
+      if (destination != null) 'destination': destination,
+      if (departure != null) 'departure': departure,
+      if (date != null) 'date': date,
+      if (time != null) 'time': time,
+    };
+    voiceLog('API', 'POST /answer  →  field=$field  params=$params');
+    final uri = Uri.parse(
+      '$kBackendUrl/answer',
+    ).replace(queryParameters: params);
+    return _sendFile(uri, filePath);
+  }
+
+  static Future<Map<String, dynamic>> _sendFile(
+    Uri uri,
+    String filePath,
+  ) async {
+    final file = File(filePath);
+    if (!await file.exists())
+      throw Exception('Audio file not found: $filePath');
+
+    final request = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('file', filePath));
+
+    final streamed = await request.send().timeout(const Duration(seconds: 120));
+    final body = await streamed.stream.bytesToString();
+
+    voiceLog('API', 'HTTP ${streamed.statusCode}  ←  ${uri.path}');
+
+    if (streamed.statusCode == 200) {
+      final decoded = json.decode(body) as Map<String, dynamic>;
+      voiceLogJson('API RAW RESPONSE', decoded);
+      return decoded;
+    }
+
+    Map<String, dynamic> err = {};
+    try {
+      err = json.decode(body);
+    } catch (_) {}
+    throw Exception(err['detail'] ?? 'Server error ${streamed.statusCode}');
+  }
+}
