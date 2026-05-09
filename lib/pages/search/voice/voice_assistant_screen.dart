@@ -11,9 +11,6 @@ import 'voice_modules/voice_logger.dart';
 import 'voice_modules/voice_api_service.dart';
 import 'voice_modules/voice_widgets.dart';
 
-// ─────────────────────────────────────────────────────────────
-// VoiceAssistantScreen
-// ─────────────────────────────────────────────────────────────
 class VoiceAssistantScreen extends StatefulWidget {
   final void Function(Map<String, String?> booking)? onBookingConfirmed;
   final void Function(String query)? onSearchQuery;
@@ -30,85 +27,78 @@ class VoiceAssistantScreen extends StatefulWidget {
 
 class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     with TickerProviderStateMixin {
+
   // ── Services ──────────────────────────────────────────────
   final AudioRecorder _recorder = AudioRecorder();
-  final FlutterTts _tts = FlutterTts();
+  final FlutterTts    _tts      = FlutterTts();
 
   // ── State ─────────────────────────────────────────────────
-  VoicePhase _phase = VoicePhase.idle;
-  String _statusMsg = 'Tap to speak';
-  String _transcript = '';
-  String _language = 'fr';
+  VoicePhase _phase     = VoicePhase.idle;
+  String     _statusMsg = 'Tap to speak';
+  String     _transcript = '';
+  String     _language   = 'fr';   // toujours initialisé à 'fr'
 
-  // ── Booking ───────────────────────────────────────────────
+  // ── Booking context ───────────────────────────────────────
   String? _destination;
   String? _departure;
   String? _date;
   String? _time;
-  List<String> _missingFields = [];
-  String? _currentField;
-  String? _confirmationText;
-  String? _searchQuery;
+  List<String> _missingFields   = [];
+  String?      _currentField;      // champ attendu pour la prochaine réponse
+  String?      _confirmationText;
+  String?      _searchQuery;
 
-  // ── Timer ─────────────────────────────────────────────────
-  Duration _elapsed = Duration.zero;
-  Timer? _timer;
-  String? _audioPath;
+  // ── Timer / recording ─────────────────────────────────────
+  Duration _elapsed  = Duration.zero;
+  Timer?   _timer;
+  String?  _audioPath;
   static const int kMaxSeconds = 60;
 
   // ── Animations ────────────────────────────────────────────
   late AnimationController _pulseCtrl;
   late AnimationController _ringCtrl;
   late AnimationController _waveCtrl;
-  late Animation<double> _pulseAnim;
-  late Animation<double> _ring1Anim;
-  late Animation<double> _ring2Anim;
-  late Animation<double> _ring3Anim;
+  late Animation<double>   _pulseAnim;
+  late Animation<double>   _ring1Anim;
+  late Animation<double>   _ring2Anim;
+  late Animation<double>   _ring3Anim;
 
   // ─────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
     voiceLog('INIT', 'VoiceAssistantScreen mounted — backend: $kBackendUrl');
+    _initAnimations();
+    _initTts();
+  }
 
+  void _initAnimations() {
     _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
+      vsync: this, duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
-    _pulseAnim = Tween(
-      begin: 1.0,
-      end: 1.12,
-    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+    _pulseAnim = Tween(begin: 1.0, end: 1.12).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
 
     _ringCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      vsync: this, duration: const Duration(milliseconds: 2200),
     )..repeat();
     _ring1Anim = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _ringCtrl,
-        curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
-      ),
+      CurvedAnimation(parent: _ringCtrl,
+          curve: const Interval(0.0, 0.7, curve: Curves.easeOut)),
     );
     _ring2Anim = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _ringCtrl,
-        curve: const Interval(0.15, 0.85, curve: Curves.easeOut),
-      ),
+      CurvedAnimation(parent: _ringCtrl,
+          curve: const Interval(0.15, 0.85, curve: Curves.easeOut)),
     );
     _ring3Anim = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _ringCtrl,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-      ),
+      CurvedAnimation(parent: _ringCtrl,
+          curve: const Interval(0.3, 1.0, curve: Curves.easeOut)),
     );
 
     _waveCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
+      vsync: this, duration: const Duration(milliseconds: 600),
     )..repeat(reverse: true);
-
-    _initTts();
   }
 
   @override
@@ -131,6 +121,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     await _tts.setPitch(1.0);
     _tts.setCompletionHandler(() {
       voiceLog('TTS', 'Speech finished → starting answer recording');
+      // Démarre l'enregistrement de réponse SEULEMENT si on attend une réponse
       if (_phase == VoicePhase.question) _startAnswerRecording();
     });
   }
@@ -139,7 +130,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     final locale = switch (lang) {
       'ar' => 'ar-SA',
       'en' => 'en-US',
-      _ => 'fr-FR',
+      _    => 'fr-FR',
     };
     voiceLog('TTS', 'speak  lang=$locale  →  "$text"');
     await _tts.setLanguage(locale);
@@ -168,49 +159,44 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     if (!await _checkPermission()) return;
 
     _audioPath = await _newAudioPath();
-    voiceLog(
-      'REC',
+    voiceLog('REC',
       '${isAnswer ? 'ANSWER' : 'INITIAL'} recording started → $_audioPath',
     );
 
     await _recorder.start(
       const RecordConfig(
-        encoder: AudioEncoder.wav,
-        sampleRate: 16000,
+        encoder:     AudioEncoder.wav,
+        sampleRate:  16000,
         numChannels: 1,
-        bitRate: 256000,
+        bitRate:     256000,
       ),
       path: _audioPath!,
     );
 
     _elapsed = Duration.zero;
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) {
-        t.cancel();
-        return;
-      }
+      if (!mounted) { t.cancel(); return; }
       setState(() => _elapsed += const Duration(seconds: 1));
       if (_elapsed.inSeconds >= kMaxSeconds) {
-        voiceLog('REC', 'Max duration reached (${kMaxSeconds}s) — auto stop');
-        if (isAnswer)
-          _stopAndAnswer();
-        else
-          _stopAndTranscribe();
+        voiceLog('REC', 'Max duration (${kMaxSeconds}s) — auto stop');
+        isAnswer ? _stopAndAnswer() : _stopAndTranscribe();
       }
     });
 
     setState(() {
-      _phase = isAnswer ? VoicePhase.waitAnswer : VoicePhase.recording;
+      _phase     = isAnswer ? VoicePhase.waitAnswer : VoicePhase.recording;
       _statusMsg = isAnswer ? 'ANSWERING...' : 'SAYING...';
+      // Reset contexte SEULEMENT pour un nouvel enregistrement initial
       if (!isAnswer) {
-        _transcript = '';
-        _destination = null;
-        _departure = null;
-        _date = null;
-        _time = null;
-        _missingFields = [];
+        _transcript       = '';
+        _destination      = null;
+        _departure        = null;
+        _date             = null;
+        _time             = null;
+        _missingFields    = [];
         _confirmationText = null;
-        _searchQuery = null;
+        _searchQuery      = null;
+        _currentField     = null;   // reset aussi currentField
       }
     });
   }
@@ -220,16 +206,12 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
   Future<void> _stopAndTranscribe() async {
     _timer?.cancel();
     final path = await _recorder.stop();
-    if (path == null || path.isEmpty) {
-      _setError('Recording failed.');
-      return;
-    }
+    if (path == null || path.isEmpty) { _setError('Recording failed.'); return; }
+
     _audioPath = path;
     voiceLog('REC', 'Initial recording stopped → $path');
-    setState(() {
-      _phase = VoicePhase.uploading;
-      _statusMsg = 'PROCESSING...';
-    });
+    setState(() { _phase = VoicePhase.uploading; _statusMsg = 'PROCESSING...'; });
+
     try {
       final result = await VoiceApiService.transcribe(_audioPath!);
       await _handleResult(result);
@@ -239,173 +221,198 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     }
   }
 
-  Future<void> _stopAndAnswer() async {
-    _timer?.cancel();
-    final path = await _recorder.stop();
-    if (path == null || path.isEmpty) {
-      _setError('Answer not recorded.');
-      return;
-    }
-    _audioPath = path;
-    voiceLog('REC', 'Answer recording stopped → $path  field=$_currentField');
-    setState(() {
-      _phase = VoicePhase.uploading;
-      _statusMsg = 'PROCESSING...';
-    });
-    try {
-      final result = await VoiceApiService.answer(
-        _audioPath!,
-        field: _currentField ?? 'destination',
-        language: _language,
-        destination: _destination,
-        departure: _departure,
-        date: _date,
-        time: _time,
-      );
-      await _handleResult(result);
-    } catch (e) {
-      voiceLog('ERROR', e);
-      _setError(e.toString().replaceFirst('Exception: ', ''));
-    }
-  }
+Future<void> _stopAndAnswer() async {
+  _timer?.cancel();
+  final path = await _recorder.stop();
+  if (path == null || path.isEmpty) { _setError('Answer not recorded.'); return; }
+  _audioPath = path;
 
+  // CAPTURER avant setState — c'est le bug principal
+  final String field    = (_currentField != null && _currentField!.isNotEmpty)
+      ? _currentField! : 'destination';
+  final String lang     = _language.isNotEmpty ? _language : 'fr';
+  final String? dest    = _destination;
+  final String? dep     = _departure;
+  final String? date    = _date;
+  final String? time    = _time;
+
+  // CE LOG doit apparaître dans Flutter avant l'appel API
+  voiceLog('STOP_ANSWER',
+    'field="$field" lang="$lang"\n'
+    '║  dest=$dest dep=$dep date=$date time=$time',
+  );
+
+  setState(() { _phase = VoicePhase.uploading; _statusMsg = 'PROCESSING...'; });
+
+  try {
+    final result = await VoiceApiService.answer(
+      _audioPath!,
+      field:       field,
+      language:    lang,
+      destination: dest,
+      departure:   dep,
+      date:        date,
+      time:        time,
+    );
+    await _handleResult(result);
+  } catch (e) {
+    voiceLog('ERROR', e);
+    _setError(e.toString().replaceFirst('Exception: ', ''));
+  }
+}
   // ─────────────────────────────────────────────────────────
-  // Handle result  ← MAIN DEBUG POINT
+  // Handle result
   // ─────────────────────────────────────────────────────────
   Future<void> _handleResult(Map<String, dynamic> result) async {
-    // ── Print raw server response ──────────────────────────
     voiceLogJson('RESULT RAW', result);
 
     _transcript = result['text'] as String? ?? '';
-    _language = (result['language'] as String? ?? 'fr').substring(0, 2);
+
+    // ── FIX : ne pas écraser _language si le serveur renvoie 'un' ou vide ──
+    final serverLang = result['language'] as String? ?? '';
+    if (serverLang.length >= 2 && serverLang != 'un') {
+      _language = serverLang.substring(0, 2);
+    }
+
     final intent = result['intent'] as String? ?? 'search';
 
-    voiceLog(
-      'RESULT',
+    voiceLog('RESULT',
       'text     = "$_transcript"\n'
-          '║  language = $_language\n'
-          '║  intent   = $intent',
+      '║  language = $_language\n'
+      '║  intent   = $intent',
     );
 
-    // ── SEARCH intent ──────────────────────────────────────
+    // ── SEARCH ─────────────────────────────────────────────
     if (intent == 'search') {
       final query = result['search_query'] as String? ?? _transcript;
       voiceLog('SEARCH', 'query = "$query"');
-
       setState(() {
         _searchQuery = query;
-        _phase = VoicePhase.search;
-        _statusMsg = 'RESULT';
+        _phase       = VoicePhase.search;
+        _statusMsg   = 'RESULT';
       });
       widget.onSearchQuery?.call(query);
       await _speak(query, _language);
       return;
     }
 
-    // ── BOOKING intent ─────────────────────────────────────
-    _destination = result['destination'] as String?;
-    _departure = result['departure'] as String?;
-    _date = result['date'] as String?;
-    _time = result['time'] as String?;
-    _missingFields = List<String>.from(result['missing_fields'] ?? []);
+    // ── BOOKING ────────────────────────────────────────────
+    // FIX : merge — on garde la valeur existante si le serveur renvoie null
+    _destination = (result['destination'] as String?)?.isNotEmpty == true
+        ? result['destination'] as String
+        : _destination;
+
+    _departure = (result['departure'] as String?)?.isNotEmpty == true
+        ? result['departure'] as String
+        : _departure;
+
+    _date = (result['date'] as String?)?.isNotEmpty == true
+        ? result['date'] as String
+        : _date;
+
+    _time = (result['time'] as String?)?.isNotEmpty == true
+        ? result['time'] as String
+        : _time;
+
+    _missingFields    = List<String>.from(result['missing_fields'] ?? []);
     _confirmationText = result['confirmation'] as String?;
 
-    voiceLog(
-      'BOOKING ENTITIES',
+    voiceLog('BOOKING ENTITIES',
       'destination    = $_destination\n'
-          '║  departure      = $_departure\n'
-          '║  date           = $_date\n'
-          '║  time           = $_time\n'
-          '║  missing_fields = $_missingFields\n'
-          '║  confirmation   = $_confirmationText',
+      '║  departure      = $_departure\n'
+      '║  date           = $_date\n'
+      '║  time           = $_time\n'
+      '║  missing_fields = $_missingFields\n'
+      '║  confirmation   = $_confirmationText',
     );
 
     final nextQ = result['next_question'] as Map<String, dynamic>?;
 
-    // ── All fields complete → confirmed ────────────────────
+    // ── Tous les champs OK → confirmation ──────────────────
     if (_missingFields.isEmpty && _confirmationText != null) {
       final booking = {
         'destination': _destination,
-        'departure': _departure,
-        'date': _date,
-        'time': _time,
+        'departure':   _departure,
+        'date':        _date,
+        'time':        _time,
       };
-      voiceLogJson(
-        'BOOKING CONFIRMED ✅',
+      voiceLogJson('BOOKING CONFIRMED ✅',
         booking.map((k, v) => MapEntry(k, v ?? 'null')),
       );
-
-      setState(() {
-        _phase = VoicePhase.result;
-        _statusMsg = 'CONFIRMED';
-      });
+      setState(() { _phase = VoicePhase.result; _statusMsg = 'CONFIRMED'; });
       widget.onBookingConfirmed?.call(booking);
       await _speak(_confirmationText!, _language);
       return;
     }
 
-    // ── Missing fields → ask next question ─────────────────
+    // ── Champs manquants → question suivante ───────────────
     if (nextQ != null) {
+      // FIX : stocker _currentField AVANT setState + await _speak
       _currentField = nextQ['field'] as String?;
       final question = nextQ['question'] as String? ?? '';
 
-      voiceLog(
-        'NEXT QUESTION',
+      voiceLog('NEXT QUESTION',
         'field    = $_currentField\n'
-            '║  question = "$question"',
+        '║  question = "$question"',
       );
 
+      // setState phase=question EN PREMIER
       setState(() {
-        _phase = VoicePhase.question;
+        _phase     = VoicePhase.question;
         _statusMsg = question;
       });
+
+      // _speak lance le TTS → à la fin, TTS completion handler
+      // appelle _startAnswerRecording() car _phase == question
       await _speak(question, _language);
+
     } else {
-      voiceLog(
-        'WARN',
-        'missing_fields=$_missingFields but next_question is null — check backend',
+      voiceLog('WARN',
+        'missing_fields=$_missingFields but next_question=null — check backend',
       );
     }
   }
 
+  // ─────────────────────────────────────────────────────────
   void _setError(String msg) {
     voiceLog('ERROR', msg);
-    setState(() {
-      _phase = VoicePhase.error;
-      _statusMsg = msg;
-    });
+    setState(() { _phase = VoicePhase.error; _statusMsg = msg; });
   }
 
   void _reset() {
-    voiceLog('RESET', 'User reset — back to idle');
+    voiceLog('RESET', 'back to idle');
+    _tts.stop();
+    _timer?.cancel();
     setState(() {
-      _phase = VoicePhase.idle;
-      _statusMsg = 'Tap to speak';
-      _transcript = '';
-      _destination = null;
-      _departure = null;
-      _date = null;
-      _time = null;
-      _missingFields = [];
+      _phase            = VoicePhase.idle;
+      _statusMsg        = 'Tap to speak';
+      _transcript       = '';
+      _language         = 'fr';
+      _destination      = null;
+      _departure        = null;
+      _date             = null;
+      _time             = null;
+      _missingFields    = [];
       _confirmationText = null;
-      _searchQuery = null;
-      _currentField = null;
-      _elapsed = Duration.zero;
+      _searchQuery      = null;
+      _currentField     = null;
+      _elapsed          = Duration.zero;
     });
   }
 
   void _onMicTap() {
     voiceLog('TAP', 'phase=$_phase');
-    if (_phase == VoicePhase.uploading || _phase == VoicePhase.question) return;
-    if (_phase == VoicePhase.recording) {
-      _stopAndTranscribe();
-      return;
+    switch (_phase) {
+      case VoicePhase.uploading:
+      case VoicePhase.question:
+        return;  // ignorer tap pendant upload ou attente TTS
+      case VoicePhase.recording:
+        _stopAndTranscribe();
+      case VoicePhase.waitAnswer:
+        _stopAndAnswer();
+      default:
+        _startRecording();
     }
-    if (_phase == VoicePhase.waitAnswer) {
-      _stopAndAnswer();
-      return;
-    }
-    _startRecording();
   }
 
   // ─────────────────────────────────────────────────────────
@@ -419,11 +426,8 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Calculate available height after top bar and safe area
-            final topBarHeight = 80.0;
-            final bottomAreaHeight = _phase == VoicePhase.result
-                ? 180.0
-                : 120.0;
+            final topBarHeight    = 80.0;
+            final bottomAreaHeight = _phase == VoicePhase.result ? 180.0 : 120.0;
             final availableHeight =
                 constraints.maxHeight - topBarHeight - bottomAreaHeight;
 
@@ -434,28 +438,28 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                   child: SizedBox(
                     height: availableHeight,
                     child: buildCenter(
-                      phase: _phase,
-                      pulseAnim: _pulseAnim,
-                      ring1Anim: _ring1Anim,
-                      ring2Anim: _ring2Anim,
-                      ring3Anim: _ring3Anim,
-                      waveCtrl: _waveCtrl,
-                      onMicTap: _onMicTap,
-                      elapsed: _elapsed,
-                      statusMsg: _statusMsg,
-                      transcript: _transcript,
+                      phase:           _phase,
+                      pulseAnim:       _pulseAnim,
+                      ring1Anim:       _ring1Anim,
+                      ring2Anim:       _ring2Anim,
+                      ring3Anim:       _ring3Anim,
+                      waveCtrl:        _waveCtrl,
+                      onMicTap:        _onMicTap,
+                      elapsed:         _elapsed,
+                      statusMsg:       _statusMsg,
+                      transcript:      _transcript,
                       confirmationText: _confirmationText,
-                      searchQuery: _searchQuery,
+                      searchQuery:     _searchQuery,
                     ),
                   ),
                 ),
                 buildBottomArea(
-                  phase: _phase,
-                  onReset: _reset,
-                  departure: _departure,
+                  phase:       _phase,
+                  onReset:     _reset,
+                  departure:   _departure,
                   destination: _destination,
-                  date: _date,
-                  time: _time,
+                  date:        _date,
+                  time:        _time,
                 ),
               ],
             );

@@ -1,7 +1,7 @@
 package com.example.moviroo
 
 import android.os.Bundle
-import android.util.Base64
+import android.util.Log
 import androidx.credentials.*
 import androidx.credentials.exceptions.*
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -37,7 +37,7 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     private fun handleRegister(options: String, result: MethodChannel.Result) {
-        android.util.Log.d("WebAuthn", "Register options JSON: $options")
+        Log.d("WebAuthn", "Register options JSON: $options")
         val request = CreatePublicKeyCredentialRequest(options)
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -67,17 +67,17 @@ class MainActivity : FlutterFragmentActivity() {
                     )
                 )
             } catch (e: CreateCredentialException) {
-                android.util.Log.e("WebAuthn", "CreateCredentialException: ${e.javaClass.name} — ${e.message}")
+                Log.e("WebAuthn", "CreateCredentialException: ${e.javaClass.name} — ${e.message}")
                 result.error("REGISTRATION_ERROR", "[${e.javaClass.simpleName}] ${e.message}", null)
             } catch (e: Exception) {
-                android.util.Log.e("WebAuthn", "Exception: ${e.javaClass.name} — ${e.message}")
+                Log.e("WebAuthn", "Exception: ${e.javaClass.name} — ${e.message}")
                 result.error("REGISTRATION_ERROR", e.message, null)
             }
         }
     }
 
     private fun handleAuthenticate(options: String, result: MethodChannel.Result) {
-        android.util.Log.d("WebAuthn", "Authenticate options JSON: $options")
+        Log.d("WebAuthn", "Authenticate options JSON: $options")
         val option = GetPublicKeyCredentialOption(options)
         val request = GetCredentialRequest(listOf(option))
         CoroutineScope(Dispatchers.Main).launch {
@@ -111,10 +111,10 @@ class MainActivity : FlutterFragmentActivity() {
                     )
                 )
             } catch (e: GetCredentialException) {
-                android.util.Log.e("WebAuthn", "GetCredentialException: ${e.javaClass.name} — ${e.message}")
+                Log.e("WebAuthn", "GetCredentialException: ${e.javaClass.name} — ${e.message}")
                 result.error("AUTHENTICATION_ERROR", "[${e.javaClass.simpleName}] ${e.message}", null)
             } catch (e: Exception) {
-                android.util.Log.e("WebAuthn", "Exception: ${e.javaClass.name} — ${e.message}")
+                Log.e("WebAuthn", "Exception: ${e.javaClass.name} — ${e.message}")
                 result.error("AUTHENTICATION_ERROR", e.message, null)
             }
         }

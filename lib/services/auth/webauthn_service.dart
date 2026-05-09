@@ -18,13 +18,7 @@ class WebAuthnService {
       accessToken: token,
     );
     final optionsId = startResult['optionsId'] as String;
-    final options = startResult['options'] as Map<String, dynamic>;
-
-    // Defensive patch: ensure RP ID is never localhost for mobile
-    final rp = options['rp'] as Map<String, dynamic>?;
-    if (rp != null && rp['id'] == 'localhost') {
-      rp['id'] = 'com.example.moviroo';
-    }
+    final options = startResult['options'];
 
     // 2. Call native WebAuthn to create credential
     final nativeResponse = await WebAuthnPlatformChannel.register(
@@ -48,12 +42,7 @@ class WebAuthnService {
       email: email,
     );
     final optionsId = startResult['optionsId'] as String;
-    final options = startResult['options'] as Map<String, dynamic>;
-
-    // Defensive patch: ensure RP ID is never localhost for mobile
-    if (options['rpId'] == 'localhost') {
-      options['rpId'] = 'com.example.moviroo';
-    }
+    final options = startResult['options'];
 
     // 2. Call native WebAuthn to get credential
     final nativeResponse = await WebAuthnPlatformChannel.authenticate(

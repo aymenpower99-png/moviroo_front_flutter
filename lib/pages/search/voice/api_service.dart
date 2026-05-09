@@ -3,8 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:moviroo/pages/search/voice/constants.dart';
-import 'package:moviroo/pages/search/voice/logger.dart';
-
+import 'package:moviroo/pages/search/voice/voice_modules/voice_logger.dart';
 
 // ─────────────────────────────────────────────────────────────
 // API Service
@@ -12,7 +11,7 @@ import 'package:moviroo/pages/search/voice/logger.dart';
 class ApiService {
   /// POST /transcribe — envoie l'audio initial et retourne le résultat complet
   static Future<Map<String, dynamic>> transcribe(String filePath) {
-    appLog('API', 'POST /transcribe  →  $filePath');
+    voiceLog('API', 'POST /transcribe  →  $filePath');
     return _sendFile(Uri.parse('$kBackendUrl/transcribe'), filePath);
   }
 
@@ -30,19 +29,22 @@ class ApiService {
       'field': field,
       'language': language,
       if (destination != null) 'destination': destination,
-      if (departure   != null) 'departure':   departure,
-      if (date        != null) 'date':         date,
-      if (time        != null) 'time':         time,
+      if (departure != null) 'departure': departure,
+      if (date != null) 'date': date,
+      if (time != null) 'time': time,
     };
-    appLog('API', 'POST /answer  →  field=$field  params=$params');
-    final uri = Uri.parse('$kBackendUrl/answer')
-        .replace(queryParameters: params);
+    voiceLog('API', 'POST /answer  →  field=$field  params=$params');
+    final uri = Uri.parse(
+      '$kBackendUrl/answer',
+    ).replace(queryParameters: params);
     return _sendFile(uri, filePath);
   }
 
   // ── Méthode interne ───────────────────────────────────────
   static Future<Map<String, dynamic>> _sendFile(
-      Uri uri, String filePath) async {
+    Uri uri,
+    String filePath,
+  ) async {
     final file = File(filePath);
     if (!await file.exists()) {
       throw Exception('Audio file not found: $filePath');
@@ -51,15 +53,14 @@ class ApiService {
     final request = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', filePath));
 
-    final streamed =
-        await request.send().timeout(const Duration(seconds: 120));
+    final streamed = await request.send().timeout(const Duration(seconds: 120));
     final body = await streamed.stream.bytesToString();
 
-    appLog('API', 'HTTP ${streamed.statusCode}  ←  ${uri.path}');
+    voiceLog('API', 'HTTP ${streamed.statusCode}  ←  ${uri.path}');
 
     if (streamed.statusCode == 200) {
       final decoded = json.decode(body) as Map<String, dynamic>;
-      appLogJson('API RAW RESPONSE', decoded);
+      voiceLogJson('API RAW RESPONSE', decoded);
       return decoded;
     }
 
