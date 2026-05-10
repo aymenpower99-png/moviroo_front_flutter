@@ -26,7 +26,6 @@ class _HomePageState extends State<HomePage> {
   // ── User name ──────────────────────────────────────────────────────────────
   final AuthService _authService = AuthService();
   String? _userName;
-  bool _isLoadingUser = true;
 
   // ── Recent rides ───────────────────────────────────────────────────────────
   final BookingApiService _bookingApi = BookingApiService();
@@ -50,6 +49,11 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    // Pre-populate name from auth cache so the greeting is instantly visible
+    // when the user returns to this tab — no flicker or fade delay.
+    final cached = _authService.getCachedUser();
+    _userName = cached?['firstName'] as String?;
+
     _loadData();
   }
 
@@ -65,12 +69,9 @@ class _HomePageState extends State<HomePage> {
       final user = await _authService.getCurrentUser();
       if (!mounted) return;
       final firstName = user?['firstName'] as String?;
-      setState(() {
-        _userName = firstName;
-        _isLoadingUser = false;
-      });
+      if (mounted) setState(() => _userName = firstName);
     } catch (_) {
-      if (mounted) setState(() => _isLoadingUser = false);
+      // Leave existing cached name in place on error
     }
   }
 
@@ -141,9 +142,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   String _whereToText(AppLocalizations t) {
-    if (_isLoadingUser) return t.translate('where_to');
-    if (_userName != null && _userName!.isNotEmpty) {
-      return '${t.translate('where_to')}, $_userName?';
+    final name = _userName;
+    if (name != null && name.isNotEmpty) {
+      // Strip any trailing ? from the translation so we don't double it
+      final whereTo = t.translate('where_to');
+      final base = whereTo.endsWith('?')
+          ? whereTo.substring(0, whereTo.length - 1).trimRight()
+          : whereTo;
+      return '$base, $name?';
     }
     return t.translate('where_to');
   }
@@ -186,15 +192,11 @@ class _HomePageState extends State<HomePage> {
                                 .copyWith(color: AppColors.primaryPurple),
                           ),
                           const SizedBox(height: 4),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: Text(
-                              _whereToText(t),
-                              key: ValueKey(_whereToText(t)),
-                              style: AppTextStyles.pageTitle(context).copyWith(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                              ),
+                          Text(
+                            _whereToText(t),
+                            style: AppTextStyles.pageTitle(context).copyWith(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                           const SizedBox(height: 18),
