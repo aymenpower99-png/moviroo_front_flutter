@@ -45,7 +45,8 @@ class _SupportPageState extends State<SupportPage> {
 
   void _showMessagesModal() {
     setState(() => _unreadCount = 0);
-    // Silent background refresh — show cached list immediately if available
+    // Trigger a silent background refresh for the parent state,
+    // but the modal will load from cache instantly and refresh itself.
     _loadTickets();
     print(
       '[SupportPage] Opening messages modal with ${_tickets.length} tickets',
@@ -55,7 +56,7 @@ class _SupportPageState extends State<SupportPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => MessagesModal(
-        tickets: _tickets,
+        initialTickets: _tickets,
         onTicketTap: (ticket) {
           print(
             '[SupportPage] Ticket tapped, navigating to chat - ticketId: ${ticket.id}',

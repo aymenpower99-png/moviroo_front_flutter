@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/config/feature_flags.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -109,15 +110,16 @@ class _SecurityPageState extends State<SecurityPage> {
                           ),
 
                           // ── Passkeys (all users) ────────────────────
-                          _SecurityNavTile(
-                            title: 'Passkeys',
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const PasskeyManagementPage(),
+                          if (FeatureFlags.enablePasskeys)
+                            _SecurityNavTile(
+                              title: 'Passkeys',
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PasskeyManagementPage(),
+                                ),
                               ),
                             ),
-                          ),
 
                           // ── Active Sessions (all users) ─────────────
                           _SecurityNavTile(

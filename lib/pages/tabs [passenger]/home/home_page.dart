@@ -10,6 +10,8 @@ import 'suggestion_card.dart';
 import 'promo_banner.dart';
 import 'recent_ride_card.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../services/auth_service/auth_service.dart';
+import '../../../../services/ride_api/booking_api_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,6 +22,16 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _tabIndex = 0;
+
+  // ── User name ──────────────────────────────────────────────────────────────
+  final AuthService _authService = AuthService();
+  String? _userName;
+  bool _isLoadingUser = true;
+
+  // ── Recent rides ───────────────────────────────────────────────────────────
+  final BookingApiService _bookingApi = BookingApiService();
+  List<RecentRideModel> _recentRides = [];
+  bool _isLoadingRides = true;
 
   static const _suggestionIcons = [
     Icons.flight_rounded,
@@ -35,32 +47,105 @@ class _HomePageState extends State<HomePage> {
     'suggestion_together_label',
   ];
 
-  static const _recent = [
-    RecentRideModel(
-      name: 'Grand Central Terminal',
-      address: '89 E 42nd St, New York',
-      time: '2d ago',
-      type: 'City Ride',
-    ),
-    RecentRideModel(
-      name: 'JFK International Airport',
-      address: 'Queens, NY 11430',
-      time: 'Fri',
-      type: 'Airport',
-    ),
-    RecentRideModel(
-      name: 'Central Park West',
-      address: 'New York, NY 10024',
-      time: 'Mon',
-      type: 'Daily',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await Future.wait([
+      _loadUser(),
+      _loadRecentRides(),
+    ]);
+  }
+
+  Future<void> _loadUser() async {
+    try {
+      final user = await _authService.getCurrentUser();
+      if (!mounted) return;
+      final firstName = user?['firstName'] as String?;
+      setState(() {
+        _userName = firstName;
+        _isLoadingUser = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingUser = false);
+    }
+  }
+
+  Future<void> _loadRecentRides() async {
+    try {
+      final rides = await _bookingApi.getMyRides();
+      if (!mounted) return;
+      setState(() {
+        _recentRides = _mapRides(rides);
+        _isLoadingRides = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingRides = false);
+    }
+  }
+
+  List<RecentRideModel> _mapRides(List<Map<String, dynamic>> rides) {
+    // Sort by createdAt descending, take latest 5
+    final sorted = List<Map<String, dynamic>>.from(rides)
+      ..sort((a, b) {
+        final aDate = DateTime.tryParse(
+          a['createdAt'] ?? a['created_at'] ?? '',
+        );
+        final bDate = DateTime.tryParse(
+          b['createdAt'] ?? b['created_at'] ?? '',
+        );
+        if (aDate == null || bDate == null) return 0;
+        return bDate.compareTo(aDate);
+      });
+
+    return sorted.take(5).map((r) {
+      final createdAt = DateTime.tryParse(
+        r['createdAt'] ?? r['created_at'] ?? '',
+      );
+      final vehicleClass = r['vehicleClass'] as Map<String, dynamic>?;
+      final className = vehicleClass?['name'] as String?;
+
+      return RecentRideModel(
+        name: r['dropoffAddress'] ?? r['dropoff_address'] ?? 'Unknown',
+        address: r['pickupAddress'] ?? r['pickup_address'] ?? '',
+        time: createdAt != null ? _formatTimeAgo(createdAt) : '',
+        type: className ?? r['status'] ?? 'Ride',
+      );
+    }).toList();
+  }
+
+  String _formatTimeAgo(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inDays >= 7) {
+      final months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      ];
+      return '${months[dt.month - 1]} ${dt.day}';
+    }
+    if (diff.inDays >= 1) return '${diff.inDays}d ago';
+    if (diff.inHours >= 1) return '${diff.inHours}h ago';
+    if (diff.inMinutes >= 1) return '${diff.inMinutes}m ago';
+    return 'Just now';
+  }
 
   String _greeting(AppLocalizations t) {
     final hour = DateTime.now().hour;
     if (hour < 12) return t.translate('good_morning');
     if (hour < 18) return t.translate('good_afternoon');
     return t.translate('good_evening');
+  }
+
+  String _whereToText(AppLocalizations t) {
+    if (_isLoadingUser) return t.translate('where_to');
+    if (_userName != null && _userName!.isNotEmpty) {
+      return '${t.translate('where_to')}, $_userName?';
+    }
+    return t.translate('where_to');
   }
 
   @override
@@ -101,11 +186,15 @@ class _HomePageState extends State<HomePage> {
                                 .copyWith(color: AppColors.primaryPurple),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            t.translate('where_to_alex'),
-                            style: AppTextStyles.pageTitle(context).copyWith(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: Text(
+                              _whereToText(t),
+                              key: ValueKey(_whereToText(t)),
+                              style: AppTextStyles.pageTitle(context).copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 18),
@@ -127,7 +216,7 @@ class _HomePageState extends State<HomePage> {
                       delegate: SliverChildListDelegate([
                         const SizedBox(height: 30),
                         Text(
-                          t.translate('suggestions'),
+                          t.translate('our_services'),
                           style: AppTextStyles.sectionLabel(context),
                         ),
                         const SizedBox(height: 14),
@@ -150,12 +239,58 @@ class _HomePageState extends State<HomePage> {
                           style: AppTextStyles.sectionLabel(context),
                         ),
                         const SizedBox(height: 14),
-                        ..._recent.map(
-                          (r) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: RecentRideCard(r: r),
+
+                        // Loading state
+                        if (_isLoadingRides)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 32),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primaryPurple,
+                              ),
+                            ),
+                          )
+                        // Empty state
+                        else if (_recentRides.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 32),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.local_taxi_outlined,
+                                    size: 48,
+                                    color: AppColors.subtext(context),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'No rides yet',
+                                    style: AppTextStyles.bodyLarge(context)
+                                        .copyWith(
+                                      color: AppColors.subtext(context),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Book your first ride!',
+                                    style: AppTextStyles.bodySmall(context)
+                                        .copyWith(
+                                      color: AppColors.subtext(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        // Ride list
+                        else
+                          ..._recentRides.map(
+                            (r) => Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: RecentRideCard(r: r),
+                            ),
                           ),
-                        ),
                         const SizedBox(height: 24),
                       ]),
                     ),

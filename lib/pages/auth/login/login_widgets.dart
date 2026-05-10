@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/config/feature_flags.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -332,40 +333,42 @@ class LoginWidgets {
                 ),
         ),
 
-        const SizedBox(height: 12),
+        if (FeatureFlags.enablePasskeys) ...[
+          const SizedBox(height: 12),
 
-        // ── Passkey ───────────────────────────────────────────
-        socialButton(
-          backgroundColor: AppColors.surface(context),
-          borderColor: AppColors.border(context),
-          onPressed: isPasskeyLoading ? null : onPasskeySignIn,
-          child: isPasskeyLoading
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.text(context),
+          // ── Passkey ───────────────────────────────────────────
+          socialButton(
+            backgroundColor: AppColors.surface(context),
+            borderColor: AppColors.border(context),
+            onPressed: isPasskeyLoading ? null : onPasskeySignIn,
+            child: isPasskeyLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.text(context),
+                      ),
                     ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.key_rounded,
+                        color: AppColors.primaryPurple,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Sign in with Passkey',
+                        style: AppTextStyles.bodyMedium(context),
+                      ),
+                    ],
                   ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.key_rounded,
-                      color: AppColors.primaryPurple,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Sign in with Passkey',
-                      style: AppTextStyles.bodyMedium(context),
-                    ),
-                  ],
-                ),
-        ),
+          ),
+        ],
       ],
     );
   }

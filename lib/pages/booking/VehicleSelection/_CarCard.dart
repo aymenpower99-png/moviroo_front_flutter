@@ -311,13 +311,30 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
     try {
       // Step 1: fetch all active classes to resolve name → ID
       final activeClasses = await _vehicleClassesService.getActiveClasses();
+      debugPrint(
+        '[_CarDetailSheet] Active classes: ${activeClasses.map((c) => c.name).toList()}',
+      );
 
-      // Step 2: find the class whose name matches the car's category
-      final matchedClass = activeClasses.firstWhere(
+      // Step 2: find the class whose name matches the car's category or name
+      VehicleClass matchedClass = activeClasses.firstWhere(
         (c) =>
             c.name.toLowerCase().trim() ==
             widget.car.classCategory.toLowerCase().trim(),
         orElse: () => VehicleClass(id: '', name: '', multiplier: 0),
+      );
+
+      // Fallback: try matching against the display name (e.g. "Standard XL")
+      if (matchedClass.id.isEmpty) {
+        matchedClass = activeClasses.firstWhere(
+          (c) =>
+              c.name.toLowerCase().trim() ==
+              widget.car.name.toLowerCase().trim(),
+          orElse: () => VehicleClass(id: '', name: '', multiplier: 0),
+        );
+      }
+
+      debugPrint(
+        '[_CarDetailSheet] Matched class: ${matchedClass.name} (id=${matchedClass.id})',
       );
 
       VehicleClassDetail? details;
@@ -326,6 +343,9 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
         details = await _vehicleClassesService.getClassDetails(
           matchedClass.id,
         );
+        debugPrint(
+          '[_CarDetailSheet] API details: ${details?.features.toString()}',
+        );
       }
 
       if (!mounted) return;
@@ -333,6 +353,9 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
       // Step 4: if API returned nothing, build fallback from static CarOption data
       if (details == null) {
         details = _buildFallbackDetails();
+        debugPrint(
+          '[_CarDetailSheet] Using fallback for ${widget.car.name}',
+        );
       }
 
       setState(() {
@@ -340,6 +363,7 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('[_CarDetailSheet] Error: $e');
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -349,9 +373,24 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
     }
   }
 
-  /// Build a VehicleClassDetail from the static CarOption so the sheet
+  /// Build a realistic VehicleClassDetail fallback per tier so the sheet
   /// never shows empty specs even when the API is unreachable.
   VehicleClassDetail _buildFallbackDetails() {
+    final name = widget.car.name.toLowerCase();
+
+    // Determine tier defaults
+    final bool wifi = name.contains('business') ||
+        name.contains('premium') ||
+        name.contains('standard');
+    final bool water = name.contains('business') || name.contains('premium');
+    final bool meetAndGreet =
+        name.contains('business') || name.contains('premium');
+    final int freeWaitingTime = name.contains('premium')
+        ? 15
+        : name.contains('business') || name.contains('van')
+            ? 10
+            : 5;
+
     return VehicleClassDetail(
       id: '',
       name: widget.car.name,
@@ -360,12 +399,12 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
       features: VehicleFeatures(
         seats: widget.car.seats,
         bags: widget.car.bags,
-        wifi: false,
+        wifi: wifi,
         ac: true,
-        water: false,
-        freeWaitingTime: 0,
-        doorToDoor: false,
-        meetAndGreet: false,
+        water: water,
+        freeWaitingTime: freeWaitingTime,
+        doorToDoor: true,
+        meetAndGreet: meetAndGreet,
         extraFeatures: [],
         extraServices: [],
       ),
@@ -378,6 +417,7 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
     final features = <String>[];
     final f = _classDetails!.features;
 
+    if (f.ac) features.add('Air conditioning');
     if (f.wifi) features.add('Free WiFi onboard');
     if (f.water) features.add('Complimentary water');
     if (f.meetAndGreet) features.add('Meet & greet service');
@@ -400,6 +440,7 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
       }
     }
 
+    debugPrint('[_CarDetailSheet] Feature labels: $features');
     return features;
   }
 

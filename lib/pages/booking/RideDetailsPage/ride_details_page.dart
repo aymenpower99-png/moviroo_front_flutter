@@ -182,10 +182,22 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       if (success) {
         context.read<BookingProvider>().onBookingCancelled();
 
+        // Reload booking data to get updated cancelledBy and paymentStatus
+        await _loadBookingData();
+
+        final paymentStatus = _bookingData?['paymentStatus'] as String?;
+        final cancelledBy = _bookingData?['cancelledBy'] as String?;
         final wasCard =
             (_bookingData?['paymentMethod'] as String?)?.toUpperCase() ==
-                'CARD';
-        if (wasCard && mounted) {
+            'CARD';
+
+        // Only show refund message if:
+        // 1. Payment was actually charged (PAID), OR
+        // 2. System cancelled (no driver found)
+        final showRefundMessage =
+            (paymentStatus == 'PAID') || (cancelledBy == 'SYSTEM');
+
+        if (wasCard && showRefundMessage && mounted) {
           showDialog(
             context: context,
             builder: (_) => AlertDialog(

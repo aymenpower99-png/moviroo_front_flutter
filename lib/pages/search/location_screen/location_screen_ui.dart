@@ -76,6 +76,8 @@ class LocationScreenUI extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPickupFocused = fromFocus.hasFocus;
+    final isDropoffFocused = toFocus.hasFocus;
+    final anyFieldFocused = isPickupFocused || isDropoffFocused;
     final currentRecentSearches = isPickupFocused
         ? recentPickupSearches
         : recentDropoffSearches;

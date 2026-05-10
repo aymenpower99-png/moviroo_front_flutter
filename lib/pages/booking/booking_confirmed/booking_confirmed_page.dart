@@ -158,10 +158,22 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
         _pollTimer?.cancel();
         context.read<BookingProvider>().onBookingCancelled();
 
+        // Reload booking data to get updated cancelledBy and paymentStatus
+        await _loadBookingData();
+
+        final paymentStatus = _bookingData?['paymentStatus'] as String?;
+        final cancelledBy = _bookingData?['cancelledBy'] as String?;
         final wasCard =
             (_bookingData?['paymentMethod'] as String?)?.toUpperCase() ==
-                'CARD';
-        if (wasCard) {
+            'CARD';
+
+        // Only show refund message if:
+        // 1. Payment was actually charged (PAID), OR
+        // 2. System cancelled (no driver found)
+        final showRefundMessage =
+            (paymentStatus == 'PAID') || (cancelledBy == 'SYSTEM');
+
+        if (wasCard && showRefundMessage) {
           showDialog(
             context: context,
             builder: (_) => AlertDialog(
@@ -212,7 +224,7 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
       );
     }
 
-    final isCash       = _paymentMethod?.toLowerCase() == 'cash';
+    final isCash = _paymentMethod?.toLowerCase() == 'cash';
     final isPendingCard = _isPendingCard;
 
     return Scaffold(

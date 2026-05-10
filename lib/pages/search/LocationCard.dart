@@ -52,7 +52,7 @@ class LocationCard extends StatelessWidget {
     final t = AppLocalizations.of(context);
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOut,
       padding: const EdgeInsets.fromLTRB(20, 16, 14, 16),
       decoration: BoxDecoration(
@@ -94,7 +94,7 @@ class LocationCard extends StatelessWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryPurple.withValues(alpha: 
+                            color: AppColors.primaryPurple.withValues(alpha:
                               0.25 * pulseAnim.value,
                             ),
                             blurRadius: 6,

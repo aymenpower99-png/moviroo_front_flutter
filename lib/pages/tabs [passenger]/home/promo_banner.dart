@@ -2,17 +2,87 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../services/membership/membership_service.dart';
+import '../../../../routing/router.dart';
 
-class PromoBanner extends StatelessWidget {
+class PromoBanner extends StatefulWidget {
   const PromoBanner({super.key});
+
+  @override
+  State<PromoBanner> createState() => _PromoBannerState();
+}
+
+class _PromoBannerState extends State<PromoBanner> {
+  MembershipInfo? _membershipInfo;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMembership();
+  }
+
+  Future<void> _loadMembership() async {
+    try {
+      final info = await MembershipService.getMembershipInfo();
+      if (!mounted) return;
+      setState(() {
+        _membershipInfo = info;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Returns the first/lowest tier's required points, or a fallback.
+  int get _firstTierPoints {
+    final levels = _membershipInfo?.levels ?? [];
+    if (levels.isEmpty) return 500; // fallback if API fails
+    // Sort by level ascending and take the first
+    final sorted = List<MembershipLevelData>.from(levels)
+      ..sort((a, b) => a.level.compareTo(b.level));
+    return sorted.first.requiredPoints;
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
 
+    // If still loading, show a shimmer-like placeholder with static text
+    // so the layout doesn't jump when data arrives.
+    if (_isLoading) {
+      return _buildCard(
+        context,
+        t: t,
+        headline: t.translate('promo_headline'),
+        cta: t.translate('promo_cta'),
+        onTap: () {},
+      );
+    }
+
+    // Dynamic headline using the first tier's threshold
+    final points = _firstTierPoints;
+    final dynamicHeadline =
+        'Your first discount\nstarts at $points pts';
+
+    return _buildCard(
+      context,
+      t: t,
+      headline: dynamicHeadline,
+      cta: t.translate('promo_cta'),
+      onTap: () => AppRouter.push(context, AppRouter.membre),
+    );
+  }
+
+  Widget _buildCard(
+    BuildContext context, {
+    required AppLocalizations t,
+    required String headline,
+    required String cta,
+    required VoidCallback onTap,
+  }) {
     return Container(
-      // Removed fixed height: 160 — caused overflow when translated text
-      // (e.g. French) wraps to more lines than the English original.
       constraints: const BoxConstraints(minHeight: 160),
       decoration: BoxDecoration(
         color: AppColors.surface(context),
@@ -60,7 +130,7 @@ class PromoBanner extends StatelessWidget {
 
                     // headline
                     Text(
-                      t.translate('promo_headline'),
+                      headline,
                       style: AppTextStyles.pageTitle(context).copyWith(
                         color: AppColors.text(context),
                         fontSize: 18,
@@ -75,7 +145,7 @@ class PromoBanner extends StatelessWidget {
                     SizedBox(
                       height: 34,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: onTap,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryPurple,
                           foregroundColor: Colors.white,
@@ -87,10 +157,8 @@ class PromoBanner extends StatelessWidget {
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        // Was `const Text(...)` — const prevents runtime
-                        // string substitution, so the key was rendered as-is.
                         child: Text(
-                          t.translate('promo_cta'),
+                          cta,
                           style: const TextStyle(
                               fontSize: 12, fontWeight: FontWeight.w700),
                         ),

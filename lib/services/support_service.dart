@@ -110,6 +110,7 @@ class TicketMessage {
   final String senderId;
   final String ticketId;
   final DateTime createdAt;
+  final DateTime? updatedAt;
   final bool isFromAdmin;
 
   TicketMessage({
@@ -118,6 +119,7 @@ class TicketMessage {
     required this.senderId,
     required this.ticketId,
     required this.createdAt,
+    this.updatedAt,
     this.isFromAdmin = false,
   });
 
@@ -147,6 +149,9 @@ class TicketMessage {
       createdAt: DateTime.parse(
         json['createdAt'] ?? json['created_at'] ?? DateTime.now().toIso8601String(),
       ),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : (json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null),
       isFromAdmin: isFromAdmin,
     );
   }
@@ -304,6 +309,56 @@ class SupportService {
       }
     } catch (e) {
       throw Exception('Failed to reply: $e');
+    }
+  }
+
+  /// Edit an existing message (user)
+  Future<TicketMessage> editMessage({
+    required String ticketId,
+    required String messageId,
+    required String body,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await _client
+          .patch(
+            Uri.parse('${AppConfig.baseUrl}/support/tickets/$ticketId/messages/$messageId'),
+            headers: headers,
+            body: jsonEncode({'body': body}),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final currentUserId = await TokenStorage.getUserId();
+        return TicketMessage.fromJson(data, currentUserId ?? '');
+      } else {
+        throw Exception('Failed to edit message: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to edit message: $e');
+    }
+  }
+
+  /// Delete an existing message (user)
+  Future<void> deleteMessage({
+    required String ticketId,
+    required String messageId,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await _client
+          .delete(
+            Uri.parse('${AppConfig.baseUrl}/support/tickets/$ticketId/messages/$messageId'),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete message: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to delete message: $e');
     }
   }
 
