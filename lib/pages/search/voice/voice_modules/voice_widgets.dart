@@ -6,41 +6,51 @@ import 'voice_constants.dart';
 // Widget Builders
 // ─────────────────────────────────────────────────────────────
 
-Widget buildTopBar({VoidCallback? onBackPressed}) => Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-  child: Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      buildCircleBtn(Icons.arrow_back_rounded, onTap: onBackPressed),
-      const Text(
-        'AI TRAVEL ASSISTANT',
-        style: TextStyle(
-          color: kTextMain,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 2.5,
-        ),
+Widget buildTopBar(BuildContext context, {VoidCallback? onBackPressed}) =>
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          buildCircleBtn(
+            context,
+            Icons.arrow_back_rounded,
+            onTap: onBackPressed,
+          ),
+          Text(
+            'AI TRAVEL ASSISTANT',
+            style: TextStyle(
+              color: voiceText(context),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2.5,
+            ),
+          ),
+          buildCircleBtn(context, Icons.more_horiz_rounded),
+        ],
       ),
-      buildCircleBtn(Icons.more_horiz_rounded),
-    ],
-  ),
-);
+    );
 
-Widget buildCircleBtn(IconData icon, {VoidCallback? onTap}) => GestureDetector(
+Widget buildCircleBtn(
+  BuildContext context,
+  IconData icon, {
+  VoidCallback? onTap,
+}) => GestureDetector(
   onTap: onTap,
   child: Container(
     width: 42,
     height: 42,
     decoration: BoxDecoration(
       shape: BoxShape.circle,
-      color: kBgCard,
+      color: voiceSurface(context),
       border: Border.all(color: kPurple.withOpacity(0.2)),
     ),
-    child: Icon(icon, color: kTextSub, size: 18),
+    child: Icon(icon, color: voiceSubtext(context), size: 18),
   ),
 );
 
-Widget buildCenter({
+Widget buildCenter(
+  BuildContext context, {
   required VoicePhase phase,
   required Animation<double> pulseAnim,
   required Animation<double> ring1Anim,
@@ -135,6 +145,7 @@ Widget buildCenter({
       ),
       const SizedBox(height: 16),
       buildMessageBubble(
+        context,
         phase: phase,
         elapsed: elapsed,
         statusMsg: statusMsg,
@@ -243,7 +254,8 @@ String phaseLabel(VoicePhase phase) => switch (phase) {
   _ => 'READY',
 };
 
-Widget buildMessageBubble({
+Widget buildMessageBubble(
+  BuildContext context, {
   required VoicePhase phase,
   required Duration elapsed,
   required String statusMsg,
@@ -281,14 +293,14 @@ Widget buildMessageBubble({
     margin: const EdgeInsets.symmetric(horizontal: 32),
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     decoration: BoxDecoration(
-      color: kBgCard,
+      color: voiceSurface(context),
       borderRadius: BorderRadius.circular(16),
       border: Border.all(color: kPurple.withOpacity(0.15)),
     ),
     child: RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
-        style: const TextStyle(fontSize: 15, height: 1.5, color: kTextMain),
+        style: TextStyle(fontSize: 15, height: 1.5, color: voiceText(context)),
         children: [
           if (rest.isNotEmpty) TextSpan(text: rest),
           if (rest.isNotEmpty && lastWord.isNotEmpty) const TextSpan(text: ' '),
@@ -303,9 +315,11 @@ Widget buildMessageBubble({
   );
 }
 
-Widget buildBottomArea({
+Widget buildBottomArea(
+  BuildContext context, {
   required VoicePhase phase,
   required VoidCallback onReset,
+  required VoidCallback? onConfirm,
   required String? departure,
   required String? destination,
   required String? date,
@@ -317,12 +331,36 @@ Widget buildBottomArea({
     children: [
       if (phase == VoicePhase.result) ...[
         buildResultRows(
+          context,
           departure: departure,
           destination: destination,
           date: date,
           time: time,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: onConfirm,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPurple,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Confirm Booking',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
       ],
       GestureDetector(
         onTap: onReset,
@@ -331,17 +369,22 @@ Widget buildBottomArea({
           height: 52,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: kBgCard,
+            color: voiceSurface(context),
             border: Border.all(color: kPurple.withOpacity(0.25)),
           ),
-          child: const Icon(Icons.close_rounded, color: kTextSub, size: 22),
+          child: Icon(
+            Icons.close_rounded,
+            color: voiceSubtext(context),
+            size: 22,
+          ),
         ),
       ),
     ],
   ),
 );
 
-Widget buildResultRows({
+Widget buildResultRows(
+  BuildContext context, {
   required String? departure,
   required String? destination,
   required String? date,
@@ -350,32 +393,40 @@ Widget buildResultRows({
   margin: const EdgeInsets.symmetric(horizontal: 24),
   padding: const EdgeInsets.all(16),
   decoration: BoxDecoration(
-    color: kBgCard,
+    color: voiceSurface(context),
     borderRadius: BorderRadius.circular(16),
     border: Border.all(color: kPurple.withOpacity(0.15)),
   ),
   child: Column(
     children: [
-      buildResultRow('From', departure, Icons.trip_origin_rounded),
-      buildResultRow('To', destination, Icons.location_on_rounded),
-      buildResultRow('Date', date, Icons.calendar_today_rounded),
-      buildResultRow('Time', time, Icons.schedule_rounded),
+      buildResultRow(context, 'From', departure, Icons.trip_origin_rounded),
+      buildResultRow(context, 'To', destination, Icons.location_on_rounded),
+      buildResultRow(context, 'Date', date, Icons.calendar_today_rounded),
+      buildResultRow(context, 'Time', time, Icons.schedule_rounded),
     ],
   ),
 );
 
-Widget buildResultRow(String label, String? val, IconData icon) => Padding(
+Widget buildResultRow(
+  BuildContext context,
+  String label,
+  String? val,
+  IconData icon,
+) => Padding(
   padding: const EdgeInsets.symmetric(vertical: 6),
   child: Row(
     children: [
       Icon(icon, size: 15, color: kPurple),
       const SizedBox(width: 10),
-      Text('$label  ', style: const TextStyle(color: kTextSub, fontSize: 13)),
+      Text(
+        '$label  ',
+        style: TextStyle(color: voiceSubtext(context), fontSize: 13),
+      ),
       Expanded(
         child: Text(
           val ?? '—',
           style: TextStyle(
-            color: val != null ? kTextMain : kTextSub,
+            color: val != null ? voiceText(context) : voiceSubtext(context),
             fontSize: 13,
             fontWeight: val != null ? FontWeight.w600 : FontWeight.normal,
           ),

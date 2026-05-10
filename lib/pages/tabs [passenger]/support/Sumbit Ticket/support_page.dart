@@ -157,11 +157,10 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
                       style: AppTextStyles.bodyMedium(context),
                     ),
                     const SizedBox(height: 8),
-                    TicketCategoryDropdown(
+                    TicketCategorySelector(
                       value: _selectedCategoryKey,
                       onChanged: (val) => setState(
-                        () =>
-                            _selectedCategoryKey = val ?? _selectedCategoryKey,
+                        () => _selectedCategoryKey = val,
                       ),
                       items: _categoryKeys,
                       labelBuilder: (key) => t.translate(key),

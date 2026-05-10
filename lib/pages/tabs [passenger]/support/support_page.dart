@@ -30,6 +30,7 @@ class _SupportPageState extends State<SupportPage> {
   final HelpCenterService _helpCenterService = HelpCenterService();
   List<SupportTicket> _tickets = [];
   bool _isLoadingTickets = false;
+  bool _hasLoadedTickets = false;
   int _unreadCount = 0;
 
   // ── Help Center categories ─────────────────────────────────────────────────
@@ -44,6 +45,8 @@ class _SupportPageState extends State<SupportPage> {
 
   void _showMessagesModal() {
     setState(() => _unreadCount = 0);
+    // Silent background refresh — show cached list immediately if available
+    _loadTickets();
     print(
       '[SupportPage] Opening messages modal with ${_tickets.length} tickets',
     );
@@ -53,8 +56,6 @@ class _SupportPageState extends State<SupportPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => MessagesModal(
         tickets: _tickets,
-        isLoading: _isLoadingTickets,
-        onRefresh: _loadTickets,
         onTicketTap: (ticket) {
           print(
             '[SupportPage] Ticket tapped, navigating to chat - ticketId: ${ticket.id}',
@@ -71,6 +72,15 @@ class _SupportPageState extends State<SupportPage> {
   }
 
   Future<void> _loadTickets() async {
+    // Cache-first: load from in-memory cache instantly if available
+    final cached = SupportService.cachedTickets;
+    if (cached != null && cached.isNotEmpty && _tickets.isEmpty) {
+      setState(() {
+        _tickets = cached;
+      });
+    }
+
+    // Silently refresh from API in background
     try {
       print('[SupportPage] Loading tickets...');
       final tickets = await _supportService.listTickets();
@@ -79,12 +89,16 @@ class _SupportPageState extends State<SupportPage> {
         setState(() {
           _tickets = tickets;
           _isLoadingTickets = false;
+          _hasLoadedTickets = true;
         });
       }
     } catch (e) {
       print('[SupportPage] Error loading tickets: $e');
       if (mounted) {
-        setState(() => _isLoadingTickets = false);
+        setState(() {
+          _isLoadingTickets = false;
+          _hasLoadedTickets = true;
+        });
       }
     }
   }
@@ -92,10 +106,8 @@ class _SupportPageState extends State<SupportPage> {
   @override
   void initState() {
     super.initState();
-    // Load tickets silently in background — no spinner on first open
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadTickets();
-    });
+    // Tickets are loaded only when MessagesModal is first opened
+    // (see _showMessagesModal). No automatic background polling.
     _connectWebSocket();
 
     // Use cache if warm → instant render, no spinner

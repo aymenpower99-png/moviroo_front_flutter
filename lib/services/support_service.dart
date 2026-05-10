@@ -125,15 +125,29 @@ class TicketMessage {
     Map<String, dynamic> json,
     String currentUserId,
   ) {
+    // Backend sends camelCase field names (senderId, ticketId, createdAt)
+    // The 'sender' object may contain role info from enriched backend response
+    final senderId = json['senderId'] ?? json['sender_id'] ?? '';
+    final sender = json['sender'] as Map<String, dynamic>?;
+
+    bool isFromAdmin;
+    if (sender != null && sender['role'] != null) {
+      // Use role from enriched backend response (preferred)
+      isFromAdmin = sender['role'] == 'admin';
+    } else {
+      // Fallback: compare sender ID to current user
+      isFromAdmin = senderId != currentUserId;
+    }
+
     return TicketMessage(
       id: json['id'] ?? '',
       body: json['body'] ?? '',
-      senderId: json['sender_id'] ?? '',
-      ticketId: json['ticket_id'] ?? '',
+      senderId: senderId,
+      ticketId: json['ticketId'] ?? json['ticket_id'] ?? '',
       createdAt: DateTime.parse(
-        json['created_at'] ?? DateTime.now().toIso8601String(),
+        json['createdAt'] ?? json['created_at'] ?? DateTime.now().toIso8601String(),
       ),
-      isFromAdmin: json['sender_id'] != currentUserId,
+      isFromAdmin: isFromAdmin,
     );
   }
 }
@@ -141,6 +155,10 @@ class TicketMessage {
 /// Service for support ticket API calls
 class SupportService {
   final http.Client _client = http.Client();
+
+  /// In-memory cache of the last fetched ticket list.
+  /// Follows the same cache-first pattern used in ChatProvider.
+  static List<SupportTicket>? cachedTickets;
 
   Future<Map<String, String>> _getHeaders() async {
     final token = await TokenStorage.getAccess();
@@ -209,9 +227,11 @@ class SupportService {
         final responseJson = jsonDecode(response.body) as Map<String, dynamic>;
         final data = responseJson['data'] as List<dynamic>;
         print('[SupportService] listTickets - parsed ${data.length} tickets');
-        return data
+        final tickets = data
             .map((e) => SupportTicket.fromJson(e as Map<String, dynamic>))
             .toList();
+        cachedTickets = tickets; // update in-memory cache
+        return tickets;
       } else {
         throw Exception('Failed to fetch tickets: ${response.statusCode}');
       }

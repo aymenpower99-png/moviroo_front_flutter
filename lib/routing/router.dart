@@ -150,7 +150,11 @@ class AppRouter {
       );
     },
     profile: (_) => const SettingsPage(),
-    nextDestinationSearchRoute: (_) => const LocationScreen(),
+    nextDestinationSearchRoute: (ctx) {
+      final args =
+          ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
+      return LocationScreen(voiceArgs: args);
+    },
     mapEtaPage: (_) => const MapEtaPage(),
     trajet: (_) => const TrajetPage(),
     membre: (_) => const MembrePassScreen(),

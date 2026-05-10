@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../theme/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────
 // CONFIG
@@ -7,15 +8,17 @@ const String kBackendUrl =
     'https://important-satisfy-sternness.ngrok-free.dev/api/voice';
 
 // ─────────────────────────────────────────────────────────────
-// Colors
+// Theme-aware helpers (call inside build / with context)
 // ─────────────────────────────────────────────────────────────
-const Color kBg = Color(0xFF0A0D1A);
-const Color kBgCard = Color(0xFF12172B);
-const Color kPurple = Color(0xFFA855F7);
-const Color kPurpleGlow = Color(0xFF7C3AED);
+Color voiceBg(BuildContext context) => AppColors.bg(context);
+Color voiceSurface(BuildContext context) => AppColors.surface(context);
+Color voiceBorder(BuildContext context) => AppColors.border(context);
+Color voiceText(BuildContext context) => AppColors.text(context);
+Color voiceSubtext(BuildContext context) => AppColors.subtext(context);
+
+const Color kPurple = AppColors.primaryPurple;
+const Color kPurpleGlow = AppColors.secondaryPurple;
 const Color kPink = Color(0xFFE06FD8);
-const Color kTextSub = Color(0xFF6B7299);
-const Color kTextMain = Color(0xFFE8EAF6);
 
 // ─────────────────────────────────────────────────────────────
 // Phase

@@ -5,15 +5,11 @@ import '../../../../services/support_service.dart';
 
 class MessagesModal extends StatelessWidget {
   final List<SupportTicket> tickets;
-  final bool isLoading;
-  final VoidCallback onRefresh;
   final Function(SupportTicket) onTicketTap;
 
   const MessagesModal({
     super.key,
     required this.tickets,
-    required this.isLoading,
-    required this.onRefresh,
     required this.onTicketTap,
   });
 
@@ -40,29 +36,17 @@ class MessagesModal extends StatelessWidget {
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            child: Row(
-              children: [
-                Text(
-                  'Messages',
-                  style: AppTextStyles.pageTitle(
-                    context,
-                  ).copyWith(fontSize: 20),
-                ),
-                const Spacer(),
-                if (!isLoading)
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: onRefresh,
-                  ),
-              ],
+            child: Text(
+              'Messages',
+              style: AppTextStyles.pageTitle(
+                context,
+              ).copyWith(fontSize: 20),
             ),
           ),
           const Divider(height: 1),
           // Content
           Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : tickets.isEmpty
+            child: tickets.isEmpty
                 ? Center(
                     child: Text(
                       'No messages yet',
@@ -100,15 +84,6 @@ class _TicketThreadItem extends StatelessWidget {
       '[MessagesModal] Ticket tapped - id: ${ticket.id}, subject: ${ticket.subject}',
     );
     onTap();
-  }
-
-  String _formatDate(DateTime date) {
-    // Return exact time in 12-hour format (e.g., "8:03 PM")
-    final hour = date.hour;
-    final minute = date.minute.toString().padLeft(2, '0');
-    final period = hour >= 12 ? 'PM' : 'AM';
-    final displayHour = hour % 12 == 0 ? 12 : hour % 12;
-    return '$displayHour:$minute $period';
   }
 
   @override
@@ -166,39 +141,6 @@ class _TicketThreadItem extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 8),
-            // Date + badge
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _formatDate(ticket.lastMessageAt ?? ticket.createdAt),
-                  style: AppTextStyles.bodySmall(
-                    context,
-                  ).copyWith(color: AppColors.subtext(context), fontSize: 11),
-                ),
-                if (ticket.hasUnread)
-                  Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryPurple,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'New',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-              ],
             ),
           ],
         ),

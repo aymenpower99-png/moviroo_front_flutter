@@ -6,7 +6,6 @@ import 'voice_constants.dart';
 import 'voice_logger.dart';
 
 class VoiceApiService {
-
   static Future<Map<String, dynamic>> transcribe(String filePath) async {
     voiceLog('API', 'POST /transcribe  →  $filePath');
     return _sendFile(Uri.parse('$kBackendUrl/transcribe'), filePath);
@@ -22,48 +21,82 @@ class VoiceApiService {
     String? time,
   }) async {
     // Validation stricte — jamais "undefined" ou "null"
-    final String safeField = (field.isNotEmpty &&
-        field != 'null' && field != 'undefined')
-        ? field : 'destination';
+    final String safeField =
+        (field.isNotEmpty && field != 'null' && field != 'undefined')
+        ? field
+        : 'destination';
 
-    final String safeLang = (language.isNotEmpty &&
-        language != 'null' && language != 'undefined' && language != 'un')
-        ? language.substring(0, 2) : 'fr';
+    final String safeLang =
+        (language.isNotEmpty &&
+            language != 'null' &&
+            language != 'undefined' &&
+            language != 'un')
+        ? language.substring(0, 2)
+        : 'fr';
 
-    final Map<String, String> params = {
-      'field':    safeField,
-      'language': safeLang,
-    };
-    if (destination != null && destination.isNotEmpty) params['destination'] = destination;
-    if (departure   != null && departure.isNotEmpty)   params['departure']   = departure;
-    if (date        != null && date.isNotEmpty)         params['date']        = date;
-    if (time        != null && time.isNotEmpty)         params['time']        = time;
+    final uri = Uri.parse('$kBackendUrl/answer');
 
-    final uri = Uri.parse('$kBackendUrl/answer').replace(queryParameters: params);
-
-    voiceLog('API',
+    voiceLog(
+      'API',
       'POST /answer\n'
-      '║  URI      = $uri\n'
-      '║  field    = $safeField\n'
-      '║  language = $safeLang\n'
-      '║  dest     = $destination\n'
-      '║  dep      = $departure\n'
-      '║  date     = $date\n'
-      '║  time     = $time',
+          '║  URI      = $uri\n'
+          '║  field    = $safeField\n'
+          '║  language = $safeLang\n'
+          '║  dest     = $destination\n'
+          '║  dep      = $departure\n'
+          '║  date     = $date\n'
+          '║  time     = $time',
     );
 
-    return _sendFile(uri, filePath);
+    return _sendFileWithFields(uri, filePath, {
+      'field': safeField,
+      'language': safeLang,
+      if (destination != null && destination.isNotEmpty)
+        'destination': destination,
+      if (departure != null && departure.isNotEmpty) 'departure': departure,
+      if (date != null && date.isNotEmpty) 'date': date,
+      if (time != null && time.isNotEmpty) 'time': time,
+    });
   }
 
-  static Future<Map<String, dynamic>> _sendFile(Uri uri, String filePath) async {
+  /// Send file only (transcribe)
+  static Future<Map<String, dynamic>> _sendFile(
+    Uri uri,
+    String filePath,
+  ) async {
     final file = File(filePath);
-    if (!await file.exists()) throw Exception('Audio file not found: $filePath');
+    if (!await file.exists())
+      throw Exception('Audio file not found: $filePath');
 
     final request = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', filePath));
 
+    return _execute(request, uri);
+  }
+
+  /// Send file + form fields (answer) — NestJS @Body() reads multipart fields
+  static Future<Map<String, dynamic>> _sendFileWithFields(
+    Uri uri,
+    String filePath,
+    Map<String, String> fields,
+  ) async {
+    final file = File(filePath);
+    if (!await file.exists())
+      throw Exception('Audio file not found: $filePath');
+
+    final request = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('file', filePath))
+      ..fields.addAll(fields);
+
+    return _execute(request, uri);
+  }
+
+  static Future<Map<String, dynamic>> _execute(
+    http.MultipartRequest request,
+    Uri uri,
+  ) async {
     final streamed = await request.send().timeout(const Duration(seconds: 120));
-    final body     = await streamed.stream.bytesToString();
+    final body = await streamed.stream.bytesToString();
 
     voiceLog('API', 'HTTP ${streamed.statusCode}  ←  ${uri.path}');
 
@@ -73,7 +106,9 @@ class VoiceApiService {
       return decoded;
     }
     Map<String, dynamic> err = {};
-    try { err = json.decode(body); } catch (_) {}
+    try {
+      err = json.decode(body);
+    } catch (_) {}
     throw Exception(err['detail'] ?? 'Server error ${streamed.statusCode}');
   }
 }

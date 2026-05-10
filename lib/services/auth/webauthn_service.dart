@@ -25,10 +25,11 @@ class WebAuthnService {
       jsonEncode(options),
     );
 
-    // 3. Finish registration
+    // 3. Finish registration — pass deviceName through so backend can label it
     return WebAuthnApiService.finishRegistration(
       dto: {
         'optionsId': optionsId,
+        'deviceName': deviceName,
         ...nativeResponse,
       },
       accessToken: token,

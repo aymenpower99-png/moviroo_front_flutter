@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../services/support_service.dart';
+import '../../../../core/storage/token_storage.dart';
 
 class SupportChatPage extends StatefulWidget {
   final String ticketId;
@@ -25,24 +26,34 @@ class _SupportChatPageState extends State<SupportChatPage> {
   List<TicketMessage> _messages = [];
   bool _isLoading = true;
   bool _isSending = false;
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
-    _loadTicket();
+    _initUserAndLoad();
+  }
+
+  Future<void> _initUserAndLoad() async {
+    _currentUserId = await TokenStorage.getUserId();
+    print('[SupportChatPage] Current user ID: $_currentUserId');
+    await _loadTicket();
   }
 
   Future<void> _loadTicket() async {
     try {
       print('[SupportChatPage] Loading ticket: ${widget.ticketId}');
       final data = await _supportService.getTicket(widget.ticketId);
-      print('[SupportChatPage] Received data: $data');
+      final loadedMessages = data['messages'] as List<TicketMessage>;
+      print('[SupportChatPage] Loaded ${loadedMessages.length} messages');
+      for (final m in loadedMessages) {
+        print('[SupportChatPage] msg id=${m.id} senderId=${m.senderId} isFromAdmin=${m.isFromAdmin} body=${m.body}');
+      }
       if (mounted) {
         setState(() {
-          _messages = data['messages'] as List<TicketMessage>;
+          _messages = loadedMessages;
           _isLoading = false;
         });
-        print('[SupportChatPage] Messages loaded: ${_messages.length}');
         _scrollToBottom();
       }
     } catch (e) {
@@ -110,6 +121,25 @@ class _SupportChatPageState extends State<SupportChatPage> {
     return '$hour:$m $period';
   }
 
+  String _formatDateLabel(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(dt.year, dt.month, dt.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    if (messageDate == today) {
+      return 'Today';
+    } else if (messageDate == yesterday) {
+      return 'Yesterday';
+    } else {
+      final months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December',
+      ];
+      return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,9 +186,68 @@ class _SupportChatPageState extends State<SupportChatPage> {
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
-                      return _MessageBubble(
-                        message: message,
-                        time: _formatTime(message.createdAt),
+
+                      // Date separator logic
+                      bool showDateSeparator = false;
+                      String dateLabel = '';
+
+                      if (index == 0) {
+                        showDateSeparator = true;
+                        dateLabel = _formatDateLabel(message.createdAt);
+                      } else {
+                        final prevMsg = _messages[index - 1];
+                        final currentDate = DateTime(
+                          message.createdAt.year,
+                          message.createdAt.month,
+                          message.createdAt.day,
+                        );
+                        final prevDate = DateTime(
+                          prevMsg.createdAt.year,
+                          prevMsg.createdAt.month,
+                          prevMsg.createdAt.day,
+                        );
+                        if (currentDate != prevDate) {
+                          showDateSeparator = true;
+                          dateLabel = _formatDateLabel(message.createdAt);
+                        }
+                      }
+
+                      return Column(
+                        children: [
+                          if (showDateSeparator)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface(context),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.border(context),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    dateLabel,
+                                    style: AppTextStyles.bodySmall(context)
+                                        .copyWith(
+                                          color: AppColors.subtext(context),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          _MessageBubble(
+                            message: message,
+                            time: _formatTime(message.createdAt),
+                            currentUserId: _currentUserId,
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -177,27 +266,35 @@ class _SupportChatPageState extends State<SupportChatPage> {
 class _MessageBubble extends StatelessWidget {
   final TicketMessage message;
   final String time;
+  final String? currentUserId;
 
-  const _MessageBubble({required this.message, required this.time});
+  const _MessageBubble({
+    required this.message,
+    required this.time,
+    this.currentUserId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isFromAdmin = message.isFromAdmin;
+    // Passenger (current user) → RIGHT, purple bubble.
+    // Admin (anyone else) → LEFT, white/neutral bubble.
+    final isFromMe =
+        currentUserId != null && message.senderId == currentUserId;
 
     return Align(
-      alignment: isFromAdmin ? Alignment.centerLeft : Alignment.centerRight,
+      alignment: isFromMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         constraints: const BoxConstraints(maxWidth: 280),
         decoration: BoxDecoration(
-          color: isFromAdmin
-              ? AppColors.surface(context)
-              : AppColors.primaryPurple,
+          color: isFromMe
+              ? AppColors.primaryPurple
+              : AppColors.surface(context),
           borderRadius: BorderRadius.circular(16),
-          border: isFromAdmin
-              ? Border.all(color: AppColors.border(context))
-              : null,
+          border: isFromMe
+              ? null
+              : Border.all(color: AppColors.border(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,16 +302,16 @@ class _MessageBubble extends StatelessWidget {
             Text(
               message.body,
               style: AppTextStyles.bodyMedium(context).copyWith(
-                color: isFromAdmin ? AppColors.text(context) : Colors.white,
+                color: isFromMe ? Colors.white : AppColors.text(context),
               ),
             ),
             const SizedBox(height: 4),
             Text(
               time,
               style: AppTextStyles.bodySmall(context).copyWith(
-                color: isFromAdmin
-                    ? AppColors.subtext(context)
-                    : Colors.white.withValues(alpha: 0.7),
+                color: isFromMe
+                    ? Colors.white.withValues(alpha: 0.7)
+                    : AppColors.subtext(context),
                 fontSize: 11,
               ),
             ),

@@ -308,20 +308,68 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
       _error = null;
     });
 
-    // Try to find class ID by matching class category name
-    final details = await _vehicleClassesService.getClassDetails(
-      widget.car.classCategory,
-    );
+    try {
+      // Step 1: fetch all active classes to resolve name → ID
+      final activeClasses = await _vehicleClassesService.getActiveClasses();
 
-    if (!mounted) return;
+      // Step 2: find the class whose name matches the car's category
+      final matchedClass = activeClasses.firstWhere(
+        (c) =>
+            c.name.toLowerCase().trim() ==
+            widget.car.classCategory.toLowerCase().trim(),
+        orElse: () => VehicleClass(id: '', name: '', multiplier: 0),
+      );
 
-    setState(() {
-      _classDetails = details;
-      _isLoading = false;
-      if (details == null) {
-        _error = 'Failed to load vehicle details';
+      VehicleClassDetail? details;
+      if (matchedClass.id.isNotEmpty) {
+        // Step 3: fetch details using the real class ID
+        details = await _vehicleClassesService.getClassDetails(
+          matchedClass.id,
+        );
       }
-    });
+
+      if (!mounted) return;
+
+      // Step 4: if API returned nothing, build fallback from static CarOption data
+      if (details == null) {
+        details = _buildFallbackDetails();
+      }
+
+      setState(() {
+        _classDetails = details;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        // Still show fallback data instead of a raw error
+        _classDetails = _buildFallbackDetails();
+      });
+    }
+  }
+
+  /// Build a VehicleClassDetail from the static CarOption so the sheet
+  /// never shows empty specs even when the API is unreachable.
+  VehicleClassDetail _buildFallbackDetails() {
+    return VehicleClassDetail(
+      id: '',
+      name: widget.car.name,
+      imageUrl: null,
+      multiplier: 1.0,
+      features: VehicleFeatures(
+        seats: widget.car.seats,
+        bags: widget.car.bags,
+        wifi: false,
+        ac: true,
+        water: false,
+        freeWaitingTime: 0,
+        doorToDoor: false,
+        meetAndGreet: false,
+        extraFeatures: [],
+        extraServices: [],
+      ),
+    );
   }
 
   List<String> _getFeatureLabels() {

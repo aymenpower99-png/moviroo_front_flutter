@@ -102,7 +102,7 @@ class SettingsSubPage extends StatelessWidget {
                       future: PackageInfo.fromPlatform(),
                       builder: (context, snapshot) {
                         final version = snapshot.hasData
-                            ? '${snapshot.data!.version}+${snapshot.data!.buildNumber}'
+                            ? snapshot.data!.version
                             : '';
                         return _NavTile(
                           title: t('app_version'),

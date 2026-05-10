@@ -7,7 +7,9 @@ import 'location_screen_location_handlers.dart';
 import 'location_screen_ui_handlers.dart';
 
 class LocationScreen extends StatefulWidget {
-  const LocationScreen({super.key});
+  final Map<String, dynamic>? voiceArgs;
+
+  const LocationScreen({super.key, this.voiceArgs});
 
   @override
   State<LocationScreen> createState() => _LocationScreenState();
@@ -107,9 +109,12 @@ class _LocationScreenState extends State<LocationScreen>
     // Initialize focus state
     _updateCardFocus();
 
+    // Pre-fill from voice assistant results if available
+    _applyVoiceArgs();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _fromFocus.requestFocus();
+        if (widget.voiceArgs == null) _fromFocus.requestFocus();
         _uiHandlers.loadRecentSearches();
       }
     });
@@ -120,6 +125,32 @@ class _LocationScreenState extends State<LocationScreen>
     _toFocus.addListener(_onFocusChanged);
     _fromFocus.addListener(_updateCardFocus);
     _toFocus.addListener(_updateCardFocus);
+  }
+
+  void _applyVoiceArgs() {
+    final args = widget.voiceArgs;
+    if (args == null) return;
+
+    final pickupAddr = args['pickupAddress'] as String?;
+    final dropoffAddr = args['dropoffAddress'] as String?;
+    if (pickupAddr != null && pickupAddr.isNotEmpty) {
+      _fromController.text = pickupAddr;
+    }
+    if (dropoffAddr != null && dropoffAddr.isNotEmpty) {
+      _toController.text = dropoffAddr;
+    }
+
+    final pLat = args['pickupLat'] as double?;
+    final pLon = args['pickupLon'] as double?;
+    final dLat = args['dropoffLat'] as double?;
+    final dLon = args['dropoffLon'] as double?;
+    if (pLat != null) _pickupLat = pLat;
+    if (pLon != null) _pickupLon = pLon;
+    if (dLat != null) _dropoffLat = dLat;
+    if (dLon != null) _dropoffLon = dLon;
+
+    if (args['date'] is DateTime) _pickedDate = args['date'] as DateTime;
+    if (args['time'] is TimeOfDay) _pickedTime = args['time'] as TimeOfDay;
   }
 
   void _updateCardFocus() => _uiHandlers.updateCardFocus();
