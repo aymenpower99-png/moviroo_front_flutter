@@ -399,7 +399,16 @@ Widget buildResultRows(
   ),
   child: Column(
     children: [
-      buildResultRow(context, 'From', departure, Icons.trip_origin_rounded),
+      buildResultRow(
+        context,
+        'From',
+        (departure == null ||
+                departure.isEmpty ||
+                departure == 'current_location')
+            ? 'My Current Location'
+            : departure,
+        Icons.trip_origin_rounded,
+      ),
       buildResultRow(context, 'To', destination, Icons.location_on_rounded),
       buildResultRow(context, 'Date', date, Icons.calendar_today_rounded),
       buildResultRow(context, 'Time', time, Icons.schedule_rounded),

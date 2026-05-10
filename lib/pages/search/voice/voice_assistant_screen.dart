@@ -116,6 +116,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     _recorder.dispose();
     _tts.stop();
     _timer?.cancel();
+    _ttsFallbackTimer?.cancel();
     _pulseCtrl.dispose();
     _ringCtrl.dispose();
     _waveCtrl.dispose();
@@ -131,10 +132,18 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     await _tts.setPitch(1.0);
     _tts.setCompletionHandler(() {
       voiceLog('TTS', 'Speech finished → starting answer recording');
+      _ttsFallbackTimer?.cancel();
       // Démarre l'enregistrement de réponse SEULEMENT si on attend une réponse
       if (_phase == VoicePhase.question) _startAnswerRecording();
     });
+    _tts.setErrorHandler((msg) {
+      voiceLog('TTS', 'ERROR: $msg → fallback to recording');
+      _ttsFallbackTimer?.cancel();
+      if (_phase == VoicePhase.question) _startAnswerRecording();
+    });
   }
+
+  Timer? _ttsFallbackTimer;
 
   Future<void> _speak(String text, String lang) async {
     final locale = switch (lang) {
@@ -145,6 +154,16 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     voiceLog('TTS', 'speak  lang=$locale  →  "$text"');
     await _tts.setLanguage(locale);
     await _tts.speak(text);
+    // Fallback: if TTS doesn't fire completion within 8s, start recording anyway
+    if (_phase == VoicePhase.question) {
+      _ttsFallbackTimer?.cancel();
+      _ttsFallbackTimer = Timer(const Duration(seconds: 8), () {
+        voiceLog('TTS', 'Fallback timer fired — TTS did not complete in 8s');
+        if (_phase == VoicePhase.question && mounted) {
+          _startAnswerRecording();
+        }
+      });
+    }
   }
 
   // ─────────────────────────────────────────────────────────
@@ -422,6 +441,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     voiceLog('RESET', 'back to idle');
     _tts.stop();
     _timer?.cancel();
+    _ttsFallbackTimer?.cancel();
     setState(() {
       _phase = VoicePhase.idle;
       _statusMsg = 'Tap to speak';
@@ -505,13 +525,20 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
       }
 
       // Navigate to LocationScreen with pre-filled voice results
+      final isCurrentLoc =
+          _departure == null ||
+          _departure!.isEmpty ||
+          _departure == 'current_location';
+
       Navigator.pushReplacementNamed(
         context,
         '/nextdestinationsearch',
         arguments: {
           'pickupPlace': pickupPlace,
           'dropoffPlace': dropoffPlace,
-          'pickupAddress': pickupPlace?.placeName ?? _departure ?? '',
+          'pickupAddress': isCurrentLoc
+              ? 'current_location'
+              : (pickupPlace?.placeName ?? _departure ?? ''),
           'dropoffAddress': dropoffPlace.placeName,
           'pickupLat': pickupPlace?.latitude,
           'pickupLon': pickupPlace?.longitude,
@@ -519,6 +546,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
           'dropoffLon': dropoffPlace.longitude,
           'date': pickedDate ?? DateTime.now(),
           'time': pickedTime,
+          'useCurrentLocation': isCurrentLoc,
         },
       );
     } catch (e) {
@@ -560,25 +588,18 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
       backgroundColor: voiceBg(context),
       resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final topBarHeight = 80.0;
-            final bottomAreaHeight = _phase == VoicePhase.result
-                ? 280.0
-                : 120.0;
-            final availableHeight =
-                constraints.maxHeight - topBarHeight - bottomAreaHeight;
-
-            return Column(
-              children: [
-                buildTopBar(
-                  context,
-                  onBackPressed: () => Navigator.maybePop(context),
-                ),
-                Flexible(
-                  child: SizedBox(
-                    height: availableHeight,
-                    child: buildCenter(
+        child: Column(
+          children: [
+            buildTopBar(
+              context,
+              onBackPressed: () => Navigator.maybePop(context),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    buildCenter(
                       context,
                       phase: _phase,
                       pulseAnim: _pulseAnim,
@@ -593,23 +614,23 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                       confirmationText: _confirmationText,
                       searchQuery: _searchQuery,
                     ),
-                  ),
+                    buildBottomArea(
+                      context,
+                      phase: _phase,
+                      onReset: _reset,
+                      onConfirm: _phase == VoicePhase.result && !_isConfirming
+                          ? _onConfirmBooking
+                          : null,
+                      departure: _departure,
+                      destination: _destination,
+                      date: _date,
+                      time: _time,
+                    ),
+                  ],
                 ),
-                buildBottomArea(
-                  context,
-                  phase: _phase,
-                  onReset: _reset,
-                  onConfirm: _phase == VoicePhase.result && !_isConfirming
-                      ? _onConfirmBooking
-                      : null,
-                  departure: _departure,
-                  destination: _destination,
-                  date: _date,
-                  time: _time,
-                ),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         ),
       ),
     );

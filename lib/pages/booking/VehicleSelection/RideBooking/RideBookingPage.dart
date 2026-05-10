@@ -206,6 +206,7 @@ class _RideBookingPageState extends State<RideBookingPage> with RouteAware {
         .map(
           (vc) => CarOption(
             name: vc.name,
+            classId: vc.id,
             image: vc.imageUrl ?? '',
             seats: vc.seats,
             bags: vc.bags,
@@ -213,7 +214,6 @@ class _RideBookingPageState extends State<RideBookingPage> with RouteAware {
             priceTndRaw: vc.priceTnd.toDouble(),
             eta: '${vc.durationMin} min',
             duration: '${vc.durationMin} min',
-            classCategory: 'All',
             badge: '',
           ),
         )

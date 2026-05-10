@@ -14,7 +14,7 @@ class CarOption {
   final int bags;
   final String price; // fallback string for static/sample data
   final double priceTndRaw; // raw TND amount for live conversion
-  final String classCategory;
+  final String? classId; // real backend UUID — null for static/sample data
   final String? eta;
   final String? duration;
   final String? badge;
@@ -27,82 +27,12 @@ class CarOption {
     required this.bags,
     required this.price,
     this.priceTndRaw = 0.0,
-    required this.classCategory,
+    this.classId,
     this.eta,
     this.duration,
     this.badge,
   });
 }
-
-final List<CarOption> cars = [
-  CarOption(
-    name: 'Economy',
-    subtitle: 'Toyota Corolla or similar',
-    image: 'images/bmw.png',
-    seats: 3,
-    bags: 3,
-    price: '€22.75',
-    classCategory: 'Economy',
-    eta: '19:57',
-    duration: '4 min',
-  ),
-  CarOption(
-    name: 'Standard',
-    subtitle: 'Volkswagen Passat or similar',
-    image: 'images/bmw.png',
-    seats: 3,
-    bags: 3,
-    price: '€35.00',
-    classCategory: 'Standard',
-    eta: '19:55',
-    duration: '3 min',
-    badge: 'FASTER',
-  ),
-  CarOption(
-    name: 'Standard XL',
-    subtitle: 'Mercedes V Class or similar',
-    image: 'images/bmw.png',
-    seats: 7,
-    bags: 7,
-    price: '€35.00',
-    classCategory: 'Standard',
-    eta: '19:55',
-    duration: '3 min',
-  ),
-  CarOption(
-    name: 'Business',
-    subtitle: 'Mercedes E Class, BMW 5 or similar',
-    image: 'images/bmw.png',
-    seats: 4,
-    bags: 4,
-    price: '€149.00',
-    classCategory: 'Business',
-    eta: '20:05',
-    duration: '10 min',
-  ),
-  CarOption(
-    name: 'Premium',
-    subtitle: 'Mercedes S Class or similar',
-    image: 'images/bmw.png',
-    seats: 4,
-    bags: 5,
-    price: '€199.00',
-    classCategory: 'Premium',
-    eta: '20:10',
-    duration: '15 min',
-  ),
-  CarOption(
-    name: 'Van',
-    subtitle: 'Mercedes V Class or similar',
-    image: 'images/bmw.png',
-    seats: 7,
-    bags: 7,
-    price: '€220.00',
-    classCategory: 'Van',
-    eta: '20:15',
-    duration: '20 min',
-  ),
-];
 
 // ── CarCard ───────────────────────────────────────────────────────────────────
 class CarCard extends StatefulWidget {
@@ -294,7 +224,6 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
   final VehicleClassesService _vehicleClassesService = VehicleClassesService();
   VehicleClassDetail? _classDetails;
   bool _isLoading = true;
-  String? _error;
 
   @override
   void initState() {
@@ -303,61 +232,26 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
   }
 
   Future<void> _loadClassDetails() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    setState(() => _isLoading = true);
+
+    final classId = widget.car.classId;
+    if (classId == null || classId.isEmpty) {
+      debugPrint(
+        '[_CarDetailSheet] No classId available for ${widget.car.name}',
+      );
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
 
     try {
-      // Step 1: fetch all active classes to resolve name → ID
-      final activeClasses = await _vehicleClassesService.getActiveClasses();
       debugPrint(
-        '[_CarDetailSheet] Active classes: ${activeClasses.map((c) => c.name).toList()}',
+        '[_CarDetailSheet] Fetching details for classId=$classId',
       );
-
-      // Step 2: find the class whose name matches the car's category or name
-      VehicleClass matchedClass = activeClasses.firstWhere(
-        (c) =>
-            c.name.toLowerCase().trim() ==
-            widget.car.classCategory.toLowerCase().trim(),
-        orElse: () => VehicleClass(id: '', name: '', multiplier: 0),
-      );
-
-      // Fallback: try matching against the display name (e.g. "Standard XL")
-      if (matchedClass.id.isEmpty) {
-        matchedClass = activeClasses.firstWhere(
-          (c) =>
-              c.name.toLowerCase().trim() ==
-              widget.car.name.toLowerCase().trim(),
-          orElse: () => VehicleClass(id: '', name: '', multiplier: 0),
-        );
-      }
-
+      final details = await _vehicleClassesService.getClassDetails(classId);
       debugPrint(
-        '[_CarDetailSheet] Matched class: ${matchedClass.name} (id=${matchedClass.id})',
+        '[_CarDetailSheet] API details: ${details?.features.toString()}',
       );
-
-      VehicleClassDetail? details;
-      if (matchedClass.id.isNotEmpty) {
-        // Step 3: fetch details using the real class ID
-        details = await _vehicleClassesService.getClassDetails(
-          matchedClass.id,
-        );
-        debugPrint(
-          '[_CarDetailSheet] API details: ${details?.features.toString()}',
-        );
-      }
-
       if (!mounted) return;
-
-      // Step 4: if API returned nothing, build fallback from static CarOption data
-      if (details == null) {
-        details = _buildFallbackDetails();
-        debugPrint(
-          '[_CarDetailSheet] Using fallback for ${widget.car.name}',
-        );
-      }
-
       setState(() {
         _classDetails = details;
         _isLoading = false;
@@ -365,50 +259,8 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
     } catch (e) {
       debugPrint('[_CarDetailSheet] Error: $e');
       if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        // Still show fallback data instead of a raw error
-        _classDetails = _buildFallbackDetails();
-      });
+      setState(() => _isLoading = false);
     }
-  }
-
-  /// Build a realistic VehicleClassDetail fallback per tier so the sheet
-  /// never shows empty specs even when the API is unreachable.
-  VehicleClassDetail _buildFallbackDetails() {
-    final name = widget.car.name.toLowerCase();
-
-    // Determine tier defaults
-    final bool wifi = name.contains('business') ||
-        name.contains('premium') ||
-        name.contains('standard');
-    final bool water = name.contains('business') || name.contains('premium');
-    final bool meetAndGreet =
-        name.contains('business') || name.contains('premium');
-    final int freeWaitingTime = name.contains('premium')
-        ? 15
-        : name.contains('business') || name.contains('van')
-            ? 10
-            : 5;
-
-    return VehicleClassDetail(
-      id: '',
-      name: widget.car.name,
-      imageUrl: null,
-      multiplier: 1.0,
-      features: VehicleFeatures(
-        seats: widget.car.seats,
-        bags: widget.car.bags,
-        wifi: wifi,
-        ac: true,
-        water: water,
-        freeWaitingTime: freeWaitingTime,
-        doorToDoor: true,
-        meetAndGreet: meetAndGreet,
-        extraFeatures: [],
-        extraServices: [],
-      ),
-    );
   }
 
   List<String> _getFeatureLabels() {
@@ -417,12 +269,12 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
     final features = <String>[];
     final f = _classDetails!.features;
 
-    if (f.ac) features.add('Air conditioning');
-    if (f.wifi) features.add('Free WiFi onboard');
-    if (f.water) features.add('Complimentary water');
-    if (f.meetAndGreet) features.add('Meet & greet service');
-    if (f.doorToDoor) features.add('Door-to-door service');
-    if (f.freeWaitingTime > 0) {
+    if (f.ac == true) features.add('Air conditioning');
+    if (f.wifi == true) features.add('Free WiFi onboard');
+    if (f.water == true) features.add('Complimentary water');
+    if (f.meetAndGreet == true) features.add('Meet & greet service');
+    if (f.doorToDoor == true) features.add('Door-to-door service');
+    if (f.freeWaitingTime != null && f.freeWaitingTime! > 0) {
       features.add('${f.freeWaitingTime} min free waiting time');
     }
 
@@ -500,63 +352,77 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
               child: CircularProgressIndicator(),
             ),
 
-          // Error state
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                _error!,
-                style: AppTextStyles.bodySmall(
-                  context,
-                ).copyWith(color: AppColors.error),
-              ),
-            ),
-
-          // Data loaded
+          // Data loaded — only show sections backed by real API data
           if (!_isLoading && _classDetails != null) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _SpecPill(
-                    icon: Icons.person_outline_rounded,
-                    label: '${_classDetails!.features.seats}',
+            // Spec pills — conditionally render each if the backend provided it
+            Builder(
+              builder: (context) {
+                final f = _classDetails!.features;
+                final pills = <Widget>[];
+
+                if (f.seats != null) {
+                  pills.add(
+                    _SpecPill(
+                      icon: Icons.person_outline_rounded,
+                      label: '${f.seats}',
+                    ),
+                  );
+                }
+                if (f.bags != null) {
+                  if (pills.isNotEmpty) pills.add(const SizedBox(width: 12));
+                  pills.add(
+                    _SpecPill(
+                      icon: Icons.luggage_outlined,
+                      label: '${f.bags}',
+                    ),
+                  );
+                }
+                if (f.ac == true) {
+                  if (pills.isNotEmpty) pills.add(const SizedBox(width: 12));
+                  pills.add(
+                    const _SpecPill(
+                      icon: Icons.ac_unit_outlined,
+                      label: 'A/C',
+                    ),
+                  );
+                }
+
+                if (pills.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: pills,
                   ),
-                  const SizedBox(width: 12),
-                  _SpecPill(
-                    icon: Icons.luggage_outlined,
-                    label: '${_classDetails!.features.bags}',
-                  ),
-                  const SizedBox(width: 12),
-                  _SpecPill(
-                    icon: Icons.ac_unit_outlined,
-                    label: _classDetails!.features.ac ? 'A/C' : 'No A/C',
-                  ),
-                ],
+                );
+              },
+            ),
+            if (_classDetails!.features.seats != null ||
+                _classDetails!.features.bags != null ||
+                _classDetails!.features.ac == true)
+              const SizedBox(height: 24),
+            if (_getFeatureLabels().isNotEmpty) ...[
+              Divider(
+                height: 1,
+                color: AppColors.border(context),
+                indent: 24,
+                endIndent: 24,
               ),
-            ),
-            const SizedBox(height: 24),
-            Divider(
-              height: 1,
-              color: AppColors.border(context),
-              indent: 24,
-              endIndent: 24,
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: _getFeatureLabels()
-                    .map(
-                      (label) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _FeatureRow(label: label),
-                      ),
-                    )
-                    .toList(),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: _getFeatureLabels()
+                      .map(
+                        (label) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _FeatureRow(label: label),
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
-            ),
+            ],
           ],
 
           const SizedBox(height: 28),
@@ -663,10 +529,17 @@ class _FeatureRow extends StatelessWidget {
           width: 20,
           height: 20,
           decoration: BoxDecoration(
-            color: AppColors.primaryPurple,
             shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.primaryPurple,
+              width: 1.5,
+            ),
           ),
-          child: const Icon(Icons.check, size: 14, color: Colors.white),
+          child: Icon(
+            Icons.check,
+            size: 14,
+            color: AppColors.primaryPurple,
+          ),
         ),
         const SizedBox(width: 10),
         Text(

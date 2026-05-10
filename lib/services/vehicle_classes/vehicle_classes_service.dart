@@ -53,40 +53,40 @@ class VehicleClassDetail {
 }
 
 class VehicleFeatures {
-  final int seats;
-  final int bags;
-  final bool wifi;
-  final bool ac;
-  final bool water;
-  final int freeWaitingTime;
-  final bool doorToDoor;
-  final bool meetAndGreet;
+  final int? seats;
+  final int? bags;
+  final bool? wifi;
+  final bool? ac;
+  final bool? water;
+  final int? freeWaitingTime;
+  final bool? doorToDoor;
+  final bool? meetAndGreet;
   final List<ExtraFeature> extraFeatures;
   final List<ExtraFeature> extraServices;
 
   VehicleFeatures({
-    required this.seats,
-    required this.bags,
-    required this.wifi,
-    required this.ac,
-    required this.water,
-    required this.freeWaitingTime,
-    required this.doorToDoor,
-    required this.meetAndGreet,
+    this.seats,
+    this.bags,
+    this.wifi,
+    this.ac,
+    this.water,
+    this.freeWaitingTime,
+    this.doorToDoor,
+    this.meetAndGreet,
     required this.extraFeatures,
     required this.extraServices,
   });
 
   factory VehicleFeatures.fromJson(Map<String, dynamic> json) {
     return VehicleFeatures(
-      seats: json['seats'] as int,
-      bags: json['bags'] as int,
-      wifi: json['wifi'] as bool,
-      ac: json['ac'] as bool,
-      water: json['water'] as bool,
-      freeWaitingTime: json['freeWaitingTime'] as int,
-      doorToDoor: json['doorToDoor'] as bool,
-      meetAndGreet: json['meetAndGreet'] as bool,
+      seats: json['seats'] as int?,
+      bags: json['bags'] as int?,
+      wifi: json['wifi'] as bool?,
+      ac: json['ac'] as bool?,
+      water: json['water'] as bool?,
+      freeWaitingTime: json['freeWaitingTime'] as int?,
+      doorToDoor: json['doorToDoor'] as bool?,
+      meetAndGreet: json['meetAndGreet'] as bool?,
       extraFeatures:
           (json['extraFeatures'] as List<dynamic>?)
               ?.map((e) => ExtraFeature.fromJson(e as Map<String, dynamic>))

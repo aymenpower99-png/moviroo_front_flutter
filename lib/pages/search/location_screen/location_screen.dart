@@ -131,11 +131,20 @@ class _LocationScreenState extends State<LocationScreen>
     final args = widget.voiceArgs;
     if (args == null) return;
 
+    final useCurrentLoc = args['useCurrentLocation'] == true;
     final pickupAddr = args['pickupAddress'] as String?;
     final dropoffAddr = args['dropoffAddress'] as String?;
-    if (pickupAddr != null && pickupAddr.isNotEmpty) {
+
+    if (useCurrentLoc || pickupAddr == 'current_location') {
+      // Show a human-readable label and auto-resolve GPS coordinates
+      _fromController.text = 'My Current Location';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _handleUseCurrentLocation();
+      });
+    } else if (pickupAddr != null && pickupAddr.isNotEmpty) {
       _fromController.text = pickupAddr;
     }
+
     if (dropoffAddr != null && dropoffAddr.isNotEmpty) {
       _toController.text = dropoffAddr;
     }
