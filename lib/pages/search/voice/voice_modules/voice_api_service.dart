@@ -95,7 +95,7 @@ class VoiceApiService {
     http.MultipartRequest request,
     Uri uri,
   ) async {
-    final streamed = await request.send().timeout(const Duration(seconds: 30));
+    final streamed = await request.send().timeout(const Duration(seconds: 120));
     final body = await streamed.stream.bytesToString();
 
     voiceLog('API', 'HTTP ${streamed.statusCode}  ←  ${uri.path}');

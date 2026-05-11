@@ -116,7 +116,6 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     _recorder.dispose();
     _tts.stop();
     _timer?.cancel();
-    _ttsFallbackTimer?.cancel();
     _pulseCtrl.dispose();
     _ringCtrl.dispose();
     _waveCtrl.dispose();
@@ -131,19 +130,14 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     await _tts.setSpeechRate(0.5);
     await _tts.setPitch(1.0);
     _tts.setCompletionHandler(() {
-      voiceLog('TTS', 'Speech finished → starting answer recording');
-      _ttsFallbackTimer?.cancel();
-      // Démarre l'enregistrement de réponse SEULEMENT si on attend une réponse
-      if (_phase == VoicePhase.question) _startAnswerRecording();
-    });
-    _tts.setErrorHandler((msg) {
-      voiceLog('TTS', 'ERROR: $msg → fallback to recording');
-      _ttsFallbackTimer?.cancel();
-      if (_phase == VoicePhase.question) _startAnswerRecording();
+      if (_phase == VoicePhase.question) {
+        voiceLog('TTS', 'Speech finished → starting answer recording');
+        _startAnswerRecording();
+      } else {
+        voiceLog('TTS', 'Speech finished (phase=$_phase, no action)');
+      }
     });
   }
-
-  Timer? _ttsFallbackTimer;
 
   Future<void> _speak(String text, String lang) async {
     final locale = switch (lang) {
@@ -154,16 +148,6 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     voiceLog('TTS', 'speak  lang=$locale  →  "$text"');
     await _tts.setLanguage(locale);
     await _tts.speak(text);
-    // Fallback: if TTS doesn't fire completion within 8s, start recording anyway
-    if (_phase == VoicePhase.question) {
-      _ttsFallbackTimer?.cancel();
-      _ttsFallbackTimer = Timer(const Duration(seconds: 8), () {
-        voiceLog('TTS', 'Fallback timer fired — TTS did not complete in 8s');
-        if (_phase == VoicePhase.question && mounted) {
-          _startAnswerRecording();
-        }
-      });
-    }
   }
 
   // ─────────────────────────────────────────────────────────
@@ -218,7 +202,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
 
     setState(() {
       _phase = isAnswer ? VoicePhase.waitAnswer : VoicePhase.recording;
-      _statusMsg = isAnswer ? 'ANSWERING...' : 'SAYING...';
+      _statusMsg = isAnswer ? 'LISTENING...' : 'SAYING...';
       // Reset contexte SEULEMENT pour un nouvel enregistrement initial
       if (!isAnswer) {
         _transcript = '';
@@ -441,7 +425,6 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     voiceLog('RESET', 'back to idle');
     _tts.stop();
     _timer?.cancel();
-    _ttsFallbackTimer?.cancel();
     setState(() {
       _phase = VoicePhase.idle;
       _statusMsg = 'Tap to speak';

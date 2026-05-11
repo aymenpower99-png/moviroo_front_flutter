@@ -195,6 +195,9 @@ Widget buildMicIcon(VoicePhase phase) {
   if (phase == VoicePhase.question) {
     return const Icon(Icons.volume_up_rounded, color: Colors.white, size: 44);
   }
+  if (phase == VoicePhase.waitAnswer) {
+    return const Icon(Icons.hearing_rounded, color: Colors.white, size: 44);
+  }
   return const Icon(Icons.mic_rounded, color: Colors.white, size: 44);
 }
 
@@ -245,7 +248,7 @@ Widget buildWaveform({
 
 String phaseLabel(VoicePhase phase) => switch (phase) {
   VoicePhase.recording => 'SAYING...',
-  VoicePhase.waitAnswer => 'SAYING...',
+  VoicePhase.waitAnswer => 'LISTENING...',
   VoicePhase.uploading => 'PROCESSING...',
   VoicePhase.question => 'SAYING...',
   VoicePhase.result => 'CONFIRMED',
@@ -270,8 +273,8 @@ Widget buildMessageBubble(
       Colors.redAccent,
     ),
     VoicePhase.waitAnswer => (
-      'Answering... ${elapsed.inSeconds}s',
-      Colors.redAccent,
+      '🎙 Listening... tap mic when done (${elapsed.inSeconds}s)',
+      kPurple,
     ),
     VoicePhase.uploading => ('Processing your voice...', kPurpleGlow),
     VoicePhase.question => (statusMsg, kPink),
@@ -362,23 +365,24 @@ Widget buildBottomArea(
         ),
         const SizedBox(height: 12),
       ],
-      GestureDetector(
-        onTap: onReset,
-        child: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: voiceSurface(context),
-            border: Border.all(color: kPurple.withOpacity(0.25)),
-          ),
-          child: Icon(
-            Icons.close_rounded,
-            color: voiceSubtext(context),
-            size: 22,
+      if (phase != VoicePhase.question && phase != VoicePhase.waitAnswer)
+        GestureDetector(
+          onTap: onReset,
+          child: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: voiceSurface(context),
+              border: Border.all(color: kPurple.withOpacity(0.25)),
+            ),
+            child: Icon(
+              Icons.close_rounded,
+              color: voiceSubtext(context),
+              size: 22,
+            ),
           ),
         ),
-      ),
     ],
   ),
 );
