@@ -94,10 +94,7 @@ class DriverRow extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _ActionButton(
-                icon: Icons.call_rounded,
-                onTap: onPhoneTap ?? () {},
-              ),
+              _PhoneButton(onTap: onPhoneTap ?? () {}),
               const SizedBox(width: 8),
               _ActionButton(
                 icon: Icons.chat_bubble_outline_rounded,
@@ -139,6 +136,35 @@ class _ActionButton extends StatelessWidget {
         ),
         child: Center(
           child: Icon(icon, size: 18, color: AppColors.primaryPurple),
+        ),
+      ),
+    );
+  }
+}
+
+class _PhoneButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _PhoneButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppColors.primaryPurple.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Image.asset(
+            'images/icons/telephone.png',
+            width: 18,
+            height: 18,
+            color: AppColors.primaryPurple,
+          ),
         ),
       ),
     );

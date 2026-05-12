@@ -175,7 +175,7 @@ class _SignUpPageState extends State<SignUpPage> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.maybePop(context),
+                    onTap: () => Navigator.pushNamed(context, '/login'),
                     child: Container(
                       width: 36,
                       height: 36,
@@ -246,13 +246,16 @@ class _SignUpPageState extends State<SignUpPage> {
   );
 
   Widget _buildLogoAndTitle(BuildContext context, AppLocalizations t) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         // ── Logo ──────────────────────────────────────────────
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Image.asset(
-            'images/lsnn.png',
+            isDark
+                ? 'images/moviroo dark mode.png'
+                : 'images/moviroo light mode.png',
             width: 100,
             height: 100,
             fit: BoxFit.cover,

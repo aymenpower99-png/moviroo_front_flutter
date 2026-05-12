@@ -92,15 +92,18 @@ flutter:
     - images/map_preview.png
     - images/bmw.png
     - images/car.png
+    - images/moviroo light mode.png
+    - images/moviroo dark mode.png
     - images/agency_logo.png
     - data/translations/en.json
     - data/translations/fr.json
     - data/translations/ar.json
     - images/flags/usa.png
     - images/flags/france.png
+    - images/icons/chat.png
     - images/flags/saudi.png
     - images/flags/tunisia.png
-    - images/icons/chat.png
+    - images/icons/telephone.png
     - images/icons/phone-call.png
     - images/icons/warning.png
     - data/privacy/privacy_patch_en.json

@@ -34,8 +34,10 @@ class BottomPanel extends StatefulWidget {
   State<BottomPanel> createState() => _BottomPanelState();
 }
 
-class _BottomPanelState extends State<BottomPanel> {
+class _BottomPanelState extends State<BottomPanel>
+    with SingleTickerProviderStateMixin {
   late final DraggableScrollableController _sheetCtrl;
+  late final AnimationController _pulseController;
 
   bool get _isArrivalOrLater =>
       widget.rideState.phase == RidePhase.driverArrived ||
@@ -53,10 +55,41 @@ class _BottomPanelState extends State<BottomPanel> {
     }
   }
 
+  /// Maps phase to stage index for the timeline.
+  int _stageIndex(RidePhase phase) {
+    switch (phase) {
+      case RidePhase.driverOnTheWay:
+        return widget.rideState.progress < 0.05 ? 0 : 1;
+      case RidePhase.driverArrived:
+        return 1;
+      case RidePhase.rideInProgress:
+        return 2;
+      case RidePhase.rideEnded:
+        return 3;
+    }
+  }
+
+  String _statusLabel(RidePhase phase) {
+    switch (phase) {
+      case RidePhase.driverOnTheWay:
+        return 'Driver is on the way';
+      case RidePhase.driverArrived:
+        return 'Driver is arriving';
+      case RidePhase.rideInProgress:
+        return 'Enjoy your ride';
+      case RidePhase.rideEnded:
+        return 'You have arrived';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _sheetCtrl = DraggableScrollableController();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -77,6 +110,7 @@ class _BottomPanelState extends State<BottomPanel> {
 
   @override
   void dispose() {
+    _pulseController.dispose();
     _sheetCtrl.dispose();
     super.dispose();
   }
@@ -203,6 +237,14 @@ class _BottomPanelState extends State<BottomPanel> {
                     pickupLabel: widget.pickupLabel,
                     dropLabel: widget.dropLabel,
                   ),
+
+                  const SizedBox(height: 24),
+
+                  _StageTimeline(
+                    activeIndex: _stageIndex(widget.rideState.phase),
+                    statusLabel: _statusLabel(widget.rideState.phase),
+                    pulseController: _pulseController,
+                  ),
                 ],
               ],
             ),
@@ -213,4 +255,191 @@ class _BottomPanelState extends State<BottomPanel> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Stage Timeline
+// ─────────────────────────────────────────────────────────────────────────────
 
+class _StageTimeline extends StatelessWidget {
+  final int activeIndex;
+  final String statusLabel;
+  final AnimationController pulseController;
+
+  const _StageTimeline({
+    required this.activeIndex,
+    required this.statusLabel,
+    required this.pulseController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const stages = ['Matched', 'Pickup', 'On trip', 'Arrived'];
+    final purple = AppColors.primaryPurple;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ── Dots + line row ──
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            // Background connecting line
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 7),
+              child: Row(
+                children: List.generate(stages.length - 1, (index) {
+                  final isCompleted = index < activeIndex;
+                  return Expanded(
+                    child: Container(
+                      height: 2,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        color: isCompleted
+                            ? purple
+                            : AppColors.border(context),
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+            // Dots row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(stages.length, (index) {
+                final isCompleted = index < activeIndex;
+                final isActive = index == activeIndex;
+
+                return isActive
+                    ? _ActiveDot(
+                        pulseController: pulseController,
+                        purple: purple,
+                      )
+                    : _InactiveDot(
+                        isCompleted: isCompleted,
+                        purple: purple,
+                      );
+              }),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 14),
+
+        // ── Status label centered under active stage ──
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(stages.length, (index) {
+            final isActive = index == activeIndex;
+            return Expanded(
+              child: Center(
+                child: isActive
+                    ? Text(
+                        statusLabel,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: purple,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Active dot with smooth scale pulse ──
+class _ActiveDot extends StatelessWidget {
+  final AnimationController pulseController;
+  final Color purple;
+
+  const _ActiveDot({
+    required this.pulseController,
+    required this.purple,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: pulseController,
+      builder: (context, child) {
+        final scale = Tween<double>(begin: 1.0, end: 1.25).evaluate(
+          CurvedAnimation(
+            parent: pulseController,
+            curve: Curves.easeInOut,
+          ),
+        );
+        return Transform.scale(
+          scale: scale,
+          child: child,
+        );
+      },
+      child: Container(
+        width: 14,
+        height: 14,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: purple,
+          boxShadow: [
+            BoxShadow(
+              color: purple.withValues(alpha: 0.3),
+              blurRadius: 8,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Center(
+          child: Container(
+            width: 5,
+            height: 5,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Completed / Upcoming dot ──
+class _InactiveDot extends StatelessWidget {
+  final bool isCompleted;
+  final Color purple;
+
+  const _InactiveDot({
+    required this.isCompleted,
+    required this.purple,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 14,
+      height: 14,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isCompleted ? purple : Colors.transparent,
+        border: Border.all(
+          color: isCompleted ? purple : AppColors.border(context),
+          width: 2,
+        ),
+      ),
+      child: isCompleted
+          ? const Center(
+              child: Icon(
+                Icons.check_rounded,
+                color: Colors.white,
+                size: 10,
+              ),
+            )
+          : null,
+    );
+  }
+}

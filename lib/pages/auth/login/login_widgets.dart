@@ -103,13 +103,16 @@ class LoginWidgets {
   });
 
   Widget buildLogoAndTitle(BuildContext context, AppLocalizations t) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         // ── App Logo ──────────────────────────────────────────
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Image.asset(
-            'images/lsnn.png',
+            isDark
+                ? 'images/moviroo dark mode.png'
+                : 'images/moviroo light mode.png',
             width: 120,
             height: 120,
             fit: BoxFit.cover,

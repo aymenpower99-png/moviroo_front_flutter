@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_text_styles.dart';
 
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
@@ -21,21 +20,12 @@ class HomeHeader extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: Image.asset(
-                  isDark ? 'images/logob.png' : 'images/lsnn.png',
+                  isDark
+                      ? 'images/moviroo dark mode.png'
+                      : 'images/moviroo light mode.png',
                   width: 65,
                   height: 65,
                   fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Padding(
-              padding: const EdgeInsets.only(top: 14),
-              child: Text(
-                'Moviroo',
-                style: AppTextStyles.pageTitle(context).copyWith(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),

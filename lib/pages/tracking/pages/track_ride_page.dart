@@ -187,9 +187,18 @@ class _TrackRidePageState extends State<TrackRidePage>
       }
     }
 
+    // Extract speed from WebSocket data (driver sends speed_kmh)
+    final speedKmh = (locationData['speed_kmh'] as num?)?.toDouble() ?? 0.0;
+
     // Use driver animation controller
-    debugPrint('🎬 Calling setTargetPosition');
-    _driverAnimController.setTargetPosition(newPos, bearing);
+    debugPrint(
+      '🎬 Calling setTargetPosition (speed=${speedKmh.toStringAsFixed(1)} km/h)',
+    );
+    _driverAnimController.setTargetPosition(
+      newPos,
+      bearing,
+      speedKmh: speedKmh,
+    );
 
     // Update progress from WebSocket data
     if (locationData.isNotEmpty && mounted) {
@@ -448,7 +457,9 @@ class _TrackRidePageState extends State<TrackRidePage>
             // ── Mapbox Map ──────────────────────────────────────────────
             Positioned.fill(
               child: mbx.MapWidget(
-                styleUri: MapConstants.mapboxStyleUrl,
+                styleUri: isDark
+                    ? MapConstants.mapboxStyleUrlDark
+                    : MapConstants.mapboxStyleUrl,
                 cameraOptions: mbx.CameraOptions(
                   center: _pickupLatLng,
                   zoom: 13.0,
@@ -470,19 +481,7 @@ class _TrackRidePageState extends State<TrackRidePage>
               ),
             ),
 
-            // ── Ride Stage Timeline (top row, right of back button) ──
-            if (_rideState.phase != RidePhase.rideEnded)
-              Positioned(
-                top: MediaQuery.of(context).padding.top + 8,
-                left: 64,
-                right: 12,
-                child: _MapStageTimeline(
-                  phase: _rideState.phase,
-                  progress: _rideState.progress,
-                ),
-              ),
-
-            // ── Loading pill (below timeline, separate) ──
+            // ── Loading pill ──
             if (_isInitializing)
               Positioned(
                 top: MediaQuery.of(context).padding.top + 62,
@@ -617,167 +616,6 @@ class _TrackRidePageState extends State<TrackRidePage>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Map Stage Timeline — compact top-overlay timeline
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _MapStageTimeline extends StatelessWidget {
-  final RidePhase phase;
-  final double progress;
-
-  const _MapStageTimeline({
-    required this.phase,
-    required this.progress,
-  });
-
-  int get _activeIndex {
-    switch (phase) {
-      case RidePhase.driverOnTheWay:
-        return progress < 0.05 ? 0 : 1;
-      case RidePhase.driverArrived:
-        return 1;
-      case RidePhase.rideInProgress:
-        return 2;
-      case RidePhase.rideEnded:
-        return 3;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const stages = ['Matched', 'Pickup', 'On trip', 'Arrived'];
-    final activeIndex = _activeIndex;
-    final purple = AppColors.primaryPurple;
-    const green = Color(0xFF4ADE80);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.border(context).withValues(alpha: 0.5),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: List.generate(stages.length * 2 - 1, (index) {
-          if (index.isOdd) {
-            final stageBefore = index ~/ 2;
-            final isActive = stageBefore < activeIndex;
-
-            return Expanded(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.easeInOut,
-                height: isActive ? 3 : 2,
-                decoration: BoxDecoration(
-                  color: isActive ? purple : AppColors.border(context),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            );
-          }
-
-          final stageIndex = index ~/ 2;
-          final isCompleted = stageIndex < activeIndex;
-          final isActive = stageIndex == activeIndex;
-
-          return Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeOutBack,
-                  width: isActive ? 24 : 18,
-                  height: isActive ? 24 : 18,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isCompleted
-                      ? green
-                      : isActive
-                          ? purple
-                          : Colors.transparent,
-                  border: Border.all(
-                    color: isCompleted
-                        ? green
-                        : isActive
-                            ? purple
-                            : AppColors.border(context),
-                    width: isActive ? 2.5 : 2,
-                  ),
-                  boxShadow: isActive
-                      ? [
-                          BoxShadow(
-                            color: purple.withValues(alpha: 0.25),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  transitionBuilder: (child, anim) {
-                    return ScaleTransition(scale: anim, child: child);
-                  },
-                  child: isCompleted
-                      ? Icon(
-                          Icons.check_rounded,
-                          key: ValueKey('check_$stageIndex'),
-                          color: Colors.white,
-                          size: 12,
-                        )
-                      : isActive
-                          ? Center(
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            )
-                          : const SizedBox.shrink(
-                              key: ValueKey('empty'),
-                            ),
-                ),
-              ),
-              const SizedBox(height: 6),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 400),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                    color: isActive
-                        ? purple
-                        : isCompleted
-                            ? green
-                            : AppColors.subtext(context),
-                  ),
-                  child: Text(
-                    stages[stageIndex],
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // White Map Button — standalone white rounded square button
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -785,10 +623,7 @@ class _WhiteMapBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _WhiteMapBtn({
-    required this.icon,
-    required this.onTap,
-  });
+  const _WhiteMapBtn({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -808,11 +643,7 @@ class _WhiteMapBtn extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(
-          icon,
-          size: 18,
-          color: AppColors.text(context),
-        ),
+        child: Icon(icon, size: 18, color: AppColors.text(context)),
       ),
     );
   }

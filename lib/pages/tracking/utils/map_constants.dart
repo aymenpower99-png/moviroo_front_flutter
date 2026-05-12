@@ -4,8 +4,11 @@ class MapConstants {
   static const String mapboxAccessToken =
       'pk.eyJ1IjoiYXltb3VuMTEiLCJhIjoiY21vM2JvY3UzMGtrdzJzcXc0cXZwbmE5eiJ9.LcnOY7q-WQ37STLy7wogRA';
 
-  /// Mapbox Style URL
+  /// Mapbox Style URL (light mode)
   static const String mapboxStyleUrl = 'mapbox://styles/mapbox/streets-v12';
+
+  /// Mapbox Style URL (dark mode)
+  static const String mapboxStyleUrlDark = 'mapbox://styles/mapbox/dark-v11';
 
   /// Default zoom level for map
   static const double defaultZoom = 13.0;
