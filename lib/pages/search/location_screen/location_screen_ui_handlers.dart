@@ -51,15 +51,16 @@ class LocationScreenUIHandlers {
   }
 
   void onFocusChanged() {
-    // Always clear suggestions when focus changes
-    // This ensures "Select on map" shows when the focused field is empty
+    // Clear suggestions when focus changes to avoid showing old suggestions from previous field
     setState(() => suggestions.clear());
   }
 
   void onFieldFocusChanged(
     FocusNode changedFocus,
     double? pickupLat,
+    double? pickupLon,
     double? dropoffLat,
+    void Function(bool) setIsLoadingSuggestions,
   ) {
     // Clear unconfirmed text from the previous field when focus changes
     // Only keep values that were explicitly confirmed via autocomplete selection
@@ -76,6 +77,8 @@ class LocationScreenUIHandlers {
         // Pickup has text but no confirmed coordinates - clear it
         setState(() => fromController.clear());
       }
+      // Suggestions are already cleared by onFocusChanged(), so "Select on map" will show
+      // Recent searches will provide nearby places below "Select on map"
     }
   }
 
@@ -100,6 +103,12 @@ class LocationScreenUIHandlers {
         .searchPlaces(query)
         .then((results) {
           if (state.mounted) {
+            // Discard stale results if focus moved or text changed since query started
+            final currentQuery = toFocus.hasFocus
+                ? toController.text.trim()
+                : fromController.text.trim();
+            if (currentQuery != query) return;
+
             setState(() {
               suggestions.clear();
               suggestions.addAll(results);

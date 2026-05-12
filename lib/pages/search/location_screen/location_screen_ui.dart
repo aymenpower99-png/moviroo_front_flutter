@@ -217,7 +217,7 @@ class LocationScreenUI extends StatelessWidget {
                           item: RecentSearchItem(
                             title: place.placeName,
                             subtitle: place.fullAddress,
-                            categoryIcon: place.categoryIcon,
+                            categoryIcon: Icons.location_on_outlined,
                           ),
                           onTap: () => onFillSmartField(place.placeName, place),
                         );

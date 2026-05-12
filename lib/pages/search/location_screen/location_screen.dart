@@ -165,7 +165,13 @@ class _LocationScreenState extends State<LocationScreen>
   void _updateCardFocus() => _uiHandlers.updateCardFocus();
   void _onFocusChanged() => _uiHandlers.onFocusChanged();
   void _onFieldFocusChanged(FocusNode focusNode) =>
-      _uiHandlers.onFieldFocusChanged(focusNode, _pickupLat, _dropoffLat);
+      _uiHandlers.onFieldFocusChanged(
+        focusNode,
+        _pickupLat,
+        _pickupLon,
+        _dropoffLat,
+        (v) => setState(() => _isLoadingSuggestions = v),
+      );
   void _onQueryChanged() {
     _uiHandlers.onQueryChanged(
       (v) => setState(() => _isLoadingSuggestions = v),
