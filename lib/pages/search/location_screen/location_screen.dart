@@ -35,8 +35,7 @@ class _LocationScreenState extends State<LocationScreen>
   bool _isLoadingSuggestions = false;
   bool _isFetchingLocation = false;
 
-  List<GeocodingPlace> _recentPickupSearches = [];
-  List<GeocodingPlace> _recentDropoffSearches = [];
+  List<GeocodingPlace> _recentSearches = [];
 
   // Store coordinates for navigation to RideBookingPage
   double? _pickupLat;
@@ -82,8 +81,7 @@ class _LocationScreenState extends State<LocationScreen>
       fromFocus: _fromFocus,
       toFocus: _toFocus,
       suggestions: _suggestions,
-      recentPickupSearches: _recentPickupSearches,
-      recentDropoffSearches: _recentDropoffSearches,
+      recentSearches: _recentSearches,
       riders: _riders,
       setState: setState,
       setIsCardFocused: (v) => setState(() => _isCardFocused = v),
@@ -123,6 +121,8 @@ class _LocationScreenState extends State<LocationScreen>
     _toController.addListener(_onQueryChanged);
     _fromFocus.addListener(_onFocusChanged);
     _toFocus.addListener(_onFocusChanged);
+    _fromFocus.addListener(() => _onFieldFocusChanged(_fromFocus));
+    _toFocus.addListener(() => _onFieldFocusChanged(_toFocus));
     _fromFocus.addListener(_updateCardFocus);
     _toFocus.addListener(_updateCardFocus);
   }
@@ -164,6 +164,8 @@ class _LocationScreenState extends State<LocationScreen>
 
   void _updateCardFocus() => _uiHandlers.updateCardFocus();
   void _onFocusChanged() => _uiHandlers.onFocusChanged();
+  void _onFieldFocusChanged(FocusNode focusNode) =>
+      _uiHandlers.onFieldFocusChanged(focusNode, _pickupLat, _dropoffLat);
   void _onQueryChanged() {
     _uiHandlers.onQueryChanged(
       (v) => setState(() => _isLoadingSuggestions = v),
@@ -247,8 +249,7 @@ class _LocationScreenState extends State<LocationScreen>
       pickedDate: _pickedDate,
       pickedTime: _pickedTime,
       suggestions: _suggestions,
-      recentPickupSearches: _recentPickupSearches,
-      recentDropoffSearches: _recentDropoffSearches,
+      recentSearches: _recentSearches,
       isLoadingSuggestions: _isLoadingSuggestions,
       isFetchingLocation: _isFetchingLocation,
       isCardFocused: _isCardFocused,
@@ -265,13 +266,9 @@ class _LocationScreenState extends State<LocationScreen>
       onMaybeNavigate: _maybeNavigate,
       onShowRiderSheet: _showRiderSheet,
       onShowPassengerPicker: _showPassengerPicker,
-      onClearPickupRecentSearches: () async {
+      onClearRecentSearches: () async {
         await RecentSearchesService.clearPickupRecentSearches();
-        setState(() => _recentPickupSearches = []);
-      },
-      onClearDropoffRecentSearches: () async {
-        await RecentSearchesService.clearDropoffRecentSearches();
-        setState(() => _recentDropoffSearches = []);
+        setState(() => _recentSearches = []);
       },
     );
   }

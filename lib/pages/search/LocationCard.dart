@@ -30,20 +30,20 @@ class LocationCard extends StatelessWidget {
     BuildContext context, {
     required String hint,
     EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(
-      vertical: 14,
+      vertical: 6,
     ),
   }) => InputDecoration(
     hintText: hint,
     hintStyle: TextStyle(
       color: AppColors.subtext(context),
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: FontWeight.w400,
     ),
     border: InputBorder.none,
     enabledBorder: InputBorder.none,
     focusedBorder: InputBorder.none,
     filled: false,
-    isDense: false,
+    isDense: true,
     contentPadding: contentPadding,
   );
 
@@ -54,18 +54,18 @@ class LocationCard extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOut,
-      padding: const EdgeInsets.fromLTRB(20, 16, 14, 16),
+      padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
       decoration: BoxDecoration(
         color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: hasFocus
-            ? Border.all(color: AppColors.primaryPurple, width: 2)
-            : null,
+            ? Border.all(color: AppColors.primaryPurple, width: 1.5)
+            : Border.all(color: AppColors.border(context), width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -136,7 +136,7 @@ class LocationCard extends StatelessWidget {
                 children: [
                   // ── Pick-up row ──
                   SizedBox(
-                    height: 48,
+                    height: 38,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -145,7 +145,7 @@ class LocationCard extends StatelessWidget {
                             controller: fromController,
                             focusNode: fromFocus,
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 15,
                               color: AppColors.text(context),
                               fontWeight: FontWeight.w400,
                             ),
@@ -198,7 +198,7 @@ class LocationCard extends StatelessWidget {
                   ),
                   // ── Drop-off row ──
                   SizedBox(
-                    height: 48,
+                    height: 38,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -207,7 +207,7 @@ class LocationCard extends StatelessWidget {
                             controller: toController,
                             focusNode: toFocus,
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 15,
                               color: AppColors.text(context),
                               fontWeight: FontWeight.w400,
                             ),
@@ -216,8 +216,8 @@ class LocationCard extends StatelessWidget {
                               context,
                               hint: t.translate('drop_off'),
                               contentPadding: const EdgeInsets.only(
-                                top: 7,
-                                bottom: 7,
+                                top: 6,
+                                bottom: 6,
                               ),
                             ),
                           ),

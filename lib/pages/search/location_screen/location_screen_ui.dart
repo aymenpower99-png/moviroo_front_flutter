@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../LocationCard.dart';
-import '../nextdestinationsearch.dart';
 import '../RecentSearchItem.dart';
 import '../datetime_row/datetime_row.dart';
 import '../../../../services/geocoding/geocoding_service.dart';
-import 'widgets.dart';
 
 class LocationScreenUI extends StatelessWidget {
   final AppLocalizations t;
@@ -20,8 +18,7 @@ class LocationScreenUI extends StatelessWidget {
   final DateTime pickedDate;
   final TimeOfDay? pickedTime;
   final List<GeocodingPlace> suggestions;
-  final List<GeocodingPlace> recentPickupSearches;
-  final List<GeocodingPlace> recentDropoffSearches;
+  final List<GeocodingPlace> recentSearches;
   final bool isLoadingSuggestions;
   final bool isFetchingLocation;
   final bool isCardFocused;
@@ -37,8 +34,7 @@ class LocationScreenUI extends StatelessWidget {
   final VoidCallback onMaybeNavigate;
   final VoidCallback onShowRiderSheet;
   final VoidCallback onShowPassengerPicker;
-  final Function() onClearPickupRecentSearches;
-  final Function() onClearDropoffRecentSearches;
+  final Function() onClearRecentSearches;
 
   const LocationScreenUI({
     super.key,
@@ -53,8 +49,7 @@ class LocationScreenUI extends StatelessWidget {
     required this.pickedDate,
     required this.pickedTime,
     required this.suggestions,
-    required this.recentPickupSearches,
-    required this.recentDropoffSearches,
+    required this.recentSearches,
     required this.isLoadingSuggestions,
     required this.isFetchingLocation,
     required this.isCardFocused,
@@ -69,210 +64,198 @@ class LocationScreenUI extends StatelessWidget {
     required this.onMaybeNavigate,
     required this.onShowRiderSheet,
     required this.onShowPassengerPicker,
-    required this.onClearPickupRecentSearches,
-    required this.onClearDropoffRecentSearches,
+    required this.onClearRecentSearches,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isPickupFocused = fromFocus.hasFocus;
-    final isDropoffFocused = toFocus.hasFocus;
-    final anyFieldFocused = isPickupFocused || isDropoffFocused;
-    final currentRecentSearches = isPickupFocused
-        ? recentPickupSearches
-        : recentDropoffSearches;
+    final anyFieldFocused = fromFocus.hasFocus || toFocus.hasFocus;
+
+    // Check if the currently focused field has text
+    final focusedFieldHasText =
+        (fromFocus.hasFocus && fromController.text.trim().isNotEmpty) ||
+        (toFocus.hasFocus && toController.text.trim().isNotEmpty);
+
+    // Show "Select on map" when:
+    // - Any field is focused
+    // - The focused field is empty (user hasn't typed yet)
+    // - Suggestions are empty (or will be replaced by suggestions when typing)
+    final showSelectOnMap = anyFieldFocused && !focusedFieldHasText;
 
     final showRecent =
         suggestions.isEmpty &&
-        currentRecentSearches.isNotEmpty &&
-        !(fromFocus.hasFocus && fromController.text.trim().isNotEmpty) &&
-        !(toFocus.hasFocus && toController.text.trim().isNotEmpty);
+        recentSearches.isNotEmpty &&
+        fromController.text.trim().isEmpty &&
+        toController.text.trim().isEmpty;
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            // Top header section (title + pills)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Column(
+            // ── Tight header (back + title) ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  // Top bar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Text(
-                          t.translate('plan_your_ride'),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.text(context),
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: GestureDetector(
-                            onTap: () => Navigator.maybePop(context),
-                            child: Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: AppColors.surface(context),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.08),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.arrow_back_ios_new_rounded,
-                                size: 18,
-                                color: AppColors.text(context),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                  Text(
+                    t.translate('plan_your_ride'),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.text(context),
                     ),
                   ),
-
-                  const SizedBox(height: 12),
-
-                  // Rider & Passenger pills
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Pill(
-                            icon: Icons.person_outline_rounded,
-                            label: pillLabel,
-                            onTap: onShowRiderSheet,
-                          ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: GestureDetector(
+                      onTap: () => Navigator.maybePop(context),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.surface(context),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Pill(
-                            icon: Icons.people_outline_rounded,
-                            label:
-                                '$passengerCount ${t.translate('passengers')}',
-                            onTap: onShowPassengerPicker,
-                          ),
+                        child: Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 16,
+                          color: AppColors.text(context),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-
-                  const SizedBox(height: 12),
                 ],
               ),
             ),
 
-            // Scrollable body (positioned to fill available space below header)
-            Positioned(
-              top: 140, // Start below the header section (title + pills)
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.manual,
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    LocationCard(
-                      fromController: fromController,
-                      toController: toController,
-                      fromFocus: fromFocus,
-                      toFocus: toFocus,
-                      pulseAnim: pulseAnim,
-                      onSwap: onSwap,
-                      onUseCurrentLocation: isFetchingLocation
-                          ? null
-                          : onUseCurrentLocation,
-                      isFetchingLocation: isFetchingLocation,
-                      hasFocus: isCardFocused,
-                    ),
-                    const SizedBox(height: 10),
-                    DateTimeRow(
-                      initialDate: pickedDate,
-                      onDateChanged: onDateChanged,
-                      onTimeChanged: onTimeChanged,
-                    ),
-                    const SizedBox(height: 14),
-                    NextDestinationSearch(
-                      suggestions: suggestions,
-                      onSuggestionTap: onSuggestionTap,
-                      onSelectOnMap: onSelectOnMap,
-                    ),
-                    if (showRecent) ...[
-                      const SizedBox(height: 2),
-                      ...(isPickupFocused
-                              ? recentPickupSearches
-                              : recentDropoffSearches)
-                          .map(
-                            (place) => RecentSearchTile(
-                              item: RecentSearchItem(
-                                title: place.placeName,
-                                subtitle: place.fullAddress,
-                                categoryIcon: place.categoryIcon,
-                              ),
-                              onTap: () =>
-                                  onFillSmartField(place.placeName, place),
-                            ),
-                          ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: GestureDetector(
-                          onTap: isPickupFocused
-                              ? onClearPickupRecentSearches
-                              : onClearDropoffRecentSearches,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.delete_outline_rounded,
-                                size: 14,
-                                color: AppColors.subtext(context),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                t.translate('clear'),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.subtext(context),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ],
-                ),
+            const SizedBox(height: 10),
+
+            // ── Passenger pill (centered, top middle) ──
+            Center(
+              child: _PassengerPill(
+                label: '$passengerCount ${t.translate('passengers')}',
+                onTap: onShowPassengerPicker,
               ),
             ),
 
-            // ── Confirm button (fixed at bottom, only shows when both fields are filled) ──
+            const SizedBox(height: 10),
+
+            // ── Compact search box ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: LocationCard(
+                fromController: fromController,
+                toController: toController,
+                fromFocus: fromFocus,
+                toFocus: toFocus,
+                pulseAnim: pulseAnim,
+                onSwap: onSwap,
+                onUseCurrentLocation: isFetchingLocation
+                    ? null
+                    : onUseCurrentLocation,
+                isFetchingLocation: isFetchingLocation,
+                hasFocus: isCardFocused,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // ── Date + Time row (after search input) ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: DateTimeRow(
+                initialDate: pickedDate,
+                onDateChanged: onDateChanged,
+                onTimeChanged: onTimeChanged,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ── Suggestions list (takes all remaining space) ──
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.manual,
+                itemCount: _listItemCount(
+                  showSelectOnMap,
+                  showRecent,
+                  isLoadingSuggestions,
+                ),
+                separatorBuilder: (_, __) => Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: AppColors.border(context).withValues(alpha: 0.5),
+                ),
+                itemBuilder: (context, index) {
+                  // Show suggestions only (no "Select on map")
+                  if (suggestions.isNotEmpty) {
+                    if (index < suggestions.length) {
+                      final place = suggestions[index];
+                      return _SuggestionTile(
+                        place: place,
+                        onTap: () => onSuggestionTap(place),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }
+
+                  // Show "Select on map" + recent searches
+                  if (showSelectOnMap) {
+                    if (index == 0) {
+                      return _SelectOnMapTile(onTap: onSelectOnMap);
+                    }
+                    if (showRecent) {
+                      final recentIndex = index - 1;
+                      if (recentIndex < recentSearches.length) {
+                        final place = recentSearches[recentIndex];
+                        return RecentSearchTile(
+                          item: RecentSearchItem(
+                            title: place.placeName,
+                            subtitle: place.fullAddress,
+                            categoryIcon: place.categoryIcon,
+                          ),
+                          onTap: () => onFillSmartField(place.placeName, place),
+                        );
+                      }
+                      if (recentIndex == recentSearches.length) {
+                        return Align(
+                          alignment: Alignment.centerRight,
+                          child: _ClearRecentTile(onTap: onClearRecentSearches),
+                        );
+                      }
+                    }
+                    return const SizedBox.shrink();
+                  }
+
+                  // Loading state
+                  if (isLoadingSuggestions) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+
+            // ── Confirm button ──
             if (fromController.text.trim().isNotEmpty &&
                 toController.text.trim().isNotEmpty)
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 16,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -298,6 +281,218 @@ class LocationScreenUI extends StatelessWidget {
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  int _listItemCount(bool showSelectOnMap, bool showRecent, bool isLoading) {
+    if (suggestions.isNotEmpty) return suggestions.length;
+    int count = 0;
+    if (showSelectOnMap) count += 1; // select-on-map only
+    if (showRecent) count += recentSearches.length + 1; // + "Clear"
+    if (isLoading && count == 0) count += 1;
+    return count;
+  }
+}
+
+// ── Passenger Pill (centered, top middle) ──
+class _PassengerPill extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _PassengerPill({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 34,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surface(context),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: AppColors.border(context)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.people_outline_rounded,
+              size: 15,
+              color: AppColors.primaryPurple,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.text(context),
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 16,
+              color: AppColors.subtext(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Icon box matching RecentSearchTile styling ──
+class _IconBox extends StatelessWidget {
+  final IconData icon;
+
+  const _IconBox({required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.primaryPurple.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, size: 22, color: AppColors.primaryPurple),
+    );
+  }
+}
+
+// ── Suggestion tile ──
+class _SuggestionTile extends StatelessWidget {
+  final GeocodingPlace place;
+  final VoidCallback onTap;
+
+  const _SuggestionTile({required this.place, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            _IconBox(icon: place.categoryIcon ?? Icons.location_on_outlined),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    place.placeName,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.text(context),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (place.fullAddress.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        place.fullAddress,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.subtext(context),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 16,
+              color: AppColors.subtext(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Select on map tile ──
+class _SelectOnMapTile extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _SelectOnMapTile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            const _IconBox(icon: Icons.map_outlined),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context).translate('select_on_map'),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text(context),
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 16,
+              color: AppColors.subtext(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Clear recent searches tile ──
+class _ClearRecentTile extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ClearRecentTile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.delete_outline_rounded,
+              color: AppColors.subtext(context),
+              size: 16,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              AppLocalizations.of(context).translate('clear'),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.subtext(context),
+              ),
+            ),
           ],
         ),
       ),

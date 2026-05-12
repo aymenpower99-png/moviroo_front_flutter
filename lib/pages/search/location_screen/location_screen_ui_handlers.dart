@@ -12,8 +12,7 @@ class LocationScreenUIHandlers {
   final FocusNode fromFocus;
   final FocusNode toFocus;
   final List<GeocodingPlace> suggestions;
-  final List<GeocodingPlace> recentPickupSearches;
-  final List<GeocodingPlace> recentDropoffSearches;
+  final List<GeocodingPlace> recentSearches;
   final List<Map<String, String?>> riders;
 
   final void Function(VoidCallback fn) setState;
@@ -28,8 +27,7 @@ class LocationScreenUIHandlers {
     required this.fromFocus,
     required this.toFocus,
     required this.suggestions,
-    required this.recentPickupSearches,
-    required this.recentDropoffSearches,
+    required this.recentSearches,
     required this.riders,
     required this.setState,
     required this.setIsCardFocused,
@@ -44,20 +42,40 @@ class LocationScreenUIHandlers {
 
   Future<void> loadRecentSearches() async {
     final pickup = await RecentSearchesService.getPickupRecentSearches();
-    final dropoff = await RecentSearchesService.getDropoffRecentSearches();
     if (state.mounted) {
       setState(() {
-        recentPickupSearches.clear();
-        recentPickupSearches.addAll(pickup);
-        recentDropoffSearches.clear();
-        recentDropoffSearches.addAll(dropoff);
+        recentSearches.clear();
+        recentSearches.addAll(pickup);
       });
     }
   }
 
   void onFocusChanged() {
-    if (!fromFocus.hasFocus && !toFocus.hasFocus) {
-      setState(() => suggestions.clear());
+    // Always clear suggestions when focus changes
+    // This ensures "Select on map" shows when the focused field is empty
+    setState(() => suggestions.clear());
+  }
+
+  void onFieldFocusChanged(
+    FocusNode changedFocus,
+    double? pickupLat,
+    double? dropoffLat,
+  ) {
+    // Clear unconfirmed text from the previous field when focus changes
+    // Only keep values that were explicitly confirmed via autocomplete selection
+    // (i.e., have coordinates set)
+    if (changedFocus == fromFocus && fromFocus.hasFocus) {
+      // User focused on pickup field - clear unconfirmed text in drop-off
+      if (toController.text.trim().isNotEmpty && dropoffLat == null) {
+        // Drop-off has text but no confirmed coordinates - clear it
+        setState(() => toController.clear());
+      }
+    } else if (changedFocus == toFocus && toFocus.hasFocus) {
+      // User focused on drop-off field - clear unconfirmed text in pickup
+      if (fromController.text.trim().isNotEmpty && pickupLat == null) {
+        // Pickup has text but no confirmed coordinates - clear it
+        setState(() => fromController.clear());
+      }
     }
   }
 

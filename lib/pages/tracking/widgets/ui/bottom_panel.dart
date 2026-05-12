@@ -180,7 +180,7 @@ class _BottomPanelState extends State<BottomPanel> {
                     ],
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   AnimatedRideProgressBar(
                     phase: widget.rideState.phase,
@@ -192,6 +192,7 @@ class _BottomPanelState extends State<BottomPanel> {
                   DriverRow(
                     driverName: widget.rideState.driverName,
                     vehicleName: widget.rideState.vehicleName,
+                    plateNumber: widget.rideState.plateNumber,
                     isArrived: _isArrivalOrLater,
                     onChatTap: widget.onChatTap,
                   ),
@@ -211,3 +212,5 @@ class _BottomPanelState extends State<BottomPanel> {
     );
   }
 }
+
+

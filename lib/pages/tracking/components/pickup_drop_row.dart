@@ -23,10 +23,9 @@ class PickupDropRow extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border(context)),
       ),
       child: Row(
@@ -38,10 +37,10 @@ class PickupDropRow extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Container(
-                  width: 11,
-                  height: 11,
+                  width: 12,
+                  height: 12,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: purple,
@@ -49,7 +48,7 @@ class PickupDropRow extends StatelessWidget {
                 ),
                 SizedBox(
                   width: 2,
-                  height: 40,
+                  height: 44,
                   child: CustomPaint(
                     painter: DashedLinePainter(
                       color: AppColors.border(context),
@@ -57,17 +56,17 @@ class PickupDropRow extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  width: 11,
-                  height: 11,
+                  width: 12,
+                  height: 12,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: purple, width: 2),
+                    border: Border.all(color: purple, width: 2.5),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           // Right column: labels + addresses
           Expanded(
             child: Column(
@@ -84,7 +83,7 @@ class PickupDropRow extends StatelessWidget {
                     letterSpacing: 0.8,
                   ),
                 ),
-                const SizedBox(height: 1),
+                const SizedBox(height: 3),
                 Text(
                   pickupLabel,
                   style: TextStyle(
@@ -96,7 +95,7 @@ class PickupDropRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
                 Text(
                   l10n.translate('dropoff'),
                   style: TextStyle(
@@ -107,7 +106,7 @@ class PickupDropRow extends StatelessWidget {
                     letterSpacing: 0.8,
                   ),
                 ),
-                const SizedBox(height: 1),
+                const SizedBox(height: 3),
                 Text(
                   dropLabel,
                   style: TextStyle(
