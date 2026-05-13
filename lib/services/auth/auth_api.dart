@@ -120,17 +120,27 @@ class AuthAPI {
     required String email,
     required String password,
     String? phone,
+    bool? termsOfServiceConsent,
+    bool? locationTrackingConsent,
+    bool? marketingConsent,
   }) async {
+    final body = <String, dynamic>{
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'password': password,
+      if (phone != null) 'phone': phone,
+      if (termsOfServiceConsent != null)
+        'termsOfServiceConsent': termsOfServiceConsent,
+      if (locationTrackingConsent != null)
+        'locationTrackingConsent': locationTrackingConsent,
+      if (marketingConsent != null) 'marketingConsent': marketingConsent,
+    };
+
     final response = await http.post(
       Uri.parse('$baseUrl/auth/register'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'firstName': firstName,
-        'lastName': lastName,
-        'email': email,
-        'password': password,
-        'phone': ?phone,
-      }),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode == 201) {

@@ -107,17 +107,13 @@ class LoginWidgets {
     return Column(
       children: [
         // ── App Logo ──────────────────────────────────────────
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Image.asset(
+        Image.asset(
             isDark
-                ? 'images/moviroo dark mode.png'
-                : 'images/moviroo light mode.png',
-            width: 120,
-            height: 120,
-            fit: BoxFit.cover,
+                ? 'images/logo/moviroo dark_light_big.png'
+                : 'images/logo/moviroo light_dark_big.png',
+            height: 40,
+            fit: BoxFit.contain,
           ),
-        ),
 
         const SizedBox(height: 28),
 

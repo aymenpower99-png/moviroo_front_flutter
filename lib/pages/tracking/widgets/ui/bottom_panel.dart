@@ -82,6 +82,23 @@ class _BottomPanelState extends State<BottomPanel>
     }
   }
 
+  String _dynamicStatusLabel(RidePhase phase, double progress) {
+    switch (phase) {
+      case RidePhase.driverOnTheWay:
+        return progress < 0.8
+            ? 'Driver is heading to your pickup'
+            : 'Driver is almost at your location';
+      case RidePhase.driverArrived:
+        return 'Driver has arrived at pickup point';
+      case RidePhase.rideInProgress:
+        return progress < 0.8
+            ? 'Your ride has started'
+            : "You're almost at your destination";
+      case RidePhase.rideEnded:
+        return "You've arrived at your destination";
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -190,7 +207,10 @@ class _BottomPanelState extends State<BottomPanel>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Arriving at',
+                                _dynamicStatusLabel(
+                                  widget.rideState.phase,
+                                  widget.rideState.progress,
+                                ),
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.normal,

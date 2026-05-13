@@ -30,12 +30,15 @@ class _LocationScreenState extends State<LocationScreen>
   int? _selectedRider;
   int _passengerCount = 1;
   final List<GeocodingPlace> _suggestions = [];
+  List<GeocodingPlace> _nearbyPlaces = [];
   DateTime _pickedDate = DateTime.now();
   TimeOfDay? _pickedTime;
   bool _isLoadingSuggestions = false;
+  bool _isLoadingNearbyPlaces = false;
   bool _isFetchingLocation = false;
 
   List<GeocodingPlace> _recentSearches = [];
+  List<GeocodingPlace> _dropoffRecentSearches = [];
 
   // Store coordinates for navigation to RideBookingPage
   double? _pickupLat;
@@ -82,6 +85,7 @@ class _LocationScreenState extends State<LocationScreen>
       toFocus: _toFocus,
       suggestions: _suggestions,
       recentSearches: _recentSearches,
+      dropoffRecentSearches: _dropoffRecentSearches,
       riders: _riders,
       setState: setState,
       setIsCardFocused: (v) => setState(() => _isCardFocused = v),
@@ -110,10 +114,10 @@ class _LocationScreenState extends State<LocationScreen>
     // Pre-fill from voice assistant results if available
     _applyVoiceArgs();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
         if (widget.voiceArgs == null) _fromFocus.requestFocus();
-        _uiHandlers.loadRecentSearches();
+        await _uiHandlers.loadRecentSearches();
       }
     });
 
@@ -164,18 +168,49 @@ class _LocationScreenState extends State<LocationScreen>
 
   void _updateCardFocus() => _uiHandlers.updateCardFocus();
   void _onFocusChanged() => _uiHandlers.onFocusChanged();
-  void _onFieldFocusChanged(FocusNode focusNode) =>
-      _uiHandlers.onFieldFocusChanged(
-        focusNode,
-        _pickupLat,
-        _pickupLon,
-        _dropoffLat,
-        (v) => setState(() => _isLoadingSuggestions = v),
-      );
+  void _onFieldFocusChanged(FocusNode focusNode) {
+    _uiHandlers.onFieldFocusChanged(
+      focusNode,
+      _pickupLat,
+      _pickupLon,
+      _dropoffLat,
+      (v) => setState(() => _isLoadingSuggestions = v),
+    );
+    // Reload recent searches when switching between pickup/dropoff fields
+    _uiHandlers.loadRecentSearches();
+  }
   void _onQueryChanged() {
     _uiHandlers.onQueryChanged(
       (v) => setState(() => _isLoadingSuggestions = v),
     );
+
+    // Fetch nearby places when pickup is set and drop-off is empty
+    _fetchNearbyPlacesIfNeeded();
+  }
+
+  Future<void> _fetchNearbyPlacesIfNeeded() async {
+    // Only fetch nearby places when:
+    // - Pickup has valid coordinates
+    // - Drop-off is empty
+    // - To field is focused (user is selecting drop-off)
+    if (_pickupLat != null &&
+        _pickupLon != null &&
+        _toController.text.trim().isEmpty &&
+        _toFocus.hasFocus) {
+      setState(() => _isLoadingNearbyPlaces = true);
+
+      final nearby = await GeocodingService().getNearbyPlaces(
+        _pickupLat!,
+        _pickupLon!,
+      );
+
+      if (mounted) {
+        setState(() {
+          _nearbyPlaces = nearby;
+          _isLoadingNearbyPlaces = false;
+        });
+      }
+    }
   }
 
   void _onSuggestionTap(GeocodingPlace place) => _locationHandlers
@@ -255,11 +290,16 @@ class _LocationScreenState extends State<LocationScreen>
       pickedDate: _pickedDate,
       pickedTime: _pickedTime,
       suggestions: _suggestions,
+      nearbyPlaces: _nearbyPlaces,
       recentSearches: _recentSearches,
+      dropoffRecentSearches: _dropoffRecentSearches,
       isLoadingSuggestions: _isLoadingSuggestions,
+      isLoadingNearbyPlaces: _isLoadingNearbyPlaces,
       isFetchingLocation: _isFetchingLocation,
       isCardFocused: _isCardFocused,
       canNavigate: _canNavigate,
+      pickupLat: _pickupLat,
+      pickupLon: _pickupLon,
       onSwap: _swapLocations,
       onUseCurrentLocation: _isFetchingLocation
           ? null
@@ -273,8 +313,13 @@ class _LocationScreenState extends State<LocationScreen>
       onShowRiderSheet: _showRiderSheet,
       onShowPassengerPicker: _showPassengerPicker,
       onClearRecentSearches: () async {
-        await RecentSearchesService.clearPickupRecentSearches();
-        setState(() => _recentSearches = []);
+        if (_toFocus.hasFocus) {
+          await RecentSearchesService.clearDropoffRecentSearches();
+          setState(() => _dropoffRecentSearches = []);
+        } else {
+          await RecentSearchesService.clearPickupRecentSearches();
+          setState(() => _recentSearches = []);
+        }
       },
     );
   }

@@ -18,11 +18,16 @@ class LocationScreenUI extends StatelessWidget {
   final DateTime pickedDate;
   final TimeOfDay? pickedTime;
   final List<GeocodingPlace> suggestions;
+  final List<GeocodingPlace> nearbyPlaces;
   final List<GeocodingPlace> recentSearches;
+  final List<GeocodingPlace> dropoffRecentSearches;
   final bool isLoadingSuggestions;
+  final bool isLoadingNearbyPlaces;
   final bool isFetchingLocation;
   final bool isCardFocused;
   final bool canNavigate;
+  final double? pickupLat;
+  final double? pickupLon;
 
   final VoidCallback onSwap;
   final VoidCallback? onUseCurrentLocation;
@@ -49,11 +54,16 @@ class LocationScreenUI extends StatelessWidget {
     required this.pickedDate,
     required this.pickedTime,
     required this.suggestions,
+    required this.nearbyPlaces,
     required this.recentSearches,
+    required this.dropoffRecentSearches,
     required this.isLoadingSuggestions,
+    required this.isLoadingNearbyPlaces,
     required this.isFetchingLocation,
     required this.isCardFocused,
     required this.canNavigate,
+    this.pickupLat,
+    this.pickupLon,
     required this.onSwap,
     required this.onUseCurrentLocation,
     required this.onSuggestionTap,
@@ -69,24 +79,39 @@ class LocationScreenUI extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final anyFieldFocused = fromFocus.hasFocus || toFocus.hasFocus;
-
-    // Check if the currently focused field has text
-    final focusedFieldHasText =
-        (fromFocus.hasFocus && fromController.text.trim().isNotEmpty) ||
-        (toFocus.hasFocus && toController.text.trim().isNotEmpty);
+    // Determine which recent-search list is active based on focused field
+    final bool isDropoffMode = toFocus.hasFocus;
+    final activeRecentList = isDropoffMode ? dropoffRecentSearches : recentSearches;
 
     // Show "Select on map" when:
-    // - Any field is focused
-    // - The focused field is empty (user hasn't typed yet)
-    // - Suggestions are empty (or will be replaced by suggestions when typing)
-    final showSelectOnMap = anyFieldFocused && !focusedFieldHasText;
+    // - Drop-off field is focused and empty
+    // - Pickup has coordinates
+    final showSelectOnMap =
+        toFocus.hasFocus &&
+        toController.text.trim().isEmpty &&
+        pickupLat != null &&
+        pickupLon != null;
 
+    // Show nearby places when:
+    // - Drop-off field is focused and empty
+    // - Pickup has coordinates
+    final showNearbyPlaces =
+        toFocus.hasFocus &&
+        toController.text.trim().isEmpty &&
+        pickupLat != null &&
+        pickupLon != null &&
+        nearbyPlaces.isNotEmpty;
+
+    // Show recent searches when:
+    // - The focused field is empty
+    // - There are recent searches for the active field
+    // - No autocomplete suggestions are showing
     final showRecent =
         suggestions.isEmpty &&
-        recentSearches.isNotEmpty &&
-        fromController.text.trim().isEmpty &&
-        toController.text.trim().isEmpty;
+        activeRecentList.isNotEmpty &&
+        (isDropoffMode
+            ? toController.text.trim().isEmpty
+            : fromController.text.trim().isEmpty);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -183,8 +208,11 @@ class LocationScreenUI extends StatelessWidget {
                     ScrollViewKeyboardDismissBehavior.manual,
                 itemCount: _listItemCount(
                   showSelectOnMap,
+                  showNearbyPlaces,
                   showRecent,
                   isLoadingSuggestions,
+                  isLoadingNearbyPlaces,
+                  activeRecentList.length,
                 ),
                 separatorBuilder: (_, __) => Divider(
                   height: 1,
@@ -192,7 +220,7 @@ class LocationScreenUI extends StatelessWidget {
                   color: AppColors.border(context).withValues(alpha: 0.5),
                 ),
                 itemBuilder: (context, index) {
-                  // Show suggestions only (no "Select on map")
+                  // 1. Autocomplete suggestions while typing
                   if (suggestions.isNotEmpty) {
                     if (index < suggestions.length) {
                       final place = suggestions[index];
@@ -204,36 +232,96 @@ class LocationScreenUI extends StatelessWidget {
                     return const SizedBox.shrink();
                   }
 
-                  // Show "Select on map" + recent searches
+                  // Compute section offsets
+                  int offset = 0;
+
+                  // Section A: "Select on map"
                   if (showSelectOnMap) {
-                    if (index == 0) {
+                    if (index == offset) {
                       return _SelectOnMapTile(onTap: onSelectOnMap);
                     }
-                    if (showRecent) {
-                      final recentIndex = index - 1;
-                      if (recentIndex < recentSearches.length) {
-                        final place = recentSearches[recentIndex];
-                        return RecentSearchTile(
-                          item: RecentSearchItem(
-                            title: place.placeName,
-                            subtitle: place.fullAddress,
-                            categoryIcon: Icons.location_on_outlined,
-                          ),
-                          onTap: () => onFillSmartField(place.placeName, place),
-                        );
-                      }
-                      if (recentIndex == recentSearches.length) {
-                        return Align(
-                          alignment: Alignment.centerRight,
-                          child: _ClearRecentTile(onTap: onClearRecentSearches),
-                        );
-                      }
-                    }
-                    return const SizedBox.shrink();
+                    offset += 1;
                   }
 
-                  // Loading state
-                  if (isLoadingSuggestions) {
+                  // Section B: Nearby places header + list
+                  if (showNearbyPlaces) {
+                    if (index == offset) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          t.translate('nearby_places'),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.subtext(context),
+                          ),
+                        ),
+                      );
+                    }
+                    offset += 1;
+                    final nearbyIndex = index - offset;
+                    if (nearbyIndex >= 0 && nearbyIndex < nearbyPlaces.length) {
+                      final place = nearbyPlaces[nearbyIndex];
+                      return _SuggestionTile(
+                        place: place,
+                        onTap: () => onSuggestionTap(place),
+                      );
+                    }
+                    offset += nearbyPlaces.length;
+                  }
+
+                  // Section C: Recent searches header + list + clear button
+                  if (showRecent) {
+                    if (index == offset) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 4),
+                        child: Text(
+                          t.translate('recent_searches'),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.subtext(context),
+                          ),
+                        ),
+                      );
+                    }
+                    offset += 1;
+                    final recentIndex = index - offset;
+                    if (recentIndex >= 0 && recentIndex < activeRecentList.length) {
+                      final place = activeRecentList[recentIndex];
+                      return RecentSearchTile(
+                        item: RecentSearchItem(
+                          title: place.placeName,
+                          subtitle: place.fullAddress,
+                          categoryIcon: Icons.history_rounded,
+                        ),
+                        onTap: () => onFillSmartField(place.placeName, place),
+                      );
+                    }
+                    offset += activeRecentList.length;
+                    if (index == offset) {
+                      return Align(
+                        alignment: Alignment.centerRight,
+                        child: _ClearRecentTile(onTap: onClearRecentSearches),
+                      );
+                    }
+                    offset += 1;
+                  }
+
+                  // Loading states
+                  if (isLoadingNearbyPlaces && offset == 0) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
+                  if (isLoadingSuggestions && offset == 0) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: Center(
@@ -287,12 +375,22 @@ class LocationScreenUI extends StatelessWidget {
     );
   }
 
-  int _listItemCount(bool showSelectOnMap, bool showRecent, bool isLoading) {
+  int _listItemCount(
+    bool showSelectOnMap,
+    bool showNearbyPlaces,
+    bool showRecent,
+    bool isLoadingSuggestions,
+    bool isLoadingNearbyPlaces,
+    int activeRecentCount,
+  ) {
     if (suggestions.isNotEmpty) return suggestions.length;
+
     int count = 0;
-    if (showSelectOnMap) count += 1; // select-on-map only
-    if (showRecent) count += recentSearches.length + 1; // + "Clear"
-    if (isLoading && count == 0) count += 1;
+    if (showSelectOnMap) count += 1;
+    if (showNearbyPlaces) count += 1 + nearbyPlaces.length; // header + items
+    if (showRecent) count += 1 + activeRecentCount + 1; // header + items + clear
+    if (isLoadingSuggestions && count == 0) count += 1;
+    if (isLoadingNearbyPlaces && count == 0) count += 1;
     return count;
   }
 }
@@ -381,7 +479,7 @@ class _SuggestionTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            _IconBox(icon: place.categoryIcon ?? Icons.location_on_outlined),
+            _IconBox(icon: place.categoryIcon),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

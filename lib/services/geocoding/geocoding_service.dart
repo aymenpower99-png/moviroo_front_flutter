@@ -118,4 +118,80 @@ class GeocodingService {
     }
     return [];
   }
+
+  /// Get nearby places from a given location (pickup)
+  Future<List<GeocodingPlace>> getNearbyPlaces(
+    double latitude,
+    double longitude, {
+    String? query,
+  }) async {
+    try {
+      final token = await TokenStorage.getAccess();
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final queryParams = <String, String>{
+        'lat': latitude.toString(),
+        'lon': longitude.toString(),
+      };
+      if (query != null && query.isNotEmpty) {
+        queryParams['q'] = query;
+      }
+
+      final uri = Uri.parse(
+        '${AppConfig.baseUrl}/rides/geocode/nearby',
+      ).replace(queryParameters: queryParams);
+
+      final res = await http
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as List;
+        return json
+            .map((e) => GeocodingPlace.fromJson(e as Map<String, dynamic>))
+            .where((p) => p.hasValidCoordinates)
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('Error fetching nearby places: $e');
+    }
+    return [];
+  }
+
+  /// Reverse geocode coordinates to place name
+  static Future<GeocodingPlace?> reverseGeocode(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final token = await TokenStorage.getAccess();
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final uri = Uri.parse('${AppConfig.baseUrl}/rides/geocode/reverse')
+          .replace(
+            queryParameters: {
+              'lat': latitude.toString(),
+              'lon': longitude.toString(),
+            },
+          );
+
+      final res = await http
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        return GeocodingPlace.fromJson(json);
+      }
+    } catch (e) {
+      debugPrint('Error reverse geocoding: $e');
+    }
+    return null;
+  }
 }

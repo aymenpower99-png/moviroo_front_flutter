@@ -17,16 +17,12 @@ class HomeHeader extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 14),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  isDark
-                      ? 'images/moviroo dark mode.png'
-                      : 'images/moviroo light mode.png',
-                  width: 65,
-                  height: 65,
-                  fit: BoxFit.cover,
-                ),
+              child: Image.asset(
+                isDark
+                    ? 'images/logo/moviroo dark_light_big.png'
+                    : 'images/logo/moviroo light_dark_big.png',
+                height: 40,
+                fit: BoxFit.contain,
               ),
             ),
           ],

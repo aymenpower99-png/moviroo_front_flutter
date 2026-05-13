@@ -335,4 +335,13 @@ class BookingApiService {
       throw Exception('Failed to set default card: ${response.body}');
     }
   }
+
+  /// Download the invoice/receipt PDF for a ride.
+  /// Backend route: GET /billing/invoices/:rideId
+  /// Returns the public download URL (caller opens it via url_launcher).
+  Future<String> getReceiptDownloadUrl(String rideId) async {
+    // The backend serves the PDF directly; we construct the URL so the
+    // caller can open it with url_launcher (system browser handles download).
+    return '${AppConfig.baseUrl}/billing/invoices/$rideId';
+  }
 }

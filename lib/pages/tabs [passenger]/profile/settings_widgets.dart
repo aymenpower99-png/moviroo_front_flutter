@@ -89,6 +89,7 @@ class SettingsRowTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLogout = item.isLogout;
+    final isDangerous = item.isDangerous;
 
     return GestureDetector(
       onTap: item.onTap,
@@ -107,14 +108,16 @@ class SettingsRowTile extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: isLogout
+                color: isLogout || isDangerous
                     ? AppColors.error.withValues(alpha: 0.12)
                     : AppColors.iconBg(context),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 item.icon,
-                color: isLogout ? AppColors.error : AppColors.primaryPurple,
+                color: isLogout || isDangerous
+                    ? AppColors.error
+                    : AppColors.primaryPurple,
                 size: 20,
               ),
             ),
@@ -128,9 +131,9 @@ class SettingsRowTile extends StatelessWidget {
                 children: [
                   Text(
                     item.title,
-                    style: AppTextStyles.settingsItem(
-                      context,
-                    ).copyWith(color: isLogout ? AppColors.error : null),
+                    style: AppTextStyles.settingsItem(context).copyWith(
+                      color: isLogout || isDangerous ? AppColors.error : null,
+                    ),
                   ),
                   if (item.subtitle != null) ...[
                     const SizedBox(height: 2),
@@ -151,7 +154,7 @@ class SettingsRowTile extends StatelessWidget {
               ),
               const SizedBox(width: 6),
             ],
-            if (!isLogout)
+            if (!isLogout && !isDangerous)
               Icon(
                 Icons.chevron_right_rounded,
                 color: AppColors.subtext(context),

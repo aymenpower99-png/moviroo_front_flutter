@@ -68,12 +68,18 @@ class AuthService {
     required String email,
     required String password,
     String? phone,
+    bool? termsOfServiceConsent,
+    bool? locationTrackingConsent,
+    bool? marketingConsent,
   }) => AuthAPI.register(
     firstName: firstName,
     lastName: lastName,
     email: email,
     password: password,
     phone: phone,
+    termsOfServiceConsent: termsOfServiceConsent,
+    locationTrackingConsent: locationTrackingConsent,
+    marketingConsent: marketingConsent,
   );
 
   Future<Map<String, dynamic>> verifyEmail({
@@ -225,8 +231,7 @@ class AuthService {
   Future<Map<String, dynamic>> verifyPasskey(
     String method, {
     String purpose = 'general',
-  }) =>
-      SecurityApi.verifyPasskey(method, purpose: purpose);
+  }) => SecurityApi.verifyPasskey(method, purpose: purpose);
 
   Future<void> requestDeleteOtp() => SecurityApi.requestDeleteOtp();
 
@@ -246,8 +251,7 @@ class AuthService {
 
   // ─── Active Sessions ───────────────────────────────────────────────────────
 
-  Future<List<Map<String, dynamic>>> getSessions() =>
-      SecurityApi.getSessions();
+  Future<List<Map<String, dynamic>>> getSessions() => SecurityApi.getSessions();
 
   Future<void> revokeAllSessions() async {
     await SecurityApi.revokeAllSessions();

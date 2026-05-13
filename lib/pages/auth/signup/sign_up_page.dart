@@ -17,6 +17,9 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _obscurePassword = true;
   bool _isLoading = false;
   String? _errorMessage;
+  bool _termsOfServiceConsent = false;
+  bool _locationTrackingConsent = false;
+  bool _marketingConsent = false;
 
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -86,6 +89,19 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
+    if (!_termsOfServiceConsent) {
+      setState(() => _errorMessage = 'You must accept the Terms of Service');
+      return;
+    }
+
+    if (!_locationTrackingConsent) {
+      setState(
+        () =>
+            _errorMessage = 'You must accept Location Tracking to use the app',
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -98,6 +114,9 @@ class _SignUpPageState extends State<SignUpPage> {
         email: email,
         password: password,
         phone: '+216$phone',
+        termsOfServiceConsent: _termsOfServiceConsent,
+        locationTrackingConsent: _locationTrackingConsent,
+        marketingConsent: _marketingConsent,
       );
 
       if (mounted) {
@@ -221,6 +240,10 @@ class _SignUpPageState extends State<SignUpPage> {
 
                     _buildPasswordField(context, t),
 
+                    const SizedBox(height: 24),
+
+                    _buildConsentCheckboxes(context, t),
+
                     const SizedBox(height: 32),
 
                     _buildErrorAndButton(context, t),
@@ -250,17 +273,13 @@ class _SignUpPageState extends State<SignUpPage> {
     return Column(
       children: [
         // ── Logo ──────────────────────────────────────────────
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Image.asset(
+        Image.asset(
             isDark
-                ? 'images/moviroo dark mode.png'
-                : 'images/moviroo light mode.png',
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
+                ? 'images/logo/moviroo dark_light_big.png'
+                : 'images/logo/moviroo light_dark_big.png',
+            height: 40,
+            fit: BoxFit.contain,
           ),
-        ),
 
         const SizedBox(height: 28),
 
@@ -454,6 +473,65 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
         PasswordStrengthBar(password: _passwordController.text),
         PasswordRequirementsChecklist(password: _passwordController.text),
+      ],
+    );
+  }
+
+  Widget _buildConsentCheckboxes(BuildContext context, AppLocalizations t) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Terms of Service (Required)
+        CheckboxListTile(
+          value: _termsOfServiceConsent,
+          onChanged: (value) =>
+              setState(() => _termsOfServiceConsent = value ?? false),
+          title: Text(
+            'I accept the Terms of Service',
+            style: AppTextStyles.bodySmall(context),
+          ),
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+          checkboxShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Location Tracking (Required)
+        CheckboxListTile(
+          value: _locationTrackingConsent,
+          onChanged: (value) =>
+              setState(() => _locationTrackingConsent = value ?? false),
+          title: Text(
+            'I consent to Location Tracking for ride services',
+            style: AppTextStyles.bodySmall(context),
+          ),
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+          checkboxShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Marketing (Optional)
+        CheckboxListTile(
+          value: _marketingConsent,
+          onChanged: (value) =>
+              setState(() => _marketingConsent = value ?? false),
+          title: Text(
+            'I consent to receive marketing communications (optional)',
+            style: AppTextStyles.bodySmall(
+              context,
+            ).copyWith(color: AppColors.subtext(context)),
+          ),
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+          checkboxShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
       ],
     );
   }

@@ -209,6 +209,8 @@
   "month_dec": "Dec",
   "select_on_map": "Select on map",
   "select_on_map_sub": "Choose a location on the map",
+  "nearby_places": "Nearby places",
+  "recent_searches": "Recent searches",
   "current_location": "Current Location",
   "whos_riding": "Who's riding?",
   "add_new_contact": "Add New Contact",

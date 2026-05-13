@@ -7,6 +7,7 @@ class SettingsItem {
   final String? trailing;
   final VoidCallback? onTap;
   final bool isLogout;
+  final bool isDangerous;
 
   const SettingsItem({
     required this.icon,
@@ -15,6 +16,7 @@ class SettingsItem {
     this.trailing,
     this.onTap,
     this.isLogout = false,
+    this.isDangerous = false,
   });
 }
 

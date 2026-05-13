@@ -53,7 +53,7 @@ class _SettingsPageState extends State<SettingsPage> {
       t: t,
       onPersonalData: _goToPersonalData,
       onPayments: () {},
-      onSavedPlaces: _goToSavedPlaces, // ← wired up
+      onSavedPlaces: _goToSavedPlaces,
       onLogout: _handleLogout,
       onNotifications: _goToNotifications,
       onSettings: _goToSettings,
@@ -185,6 +185,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+
 }
 
 // ── Top bar ───────────────────────────────────────────────────────────────────

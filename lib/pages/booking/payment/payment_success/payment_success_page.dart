@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moviroo/routing/router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -23,6 +24,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
   final BookingApiService _bookingApi = BookingApiService();
   Map<String, dynamic>? _bookingData;
   bool _isLoading = true;
+  bool _isDownloading = false;
 
   @override
   void initState() {
@@ -125,6 +127,32 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
     return '$hour:$minute $period';
   }
 
+  Future<void> _downloadReceipt() async {
+    final bookingId = widget.bookingId;
+    if (bookingId == null) return;
+
+    setState(() => _isDownloading = true);
+    try {
+      final url = await _bookingApi.getReceiptDownloadUrl(bookingId);
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open receipt')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Download failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t        = AppLocalizations.of(context);
@@ -219,7 +247,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
                 width: double.infinity,
                 height: 52,
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: _isDownloading ? null : _downloadReceipt,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.text(context),
                     side: BorderSide(
@@ -230,12 +258,21 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: Text(
-                    t.translate('download_receipt'),
-                    style: AppTextStyles.bodyLarge(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.w700, fontSize: 16),
-                  ),
+                  child: _isDownloading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primaryPurple,
+                          ),
+                        )
+                      : Text(
+                          t.translate('download_receipt'),
+                          style: AppTextStyles.bodyLarge(
+                            context,
+                          ).copyWith(fontWeight: FontWeight.w700, fontSize: 16),
+                        ),
                 ),
               ),
 

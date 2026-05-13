@@ -13,6 +13,7 @@ class LocationScreenUIHandlers {
   final FocusNode toFocus;
   final List<GeocodingPlace> suggestions;
   final List<GeocodingPlace> recentSearches;
+  final List<GeocodingPlace> dropoffRecentSearches;
   final List<Map<String, String?>> riders;
 
   final void Function(VoidCallback fn) setState;
@@ -28,6 +29,7 @@ class LocationScreenUIHandlers {
     required this.toFocus,
     required this.suggestions,
     required this.recentSearches,
+    required this.dropoffRecentSearches,
     required this.riders,
     required this.setState,
     required this.setIsCardFocused,
@@ -41,12 +43,24 @@ class LocationScreenUIHandlers {
   }
 
   Future<void> loadRecentSearches() async {
-    final pickup = await RecentSearchesService.getPickupRecentSearches();
-    if (state.mounted) {
-      setState(() {
-        recentSearches.clear();
-        recentSearches.addAll(pickup);
-      });
+    if (!state.mounted) return;
+
+    if (toFocus.hasFocus) {
+      final dropoff = await RecentSearchesService.getDropoffRecentSearches();
+      if (state.mounted) {
+        setState(() {
+          dropoffRecentSearches.clear();
+          dropoffRecentSearches.addAll(dropoff);
+        });
+      }
+    } else {
+      final pickup = await RecentSearchesService.getPickupRecentSearches();
+      if (state.mounted) {
+        setState(() {
+          recentSearches.clear();
+          recentSearches.addAll(pickup);
+        });
+      }
     }
   }
 
