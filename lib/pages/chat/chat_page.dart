@@ -68,7 +68,10 @@ class _ChatPageState extends State<ChatPage> {
 
     // Load history from provider (uses cache if available)
     final chatProvider = context.read<ChatProvider>();
-    await chatProvider.fetchMessages(widget.rideId);
+    await chatProvider.fetchMessages(
+      widget.rideId,
+      currentUserId: _currentUserId,
+    );
 
     if (mounted) {
       _scrollToBottom();
@@ -90,16 +93,18 @@ class _ChatPageState extends State<ChatPage> {
     // Avoid duplicates (we already added optimistic local messages)
     if (chatProvider.getMessages(widget.rideId).any((m) => m.id == msg.id))
       return;
-    // Remove optimistic placeholder if this is our own message
+
+    // Remove optimistic placeholder safely if this is our own message
     if (msg.senderId == _currentUserId) {
-      chatProvider.deleteMessage(
-        widget.rideId,
-        chatProvider
-            .getMessages(widget.rideId)
-            .firstWhere((m) => m.id.startsWith('local_') && m.text == msg.text)
-            .id,
-      );
+      final localPlaceholders = chatProvider
+          .getMessages(widget.rideId)
+          .where((m) => m.id.startsWith('local_') && m.text == msg.text)
+          .toList();
+      if (localPlaceholders.isNotEmpty) {
+        chatProvider.deleteMessage(widget.rideId, localPlaceholders.first.id);
+      }
     }
+
     if (mounted) {
       chatProvider.addMessage(widget.rideId, _chatMsgToUI(msg));
       _scrollToBottom();
@@ -138,21 +143,34 @@ class _ChatPageState extends State<ChatPage> {
 
   // ── Send text ───────────────────────────────────────────
   void _sendMessage(String text) {
-    if (text.trim().isEmpty ||
-        widget.rideId.isEmpty ||
-        _currentUserId == null) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty || widget.rideId.isEmpty || _currentUserId == null) {
       return;
     }
 
+    // 1. Optimistic UI — add message immediately before WebSocket round-trip
+    final localId = 'local_${DateTime.now().millisecondsSinceEpoch}';
+    final optimisticMsg = ChatMessage(
+      id: localId,
+      text: trimmed,
+      isMe: true,
+      time: _formatTime(DateTime.now()),
+      senderId: _currentUserId,
+      senderRole: 'passenger',
+      createdAt: DateTime.now(),
+    );
+    context.read<ChatProvider>().addMessage(widget.rideId, optimisticMsg);
+    _scrollToBottom();
+
+    // 2. Emit via WebSocket
     _chatService.sendMessage(
       rideId: widget.rideId,
       senderId: _currentUserId!,
       senderRole: 'passenger',
-      text: text.trim(),
+      text: trimmed,
     );
 
     _input.clear();
-    _scrollToBottom();
   }
 
   void _scrollToBottom() {

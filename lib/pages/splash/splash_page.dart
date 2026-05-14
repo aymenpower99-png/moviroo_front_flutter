@@ -4,6 +4,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import '../../routing/router.dart';
 import '../../services/auth_service/auth_service.dart';
+import '../../services/notification_service.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -72,15 +73,17 @@ class _SplashPageState extends State<SplashPage> {
     _sessionOk = await _authService.tryRestoreSession();
   }
 
-  void _goNext() {
+  void _goNext() async {
     if (!mounted || _navigated) return;
 
     _navigated = true;
 
     if (_sessionOk) {
-      AppRouter.clearAndGo(context, AppRouter.home);
+      // User was already logged in — register FCM token
+      await NotificationService().registerTokenAfterLogin();
+      if (mounted) AppRouter.clearAndGo(context, AppRouter.home);
     } else {
-      AppRouter.clearAndGo(context, AppRouter.login);
+      if (mounted) AppRouter.clearAndGo(context, AppRouter.login);
     }
   }
 

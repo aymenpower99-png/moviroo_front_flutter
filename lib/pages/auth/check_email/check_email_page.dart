@@ -4,6 +4,7 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../routing/router.dart';
 import '../../../../services/auth_service/auth_service.dart';
+import '../../../../services/notification_service.dart';
 
 class CheckEmailPage extends StatefulWidget {
   const CheckEmailPage({super.key});
@@ -68,6 +69,10 @@ class _CheckEmailPageState extends State<CheckEmailPage> {
 
     try {
       final result = await _authService.login(email: email, password: password);
+
+      // Register FCM token now that user is authenticated
+      await NotificationService().registerTokenAfterLogin();
+
       if (mounted) {
         if (result['requiresVerification'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(

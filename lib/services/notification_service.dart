@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'auth_service/auth_service.dart';
 
+/// Payload callback when user taps a notification.
+typedef NotificationTapCallback = void Function(Map<String, dynamic> data);
+
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
@@ -13,8 +16,12 @@ class NotificationService {
   final AuthService _authService = AuthService();
 
   bool _initialized = false;
+  String? _pendingToken; // holds token until login registers it
 
   bool get initialized => _initialized;
+
+  /// Called when user taps a notification (foreground / background / terminated).
+  NotificationTapCallback? onNotificationTap;
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -30,13 +37,15 @@ class NotificationService {
       debugPrint('🔔 FCM token: ${token?.substring(0, 20) ?? "null"}...');
 
       if (token != null) {
-        await _registerToken(token);
+        // Do NOT register here — user may not be logged in yet.
+        _pendingToken = token;
       } else {
         debugPrint('❌ FCM token is null');
       }
 
       _messaging.onTokenRefresh.listen((newToken) {
         debugPrint('🔔 FCM token refreshed');
+        _pendingToken = newToken;
         _registerToken(newToken);
       });
 
@@ -47,6 +56,17 @@ class NotificationService {
       debugPrint('✅ Notification service initialized');
     } catch (e) {
       debugPrint('❌ Failed to initialize notification service: $e');
+    }
+  }
+
+  /// Call this AFTER the user successfully logs in.
+  /// Registers the stored FCM token with the backend.
+  Future<void> registerTokenAfterLogin() async {
+    if (_pendingToken != null) {
+      await _registerToken(_pendingToken!);
+    } else {
+      final token = await _messaging.getToken();
+      if (token != null) await _registerToken(token);
     }
   }
 
@@ -89,7 +109,19 @@ class NotificationService {
           iOS: initializationSettingsIOS,
         );
 
-    await _localNotifications.initialize(initializationSettings);
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (response) {
+        if (response.payload != null) {
+          try {
+            final data = _parsePayload(response.payload!);
+            onNotificationTap?.call(data);
+          } catch (e) {
+            debugPrint('❌ Failed to parse notification payload: $e');
+          }
+        }
+      },
+    );
 
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'moviroo_channel',
@@ -146,10 +178,33 @@ class NotificationService {
         payload: message.data.toString(),
       );
     }
+
+    // Also propagate data payload to any listeners
+    if (message.data.isNotEmpty) {
+      onNotificationTap?.call(message.data);
+    }
   }
 
   Future<void> _handleMessageOpened(RemoteMessage message) async {
     debugPrint('📩 Message opened: ${message.data}');
+    if (message.data.isNotEmpty) {
+      onNotificationTap?.call(message.data);
+    }
+  }
+
+  Map<String, dynamic> _parsePayload(String payload) {
+    // payload is currently the .toString() of a Map, e.g.
+    // {ride_id: abc123, type: DRIVER_ASSIGNED}
+    // We'll do a lightweight parse.
+    final result = <String, dynamic>{};
+    final clean = payload.replaceAll(RegExp(r'^[^{]*\{|}[^}]*$'), '');
+    for (final entry in clean.split(',')) {
+      final parts = entry.split(':');
+      if (parts.length == 2) {
+        result[parts[0].trim()] = parts[1].trim();
+      }
+    }
+    return result;
   }
 
   Future<String?> getToken() async {

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:moviroo/routing/router.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -146,9 +145,9 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
       final token = await TokenStorage.getAccess();
 
       final dio = Dio();
-      final tempDir = await getTemporaryDirectory();
+      final docsDir = await getApplicationDocumentsDirectory();
       final fileName = 'moviroo-receipt-${bookingId.substring(0, 8).toUpperCase()}.pdf';
-      final savePath = '${tempDir.path}/$fileName';
+      final savePath = '${docsDir.path}/$fileName';
 
       await dio.download(
         url,
@@ -159,9 +158,14 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
       );
 
       if (!mounted) return;
-      await Share.shareXFiles(
-        [XFile(savePath)],
-        subject: 'Moviroo Ride Receipt',
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Receipt saved: $fileName'),
+          action: SnackBarAction(
+            label: 'OK',
+            onPressed: () {},
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;

@@ -7,6 +7,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:app_links/app_links.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'routing/router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
@@ -25,6 +27,15 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 final themeProvider = ThemeProvider();
 final localeProvider = LocaleProvider();
 
+/// Global navigator key for notification tap navigation from anywhere.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('📩 Background message: ${message.messageId}');
+}
+
 void main() async {
   debugPrint('🚀 App starting...');
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -38,8 +49,11 @@ void main() async {
     'pk.eyJ1IjoiYXltb3VuMTEiLCJhIjoiY21vM2JvY3UzMGtrdzJzcXc0cXZwbmE5eiJ9.LcnOY7q-WQ37STLy7wogRA',
   );
 
-  // Init services BEFORE app start
+  // Init Firebase BEFORE anything else
   await FirebaseService.initialize();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Init notification service (does NOT register token yet — waits for login)
   await NotificationService().initialize();
   await RecentSearchesService.clearOldCache();
   await CurrencyService.instance.init();
@@ -73,6 +87,71 @@ class _SmartWayAppState extends State<SmartWayApp> {
   void initState() {
     super.initState();
     _initDeepLinks();
+    _initNotificationTapHandler();
+  }
+
+  void _initNotificationTapHandler() {
+    NotificationService().onNotificationTap = (data) {
+      final type = data['type']?.toString() ?? '';
+      final rideId = data['ride_id']?.toString() ?? '';
+      final driverName = data['driver_name']?.toString();
+      final driverId = data['driver_id']?.toString();
+      final vehicleName = data['vehicle_name']?.toString();
+      final vehicleColor = data['vehicle_color']?.toString();
+      final plateNumber = data['plate_number']?.toString();
+
+      debugPrint('🔔 Notification tap — type: $type, rideId: $rideId');
+
+      final nav = navigatorKey.currentState;
+      if (nav == null) return;
+
+      switch (type) {
+        case 'DRIVER_ASSIGNED':
+        case 'DRIVER_ARRIVED':
+        case 'RIDE_STARTED':
+        case 'RIDE_COMPLETED':
+          if (rideId.isNotEmpty) {
+            nav.pushNamed(
+              AppRouter.trackRide,
+              arguments: {
+                'rideId': rideId,
+                'driverName': driverName ?? 'Driver',
+                'vehicleName': vehicleName ?? '',
+                'vehicleColor': vehicleColor ?? '',
+                'plateNumber': plateNumber ?? '',
+              },
+            );
+          }
+          break;
+        case 'CHAT_MESSAGE':
+          if (rideId.isNotEmpty) {
+            nav.pushNamed(
+              AppRouter.chat,
+              arguments: {
+                'rideId': rideId,
+                'driverName': driverName ?? 'Driver',
+                'driverId': driverId,
+                'vehicleName': vehicleName ?? '',
+                'vehicleColor': vehicleColor ?? '',
+                'plateNumber': plateNumber ?? '',
+              },
+            );
+          }
+          break;
+        case 'RIDE_CANCELLED':
+          nav.pushNamedAndRemoveUntil(
+            AppRouter.trajet,
+            (route) => false,
+          );
+          break;
+        default:
+          // Unknown type — fall back to home
+          nav.pushNamedAndRemoveUntil(
+            AppRouter.home,
+            (route) => false,
+          );
+      }
+    };
   }
 
   @override
@@ -156,6 +235,7 @@ class _SmartWayAppState extends State<SmartWayApp> {
             child: MaterialApp(
               title: 'Moviroo',
               debugShowCheckedModeBanner: false,
+              navigatorKey: navigatorKey,
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
               themeMode: themeProvider.mode,

@@ -4,6 +4,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth_service/auth_service.dart';
+import '../../../../services/notification_service.dart';
 import '../../../../routing/router.dart';
 
 class OtpPage extends StatefulWidget {
@@ -91,6 +92,10 @@ class _OtpPageState extends State<OtpPage> {
           code: otp,
         );
         await _authService.getCurrentUser(forceRefresh: true);
+
+        // Register FCM token now that user is authenticated
+        await NotificationService().registerTokenAfterLogin();
+
         if (mounted) {
           AppRouter.clearAndGo(context, AppRouter.home);
         }

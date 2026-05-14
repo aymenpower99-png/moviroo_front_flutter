@@ -32,31 +32,31 @@ class ChatProvider with ChangeNotifier {
   }
   
   /// Fetch messages from backend if not already cached.
-  /// Returns cached messages immediately if available.
-  Future<void> fetchMessages(String rideId) async {
+  /// [currentUserId] is required to correctly set `isMe` on each message.
+  Future<void> fetchMessages(String rideId, {String? currentUserId}) async {
     // Return early if already cached
     if (_chatsByRideId.containsKey(rideId)) {
       debugPrint('📦 [ChatProvider] Using cached messages for ride: $rideId');
       return;
     }
-    
+
     _loadingByRideId[rideId] = true;
     _errorByRideId[rideId] = null;
     notifyListeners();
-    
+
     try {
       debugPrint('📦 [ChatProvider] Fetching messages for ride: $rideId');
       final history = await _chatService.fetchHistory(rideId);
-      
-      // Get current user ID from first message
-      if (history.isNotEmpty && _currentUserId == null) {
-        _currentUserId = history.first.senderId;
+
+      // Use provided currentUserId; do NOT guess from first message.
+      if (currentUserId != null) {
+        _currentUserId = currentUserId;
       }
-      
+
       _chatsByRideId[rideId] = history.map((m) => _chatMsgToUI(m)).toList();
       _loadingByRideId[rideId] = false;
       notifyListeners();
-      
+
       debugPrint('📦 [ChatProvider] Loaded ${history.length} messages for ride: $rideId');
     } catch (e) {
       _errorByRideId[rideId] = e.toString();

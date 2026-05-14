@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../services/auth_service/auth_service.dart';
+import '../../../../services/notification_service.dart';
 import '../../../../routing/router.dart';
 
 Future<void> handleLogin({
@@ -63,6 +64,10 @@ Future<void> handleLogin({
 
     // Normal login — pre-cache user data so profile page doesn't refetch
     await authService.getCurrentUser(forceRefresh: true);
+
+    // Register FCM token now that user is authenticated
+    await NotificationService().registerTokenAfterLogin();
+
     if (context.mounted) {
       AppRouter.clearAndGo(context, AppRouter.home);
     }
@@ -110,6 +115,10 @@ Future<void> handleGoogleSignIn({
     } else {
       // Existing user with full profile — go straight to home
       await authService.getCurrentUser(forceRefresh: true);
+
+      // Register FCM token now that user is authenticated
+      await NotificationService().registerTokenAfterLogin();
+
       if (context.mounted) {
         AppRouter.clearAndGo(context, AppRouter.home);
       }
