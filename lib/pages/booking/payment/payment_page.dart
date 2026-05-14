@@ -146,7 +146,11 @@ class _PaymentPageState extends State<PaymentPage> {
         ephemeralKey: intentData['ephemeralKey'] as String?,
       );
 
-      // 4. Mark coupon used now that payment succeeded.
+      // 4. Tell backend that Stripe PaymentSheet succeeded.
+      //    This marks payment PAID and transitions ride status.
+      await _bookingApi.confirmCardPaymentSuccess(bookingId);
+
+      // 5. Mark coupon used now that payment succeeded.
       final couponCode = _bookingData?['couponCode'] as String?;
       if (couponCode != null && couponCode.isNotEmpty) {
         try {
@@ -158,18 +162,18 @@ class _PaymentPageState extends State<PaymentPage> {
       context.read<BookingProvider>().onPaymentCompleted();
       setState(() => _isProcessing = false);
 
-      // 5. Navigate to booking confirmed (awaiting driver assignment).
-      //    The booking_confirmed page polls and updates UI when driver is assigned.
+      // 6. Navigate to payment success page.
       Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRouter.bookingConfirmed,
+        AppRouter.paymentSuccess,
         (route) => false,
-        arguments: {'bookingId': bookingId},
+        arguments: {'bookingId': bookingId, 'paymentMethod': 'card'},
       );
     } on StripeException catch (e) {
       if (!mounted) return;
       setState(() => _isProcessing = false);
       final msg = e.error.localizedMessage ?? 'Payment cancelled';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      // Payment was cancelled / failed — ride stays PENDING, no rollback needed
     } catch (e) {
       if (!mounted) return;
       setState(() => _isProcessing = false);

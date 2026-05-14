@@ -8,8 +8,7 @@ class ReceiptCard extends StatelessWidget {
   final String refNumber;
   final String date;
   final String time;
-  final String cardBrand;
-  final String cardLast4;
+  final String paymentMethod;
 
   const ReceiptCard({
     super.key,
@@ -17,13 +16,13 @@ class ReceiptCard extends StatelessWidget {
     required this.refNumber,
     required this.date,
     required this.time,
-    required this.cardBrand,
-    required this.cardLast4,
+    required this.paymentMethod,
   });
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final isCash = paymentMethod.toLowerCase() == 'cash';
 
     return Container(
       width: double.infinity,
@@ -83,55 +82,74 @@ class ReceiptCard extends StatelessWidget {
                 const SizedBox(height: 14),
                 _ReceiptRow(
                   label: t.translate('receipt_payment_method'),
-                  valueWidget: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      // Mastercard icon
-                      Container(
-                        width: 32, height: 22,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Stack(
-                          alignment: Alignment.center,
+                  valueWidget: isCash
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Positioned(
-                              left: 6,
-                              child: Container(
-                                width: 14, height: 14,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFEB001B),
-                                  shape: BoxShape.circle,
-                                ),
+                            Icon(
+                              Icons.payments_outlined,
+                              size: 20,
+                              color: AppColors.primaryPurple,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Cash',
+                              style: AppTextStyles.bodyMedium(context).copyWith(
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                            Positioned(
-                              right: 6,
-                              child: Container(
-                                width: 14, height: 14,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFF79E1B),
-                                  shape: BoxShape.circle,
+                          ],
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Card icon
+                            Container(
+                              width: 32, height: 22,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Positioned(
+                                    left: 6,
+                                    child: Container(
+                                      width: 14, height: 14,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFEB001B),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: 6,
+                                    child: Container(
+                                      width: 14, height: 14,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFF79E1B),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Card',
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.bodyMedium(context).copyWith(
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          '$cardBrand **** $cardLast4',
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.bodyMedium(context).copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),

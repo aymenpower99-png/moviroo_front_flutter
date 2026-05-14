@@ -70,7 +70,10 @@ class AppRouter {
     paymentSuccess: (ctx) {
       final args =
           ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
-      return PaymentSuccessPage(bookingId: args?['bookingId'] as String?);
+      return PaymentSuccessPage(
+        bookingId: args?['bookingId'] as String?,
+        paymentMethod: args?['paymentMethod'] as String? ?? 'card',
+      );
     },
     rideDetails: (ctx) {
       final args =

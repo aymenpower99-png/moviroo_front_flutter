@@ -49,16 +49,33 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
           _bookingData = data;
           _isLoading = false;
         });
-        // For card rides in PENDING state, poll until status changes
-        final status = data?['status'] as String?;
-        final method = (data?['paymentMethod'] as String?)?.toUpperCase();
-        if (status == 'PENDING' && method == 'CARD') {
-          _startPolling();
-        }
+        _maybeStartPolling(data);
+        _maybeShowNoDriverModal(data);
       }
     } catch (e) {
       debugPrint('Failed to load booking data: $e');
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Start polling when the ride is in a transitional state.
+  void _maybeStartPolling(Map<String, dynamic>? data) {
+    final status = data?['status'] as String?;
+    // Poll while: PENDING (waiting for payment) or SEARCHING_DRIVER (waiting for assignment)
+    if (status == 'PENDING' || status == 'SEARCHING_DRIVER') {
+      _startPolling();
+    }
+  }
+
+  /// Show no-driver modal if the system cancelled the ride.
+  void _maybeShowNoDriverModal(Map<String, dynamic>? data) {
+    final status = data?['status'] as String?;
+    final cancelledBy = data?['cancelledBy'] as String?;
+    final wasCard =
+        (data?['paymentMethod'] as String?)?.toUpperCase() == 'CARD';
+
+    if (status == 'CANCELLED' && cancelledBy == 'SYSTEM') {
+      _showNoDriverDialog(wasCard);
     }
   }
 
@@ -72,11 +89,68 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
       final data = await _bookingApi.getRideDetails(widget.bookingId!);
       if (!mounted) return;
       final status = data?['status'] as String?;
-      if (status != null && status != 'PENDING') {
+      final cancelledBy = data?['cancelledBy'] as String?;
+      final wasCard =
+          (data?['paymentMethod'] as String?)?.toUpperCase() == 'CARD';
+
+      if (status == 'CANCELLED' && cancelledBy == 'SYSTEM') {
+        _pollTimer?.cancel();
+        setState(() => _bookingData = data);
+        _showNoDriverDialog(wasCard);
+        return;
+      }
+
+      if (status != null && status != 'PENDING' && status != 'SEARCHING_DRIVER') {
         _pollTimer?.cancel();
         setState(() => _bookingData = data);
       }
     });
+  }
+
+  void _showNoDriverDialog(bool wasCard) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.info_outline_rounded, color: AppColors.primaryPurple),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'No Drivers Available',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          wasCard
+              ? 'We could not find a driver for your booking. Your booking has been cancelled and your refund is being processed to your card within 5–10 business days.'
+              : 'We could not find a driver for your booking. Your booking has been cancelled.',
+          style: const TextStyle(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                AppRouter.trajet,
+                (route) => false,
+              );
+            },
+            child: Text(
+              'OK',
+              style: TextStyle(
+                color: AppColors.primaryPurple,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── Backend-first data accessors ─────────────────────────────────────────

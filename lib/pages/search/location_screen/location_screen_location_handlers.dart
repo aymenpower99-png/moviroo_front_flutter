@@ -290,6 +290,49 @@ class LocationScreenLocationHandlers {
       );
       return;
     }
+
+    // Validate that selected date/time is not in the past
+    final combinedDateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+    if (combinedDateTime.isBefore(DateTime.now())) {
+      ScaffoldMessenger.of(state.context).showSnackBar(
+        const SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+          backgroundColor: Color(0xFF323232),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+          duration: Duration(seconds: 3),
+          content: Row(
+            children: [
+              Icon(
+                Icons.access_time_filled_rounded,
+                color: Colors.orangeAccent,
+                size: 18,
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Selected time is in the past. Please choose a valid future time.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
     if (pickupLat == null || pickupLon == null) {
       ScaffoldMessenger.of(state.context).showSnackBar(
         const SnackBar(

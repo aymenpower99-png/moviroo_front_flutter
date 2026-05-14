@@ -336,6 +336,32 @@ class BookingApiService {
     }
   }
 
+  /// Confirm that the Stripe PaymentSheet succeeded (card payment).
+  /// Backend route: POST /billing/payments/ride/:rideId/confirm-card-success
+  /// Idempotent — marks payment PAID and transitions ride status.
+  Future<Map<String, dynamic>> confirmCardPaymentSuccess(String rideId) async {
+    final token = await TokenStorage.getAccess();
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    final response = await http
+        .post(
+          Uri.parse(
+            '${AppConfig.baseUrl}/billing/payments/ride/$rideId/confirm-card-success',
+          ),
+          headers: headers,
+          body: jsonEncode({}),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to confirm card payment: ${response.body}');
+  }
+
   /// Download the invoice/receipt PDF for a ride.
   /// Backend route: GET /billing/invoices/:rideId
   /// Returns the public download URL (caller opens it via url_launcher).

@@ -13,8 +13,13 @@ import '_ReceiptCard.dart';
 
 class PaymentSuccessPage extends StatefulWidget {
   final String? bookingId;
+  final String paymentMethod;
 
-  const PaymentSuccessPage({super.key, this.bookingId});
+  const PaymentSuccessPage({
+    super.key,
+    this.bookingId,
+    this.paymentMethod = 'card',
+  });
 
   @override
   State<PaymentSuccessPage> createState() => _PaymentSuccessPageState();
@@ -155,8 +160,9 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
 
   @override
   Widget build(BuildContext context) {
-    final t        = AppLocalizations.of(context);
+    final t = AppLocalizations.of(context);
     final currency = context.watch<CurrencyService>();
+    final isCash = widget.paymentMethod.toLowerCase() == 'cash';
 
     if (_isLoading) {
       return Scaffold(
@@ -180,7 +186,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
 
               // ── Title ──────────────────────────────────────
               Text(
-                t.translate('payment_successful'),
+                isCash ? 'Booking Confirmed' : t.translate('payment_successful'),
                 style: AppTextStyles.bodyLarge(context).copyWith(
                   fontWeight: FontWeight.w800,
                   fontSize: 22,
@@ -191,7 +197,9 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
 
               // ── Subtitle ───────────────────────────────────
               Text(
-                t.translate('payment_successful_subtitle'),
+                isCash
+                    ? 'Your ride has been booked successfully. A driver will be assigned shortly.'
+                    : t.translate('payment_successful_subtitle'),
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodyMedium(
                   context,
@@ -206,8 +214,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
                 refNumber: _formatRefNumber(),
                 date: _formatDate(),
                 time: _formatTime(),
-                cardBrand: 'Visa',
-                cardLast4: '4242',
+                paymentMethod: widget.paymentMethod,
               ),
 
               const Spacer(flex: 3),

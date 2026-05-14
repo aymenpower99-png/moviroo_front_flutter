@@ -178,11 +178,11 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           _isProcessing = false;
         });
 
-        // Navigate to Booking Confirmed Screen - only pass bookingId
+        // Navigate to Payment Success Screen
         AppRouter.push(
           context,
-          AppRouter.bookingConfirmed,
-          args: {'bookingId': rideId},
+          AppRouter.paymentSuccess,
+          args: {'bookingId': rideId, 'paymentMethod': 'cash'},
         );
       } catch (e) {
         if (mounted) {
