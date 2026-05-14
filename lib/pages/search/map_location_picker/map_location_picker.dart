@@ -3,6 +3,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 import 'package:geolocator/geolocator.dart';
 import '../../../theme/app_colors.dart';
 import '../../../../services/mapbox/mapbox_service.dart' as svc;
+import '../../../../services/geocoding/geocoding_service.dart';
 import 'widgets.dart';
 import 'utils.dart';
 
@@ -56,6 +57,10 @@ class _MapLocationPickerState extends State<MapLocationPicker>
   double _currentLon = _defaultLon;
   bool _isLoadingLocation = false;
   bool _isOutOfCoverage = false;
+
+  // ── Nearby places ────────────────────────────────────────────────────────
+  List<GeocodingPlace> _nearbyPlaces = [];
+  bool _isLoadingNearby = false;
 
   @override
   void initState() {
@@ -124,6 +129,45 @@ class _MapLocationPickerState extends State<MapLocationPicker>
       _pinController.forward(from: 0);
     }
     await _reverseGeocode();
+    await _fetchNearbyPlaces();
+  }
+
+  /// Fetch nearby places around the current map center.
+  Future<void> _fetchNearbyPlaces() async {
+    if (_isOutOfCoverage) {
+      setState(() => _nearbyPlaces = []);
+      return;
+    }
+    setState(() => _isLoadingNearby = true);
+    try {
+      final places = await GeocodingService().getNearbyPlaces(
+        _currentLat,
+        _currentLon,
+      );
+      if (mounted) {
+        setState(() {
+          _nearbyPlaces = places;
+          _isLoadingNearby = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch nearby places: $e');
+      if (mounted) setState(() => _isLoadingNearby = false);
+    }
+  }
+
+  /// Fly map to a selected nearby place.
+  void _onNearbyPlaceSelected(GeocodingPlace place) {
+    if (place.latitude == null || place.longitude == null) return;
+    _mapboxMap?.flyTo(
+      mbx.CameraOptions(
+        center: mbx.Point(
+          coordinates: mbx.Position(place.longitude!, place.latitude!),
+        ),
+        zoom: 16.0,
+      ),
+      mbx.MapAnimationOptions(duration: 600),
+    );
   }
 
   // ── Reverse geocoding ────────────────────────────────────────────────────
@@ -296,6 +340,9 @@ class _MapLocationPickerState extends State<MapLocationPicker>
                   _addressController.text.trim().isEmpty || _isOutOfCoverage
                   ? null
                   : _handleConfirm,
+              nearbyPlaces: _nearbyPlaces,
+              isLoadingNearby: _isLoadingNearby,
+              onNearbyPlaceSelected: _onNearbyPlaceSelected,
             ),
           ),
 

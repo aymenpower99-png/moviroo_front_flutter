@@ -31,20 +31,20 @@ class BookingSummaryCard extends StatelessWidget {
           imageUrl != null && imageUrl!.isNotEmpty
               ? Image.network(
                   imageUrl!,
-                  width: 90,
-                  height: 60,
+                  width: 120,
+                  height: 80,
                   fit: BoxFit.contain,
                   errorBuilder: (_, _, _) => Image.asset(
                     'images/bmw.png',
-                    width: 90,
-                    height: 60,
+                    width: 120,
+                    height: 80,
                     fit: BoxFit.contain,
                   ),
                 )
               : Image.asset(
                   'images/bmw.png',
-                  width: 90,
-                  height: 60,
+                  width: 120,
+                  height: 80,
                   fit: BoxFit.contain,
                 ),
           const SizedBox(width: 14),

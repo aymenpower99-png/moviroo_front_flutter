@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_text_styles.dart';
+import '../../../../services/geocoding/geocoding_service.dart';
 
 class CenterPin extends StatelessWidget {
   const CenterPin({super.key});
@@ -196,6 +197,9 @@ class PickerBottomSheet extends StatelessWidget {
   final bool isLoading;
   final bool isOutOfCoverage;
   final VoidCallback? onConfirm;
+  final List<GeocodingPlace> nearbyPlaces;
+  final bool isLoadingNearby;
+  final ValueChanged<GeocodingPlace>? onNearbyPlaceSelected;
 
   const PickerBottomSheet({
     super.key,
@@ -204,6 +208,9 @@ class PickerBottomSheet extends StatelessWidget {
     required this.isLoading,
     required this.isOutOfCoverage,
     required this.onConfirm,
+    this.nearbyPlaces = const [],
+    this.isLoadingNearby = false,
+    this.onNearbyPlaceSelected,
   });
 
   @override
@@ -228,21 +235,84 @@ class PickerBottomSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Bold title (centered)
-            const Text(
-              'Your Pickup',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+            // Address display
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              decoration: BoxDecoration(
+                color: AppColors.bg(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: isLoading
+                  ? const Center(
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : Text(
+                      addressController.text.trim().isNotEmpty
+                          ? addressController.text
+                          : 'Drag map to select location',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodyMedium(context).copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 14),
 
-            // Subtitle (centered)
-            Text(
-              'Tap button to confirm',
-              style: AppTextStyles.bodySmall(context),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
+            // Nearby places
+            if (isLoadingNearby)
+              const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else if (nearbyPlaces.isNotEmpty) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Nearby',
+                  style: AppTextStyles.bodySmall(context).copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.subtext(context),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 38,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: nearbyPlaces.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final place = nearbyPlaces[index];
+                    return ActionChip(
+                      avatar: Icon(
+                        Icons.place_outlined,
+                        size: 16,
+                        color: AppColors.primaryPurple,
+                      ),
+                      label: Text(
+                        place.placeName,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      backgroundColor: AppColors.bg(context),
+                      side: BorderSide(color: AppColors.border(context)),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      onPressed: () => onNearbyPlaceSelected?.call(place),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
 
             // Confirm button
             ElevatedButton(

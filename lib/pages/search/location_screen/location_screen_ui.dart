@@ -220,7 +220,10 @@ class LocationScreenUI extends StatelessWidget {
                   color: AppColors.border(context).withValues(alpha: 0.5),
                 ),
                 itemBuilder: (context, index) {
-                  // 1. Autocomplete suggestions while typing
+                  // Compute section offsets
+                  int offset = 0;
+
+                  // Section 0: Autocomplete suggestions while typing
                   if (suggestions.isNotEmpty) {
                     if (index < suggestions.length) {
                       final place = suggestions[index];
@@ -229,11 +232,8 @@ class LocationScreenUI extends StatelessWidget {
                         onTap: () => onSuggestionTap(place),
                       );
                     }
-                    return const SizedBox.shrink();
+                    offset += suggestions.length;
                   }
-
-                  // Compute section offsets
-                  int offset = 0;
 
                   // Section A: "Select on map"
                   if (showSelectOnMap) {
@@ -270,22 +270,8 @@ class LocationScreenUI extends StatelessWidget {
                     offset += nearbyPlaces.length;
                   }
 
-                  // Section C: Recent searches header + list + clear button
+                  // Section C: Recent searches list + clear button
                   if (showRecent) {
-                    if (index == offset) {
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8, bottom: 4),
-                        child: Text(
-                          t.translate('recent_searches'),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.subtext(context),
-                          ),
-                        ),
-                      );
-                    }
-                    offset += 1;
                     final recentIndex = index - offset;
                     if (recentIndex >= 0 && recentIndex < activeRecentList.length) {
                       final place = activeRecentList[recentIndex];
@@ -333,7 +319,6 @@ class LocationScreenUI extends StatelessWidget {
                       ),
                     );
                   }
-
                   return const SizedBox.shrink();
                 },
               ),
@@ -383,12 +368,11 @@ class LocationScreenUI extends StatelessWidget {
     bool isLoadingNearbyPlaces,
     int activeRecentCount,
   ) {
-    if (suggestions.isNotEmpty) return suggestions.length;
-
     int count = 0;
+    if (suggestions.isNotEmpty) count += suggestions.length;
     if (showSelectOnMap) count += 1;
     if (showNearbyPlaces) count += 1 + nearbyPlaces.length; // header + items
-    if (showRecent) count += 1 + activeRecentCount + 1; // header + items + clear
+    if (showRecent) count += activeRecentCount + 1; // items + clear
     if (isLoadingSuggestions && count == 0) count += 1;
     if (isLoadingNearbyPlaces && count == 0) count += 1;
     return count;

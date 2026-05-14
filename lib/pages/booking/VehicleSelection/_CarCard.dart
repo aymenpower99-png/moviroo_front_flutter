@@ -165,6 +165,70 @@ class _CarCardState extends State<CarCard> {
   }
 }
 
+// ── Adaptive car image: handles network URLs and local assets ───────────────
+class _AdaptiveCarImage extends StatelessWidget {
+  final String? image;
+  final double? width;
+  final double? height;
+  final BoxFit fit;
+
+  const _AdaptiveCarImage({
+    this.image,
+    this.width,
+    this.height,
+    this.fit = BoxFit.contain,
+  });
+
+  bool get _isNetwork =>
+      image != null &&
+      (image!.startsWith('http://') || image!.startsWith('https://'));
+
+  @override
+  Widget build(BuildContext context) {
+    if (image == null || image!.isEmpty) {
+      return _FallbackCarImage(width: width, height: height);
+    }
+    if (_isNetwork) {
+      return Image.network(
+        image!,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (_, __, ___) =>
+            _FallbackCarImage(width: width, height: height),
+      );
+    }
+    return Image.asset(
+      image!,
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: (_, __, ___) =>
+          _FallbackCarImage(width: width, height: height),
+    );
+  }
+}
+
+class _FallbackCarImage extends StatelessWidget {
+  final double? width;
+  final double? height;
+  const _FallbackCarImage({this.width, this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width ?? 80,
+      height: height ?? 58,
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.directions_car_rounded,
+        size: 40,
+        color: AppColors.subtext(context),
+      ),
+    );
+  }
+}
+
 // ── Car image with dark ellipse shadow pod (like Uber/Bolt) ──────────────────
 class _CarImagePod extends StatelessWidget {
   final String image;
@@ -174,36 +238,30 @@ class _CarImagePod extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 100,
-      height: 66,
+      width: 120,
+      height: 80,
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
           // Shadow ellipse beneath car
           Container(
-            height: 12,
-            width: 80,
+            height: 14,
+            width: 95,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(50),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: isDark ? 0.55 : 0.18),
-                  blurRadius: 12,
+                  blurRadius: 14,
                   spreadRadius: 2,
                 ),
               ],
             ),
           ),
-          Image.asset(
-            image,
-            width: 100,
-            height: 58,
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => Icon(
-              Icons.directions_car_rounded,
-              size: 48,
-              color: AppColors.subtext(context),
-            ),
+          _AdaptiveCarImage(
+            image: image,
+            width: 120,
+            height: 70,
           ),
         ],
       ),
@@ -320,15 +378,10 @@ class _CarDetailSheetState extends State<_CarDetailSheet> {
           const SizedBox(height: 20),
           Center(
             child: SizedBox(
-              height: 120,
-              child: Image.asset(
-                widget.car.image,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => Icon(
-                  Icons.directions_car,
-                  size: 80,
-                  color: AppColors.subtext(context),
-                ),
+              height: 160,
+              child: _AdaptiveCarImage(
+                image: widget.car.image,
+                height: 160,
               ),
             ),
           ),

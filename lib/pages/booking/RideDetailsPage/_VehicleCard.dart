@@ -49,12 +49,12 @@ class VehicleCard extends StatelessWidget {
                 child: imageUrl != null && imageUrl!.isNotEmpty
                     ? Image.network(
                         imageUrl!,
-                        width: 75,
-                        height: 52,
+                        width: 100,
+                        height: 70,
                         fit: BoxFit.contain,
                         errorBuilder: (_, _, _) => Container(
-                          width: 75,
-                          height: 52,
+                          width: 100,
+                          height: 70,
                           decoration: BoxDecoration(
                             color: AppColors.border(context),
                             borderRadius: BorderRadius.circular(10),
@@ -66,8 +66,8 @@ class VehicleCard extends StatelessWidget {
                         ),
                       )
                     : Container(
-                        width: 75,
-                        height: 52,
+                        width: 100,
+                        height: 70,
                         decoration: BoxDecoration(
                           color: AppColors.border(context),
                           borderRadius: BorderRadius.circular(10),

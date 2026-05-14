@@ -1,10 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:moviroo/routing/router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
+import '../../../../core/storage/token_storage.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/booking_provider.dart';
 import '../../../../services/currency/currency_service.dart';
@@ -139,19 +143,58 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
     setState(() => _isDownloading = true);
     try {
       final url = await _bookingApi.getReceiptDownloadUrl(bookingId);
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (!mounted) return;
+      final token = await TokenStorage.getAccess();
+
+      final dio = Dio();
+      final tempDir = await getTemporaryDirectory();
+      final fileName = 'moviroo-receipt-${bookingId.substring(0, 8).toUpperCase()}.pdf';
+      final savePath = '${tempDir.path}/$fileName';
+
+      await dio.download(
+        url,
+        savePath,
+        options: Options(
+          headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+        ),
+      );
+
+      if (!mounted) return;
+      await Share.shareXFiles(
+        [XFile(savePath)],
+        subject: 'Moviroo Ride Receipt',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Download failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
+  }
+
+  Future<void> _cancelRide() async {
+    final bookingId = widget.bookingId;
+    if (bookingId == null) return;
+
+    setState(() => _isDownloading = true);
+    try {
+      final success = await _bookingApi.cancelRide(bookingId);
+      if (!mounted) return;
+      if (success) {
+        context.read<BookingProvider>().onBookingCancelled();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open receipt')),
+          const SnackBar(content: Text('Ride cancelled successfully')),
+        );
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRouter.trajet,
+          (route) => false,
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Download failed: $e')),
+        SnackBar(content: Text('Cancel failed: $e')),
       );
     } finally {
       if (mounted) setState(() => _isDownloading = false);
@@ -233,7 +276,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
                       alpha: 0.50,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(18),
                     ),
                   ),
                   child: Text(
@@ -249,38 +292,75 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
 
               const SizedBox(height: 12),
 
-              // ── Download Receipt button ────────────────────
+              // ── Secondary action button ────────────────────
               SizedBox(
                 width: double.infinity,
-                height: 52,
-                child: OutlinedButton(
-                  onPressed: _isDownloading ? null : _downloadReceipt,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.text(context),
-                    side: BorderSide(
-                      color: AppColors.border(context),
-                      width: 1.5,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: _isDownloading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primaryPurple,
+                height: 56,
+                child: isCash
+                    ? OutlinedButton(
+                        onPressed: _isDownloading ? null : _cancelRide,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(
+                            color: Colors.red,
+                            width: 1.5,
                           ),
-                        )
-                      : Text(
-                          t.translate('download_receipt'),
-                          style: AppTextStyles.bodyLarge(
-                            context,
-                          ).copyWith(fontWeight: FontWeight.w700, fontSize: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
                         ),
-                ),
+                        child: _isDownloading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.red,
+                                ),
+                              )
+                            : Text(
+                                'Cancel Ride',
+                                style: AppTextStyles.bodyLarge(
+                                  context,
+                                ).copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  color: Colors.red,
+                                ),
+                              ),
+                      )
+                    : OutlinedButton(
+                        onPressed: _isDownloading ? null : _downloadReceipt,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryPurple,
+                          side: BorderSide(
+                            color: AppColors.primaryPurple,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        child: _isDownloading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.primaryPurple,
+                                ),
+                              )
+                            : Text(
+                                t.translate('download_receipt'),
+                                style: AppTextStyles.bodyLarge(
+                                  context,
+                                ).copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  color: AppColors.primaryPurple,
+                                ),
+                              ),
+                      ),
               ),
 
               const SizedBox(height: 24),
