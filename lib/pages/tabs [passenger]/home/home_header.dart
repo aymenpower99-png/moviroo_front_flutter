@@ -21,7 +21,8 @@ class HomeHeader extends StatelessWidget {
                 isDark
                     ? 'images/logo/moviroo dark_light_big.png'
                     : 'images/logo/moviroo light_dark_big.png',
-                height: 40,
+                width: 140,
+                height: 48,
                 fit: BoxFit.contain,
               ),
             ),

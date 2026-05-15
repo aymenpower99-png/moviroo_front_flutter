@@ -158,11 +158,10 @@ class _MapLocationPickerState extends State<MapLocationPicker>
 
   /// Fly map to a selected nearby place.
   void _onNearbyPlaceSelected(GeocodingPlace place) {
-    if (place.latitude == null || place.longitude == null) return;
     _mapboxMap?.flyTo(
       mbx.CameraOptions(
         center: mbx.Point(
-          coordinates: mbx.Position(place.longitude!, place.latitude!),
+          coordinates: mbx.Position(place.longitude, place.latitude),
         ),
         zoom: 16.0,
       ),

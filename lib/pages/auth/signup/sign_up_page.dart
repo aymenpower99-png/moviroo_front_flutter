@@ -274,12 +274,13 @@ class _SignUpPageState extends State<SignUpPage> {
       children: [
         // ── Logo ──────────────────────────────────────────────
         Image.asset(
-            isDark
-                ? 'images/logo/moviroo dark_light_big.png'
-                : 'images/logo/moviroo light_dark_big.png',
-            height: 40,
-            fit: BoxFit.contain,
-          ),
+          isDark
+              ? 'images/logo/moviroo dark_light_big.png'
+              : 'images/logo/moviroo light_dark_big.png',
+          width: 140,
+          height: 48,
+          fit: BoxFit.contain,
+        ),
 
         const SizedBox(height: 28),
 
@@ -478,6 +479,12 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   Widget _buildConsentCheckboxes(BuildContext context, AppLocalizations t) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final checkboxTextStyle = AppTextStyles.bodySmall(context).copyWith(
+      fontSize: 14,
+      color: isDark ? Colors.white : Colors.black,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -488,7 +495,7 @@ class _SignUpPageState extends State<SignUpPage> {
               setState(() => _termsOfServiceConsent = value ?? false),
           title: Text(
             'I accept the Terms of Service',
-            style: AppTextStyles.bodySmall(context),
+            style: checkboxTextStyle,
           ),
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
@@ -505,7 +512,7 @@ class _SignUpPageState extends State<SignUpPage> {
               setState(() => _locationTrackingConsent = value ?? false),
           title: Text(
             'I consent to Location Tracking for ride services',
-            style: AppTextStyles.bodySmall(context),
+            style: checkboxTextStyle,
           ),
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
@@ -522,9 +529,7 @@ class _SignUpPageState extends State<SignUpPage> {
               setState(() => _marketingConsent = value ?? false),
           title: Text(
             'I consent to receive marketing communications (optional)',
-            style: AppTextStyles.bodySmall(
-              context,
-            ).copyWith(color: AppColors.subtext(context)),
+            style: checkboxTextStyle,
           ),
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,

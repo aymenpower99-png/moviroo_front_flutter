@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../routing/router.dart';
 import 'home_models.dart';
 
 class RecentRideCard extends StatelessWidget {
@@ -13,7 +14,11 @@ class RecentRideCard extends StatelessWidget {
     final t = AppLocalizations.of(context);
 
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        if (r.id != null) {
+          AppRouter.push(context, AppRouter.rideDetails, args: {'bookingId': r.id});
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(

@@ -15,12 +15,14 @@ class SuggestionModel {
 }
 
 class RecentRideModel {
+  final String? id;
   final String name;
   final String address;
   final String time;
   final String type;
 
   const RecentRideModel({
+    this.id,
     required this.name,
     required this.address,
     required this.time,

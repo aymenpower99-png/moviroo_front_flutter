@@ -108,12 +108,13 @@ class LoginWidgets {
       children: [
         // ── App Logo ──────────────────────────────────────────
         Image.asset(
-            isDark
-                ? 'images/logo/moviroo dark_light_big.png'
-                : 'images/logo/moviroo light_dark_big.png',
-            height: 40,
-            fit: BoxFit.contain,
-          ),
+          isDark
+              ? 'images/logo/moviroo dark_light_big.png'
+              : 'images/logo/moviroo light_dark_big.png',
+          width: 140,
+          height: 48,
+          fit: BoxFit.contain,
+        ),
 
         const SizedBox(height: 28),
 

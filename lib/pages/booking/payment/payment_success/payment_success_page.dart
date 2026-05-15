@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:moviroo/routing/router.dart';
 import 'package:dio/dio.dart';
@@ -38,8 +37,9 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
   void initState() {
     super.initState();
     // Notify provider that a booking was confirmed
+    final bookingProvider = context.read<BookingProvider>();
     Future.microtask(() {
-      context.read<BookingProvider>().onBookingConfirmed();
+      bookingProvider.onBookingConfirmed();
     });
 
     if (widget.bookingId != null) {

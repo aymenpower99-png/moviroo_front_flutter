@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> {
         return bDate.compareTo(aDate);
       });
 
-    return sorted.take(5).map((r) {
+    return sorted.take(3).map((r) {
       final createdAt = DateTime.tryParse(
         r['createdAt'] ?? r['created_at'] ?? '',
       );
@@ -110,6 +110,7 @@ class _HomePageState extends State<HomePage> {
       final className = vehicleClass?['name'] as String?;
 
       return RecentRideModel(
+        id: r['id']?.toString(),
         name: r['dropoffAddress'] ?? r['dropoff_address'] ?? 'Unknown',
         address: r['pickupAddress'] ?? r['pickup_address'] ?? '',
         time: createdAt != null ? _formatTimeAgo(createdAt) : '',

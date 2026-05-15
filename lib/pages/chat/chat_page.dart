@@ -49,6 +49,9 @@ class _ChatPageState extends State<ChatPage> {
       '🔵 [PassengerChat] Initializing chat with rideId: ${widget.rideId}',
     );
 
+    // Capture provider before any await (BuildContext rule)
+    final chatProvider = context.read<ChatProvider>();
+
     // Get current user ID from token storage
     _currentUserId = await TokenStorage.getUserId();
     debugPrint('🔵 [PassengerChat] User ID: $_currentUserId');
@@ -67,7 +70,6 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     // Load history from provider (uses cache if available)
-    final chatProvider = context.read<ChatProvider>();
     await chatProvider.fetchMessages(
       widget.rideId,
       currentUserId: _currentUserId,
@@ -91,8 +93,9 @@ class _ChatPageState extends State<ChatPage> {
   void _onNewMessage(ChatMsg msg) {
     final chatProvider = context.read<ChatProvider>();
     // Avoid duplicates (we already added optimistic local messages)
-    if (chatProvider.getMessages(widget.rideId).any((m) => m.id == msg.id))
+    if (chatProvider.getMessages(widget.rideId).any((m) => m.id == msg.id)) {
       return;
+    }
 
     // Remove optimistic placeholder safely if this is our own message
     if (msg.senderId == _currentUserId) {
@@ -403,8 +406,9 @@ class _ChatTopBar extends StatelessWidget {
   String get _vehicleInfo {
     final parts = <String>[];
     if (vehicleName != null && vehicleName!.isNotEmpty) parts.add(vehicleName!);
-    if (vehicleColor != null && vehicleColor!.isNotEmpty)
+    if (vehicleColor != null && vehicleColor!.isNotEmpty) {
       parts.add(vehicleColor!);
+    }
     if (plateNumber != null && plateNumber!.isNotEmpty) parts.add(plateNumber!);
     return parts.isNotEmpty ? parts.join(' • ') : 'Vehicle info';
   }
