@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../../../services/auth_service/auth_service.dart';
+import '../../../../../../services/passkey/passkey_service.dart';
 import '../../../../../../theme/app_colors.dart';
 
 class ActiveSessionsPage extends StatefulWidget {
@@ -12,8 +13,9 @@ class ActiveSessionsPage extends StatefulWidget {
 
 class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
   final _auth = AuthService();
+  final _biometric = BiometricService();
   List<Map<String, dynamic>> _sessions = [];
-  bool _loading = false; // ← never default to true
+  bool _loading = false;
   bool _revoking = false;
   String? _error;
 
@@ -46,6 +48,24 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
   }
 
   Future<void> _revokeAll() async {
+    // Step-up auth: if biometric is enabled, require device biometric first
+    final cached = _auth.getCachedUser();
+    final hasBiometric = (cached?['passkeyEnabled'] as bool?) ?? false;
+    if (hasBiometric) {
+      final challenge = await _biometric.challenge(
+        reason: 'Confirm your identity to sign out all devices.',
+        purpose: 'revoke-sessions',
+      );
+      if (!challenge.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(challenge.errorMessage ?? 'Authentication cancelled.')),
+          );
+        }
+        return;
+      }
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

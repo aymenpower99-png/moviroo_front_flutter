@@ -16,13 +16,13 @@ class HomeHeader extends StatelessWidget {
         child: Row(
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 14),
+              padding: const EdgeInsets.only(top: 10),
               child: Image.asset(
                 isDark
                     ? 'images/logo/moviroo dark_light_big.png'
                     : 'images/logo/moviroo light_dark_big.png',
-                width: 140,
-                height: 48,
+                width: 160,
+                height: 160,
                 fit: BoxFit.contain,
               ),
             ),

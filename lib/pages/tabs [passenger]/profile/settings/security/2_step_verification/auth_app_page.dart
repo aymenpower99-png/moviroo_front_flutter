@@ -195,8 +195,13 @@ class _SetupView extends StatefulWidget {
 }
 
 class _SetupViewState extends State<_SetupView> {
-  final _codeController = TextEditingController();
   bool _copied = false;
+
+  final List<TextEditingController> _otpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
 
   void _copySecret() {
     Clipboard.setData(ClipboardData(text: widget.secret));
@@ -206,9 +211,18 @@ class _SetupViewState extends State<_SetupView> {
     });
   }
 
+  String get _otp => _otpControllers.map((c) => c.text).join();
+
+  void _onOtpChanged(String value, int index) {
+    if (value.isNotEmpty && index < 5) {
+      _focusNodes[index + 1].requestFocus();
+    }
+  }
+
   @override
   void dispose() {
-    _codeController.dispose();
+    for (var c in _otpControllers) { c.dispose(); }
+    for (var f in _focusNodes) { f.dispose(); }
     super.dispose();
   }
 
@@ -288,9 +302,62 @@ class _SetupViewState extends State<_SetupView> {
           t('Open your authenticator app and enter the code shown.'),
           style: AppTextStyles.bodySmall(context),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
-        _OtpCodeField(controller: _codeController),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(6, (index) {
+            return Row(
+              children: [
+                if (index > 0) const SizedBox(width: 12),
+                SizedBox(
+                  width: 46,
+                  height: 56,
+                  child: TextField(
+                    controller: _otpControllers[index],
+                    focusNode: _focusNodes[index],
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    maxLength: 1,
+                    cursorColor: AppColors.primaryPurple,
+                    style: AppTextStyles.bodyLarge(context).copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      filled: true,
+                      fillColor: AppColors.surface(context),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.border(context),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.border(context),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.primaryPurple,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    onChanged: (value) => _onOtpChanged(value, index),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
 
         if (widget.errorMessage != null) ...[
           const SizedBox(height: 12),
@@ -326,7 +393,7 @@ class _SetupViewState extends State<_SetupView> {
         _PrimaryButton(
           label: t('Verify & Link'),
           isLoading: widget.isLoading,
-          onTap: () => widget.onLink(_codeController.text),
+          onTap: () => widget.onLink(_otp),
         ),
 
         const SizedBox(height: 24),
@@ -533,51 +600,6 @@ class _StepLabel extends StatelessWidget {
   }
 }
 
-class _OtpCodeField extends StatelessWidget {
-  final TextEditingController controller;
-  const _OtpCodeField({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      maxLength: 6,
-      textAlign: TextAlign.center,
-      style: AppTextStyles.bookingId(context).copyWith(letterSpacing: 8),
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: InputDecoration(
-        counterText: '',
-        hintText: '000000',
-        hintStyle: AppTextStyles.bodyLarge(
-          context,
-        ).copyWith(letterSpacing: 8, color: AppColors.subtext(context)),
-        filled: true,
-        fillColor: AppColors.surface(context),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border(context)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border(context)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: AppColors.primaryPurple,
-            width: 2,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _PrimaryButton extends StatelessWidget {
   final String label;
   final bool isLoading;
@@ -670,11 +692,24 @@ class _ConfirmUnlinkDialog extends StatefulWidget {
 }
 
 class _ConfirmUnlinkDialogState extends State<_ConfirmUnlinkDialog> {
-  final _controller = TextEditingController();
+  final List<TextEditingController> _otpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+
+  String get _otp => _otpControllers.map((c) => c.text).join();
+
+  void _onOtpChanged(String value, int index) {
+    if (value.isNotEmpty && index < 5) {
+      _focusNodes[index + 1].requestFocus();
+    }
+  }
 
   @override
   void dispose() {
-    _controller.dispose();
+    for (var c in _otpControllers) { c.dispose(); }
+    for (var f in _focusNodes) { f.dispose(); }
     super.dispose();
   }
 
@@ -704,43 +739,60 @@ class _ConfirmUnlinkDialogState extends State<_ConfirmUnlinkDialog> {
               style: AppTextStyles.bodySmall(context),
             ),
             const SizedBox(height: 20),
-            TextField(
-              controller: _controller,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              textAlign: TextAlign.center,
-              autofocus: true,
-              style: AppTextStyles.bookingId(context).copyWith(letterSpacing: 8),
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(
-                counterText: '',
-                hintText: '000000',
-                hintStyle: AppTextStyles.bodyLarge(context).copyWith(
-                  letterSpacing: 8,
-                  color: AppColors.subtext(context),
-                ),
-                filled: true,
-                fillColor: AppColors.bg(context),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.border(context)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.border(context)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: AppColors.primaryPurple,
-                    width: 2,
-                  ),
-                ),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(6, (index) {
+                return Row(
+                  children: [
+                    if (index > 0) const SizedBox(width: 10),
+                    SizedBox(
+                      width: 40,
+                      height: 50,
+                      child: TextField(
+                        controller: _otpControllers[index],
+                        focusNode: _focusNodes[index],
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        maxLength: 1,
+                        autofocus: index == 0,
+                        cursorColor: AppColors.primaryPurple,
+                        style: AppTextStyles.bodyLarge(context).copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          filled: true,
+                          fillColor: AppColors.bg(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: AppColors.border(context),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: AppColors.border(context),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.primaryPurple,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        onChanged: (value) => _onOtpChanged(value, index),
+                      ),
+                    ),
+                  ],
+                );
+              }),
             ),
             const SizedBox(height: 24),
             Row(
@@ -767,7 +819,7 @@ class _ConfirmUnlinkDialogState extends State<_ConfirmUnlinkDialog> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      final code = _controller.text.trim();
+                      final code = _otp.trim();
                       if (code.length == 6) Navigator.pop(context, code);
                     },
                     child: Container(

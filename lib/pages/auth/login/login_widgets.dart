@@ -111,8 +111,8 @@ class LoginWidgets {
           isDark
               ? 'images/logo/moviroo dark_light_big.png'
               : 'images/logo/moviroo light_dark_big.png',
-          width: 140,
-          height: 48,
+          width: 210,
+          height: 100,
           fit: BoxFit.contain,
         ),
 

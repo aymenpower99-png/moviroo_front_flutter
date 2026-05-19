@@ -5,6 +5,8 @@ import '../../../../../../../theme/app_text_styles.dart';
 import '../../../../../../../l10n/app_localizations.dart';
 import '../../../../../../../services/ride_api/booking_api_service.dart';
 import '../../../../../../../services/stripe/stripe_service.dart';
+import '../../../../../../../services/passkey/passkey_service.dart';
+import '../../../../../../../services/auth_service/auth_service.dart';
 
 class AddCardPage extends StatefulWidget {
   const AddCardPage({super.key});
@@ -16,8 +18,28 @@ class AddCardPage extends StatefulWidget {
 class _AddCardPageState extends State<AddCardPage> {
   bool _isLoading = false;
   final _bookingApi = BookingApiService();
+  final _biometric = BiometricService();
+  final _auth = AuthService();
 
   Future<void> _handleAdd() async {
+    // Step-up auth: if biometric is enabled, require device biometric first
+    final cached = _auth.getCachedUser();
+    final hasBiometric = (cached?['passkeyEnabled'] as bool?) ?? false;
+    if (hasBiometric) {
+      final challenge = await _biometric.challenge(
+        reason: 'Confirm your identity to add a new payment card.',
+        purpose: 'add-payment',
+      );
+      if (!challenge.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(challenge.errorMessage ?? 'Authentication cancelled.')),
+          );
+        }
+        return;
+      }
+    }
+
     setState(() => _isLoading = true);
     try {
       // 1. Create SetupIntent on backend (creates Stripe customer if needed)

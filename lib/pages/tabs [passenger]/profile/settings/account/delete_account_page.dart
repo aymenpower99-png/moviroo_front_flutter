@@ -28,7 +28,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   _ReAuthMethod _method = _ReAuthMethod.password;
 
   bool _obscure = true;
-  bool _isBootstrapping = false; // ← never default to true
+  bool _isBootstrapping = false;
   bool _isBusy = false;
   bool _otpSent = false;
 
@@ -42,14 +42,16 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   void initState() {
     super.initState();
 
-    // 1. Populate from cached user synchronously — no spinner, no setState
+    // 1. Populate from cached user synchronously — show content immediately
     final cached = _auth.getCachedUser();
     if (cached != null) {
       _hasBiometric = (cached['passkeyEnabled'] as bool?) ?? false;
       _has2fa = (cached['email2faEnabled'] as bool?) ?? false;
+    } else {
+      _isBootstrapping = true;
     }
 
-    // 2. Refresh device support + user flags in background
+    // 2. Refresh device support + user flags silently in background
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _bootstrap();
     });
@@ -65,16 +67,29 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   Future<void> _bootstrap() async {
     try {
       final supported = await _biometric.isSupported();
-      final user = await _auth.getCurrentUser(forceRefresh: true);
+      final user = await _auth.getCurrentUser();
       if (!mounted) return;
 
-      setState(() {
-        _hasBiometric = (user?['passkeyEnabled'] as bool?) ?? false;
-        _biometricDeviceSupported = supported;
-        _has2fa = (user?['email2faEnabled'] as bool?) ?? false;
-      });
+      final newHasBiometric = (user?['passkeyEnabled'] as bool?) ?? false;
+      final newHas2fa = (user?['email2faEnabled'] as bool?) ?? false;
+      final changed =
+          newHasBiometric != _hasBiometric ||
+          supported != _biometricDeviceSupported ||
+          newHas2fa != _has2fa ||
+          _isBootstrapping;
+
+      if (changed) {
+        setState(() {
+          _hasBiometric = newHasBiometric;
+          _biometricDeviceSupported = supported;
+          _has2fa = newHas2fa;
+          _isBootstrapping = false;
+        });
+      }
     } catch (_) {
-      // silent fail — keep showing cached/empty state
+      if (mounted && _isBootstrapping) {
+        setState(() => _isBootstrapping = false);
+      }
     }
   }
 

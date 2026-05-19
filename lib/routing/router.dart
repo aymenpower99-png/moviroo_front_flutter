@@ -15,7 +15,7 @@ import '../pages/auth/login/login_page.dart';
 import '../pages/auth/signup/sign_up_page.dart';
 import '../pages/auth/forgot_password/forget_password.dart';
 import '../pages/auth/complete_profile/complete_profile_page.dart';
-import '../pages/auth/otp/otp.dart';
+import '../pages/auth/otp/otp_page.dart';
 import '../pages/auth/check_email/check_email_page.dart';
 import '../pages/tabs [passenger]/home/home_page.dart' as home_tab;
 import '../pages/tabs [passenger]/support/support_page.dart';

@@ -43,32 +43,48 @@ class BiometricService {
   final LocalAuthentication _localAuth = LocalAuthentication();
   final AuthService _authService = AuthService();
 
+  // ─── In-memory device capability cache (never changes during a session) ───
+  static bool? _deviceSupportedCache;
+  static String? _methodLabelCache;
+
   // ─── Device capability ────────────────────────────────────────────────────
 
   /// True if the device has any biometric OR device PIN set up.
+  /// Result is cached for the app session to avoid repeated OS calls.
   Future<bool> isSupported() async {
+    if (_deviceSupportedCache != null) return _deviceSupportedCache!;
     try {
       final bool deviceSupported = await _localAuth.isDeviceSupported();
       final bool canCheck = await _localAuth.canCheckBiometrics;
-      return deviceSupported || canCheck;
+      _deviceSupportedCache = deviceSupported || canCheck;
+      return _deviceSupportedCache!;
     } on PlatformException {
+      _deviceSupportedCache = false;
       return false;
     }
   }
 
   /// Returns a human-readable label for the strongest available method.
+  /// Result is cached for the app session.
   Future<String> availableMethodLabel() async {
+    if (_methodLabelCache != null) return _methodLabelCache!;
     try {
       final types = await _localAuth.getAvailableBiometrics();
-      if (types.contains(BiometricType.face)) return 'Face ID';
-      if (types.contains(BiometricType.fingerprint)) return 'Fingerprint';
-      if (types.contains(BiometricType.iris)) return 'Iris';
-      if (types.contains(BiometricType.strong) ||
+      if (types.contains(BiometricType.face)) {
+        _methodLabelCache = 'Face ID';
+      } else if (types.contains(BiometricType.fingerprint)) {
+        _methodLabelCache = 'Fingerprint';
+      } else if (types.contains(BiometricType.iris)) {
+        _methodLabelCache = 'Iris';
+      } else if (types.contains(BiometricType.strong) ||
           types.contains(BiometricType.weak)) {
-        return 'Biometric';
+        _methodLabelCache = 'Biometric';
+      } else {
+        _methodLabelCache = 'Device PIN';
       }
-      return 'Device PIN';
+      return _methodLabelCache!;
     } on PlatformException {
+      _methodLabelCache = 'Device PIN';
       return 'Device PIN';
     }
   }

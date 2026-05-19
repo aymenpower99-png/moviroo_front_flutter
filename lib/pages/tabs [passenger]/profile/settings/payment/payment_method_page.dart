@@ -3,6 +3,8 @@ import '../../../../../../../theme/app_colors.dart';
 import '../../../../../../../theme/app_text_styles.dart';
 import '../../../../../../../l10n/app_localizations.dart';
 import '../../../../../../../services/ride_api/booking_api_service.dart';
+import '../../../../../../../services/passkey/passkey_service.dart';
+import '../../../../../../../services/auth_service/auth_service.dart';
 import 'add_card_page.dart';
 
 // ── Model ─────────────────────────────────────────────────────────────────────
@@ -74,6 +76,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   List<PaymentCard> _cards = [];
   bool _isLoading = false;
   final _api = BookingApiService();
+  final _biometric = BiometricService();
+  final _auth = AuthService();
 
   @override
   void initState() {
@@ -117,6 +121,24 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   }
 
   Future<void> _deleteCard(String id) async {
+    // Step-up auth: if biometric is enabled, require device biometric first
+    final cached = _auth.getCachedUser();
+    final hasBiometric = (cached?['passkeyEnabled'] as bool?) ?? false;
+    if (hasBiometric) {
+      final challenge = await _biometric.challenge(
+        reason: 'Confirm your identity to remove this payment card.',
+        purpose: 'delete-payment',
+      );
+      if (!challenge.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(challenge.errorMessage ?? 'Authentication cancelled.')),
+          );
+        }
+        return;
+      }
+    }
+
     try {
       await _api.deleteCard(id);
       setState(() => _cards.removeWhere((c) => c.id == id));

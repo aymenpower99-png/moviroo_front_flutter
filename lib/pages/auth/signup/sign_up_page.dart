@@ -19,7 +19,6 @@ class _SignUpPageState extends State<SignUpPage> {
   String? _errorMessage;
   bool _termsOfServiceConsent = false;
   bool _locationTrackingConsent = false;
-  bool _marketingConsent = false;
 
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -116,7 +115,6 @@ class _SignUpPageState extends State<SignUpPage> {
         phone: '+216$phone',
         termsOfServiceConsent: _termsOfServiceConsent,
         locationTrackingConsent: _locationTrackingConsent,
-        marketingConsent: _marketingConsent,
       );
 
       if (mounted) {
@@ -277,8 +275,8 @@ class _SignUpPageState extends State<SignUpPage> {
           isDark
               ? 'images/logo/moviroo dark_light_big.png'
               : 'images/logo/moviroo light_dark_big.png',
-          width: 140,
-          height: 48,
+          width: 210,
+          height: 100,
           fit: BoxFit.contain,
         ),
 
@@ -512,23 +510,6 @@ class _SignUpPageState extends State<SignUpPage> {
               setState(() => _locationTrackingConsent = value ?? false),
           title: Text(
             'I consent to Location Tracking for ride services',
-            style: checkboxTextStyle,
-          ),
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-          checkboxShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // Marketing (Optional)
-        CheckboxListTile(
-          value: _marketingConsent,
-          onChanged: (value) =>
-              setState(() => _marketingConsent = value ?? false),
-          title: Text(
-            'I consent to receive marketing communications (optional)',
             style: checkboxTextStyle,
           ),
           contentPadding: EdgeInsets.zero,

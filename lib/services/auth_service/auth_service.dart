@@ -220,12 +220,12 @@ class AuthService {
 
   Future<void> enablePasskey() async {
     await SecurityApi.enablePasskey();
-    _cachedUser = null;
+    _cachedUser = await getCurrentUser();
   }
 
   Future<void> disablePasskey() async {
     await SecurityApi.disablePasskey();
-    _cachedUser = null;
+    _cachedUser = await getCurrentUser();
   }
 
   Future<Map<String, dynamic>> verifyPasskey(

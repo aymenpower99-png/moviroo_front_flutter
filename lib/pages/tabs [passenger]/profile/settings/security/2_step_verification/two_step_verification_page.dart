@@ -23,7 +23,7 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
   bool _authAppEnabled = false;
   TwoFactorMethod? _primary;
 
-  bool _isBootstrapping = false; // ← never default to true
+  bool _isBootstrapping = false;
   bool _busyEmail = false;
   bool _busyTotp = false;
   bool _busyPrimary = false;
@@ -33,7 +33,7 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
   void initState() {
     super.initState();
 
-    // 1. Populate from cached user synchronously — no spinner, no setState
+    // 1. Populate from cached user synchronously — show content immediately
     final cached = _authService.getCachedUser();
     if (cached != null) {
       _emailEnabled = (cached['is2faEnabled'] as bool?) ?? false;
@@ -41,9 +41,11 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
       _primary = twoFactorMethodFromString(
         cached['primary2faMethod'] as String?,
       );
+    } else {
+      _isBootstrapping = true;
     }
 
-    // 2. Refresh from backend in background
+    // 2. Refresh from backend silently in background
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _bootstrap();
     });
@@ -51,20 +53,36 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
 
   Future<void> _bootstrap() async {
     try {
-      final user = await _authService.getCurrentUser(forceRefresh: true);
+      final user = await _authService.getCurrentUser();
       if (!mounted) return;
-      setState(() {
-        _emailEnabled = (user?['is2faEnabled'] as bool?) ?? false;
-        _authAppEnabled = (user?['totpEnabled'] as bool?) ?? false;
-        _primary = twoFactorMethodFromString(
-          user?['primary2faMethod'] as String?,
-        );
-      });
+
+      final newEmail = (user?['is2faEnabled'] as bool?) ?? false;
+      final newTotp = (user?['totpEnabled'] as bool?) ?? false;
+      final newPrimary = twoFactorMethodFromString(
+        user?['primary2faMethod'] as String?,
+      );
+      final changed =
+          newEmail != _emailEnabled ||
+          newTotp != _authAppEnabled ||
+          newPrimary != _primary ||
+          _isBootstrapping;
+
+      if (changed) {
+        setState(() {
+          _emailEnabled = newEmail;
+          _authAppEnabled = newTotp;
+          _primary = newPrimary;
+          _isBootstrapping = false;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
-      });
+      if (_isBootstrapping) {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _isBootstrapping = false;
+        });
+      }
     }
   }
 
@@ -109,6 +127,17 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
         if (mounted) setState(() => _busyEmail = false);
       }
     } else {
+      // Require biometric re-auth to disable email 2FA
+      final challenge = await _biometric.challenge(
+        reason: 'Confirm your identity to disable email two-factor authentication.',
+        purpose: 'disable-email-2fa',
+      );
+      if (!challenge.success || challenge.actionToken == null) {
+        _showError(
+          challenge.errorMessage ?? 'Biometric authentication failed.',
+        );
+        return;
+      }
       setState(() {
         _busyEmail = true;
         _errorMessage = null;
@@ -202,6 +231,18 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
     if (_busyPrimary || _primary == target) return;
     if (target == TwoFactorMethod.email && !_emailEnabled) return;
     if (target == TwoFactorMethod.totp && !_authAppEnabled) return;
+
+    // Require biometric re-auth before switching primary 2FA method
+    final challenge = await _biometric.challenge(
+      reason: 'Confirm your identity to change your primary two-factor method.',
+      purpose: 'switch-primary-2fa',
+    );
+    if (!challenge.success || challenge.actionToken == null) {
+      _showError(
+        challenge.errorMessage ?? 'Biometric authentication failed.',
+      );
+      return;
+    }
 
     // Identity must be proven with the CURRENT primary. If none yet, the target.
     final verifyAgainst = _primary ?? target;

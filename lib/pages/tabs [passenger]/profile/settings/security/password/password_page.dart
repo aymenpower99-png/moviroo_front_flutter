@@ -4,6 +4,7 @@ import '../../../../../../../../../theme/app_text_styles.dart';
 import '../../../../../../../../../l10n/app_localizations.dart';
 import '../../../../../../../../../widgets/password_strength_indicator.dart';
 import '../../../../../../../../../services/auth_service/auth_service.dart';
+import '../../../../../../../../../services/passkey/passkey_service.dart';
 
 class PasswordPage extends StatefulWidget {
   const PasswordPage({super.key});
@@ -14,6 +15,7 @@ class PasswordPage extends StatefulWidget {
 
 class _PasswordPageState extends State<PasswordPage> {
   final _authService = AuthService();
+  final _biometric = BiometricService();
 
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
@@ -68,6 +70,23 @@ class _PasswordPageState extends State<PasswordPage> {
 
   Future<void> _handleSave() async {
     if (!_canSubmit) return;
+
+    // Step-up auth: if biometric is enabled, require device biometric first
+    final cached = _authService.getCachedUser();
+    final hasBiometric = (cached?['passkeyEnabled'] as bool?) ?? false;
+    if (hasBiometric) {
+      final challenge = await _biometric.challenge(
+        reason: 'Confirm your identity to change your password.',
+        purpose: 'change-password',
+      );
+      if (!challenge.success) {
+        if (mounted) {
+          setState(() => _serverError = challenge.errorMessage);
+        }
+        return;
+      }
+    }
+
     setState(() {
       _isLoading = true;
       _serverError = null;
