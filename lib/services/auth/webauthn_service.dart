@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'webauthn_api_service.dart';
 import 'webauthn_platform_channel.dart';
 import '../auth_service/auth_service.dart';
@@ -6,15 +8,39 @@ import '../auth_service/auth_service.dart';
 class WebAuthnService {
   final AuthService _authService = AuthService();
 
+  /// In-memory cache so the Passkeys page feels instant on re-entry.
+  static List<dynamic>? _cachedPasskeys;
+
   /// Register a new passkey for the current user.
   /// Must be called when user is already logged in.
+  /// [deviceName] is optional — if omitted the actual device model is used.
   Future<Map<String, dynamic>> registerPasskey({String? deviceName}) async {
     final token = await _authService.getAccessToken();
     if (token == null) throw Exception('User must be logged in');
 
+    // Auto-detect device name when not supplied
+    String effectiveDeviceName = deviceName ?? '';
+    if (effectiveDeviceName.isEmpty) {
+      try {
+        final info = DeviceInfoPlugin();
+        if (Platform.isAndroid) {
+          final android = await info.androidInfo;
+          effectiveDeviceName = android.model;
+        } else if (Platform.isIOS) {
+          final ios = await info.iosInfo;
+          effectiveDeviceName = ios.name;
+        }
+      } catch (_) {
+        // fallback handled below
+      }
+      if (effectiveDeviceName.isEmpty) {
+        effectiveDeviceName = 'Passkey ${DateTime.now().year}';
+      }
+    }
+
     // 1. Start registration
     final startResult = await WebAuthnApiService.startRegistration(
-      deviceName: deviceName,
+      deviceName: effectiveDeviceName,
       accessToken: token,
     );
     final optionsId = startResult['optionsId'] as String;
@@ -25,15 +51,18 @@ class WebAuthnService {
       jsonEncode(options),
     );
 
-    // 3. Finish registration — pass deviceName through so backend can label it
-    return WebAuthnApiService.finishRegistration(
+    // 3. Finish registration
+    final result = await WebAuthnApiService.finishRegistration(
       dto: {
         'optionsId': optionsId,
-        'deviceName': deviceName,
+        'deviceName': effectiveDeviceName,
         ...nativeResponse,
       },
       accessToken: token,
     );
+
+    _cachedPasskeys = null; // invalidate cache
+    return result;
   }
 
   /// Authenticate with passkey (passwordless login).
@@ -59,21 +88,27 @@ class WebAuthnService {
     );
   }
 
+  /// Returns the cached list if available, otherwise fetches from the API.
   Future<List<dynamic>> getPasskeys() async {
+    if (_cachedPasskeys != null) return _cachedPasskeys!;
     final token = await _authService.getAccessToken();
     if (token == null) throw Exception('Not authenticated');
-    return WebAuthnApiService.listPasskeys(token);
+    final list = await WebAuthnApiService.listPasskeys(token);
+    _cachedPasskeys = list;
+    return list;
   }
 
   Future<void> deletePasskey(String id) async {
     final token = await _authService.getAccessToken();
     if (token == null) throw Exception('Not authenticated');
-    return WebAuthnApiService.deletePasskey(id, token);
+    await WebAuthnApiService.deletePasskey(id, token);
+    _cachedPasskeys = null;
   }
 
   Future<void> renamePasskey(String id, String deviceName) async {
     final token = await _authService.getAccessToken();
     if (token == null) throw Exception('Not authenticated');
-    return WebAuthnApiService.renamePasskey(id, deviceName, token);
+    await WebAuthnApiService.renamePasskey(id, deviceName, token);
+    _cachedPasskeys = null;
   }
 }

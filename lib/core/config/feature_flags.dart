@@ -6,5 +6,5 @@ class FeatureFlags {
 
   /// Whether the WebAuthn / Passkey feature is visible in the UI.
   /// Backend APIs, native channels, and all logic remain intact.
-  static const bool enablePasskeys = false;
+  static const bool enablePasskeys = true;
 }

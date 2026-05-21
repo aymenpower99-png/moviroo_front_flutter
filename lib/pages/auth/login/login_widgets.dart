@@ -362,7 +362,7 @@ class LoginWidgets {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Sign in with Passkey',
+                        t.translate('sign_in_with_passkey'),
                         style: AppTextStyles.bodyMedium(context),
                       ),
                     ],

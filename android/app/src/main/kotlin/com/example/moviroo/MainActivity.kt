@@ -9,6 +9,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.*
 import org.json.JSONObject
+import org.json.JSONArray
 
 class MainActivity : FlutterFragmentActivity() {
     private val CHANNEL = "com.moviroo/webauthn"
@@ -61,9 +62,7 @@ class MainActivity : FlutterFragmentActivity() {
                             "clientDataJSON" to responseObj.getString("clientDataJSON"),
                             "attestationObject" to responseObj.getString("attestationObject"),
                         ),
-                        "clientExtensionResults" to json.optJSONObject("clientExtensionResults")?.let {
-                            it.keys().asSequence().associateWith { key -> it.get(key) }
-                        }
+                        "clientExtensionResults" to jsonObjectToMap(json.optJSONObject("clientExtensionResults"))
                     )
                 )
             } catch (e: CreateCredentialException) {
@@ -105,9 +104,7 @@ class MainActivity : FlutterFragmentActivity() {
                             "signature" to responseObj.getString("signature"),
                             "userHandle" to responseObj.optString("userHandle", ""),
                         ),
-                        "clientExtensionResults" to json.optJSONObject("clientExtensionResults")?.let {
-                            it.keys().asSequence().associateWith { key -> it.get(key) }
-                        }
+                        "clientExtensionResults" to jsonObjectToMap(json.optJSONObject("clientExtensionResults"))
                     )
                 )
             } catch (e: GetCredentialException) {
@@ -118,5 +115,35 @@ class MainActivity : FlutterFragmentActivity() {
                 result.error("AUTHENTICATION_ERROR", e.message, null)
             }
         }
+    }
+
+    /** Recursively convert a JSONObject into a plain Kotlin Map so Flutter's
+     *  StandardMessageCodec can serialise it (it does not understand JSONObject).
+     */
+    private fun jsonObjectToMap(json: JSONObject?): Map<String, Any?>? {
+        if (json == null) return null
+        val map = mutableMapOf<String, Any?>()
+        for (key in json.keys()) {
+            val value = json.get(key)
+            map[key] = when (value) {
+                is JSONObject -> jsonObjectToMap(value)
+                is JSONArray -> jsonArrayToList(value)
+                else -> value
+            }
+        }
+        return map
+    }
+
+    private fun jsonArrayToList(array: JSONArray): List<Any?> {
+        val list = mutableListOf<Any?>()
+        for (i in 0 until array.length()) {
+            val value = array.get(i)
+            list.add(when (value) {
+                is JSONObject -> jsonObjectToMap(value)
+                is JSONArray -> jsonArrayToList(value)
+                else -> value
+            })
+        }
+        return list
     }
 }

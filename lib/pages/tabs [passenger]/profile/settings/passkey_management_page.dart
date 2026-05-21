@@ -14,8 +14,11 @@ class PasskeyManagementPage extends StatefulWidget {
 class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
   final _webauthn = WebAuthnService();
   List<dynamic> _passkeys = [];
-  bool _isLoading = false;
+  bool _isBootstrapping = false;
+  bool _isBusy = false;
   String? _error;
+
+  String _t(String key) => AppLocalizations.of(context).translate(key);
 
   @override
   void initState() {
@@ -24,19 +27,24 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
   }
 
   Future<void> _loadPasskeys() async {
-    setState(() => _isLoading = true);
+    // Only show a spinner on the very first load when we have nothing to show.
+    if (_passkeys.isEmpty) setState(() => _isBootstrapping = true);
     try {
       final passkeys = await _webauthn.getPasskeys();
-      setState(() {
-        _passkeys = passkeys;
-        _error = null;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _passkeys = passkeys;
+          _error = null;
+          _isBootstrapping = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isBootstrapping = false;
+        });
+      }
     }
   }
 
@@ -47,21 +55,21 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
         backgroundColor: AppColors.surface(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Remove Passkey?',
+          _t('remove_passkey_title'),
           style: AppTextStyles.bodyLarge(context),
         ),
         content: Text(
-          'This passkey will no longer be available for passwordless sign-in.',
+          _t('remove_passkey_confirm'),
           style: AppTextStyles.bodySmall(context),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: TextStyle(color: AppColors.subtext(context))),
+            child: Text(_t('cancel'), style: TextStyle(color: AppColors.subtext(context))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove', style: TextStyle(color: AppColors.error)),
+            child: Text(_t('remove'), style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -74,77 +82,27 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to remove passkey: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _renamePasskey(String id, String currentName) async {
-    final controller = TextEditingController(text: currentName);
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Rename Passkey', style: AppTextStyles.bodyLarge(context)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: 'Device name',
-            filled: true,
-            fillColor: AppColors.surface(context),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border(context)),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: AppColors.subtext(context))),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save', style: TextStyle(color: AppColors.primaryPurple)),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (newName == null || newName.isEmpty) return;
-
-    try {
-      await _webauthn.renamePasskey(id, newName);
-      _loadPasskeys();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to rename passkey: $e')),
+          SnackBar(content: Text('${_t('passkey_remove_failed')}: $e')),
         );
       }
     }
   }
 
   Future<void> _registerPasskey() async {
-    setState(() => _isLoading = true);
+    setState(() => _isBusy = true);
     try {
-      await _webauthn.registerPasskey(
-        deviceName: 'Passkey ${DateTime.now().year}',
-      );
+      await _webauthn.registerPasskey();
       _loadPasskeys();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Passkey registered successfully')),
+          SnackBar(content: Text(_t('passkey_registered'))),
         );
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      setState(() => _isBusy = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to register passkey: $e')),
+          SnackBar(content: Text('${_t('passkey_register_failed')}: $e')),
         );
       }
     }
@@ -159,7 +117,7 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _SubPageTopBar(title: 'Passkeys'),
+            _SubPageTopBar(title: t('passkeys')),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -168,14 +126,14 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
                   children: [
                     const SizedBox(height: 8),
                     Text(
-                      'Manage your passkeys for passwordless sign-in.',
+                      t('passkey_manage_subtitle'),
                       style: AppTextStyles.bodySmall(context),
                     ),
                     const SizedBox(height: 20),
 
                     // Add new passkey button
                     GestureDetector(
-                      onTap: _isLoading ? null : _registerPasskey,
+                      onTap: _isBusy ? null : _registerPasskey,
                       child: Container(
                         width: double.infinity,
                         height: 52,
@@ -187,10 +145,21 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add, color: AppColors.primaryPurple),
+                            _isBusy
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.primaryPurple,
+                                      ),
+                                    ),
+                                  )
+                                : Icon(Icons.add, color: AppColors.primaryPurple),
                             const SizedBox(width: 10),
                             Text(
-                              'Add Passkey',
+                              t('add_passkey'),
                               style: AppTextStyles.bodyLarge(context).copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -201,7 +170,7 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    if (_isLoading && _passkeys.isEmpty)
+                    if (_isBootstrapping)
                       const Center(child: CircularProgressIndicator())
                     else if (_error != null)
                       Center(
@@ -223,12 +192,12 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'No passkeys yet',
+                                t('no_passkeys_yet'),
                                 style: AppTextStyles.bodyLarge(context),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Add a passkey for passwordless sign-in.',
+                                t('add_passkey_empty'),
                                 style: AppTextStyles.bodySmall(context),
                               ),
                             ],
@@ -243,10 +212,6 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
                             name: p['deviceName'] as String? ?? 'Unknown Device',
                             createdAt: p['createdAt'] as String?,
                             lastUsedAt: p['lastUsedAt'] as String?,
-                            onRename: () => _renamePasskey(
-                              p['id'] as String,
-                              p['deviceName'] as String? ?? 'Unknown Device',
-                            ),
                             onDelete: () => _deletePasskey(p['id'] as String),
                           ),
                         );
@@ -266,19 +231,18 @@ class _PasskeyCard extends StatelessWidget {
   final String name;
   final String? createdAt;
   final String? lastUsedAt;
-  final VoidCallback onRename;
   final VoidCallback onDelete;
 
   const _PasskeyCard({
     required this.name,
     this.createdAt,
     this.lastUsedAt,
-    required this.onRename,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface(context),
@@ -317,12 +281,12 @@ class _PasskeyCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Added ${_formatDate(createdAt)}',
+                        '${t('passkey_added')} ${_formatDate(createdAt)}',
                         style: AppTextStyles.bodySmall(context),
                       ),
                       if (lastUsedAt != null)
                         Text(
-                          'Last used ${_formatDate(lastUsedAt)}',
+                          '${t('passkey_last_used')} ${_formatDate(lastUsedAt)}',
                           style: AppTextStyles.bodySmall(context),
                         ),
                     ],
@@ -332,26 +296,26 @@ class _PasskeyCard extends StatelessWidget {
             ),
           ),
           Divider(height: 1, color: AppColors.border(context)),
-          Row(
-            children: [
-              Expanded(
-                child: _TileAction(
-                  icon: Icons.edit_outlined,
-                  label: 'Rename',
-                  color: AppColors.primaryPurple,
-                  onTap: onRename,
-                ),
+          GestureDetector(
+            onTap: onDelete,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.delete_outline_rounded, size: 16, color: AppColors.error),
+                  const SizedBox(width: 6),
+                  Text(
+                    t('remove'),
+                    style: AppTextStyles.bodySmall(context).copyWith(
+                      color: AppColors.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-              VerticalDivider(width: 1, color: AppColors.border(context)),
-              Expanded(
-                child: _TileAction(
-                  icon: Icons.delete_outline_rounded,
-                  label: 'Remove',
-                  color: AppColors.error,
-                  onTap: onDelete,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -366,45 +330,6 @@ class _PasskeyCard extends StatelessWidget {
     } catch (_) {
       return iso;
     }
-  }
-}
-
-class _TileAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _TileAction({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: AppTextStyles.bodySmall(context).copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

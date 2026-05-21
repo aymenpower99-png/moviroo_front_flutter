@@ -498,5 +498,21 @@
   "otp_code_resent": "Verification code resent.",
   "otp_missing_user_id": "Missing user ID",
   "otp_missing_token": "Missing authentication token",
-  "otp_unknown_purpose": "Unknown verification purpose"
+  "otp_unknown_purpose": "Unknown verification purpose",
+  "sign_in_with_passkey": "Sign in with Passkey",
+  "passkey_manage_subtitle": "Manage your passkeys for passwordless sign-in.",
+  "add_passkey": "Add Passkey",
+  "no_passkeys_yet": "No passkeys yet",
+  "add_passkey_empty": "Add a passkey for passwordless sign-in.",
+  "passkey_added": "Added",
+  "passkey_last_used": "Last used",
+  "rename": "Rename",
+  "rename_passkey_title": "Rename Passkey",
+  "remove_passkey_title": "Remove Passkey?",
+  "remove_passkey_confirm": "This passkey will no longer be available for passwordless sign-in.",
+  "passkey_registered": "Passkey registered successfully",
+  "passkey_register_failed": "Failed to register passkey",
+  "passkey_remove_failed": "Failed to remove passkey",
+  "passkey_rename_failed": "Failed to rename passkey",
+  "device_name": "Device name"
 }
