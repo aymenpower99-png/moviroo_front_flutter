@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/address_utils.dart';
 
 class MapboxPlace {
   final String id;
@@ -26,25 +27,42 @@ class MapboxPlace {
     final lat = (json['lat'] as num?)?.toDouble();
     final lon = (json['lon'] as num?)?.toDouble();
     final displayName = json['display_name'] as String? ?? '';
+    final address = json['address'] as String?;
     final city = json['city'] as String? ?? '';
     final country = json['country'] as String? ?? '';
+    final placeType = json['place_type'] as String?;
+    final category = json['category'] as String?;
 
     // Build full address from components
-    final fullAddress = [
-      displayName,
-      city,
+    final fullAddress = simplifyAddress([
+      address ?? displayName,
+      if (address == null || address.isEmpty) city,
       country,
-    ].where((part) => part.isNotEmpty).join(', ');
+    ].where((part) => part.isNotEmpty).join(', '));
+
+    // Simplify display name too
+    final simplifiedPlaceName = simplifyAddress(displayName);
 
     // Generate ID from coordinates only (Mapbox-only now)
     final id = 'geo_${lat?.toStringAsFixed(6)}_${lon?.toStringAsFixed(6)}';
 
-    // Determine icon based on display name
-    final categoryIcon = _resolveIconFromName(displayName);
+    // Determine icon from backend category/place_type when available
+    final signals = <String>[];
+    if (category != null && category.isNotEmpty) {
+      signals.addAll(category.split(',').map((s) => s.trim().toLowerCase()));
+    }
+    if (placeType != null && placeType.isNotEmpty) {
+      signals.addAll(placeType.split(',').map((s) => s.trim().toLowerCase()));
+    }
+    signals.add(displayName.toLowerCase());
+
+    final categoryIcon = signals.isNotEmpty
+        ? _resolveIcon(signals)
+        : _resolveIconFromName(displayName);
 
     return MapboxPlace(
       id: id,
-      placeName: displayName,
+      placeName: simplifiedPlaceName,
       fullAddress: fullAddress,
       city: city,
       country: country,
@@ -55,8 +73,9 @@ class MapboxPlace {
   }
 
   factory MapboxPlace.fromJson(Map<String, dynamic> json) {
-    final placeName = json['place_name'] as String? ?? '';
-    final fullAddress = json['place_name'] as String? ?? '';
+    final rawPlaceName = json['place_name'] as String? ?? '';
+    final placeName = simplifyAddress(rawPlaceName);
+    final fullAddress = simplifyAddress(rawPlaceName);
     final center = json['center'] as List?;
     final context = json['context'] as List?;
     final properties = json['properties'] as Map<String, dynamic>?;

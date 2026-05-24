@@ -19,6 +19,7 @@ class RideBookingPage extends StatefulWidget {
   final String? dropoffAddress;
   final DateTime? pickedDate;
   final TimeOfDay? pickedTime;
+  final int passengerCount;
 
   const RideBookingPage({
     super.key,
@@ -30,6 +31,7 @@ class RideBookingPage extends StatefulWidget {
     this.dropoffAddress,
     this.pickedDate,
     this.pickedTime,
+    this.passengerCount = 1,
   });
 
   @override
@@ -152,6 +154,7 @@ class _RideBookingPageState extends State<RideBookingPage> with RouteAware {
       dropoffLat: widget.dropoffLat,
       dropoffLon: widget.dropoffLon,
       bookingDt: bookingDt,
+      passengerCount: widget.passengerCount,
     );
     if (mounted) {
       setState(() {
@@ -203,6 +206,7 @@ class _RideBookingPageState extends State<RideBookingPage> with RouteAware {
       return [];
     }
     return _pricingResponse!.vehicleClasses
+        .where((vc) => vc.seats >= widget.passengerCount)
         .map(
           (vc) => CarOption(
             name: vc.name,
@@ -240,6 +244,7 @@ class _RideBookingPageState extends State<RideBookingPage> with RouteAware {
         'dropoffLon': widget.dropoffLon,
         'scheduledDate': widget.pickedDate,
         'scheduledTime': widget.pickedTime,
+        'passengerCount': widget.passengerCount,
       },
     );
   }

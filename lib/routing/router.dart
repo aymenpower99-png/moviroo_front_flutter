@@ -105,6 +105,7 @@ class AppRouter {
         dropoffLon: (args?['dropoffLon'] as num?)?.toDouble(),
         scheduledDate: args?['scheduledDate'] as DateTime?,
         scheduledTime: args?['scheduledTime'] as TimeOfDay?,
+        passengerCount: (args?['passengerCount'] as num?)?.toInt() ?? 1,
       );
     },
     payment: (ctx) {
@@ -133,6 +134,7 @@ class AppRouter {
         dropoffAddress: args?['dropoffAddress'] as String?,
         pickedDate: args?['date'] as DateTime?,
         pickedTime: args?['time'] as TimeOfDay?,
+        passengerCount: (args?['passengerCount'] as num?)?.toInt() ?? 1,
       );
     },
     getStartedPage: (_) => const OnboardingPage(),

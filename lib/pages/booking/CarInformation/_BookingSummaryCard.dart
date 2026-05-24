@@ -7,6 +7,7 @@ import '_SummaryCard.dart';
 class BookingSummaryCard extends StatelessWidget {
   final int pax;
   final int bags;
+  final int? seats;
   final String vehicleName;
   final String? carName;
   final String? imageUrl;
@@ -15,6 +16,7 @@ class BookingSummaryCard extends StatelessWidget {
     super.key,
     required this.pax,
     required this.bags,
+    this.seats,
     required this.vehicleName,
     this.carName,
     this.imageUrl,
@@ -26,67 +28,80 @@ class BookingSummaryCard extends StatelessWidget {
     final carNameValue = carName;
 
     return SummaryCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          imageUrl != null && imageUrl!.isNotEmpty
-              ? Image.network(
-                  imageUrl!,
-                  width: 120,
-                  height: 80,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => Image.asset(
-                    'images/bmw.png',
-                    width: 120,
-                    height: 80,
-                    fit: BoxFit.contain,
-                  ),
-                )
-              : Image.asset(
-                  'images/bmw.png',
-                  width: 120,
-                  height: 80,
-                  fit: BoxFit.contain,
-                ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (vehicleName.isNotEmpty)
-                  Text(
-                    vehicleName,
-                    style: AppTextStyles.bodyLarge(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.w800, fontSize: 18),
-                  ),
-                if (carNameValue != null && carNameValue.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    carNameValue,
-                    style: AppTextStyles.bodyMedium(context).copyWith(
-                      color: AppColors.subtext(context),
-                      fontWeight: FontWeight.w500,
-                      fontSize: 13,
+          // ── Passenger info (separate from vehicle) ───────────
+          
+
+          
+          // ── Vehicle info ─────────────────────────────────────
+          Row(
+            children: [
+              imageUrl != null && imageUrl!.isNotEmpty
+                  ? Image.network(
+                      imageUrl!,
+                      width: 120,
+                      height: 80,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => Image.asset(
+                        'images/bmw.png',
+                        width: 120,
+                        height: 80,
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                  : Image.asset(
+                      'images/bmw.png',
+                      width: 120,
+                      height: 80,
+                      fit: BoxFit.contain,
                     ),
-                  ),
-                ],
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _InfoChip(
-                      icon: Icons.person_outline_rounded,
-                      label: '$pax ${t.translate('chip_pax')}',
-                    ),
-                    _InfoChip(
-                      icon: Icons.luggage_outlined,
-                      label: '$bags ${t.translate('chip_lug')}',
+                    if (vehicleName.isNotEmpty)
+                      Text(
+                        vehicleName,
+                        style: AppTextStyles.bodyLarge(
+                          context,
+                        ).copyWith(fontWeight: FontWeight.w800, fontSize: 18),
+                      ),
+                    if (carNameValue != null && carNameValue.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        carNameValue,
+                        style: AppTextStyles.bodyMedium(context).copyWith(
+                          color: AppColors.subtext(context),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        // Seats capacity (vehicle spec)
+                        if (seats != null)
+                          _InfoChip(
+                            icon: Icons.event_seat_outlined,
+                            label: '$seats ${t.translate('seats')}',
+                          ),
+                        // Bags
+                        _InfoChip(
+                          icon: Icons.luggage_outlined,
+                          label: '$bags ${t.translate('chip_lug')}',
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

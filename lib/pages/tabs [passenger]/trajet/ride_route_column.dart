@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/utils/address_utils.dart';
 import 'trajet_models.dart';
 
 class RideRouteColumn extends StatelessWidget {
@@ -61,7 +62,7 @@ class RideRouteColumn extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(ride.pickup,
+                Text(simplifyAddress(ride.pickup),
                     style: AppTextStyles.bodyMedium(context)
                         .copyWith(fontWeight: FontWeight.w500)),
                 const SizedBox(height: 12),
@@ -74,7 +75,7 @@ class RideRouteColumn extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(ride.dropoff,
+                Text(simplifyAddress(ride.dropoff),
                     style: AppTextStyles.bodyMedium(context)
                         .copyWith(fontWeight: FontWeight.w500)),
               ],

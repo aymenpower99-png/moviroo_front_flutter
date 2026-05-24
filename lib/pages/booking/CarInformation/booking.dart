@@ -22,6 +22,7 @@ class BookingSummaryPage extends StatefulWidget {
   final double? dropoffLon;
   final DateTime? scheduledDate;
   final TimeOfDay? scheduledTime;
+  final int passengerCount;
 
   const BookingSummaryPage({
     super.key,
@@ -34,6 +35,7 @@ class BookingSummaryPage extends StatefulWidget {
     this.dropoffLon,
     this.scheduledDate,
     this.scheduledTime,
+    this.passengerCount = 1,
   });
 
   @override
@@ -264,14 +266,16 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                 child: Column(
                   children: [
                     BookingSummaryCard(
-                      pax: widget.selectedVehicle?.seats ?? 2,
+                      pax: widget.passengerCount,
                       bags: widget.selectedVehicle?.bags ?? 3,
+                      seats: widget.selectedVehicle?.seats,
                       vehicleName: widget.selectedVehicle?.name ?? 'Economy',
                       imageUrl: widget.selectedVehicle?.imageUrl,
                     ),
                     const SizedBox(height: 12),
                     RouteSection(
-                      pax: widget.selectedVehicle?.seats ?? 2,
+                      pax: widget.passengerCount,
+                      seats: widget.selectedVehicle?.seats,
                       pickupAddress: widget.pickupAddress,
                       dropoffAddress: widget.dropoffAddress,
                       scheduledDate: widget.scheduledDate,

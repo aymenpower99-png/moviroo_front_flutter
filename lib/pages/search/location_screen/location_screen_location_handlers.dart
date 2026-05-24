@@ -122,12 +122,23 @@ class LocationScreenLocationHandlers {
   Future<void> handleUseCurrentLocation(
     double? pickupLat,
     double? pickupLon,
-    void Function(bool) setIsFetchingLocation,
-  ) async {
+    void Function(bool) setIsFetchingLocation, {
+    String? language,
+  }) async {
     setIsFetchingLocation(true);
 
     try {
-      final place = await GpsService.getCurrentLocationWithAddress();
+      // Show permission dialog and guide user if needed
+      final hasPermission = await GpsService.showPermissionDialog(state.context);
+      if (!hasPermission) {
+        setIsFetchingLocation(false);
+        return;
+      }
+
+      final place = await GpsService.getCurrentLocationWithAddress(
+        state.context,
+        language: language,
+      );
       if (place != null && state.mounted) {
         fromController.text = place.placeName;
         setState(() {
@@ -138,22 +149,17 @@ class LocationScreenLocationHandlers {
         Future.delayed(const Duration(milliseconds: 100), () {
           if (state.mounted) toFocus.requestFocus();
         });
-      } else {
-        if (state.mounted) {
-          ScaffoldMessenger.of(state.context).showSnackBar(
-            SnackBar(
-              content: Text('Unable to get current location'),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
+      } else if (state.mounted) {
+        // User cancelled or location unavailable — no snackbar needed,
+        // the dialog already explained the situation.
       }
     } catch (e) {
+      debugPrint('Current location error: $e');
       if (state.mounted) {
         ScaffoldMessenger.of(state.context).showSnackBar(
-          SnackBar(
-            content: Text('Location permission denied or unavailable'),
-            duration: const Duration(seconds: 2),
+          const SnackBar(
+            content: Text('An error occurred while fetching your location. Please try again.'),
+            duration: Duration(seconds: 3),
           ),
         );
       }

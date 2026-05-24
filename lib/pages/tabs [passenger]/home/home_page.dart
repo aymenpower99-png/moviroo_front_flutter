@@ -2,6 +2,7 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../core/utils/address_utils.dart';
 import '../../widgets/tab_bar.dart';
 import 'home_models.dart';
 import 'home_header.dart';
@@ -111,8 +112,8 @@ class _HomePageState extends State<HomePage> {
 
       return RecentRideModel(
         id: r['id']?.toString(),
-        name: r['dropoffAddress'] ?? r['dropoff_address'] ?? 'Unknown',
-        address: r['pickupAddress'] ?? r['pickup_address'] ?? '',
+        name: simplifyAddress(r['dropoffAddress'] ?? r['dropoff_address'] ?? 'Unknown'),
+        address: simplifyAddress(r['pickupAddress'] ?? r['pickup_address'] ?? ''),
         time: createdAt != null ? _formatTimeAgo(createdAt) : '',
         type: className ?? r['status'] ?? 'Ride',
       );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../core/utils/address_utils.dart';
 import '../../models/ride_state.dart';
 
 class TripCompletedOverlay extends StatelessWidget {
@@ -109,10 +110,10 @@ class _TripRouteCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     const purple = AppColors.primaryPurple;
     final pickup = rideState.pickupAddress.isNotEmpty
-        ? rideState.pickupAddress
+        ? simplifyAddress(rideState.pickupAddress)
         : 'Pickup location';
     final dropoff = rideState.dropoffAddress.isNotEmpty
-        ? rideState.dropoffAddress
+        ? simplifyAddress(rideState.dropoffAddress)
         : 'Drop-off location';
     return _Card(
       child: Row(

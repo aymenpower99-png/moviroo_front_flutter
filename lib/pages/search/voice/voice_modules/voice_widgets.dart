@@ -26,7 +26,10 @@ Widget buildTopBar(BuildContext context, {VoidCallback? onBackPressed}) =>
               letterSpacing: 2.5,
             ),
           ),
-          buildCircleBtn(context, Icons.more_horiz_rounded),
+          Opacity(
+            opacity: 0,
+            child: buildCircleBtn(context, Icons.more_horiz_rounded),
+          ),
         ],
       ),
     );
@@ -72,27 +75,27 @@ Widget buildCenter(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 280, maxHeight: 280),
+        constraints: const BoxConstraints(maxWidth: 280, minHeight: 240, maxHeight: 280),
         child: Stack(
           alignment: Alignment.center,
           children: [
-            buildStaticRing(240, kPurple.withOpacity(0.07)),
-            buildStaticRing(190, kPurple.withOpacity(0.11)),
             if (isActive) ...[
+              buildStaticRing(240, kPurple.withOpacity(0.07)),
+              buildStaticRing(190, kPurple.withOpacity(0.11)),
               buildAnimatedRing(ring1Anim, 210),
               buildAnimatedRing(ring2Anim, 210),
               buildAnimatedRing(ring3Anim, 210),
-            ],
-            Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [kPurple.withOpacity(0.18), Colors.transparent],
+              Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [kPurple.withOpacity(0.18), Colors.transparent],
+                  ),
                 ),
               ),
-            ),
+            ],
             GestureDetector(
               onTap: onMicTap,
               child: AnimatedBuilder(
@@ -104,25 +107,9 @@ Widget buildCenter(
                 child: Container(
                   width: 95,
                   height: 95,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF9D8FF5), Color(0xFF6C5CE7)],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: kPurple.withOpacity(0.5),
-                        blurRadius: 30,
-                        spreadRadius: 5,
-                      ),
-                      BoxShadow(
-                        color: kPurple.withOpacity(0.2),
-                        blurRadius: 60,
-                        spreadRadius: 15,
-                      ),
-                    ],
+                    color: Color(0xFF7C3AED),
                   ),
                   child: buildMicIcon(phase),
                 ),
@@ -137,7 +124,7 @@ Widget buildCenter(
       Text(
         phaseLabel(phase),
         style: const TextStyle(
-          color: kPurpleGlow,
+          color: kPurple,
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 3,
@@ -153,6 +140,10 @@ Widget buildCenter(
         confirmationText: confirmationText,
         searchQuery: searchQuery,
       ),
+      if (transcript.isNotEmpty) ...[
+        const SizedBox(height: 12),
+        buildYouSaidCard(context, transcript: transcript),
+      ],
     ],
   );
 }
@@ -216,27 +207,33 @@ Widget buildWaveform({
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: List.generate(bars.length, (i) {
+        if (!isActive) {
+          // Static and flat by default — zero animation
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            width: 3,
+            height: 4,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: const Color(0xFFA855F7),
+            ),
+          );
+        }
         return AnimatedBuilder(
           animation: waveCtrl,
           builder: (_, __) {
-            final h = isActive
-                ? bars[i] *
-                      (0.5 +
-                          0.5 *
-                              (waveCtrl.value * (i % 2 == 0 ? 1.0 : -1.0))
-                                  .abs())
-                : 0.3;
+            final h = bars[i] *
+                (0.5 +
+                    0.5 *
+                        (waveCtrl.value * (i % 2 == 0 ? 1.0 : -1.0))
+                            .abs());
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               width: 3,
               height: 32 * h,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [kPink, kPurple],
-                ),
+                color: const Color(0xFFA855F7),
               ),
             );
           },
@@ -254,7 +251,7 @@ String phaseLabel(VoicePhase phase) => switch (phase) {
   VoicePhase.result => 'CONFIRMED',
   VoicePhase.search => 'RESULT',
   VoicePhase.error => 'ERROR',
-  _ => 'READY',
+  _ => 'TAP TO SPEAK',
 };
 
 Widget buildMessageBubble(
@@ -267,7 +264,7 @@ Widget buildMessageBubble(
   required String? searchQuery,
 }) {
   final (String text, Color highlight) = switch (phase) {
-    VoicePhase.idle => ('"Welcome! Where is your next destination?"', kPink),
+    VoicePhase.idle => ('"Welcome! Where is your next destination?"', kPurple),
     VoicePhase.recording => (
       'Recording... ${elapsed.inSeconds}s',
       Colors.redAccent,
@@ -277,7 +274,7 @@ Widget buildMessageBubble(
       kPurple,
     ),
     VoicePhase.uploading => ('Processing your voice...', kPurpleGlow),
-    VoicePhase.question => (statusMsg, kPink),
+    VoicePhase.question => (statusMsg, kPurple),
     VoicePhase.result => (
       confirmationText ?? 'Booking confirmed!',
       Colors.greenAccent,
@@ -285,12 +282,6 @@ Widget buildMessageBubble(
     VoicePhase.search => (searchQuery ?? transcript, Colors.blueAccent),
     VoicePhase.error => (statusMsg, Colors.redAccent),
   };
-
-  final words = text.split(' ');
-  final lastWord = words.isNotEmpty ? words.last : '';
-  final rest = words.length > 1
-      ? words.sublist(0, words.length - 1).join(' ')
-      : '';
 
   return Container(
     margin: const EdgeInsets.symmetric(horizontal: 32),
@@ -300,21 +291,41 @@ Widget buildMessageBubble(
       borderRadius: BorderRadius.circular(16),
       border: Border.all(color: kPurple.withOpacity(0.15)),
     ),
-    child: RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        style: TextStyle(fontSize: 15, height: 1.5, color: voiceText(context)),
-        children: [
-          if (rest.isNotEmpty) TextSpan(text: rest),
-          if (rest.isNotEmpty && lastWord.isNotEmpty) const TextSpan(text: ' '),
-          if (lastWord.isNotEmpty)
-            TextSpan(
-              text: lastWord,
-              style: TextStyle(color: highlight, fontWeight: FontWeight.w600),
+    child: phase == VoicePhase.idle
+        ? RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.5,
+                color: voiceText(context),
+              ),
+              children: const [
+                TextSpan(text: '"Welcome! '),
+                TextSpan(
+                  text: 'Where is your next destination?',
+                  style: TextStyle(
+                    color: kPurple,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                TextSpan(text: '"'),
+              ],
             ),
-        ],
-      ),
-    ),
+          )
+        : RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.5,
+                color: voiceText(context),
+              ),
+              children: [
+                TextSpan(text: text),
+              ],
+            ),
+          ),
   );
 }
 
@@ -419,6 +430,43 @@ Widget buildResultRows(
     ],
   ),
 );
+
+Widget buildYouSaidCard(
+  BuildContext context, {
+  required String transcript,
+}) =>
+    Container(
+      margin: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: voiceSurface(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kPurple.withOpacity(0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'YOU SAID',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 2,
+              color: voiceSubtext(context),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            transcript,
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.5,
+              color: voiceText(context),
+            ),
+          ),
+        ],
+      ),
+    );
 
 Widget buildResultRow(
   BuildContext context,

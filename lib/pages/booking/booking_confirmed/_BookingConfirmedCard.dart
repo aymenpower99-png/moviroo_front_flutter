@@ -9,7 +9,8 @@ class BookingConfirmedCard extends StatelessWidget {
   final String dropoffAddress;
   final String eta;
   final String distance;
-  final String pax;
+  final String passengers;
+  final String seatCapacity;
   final bool isCash;
 
   const BookingConfirmedCard({
@@ -17,7 +18,8 @@ class BookingConfirmedCard extends StatelessWidget {
     required this.dropoffAddress,
     required this.eta,
     required this.distance,
-    required this.pax,
+    required this.passengers,
+    required this.seatCapacity,
     required this.isCash,
   });
 
@@ -50,7 +52,7 @@ class BookingConfirmedCard extends StatelessWidget {
           // Divider
           Divider(height: 1, thickness: 1, color: AppColors.border(context)),
 
-          // ── 3. Trip info row (3 columns) ──────
+          // ── 3. Trip info row (4 columns) ──────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             child: IntrinsicHeight(
@@ -73,7 +75,15 @@ class BookingConfirmedCard extends StatelessWidget {
                     color: AppColors.border(context),
                   ),
                   Expanded(
-                    child: StatColumn(label: 'PAX', value: pax),
+                    child: StatColumn(label: 'PASSENGERS', value: passengers),
+                  ),
+                  VerticalDivider(
+                    width: 1,
+                    thickness: 1,
+                    color: AppColors.border(context),
+                  ),
+                  Expanded(
+                    child: StatColumn(label: 'CAPACITY', value: seatCapacity),
                   ),
                 ],
               ),

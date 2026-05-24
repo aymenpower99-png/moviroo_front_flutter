@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../services/geocoding/geocoding_service.dart';
 import '../../../../services/recent_searches/recent_searches_service.dart';
@@ -21,6 +22,8 @@ class LocationScreenUIHandlers {
   final void Function(int?) setSelectedRider;
   final void Function(int) setPassengerCount;
 
+  Timer? _debounceTimer;
+
   LocationScreenUIHandlers({
     required this.state,
     required this.fromController,
@@ -36,6 +39,10 @@ class LocationScreenUIHandlers {
     required this.setSelectedRider,
     required this.setPassengerCount,
   });
+
+  void dispose() {
+    _debounceTimer?.cancel();
+  }
 
   void updateCardFocus() {
     final isFocused = fromFocus.hasFocus || toFocus.hasFocus;
@@ -65,8 +72,14 @@ class LocationScreenUIHandlers {
   }
 
   void onFocusChanged() {
-    // Clear suggestions when focus changes to avoid showing old suggestions from previous field
-    setState(() => suggestions.clear());
+    // Only clear suggestions if the focused field is empty.
+    // If the user already typed something, keep suggestions visible.
+    final query = toFocus.hasFocus
+        ? toController.text.trim()
+        : fromController.text.trim();
+    if (query.isEmpty) {
+      setState(() => suggestions.clear());
+    }
   }
 
   void onFieldFocusChanged(
@@ -76,27 +89,18 @@ class LocationScreenUIHandlers {
     double? dropoffLat,
     void Function(bool) setIsLoadingSuggestions,
   ) {
-    // Clear unconfirmed text from the previous field when focus changes
-    // Only keep values that were explicitly confirmed via autocomplete selection
-    // (i.e., have coordinates set)
-    if (changedFocus == fromFocus && fromFocus.hasFocus) {
-      // User focused on pickup field - clear unconfirmed text in drop-off
-      if (toController.text.trim().isNotEmpty && dropoffLat == null) {
-        // Drop-off has text but no confirmed coordinates - clear it
-        setState(() => toController.clear());
-      }
-    } else if (changedFocus == toFocus && toFocus.hasFocus) {
-      // User focused on drop-off field - clear unconfirmed text in pickup
-      if (fromController.text.trim().isNotEmpty && pickupLat == null) {
-        // Pickup has text but no confirmed coordinates - clear it
-        setState(() => fromController.clear());
-      }
-      // Suggestions are already cleared by onFocusChanged(), so "Select on map" will show
-      // Recent searches will provide nearby places below "Select on map"
-    }
+    // NOTE: We intentionally do NOT clear unconfirmed text when switching focus.
+    // Users often type a partial address, switch fields to check something,
+    // and come back. Auto-clearing destroys their input.
+    // Only confirmed selections (with coordinates) are kept as-is.
   }
 
-  void onQueryChanged(void Function(bool) setIsLoadingSuggestions) {
+  void onQueryChanged(
+    void Function(bool) setIsLoadingSuggestions, {
+    double? proximityLat,
+    double? proximityLon,
+    String? language,
+  }) {
     if (!fromFocus.hasFocus && !toFocus.hasFocus) {
       setState(() => suggestions.clear());
       return;
@@ -111,30 +115,49 @@ class LocationScreenUIHandlers {
       return;
     }
 
-    setIsLoadingSuggestions(true);
+    // Cancel previous debounce timer
+    _debounceTimer?.cancel();
 
-    GeocodingService()
-        .searchPlaces(query)
-        .then((results) {
-          if (state.mounted) {
-            // Discard stale results if focus moved or text changed since query started
-            final currentQuery = toFocus.hasFocus
-                ? toController.text.trim()
-                : fromController.text.trim();
-            if (currentQuery != query) return;
+    // Debounce: wait 350ms after the user stops typing before calling backend
+    _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+      if (!state.mounted) return;
 
-            setState(() {
-              suggestions.clear();
-              suggestions.addAll(results);
-            });
-          }
-        })
-        .catchError((e) {
-          debugPrint('Search error: $e');
-        })
-        .whenComplete(() {
-          if (state.mounted) setIsLoadingSuggestions(false);
-        });
+      // Re-check current query after debounce
+      final currentQuery = toFocus.hasFocus
+          ? toController.text.trim()
+          : fromController.text.trim();
+      if (currentQuery != query) return;
+
+      setIsLoadingSuggestions(true);
+
+      GeocodingService()
+          .searchPlaces(
+            query,
+            proximityLat: proximityLat,
+            proximityLon: proximityLon,
+            language: language,
+          )
+          .then((results) {
+            if (state.mounted) {
+              // Discard stale results if focus moved or text changed since query started
+              final latestQuery = toFocus.hasFocus
+                  ? toController.text.trim()
+                  : fromController.text.trim();
+              if (latestQuery != query) return;
+
+              setState(() {
+                suggestions.clear();
+                suggestions.addAll(results);
+              });
+            }
+          })
+          .catchError((e) {
+            debugPrint('Search error: $e');
+          })
+          .whenComplete(() {
+            if (state.mounted) setIsLoadingSuggestions(false);
+          });
+    });
   }
 
   Future<void> showRiderSheet(int? selectedRider) async {

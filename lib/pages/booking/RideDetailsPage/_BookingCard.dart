@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/utils/address_utils.dart';
 
 class BookingCard extends StatelessWidget {
   final String? bookingId;
@@ -138,7 +139,7 @@ class BookingCard extends StatelessWidget {
               _RouteStop(
                 dot: _DotFilledPurple(),
                 label: 'Pick-up',
-                title: pickupAddress ?? '--',
+                title: pickupAddress != null ? simplifyAddress(pickupAddress!) : '--',
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 6),
@@ -151,7 +152,7 @@ class BookingCard extends StatelessWidget {
               _RouteStop(
                 dot: _DotOutlinePurple(),
                 label: 'Drop-off',
-                title: dropoffAddress ?? '--',
+                title: dropoffAddress != null ? simplifyAddress(dropoffAddress!) : '--',
               ),
             ],
           ),

@@ -88,6 +88,12 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     return null;
   }
 
+  int? get _passengerCount {
+    final v = _bookingData?['passengerCount'];
+    if (v is num) return v.toInt();
+    return null;
+  }
+
   int? get _seats {
     final cls = _bookingData?['vehicleClass'] as Map<String, dynamic>?;
     final v = cls?['seats'];
@@ -281,7 +287,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                           RideDetailsCard(
                             distanceKm: _distanceKm,
                             durationMin: _durationMin,
-                            passengers: _seats,
+                            passengers: _passengerCount,
                           ),
                           const SizedBox(height: 12),
                           VehicleCard(

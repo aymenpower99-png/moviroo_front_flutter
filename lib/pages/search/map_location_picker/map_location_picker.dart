@@ -190,7 +190,8 @@ class _MapLocationPickerState extends State<MapLocationPicker>
     });
 
     if (inCoverage) {
-      final place = await svc.MapboxService.reverseGeocode(lat, lon);
+      final locale = Localizations.localeOf(context).languageCode;
+      final place = await svc.MapboxService.reverseGeocode(lat, lon, language: locale);
       if (!mounted) return;
       setState(() {
         _isLoadingAddress = false;

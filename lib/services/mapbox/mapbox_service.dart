@@ -10,13 +10,13 @@ class MapboxService {
   static const String _mapboxDirectionsUrl =
       'https://api.mapbox.com/directions/v5/mapbox/driving';
 
-  /// Search places using backend unified autocomplete endpoint
+  /// Search places using backend unified search endpoint (parallel Mapbox + Nominatim)
   static Future<List<MapboxPlace>> searchPlaces(String query) async {
     if (query.trim().isEmpty) return [];
 
     try {
       final url = Uri.parse(
-        '${AppConfig.baseUrl}/rides/geocode/autocomplete',
+        '${AppConfig.baseUrl}/rides/geocode/search',
       ).replace(queryParameters: {'q': query});
 
       final response = await http.get(url);
@@ -30,11 +30,11 @@ class MapboxService {
             .toList();
       } else {
         debugPrint(
-          'Backend autocomplete HTTP ${response.statusCode}: ${response.body}',
+          'Backend search HTTP ${response.statusCode}: ${response.body}',
         );
       }
     } catch (e, st) {
-      debugPrint('Backend autocomplete error: $e\n$st');
+      debugPrint('Backend search error: $e\n$st');
     }
 
     return [];
@@ -43,16 +43,20 @@ class MapboxService {
   /// Reverse geocode using backend endpoint
   static Future<MapboxPlace?> reverseGeocode(
     double latitude,
-    double longitude,
-  ) async {
+    double longitude, {
+    String? language,
+  }) async {
     try {
+      final params = <String, String>{
+        'lat': latitude.toString(),
+        'lon': longitude.toString(),
+      };
+      if (language != null && language.isNotEmpty) {
+        params['lang'] = language;
+      }
+
       final url = Uri.parse('${AppConfig.baseUrl}/rides/geocode/reverse')
-          .replace(
-            queryParameters: {
-              'lat': latitude.toString(),
-              'lon': longitude.toString(),
-            },
-          );
+          .replace(queryParameters: params);
 
       final response = await http.get(url);
 

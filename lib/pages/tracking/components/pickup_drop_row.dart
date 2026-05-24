@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../core/utils/address_utils.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pickup / Drop-off row
@@ -85,7 +86,7 @@ class PickupDropRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  pickupLabel,
+                  simplifyAddress(pickupLabel),
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
@@ -108,7 +109,7 @@ class PickupDropRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  dropLabel,
+                  simplifyAddress(dropLabel),
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,

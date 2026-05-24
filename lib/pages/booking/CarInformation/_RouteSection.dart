@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/utils/address_utils.dart';
 import '_SummaryCard.dart';
 
 class RouteSection extends StatelessWidget {
   final int pax;
+  final int? seats;
   final String? pickupAddress;
   final String? dropoffAddress;
   final DateTime? scheduledDate;
@@ -16,6 +18,7 @@ class RouteSection extends StatelessWidget {
   const RouteSection({
     super.key,
     required this.pax,
+    this.seats,
     this.pickupAddress,
     this.dropoffAddress,
     this.scheduledDate,
@@ -154,14 +157,14 @@ class RouteSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        pickupAddress ?? 'Pickup location',
+                        simplifyAddress(pickupAddress, defaultValue: 'Pickup location'),
                         style: AppTextStyles.bodyMedium(
                           context,
                         ).copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 28),
                       Text(
-                        dropoffAddress ?? 'Drop-off location',
+                        simplifyAddress(dropoffAddress, defaultValue: 'Drop-off location'),
                         style: AppTextStyles.bodyMedium(
                           context,
                         ).copyWith(fontWeight: FontWeight.w700),
@@ -197,11 +200,11 @@ class RouteSection extends StatelessWidget {
               ),
               Expanded(
                 child: _StatItem(
-                  icon: Icons.person_outline_rounded,
+                  icon: Icons.people_outline_rounded,
                   label: t.translate('stat_passenger').toUpperCase(),
                   value: '$pax',
                 ),
-              ),
+              ),                
             ],
           ),
         ],

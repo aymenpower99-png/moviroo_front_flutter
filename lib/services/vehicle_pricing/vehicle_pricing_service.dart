@@ -12,14 +12,15 @@ class VehiclePricingService {
   static const Duration _cacheTtl = Duration(minutes: 3);
 
   static String _key(
-    double lat1, double lon1, double lat2, double lon2, String? dt,
+    double lat1, double lon1, double lat2, double lon2, String? dt, int? pax,
   ) {
     // Round to 4 decimal places (~11 m) so minor GPS jitter doesn't bust cache
     final k = '${lat1.toStringAsFixed(4)},${lon1.toStringAsFixed(4)},'
         '${lat2.toStringAsFixed(4)},${lon2.toStringAsFixed(4)}';
     // Truncate bookingDt to the minute so small time drift doesn't bust cache
     final d = dt != null && dt.length >= 16 ? dt.substring(0, 16) : (dt ?? '');
-    return '$k,$d';
+    final p = pax?.toString() ?? '';
+    return '$k,$d,$p';
   }
 
   /// Get pricing for ALL active car classes from backend.
@@ -30,8 +31,9 @@ class VehiclePricingService {
     required double dropoffLat,
     required double dropoffLon,
     String? bookingDt,
+    int? passengerCount,
   }) async {
-    final key = _key(pickupLat, pickupLon, dropoffLat, dropoffLon, bookingDt);
+    final key = _key(pickupLat, pickupLon, dropoffLat, dropoffLon, bookingDt, passengerCount);
 
     // Return cached if still fresh
     final entry = _cache[key];
@@ -53,6 +55,7 @@ class VehiclePricingService {
         'dropoffLat': dropoffLat.toString(),
         'dropoffLon': dropoffLon.toString(),
         if (bookingDt != null) 'bookingDt': bookingDt,
+        if (passengerCount != null) 'passengerCount': passengerCount.toString(),
       };
 
       final uri = Uri.parse(

@@ -46,6 +46,9 @@ class _LocationScreenState extends State<LocationScreen>
   double? _dropoffLat;
   double? _dropoffLon;
 
+  // Cache key for nearby places to avoid redundant backend calls
+  String? _nearbyPlacesCacheKey;
+
   // Track if either input is focused for border highlight
   bool _isCardFocused = false;
 
@@ -118,6 +121,10 @@ class _LocationScreenState extends State<LocationScreen>
       if (mounted) {
         if (widget.voiceArgs == null) _fromFocus.requestFocus();
         await _uiHandlers.loadRecentSearches();
+        // If drop-off is already focused and pickup has coords, load nearby
+        if (_toFocus.hasFocus && _pickupLat != null && _pickupLon != null) {
+          _fetchNearbyPlacesIfNeeded();
+        }
       }
     });
 
@@ -125,8 +132,8 @@ class _LocationScreenState extends State<LocationScreen>
     _toController.addListener(_onQueryChanged);
     _fromFocus.addListener(_onFocusChanged);
     _toFocus.addListener(_onFocusChanged);
-    _fromFocus.addListener(() => _onFieldFocusChanged(_fromFocus));
-    _toFocus.addListener(() => _onFieldFocusChanged(_toFocus));
+    _fromFocus.addListener(_onFromFieldFocusChanged);
+    _toFocus.addListener(_onToFieldFocusChanged);
     _fromFocus.addListener(_updateCardFocus);
     _toFocus.addListener(_updateCardFocus);
   }
@@ -168,37 +175,48 @@ class _LocationScreenState extends State<LocationScreen>
 
   void _updateCardFocus() => _uiHandlers.updateCardFocus();
   void _onFocusChanged() => _uiHandlers.onFocusChanged();
-  void _onFieldFocusChanged(FocusNode focusNode) {
-    _uiHandlers.onFieldFocusChanged(
-      focusNode,
-      _pickupLat,
-      _pickupLon,
-      _dropoffLat,
-      (v) => setState(() => _isLoadingSuggestions = v),
-    );
-    // Reload recent searches when switching between pickup/dropoff fields
+
+  void _onFromFieldFocusChanged() {
     _uiHandlers.loadRecentSearches();
   }
+
+  void _onToFieldFocusChanged() {
+    _uiHandlers.loadRecentSearches();
+    // Fetch nearby places when focus lands on drop-off and pickup is confirmed
+    if (_toFocus.hasFocus && _pickupLat != null && _pickupLon != null) {
+      _fetchNearbyPlacesIfNeeded();
+    }
+  }
   void _onQueryChanged() {
+    final locale = Localizations.localeOf(context).languageCode;
     _uiHandlers.onQueryChanged(
       (v) => setState(() => _isLoadingSuggestions = v),
+      proximityLat: _pickupLat,
+      proximityLon: _pickupLon,
+      language: locale,
     );
 
-    // Fetch nearby places when pickup is set and drop-off is empty
-    _fetchNearbyPlacesIfNeeded();
+    // Keep nearby places refreshed while user is typing drop-off
+    if (_toFocus.hasFocus && _pickupLat != null && _pickupLon != null) {
+      _fetchNearbyPlacesIfNeeded();
+    }
   }
 
   Future<void> _fetchNearbyPlacesIfNeeded() async {
-    // Only fetch nearby places when:
-    // - Pickup has valid coordinates
-    // - Drop-off is empty
-    // - To field is focused (user is selecting drop-off)
-    if (_pickupLat != null &&
-        _pickupLon != null &&
-        _toController.text.trim().isEmpty &&
-        _toFocus.hasFocus) {
-      setState(() => _isLoadingNearbyPlaces = true);
+    // Fetch nearby places around the confirmed pickup location.
+    // The caller must ensure drop-off is focused and pickup has valid coords.
+    if (_pickupLat == null || _pickupLon == null) return;
+    if (_pickupLat == 0.0 && _pickupLon == 0.0) return;
+    if (_pickupLat!.isNaN || _pickupLon!.isNaN) return;
 
+    // Cache key based on pickup coordinates (rounded to 4 decimals)
+    final cacheKey =
+        '${_pickupLat!.toStringAsFixed(4)},${_pickupLon!.toStringAsFixed(4)}';
+    if (_nearbyPlacesCacheKey == cacheKey && _nearbyPlaces.isNotEmpty) return;
+
+    setState(() => _isLoadingNearbyPlaces = true);
+
+    try {
       final nearby = await GeocodingService().getNearbyPlaces(
         _pickupLat!,
         _pickupLon!,
@@ -208,21 +226,40 @@ class _LocationScreenState extends State<LocationScreen>
         setState(() {
           _nearbyPlaces = nearby;
           _isLoadingNearbyPlaces = false;
+          _nearbyPlacesCacheKey = cacheKey;
         });
+      }
+    } catch (e) {
+      debugPrint('Error fetching nearby places: $e');
+      if (mounted) {
+        setState(() => _isLoadingNearbyPlaces = false);
       }
     }
   }
 
-  void _onSuggestionTap(GeocodingPlace place) => _locationHandlers
-      .onSuggestionTap(place, _pickupLat, _pickupLon, _dropoffLat, _dropoffLon);
+  void _onSuggestionTap(GeocodingPlace place) async {
+    await _locationHandlers.onSuggestionTap(
+      place, _pickupLat, _pickupLon, _dropoffLat, _dropoffLon,
+    );
+    // After pickup is confirmed and focus moves to drop-off, explicitly
+    // trigger nearby places with a short delay so focus has settled.
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted && _toFocus.hasFocus && _pickupLat != null) {
+        _fetchNearbyPlacesIfNeeded();
+      }
+    });
+  }
   void _fillSmartField(String locationName, GeocodingPlace place) =>
       _locationHandlers.fillSmartField(locationName, place);
-  void _handleUseCurrentLocation() =>
-      _locationHandlers.handleUseCurrentLocation(
-        _pickupLat,
-        _pickupLon,
-        (v) => setState(() => _isFetchingLocation = v),
-      );
+  void _handleUseCurrentLocation() {
+    final locale = Localizations.localeOf(context).languageCode;
+    _locationHandlers.handleUseCurrentLocation(
+      _pickupLat,
+      _pickupLon,
+      (v) => setState(() => _isFetchingLocation = v),
+      language: locale,
+    );
+  }
   void _swapLocations() => _locationHandlers.swapLocations(
     _pickupLat,
     _pickupLon,
@@ -252,11 +289,14 @@ class _LocationScreenState extends State<LocationScreen>
 
   @override
   void dispose() {
+    _uiHandlers.dispose();
     _pulseController.dispose();
     _fromController.removeListener(_onQueryChanged);
     _toController.removeListener(_onQueryChanged);
     _fromFocus.removeListener(_onFocusChanged);
     _toFocus.removeListener(_onFocusChanged);
+    _fromFocus.removeListener(_onFromFieldFocusChanged);
+    _toFocus.removeListener(_onToFieldFocusChanged);
     _fromFocus.removeListener(_updateCardFocus);
     _toFocus.removeListener(_updateCardFocus);
     _fromController.dispose();

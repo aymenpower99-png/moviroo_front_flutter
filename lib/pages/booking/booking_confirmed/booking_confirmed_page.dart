@@ -5,6 +5,7 @@ import '../../../../services/ride_api/booking_api_service.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/booking_provider.dart';
 import '../../../../routing/router.dart';
+import '../../../../core/utils/address_utils.dart';
 import '_BookingConfirmedHeader.dart';
 import '_BookingConfirmedCard.dart';
 import '_BookingConfirmedButtons.dart';
@@ -195,14 +196,28 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
     return '${distance.toStringAsFixed(0)} KM';
   }
 
-  String _formatPax() {
+  int? get _passengerCount {
+    final v = _bookingData?['passengerCount'];
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  int? get _seatCount {
     final cls = _bookingData?['vehicleClass'] as Map<String, dynamic>?;
-    final seats = cls?['seats'];
-    if (seats is num) {
-      final seatCount = seats.toInt();
-      return '$seatCount ${seatCount == 1 ? "ADULT" : "ADULTS"}';
-    }
-    return '2 ADULTS';
+    final v = cls?['seats'];
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  String _formatPassengers() {
+    final count = _passengerCount ?? 1;
+    return '$count ${count == 1 ? 'passenger riding' : 'passengers riding'}';
+  }
+
+  String _formatSeatCapacity() {
+    final count = _seatCount;
+    if (count != null) return '$count seats capacity';
+    return '--';
   }
 
   void _handlePayNow() {
@@ -320,11 +335,12 @@ class _BookingConfirmedPageState extends State<BookingConfirmedPage> {
 
                     // ── Main Card ─────────────────────────────
                     BookingConfirmedCard(
-                      pickupAddress: _pickupAddress ?? 'Pickup location',
-                      dropoffAddress: _dropoffAddress ?? 'Dropoff location',
+                      pickupAddress: _pickupAddress != null ? simplifyAddress(_pickupAddress!) : 'Pickup location',
+                      dropoffAddress: _dropoffAddress != null ? simplifyAddress(_dropoffAddress!) : 'Dropoff location',
                       eta: _formatEta(),
                       distance: _formatDistance(),
-                      pax: _formatPax(),
+                      passengers: _formatPassengers(),
+                      seatCapacity: _formatSeatCapacity(),
                       isCash: isCash,
                     ),
                   ],

@@ -10,7 +10,8 @@ const String kBackendUrl =
 // ─────────────────────────────────────────────────────────────
 // Theme-aware helpers (call inside build / with context)
 // ─────────────────────────────────────────────────────────────
-Color voiceBg(BuildContext context) => AppColors.bg(context);
+const Color kVoiceBackground = Color(0xFFF3F0FF);
+Color voiceBg(BuildContext context) => kVoiceBackground;
 Color voiceSurface(BuildContext context) => AppColors.surface(context);
 Color voiceBorder(BuildContext context) => AppColors.border(context);
 Color voiceText(BuildContext context) => AppColors.text(context);
