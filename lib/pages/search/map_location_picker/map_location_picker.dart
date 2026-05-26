@@ -143,6 +143,7 @@ class _MapLocationPickerState extends State<MapLocationPicker>
       final places = await GeocodingService().getNearbyPlaces(
         _currentLat,
         _currentLon,
+        language: Localizations.localeOf(context).languageCode,
       );
       if (mounted) {
         setState(() {
@@ -195,7 +196,7 @@ class _MapLocationPickerState extends State<MapLocationPicker>
       if (!mounted) return;
       setState(() {
         _isLoadingAddress = false;
-        _addressController.text = place?.fullAddress ?? '';
+        _addressController.text = place?.localizedFullAddress() ?? '';
       });
     } else {
       if (!mounted) return;

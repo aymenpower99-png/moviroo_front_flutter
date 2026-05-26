@@ -1,10 +1,27 @@
 import 'package:flutter/material.dart';
 import '../../core/utils/address_utils.dart';
 
+/// Current app locale for address localization.
+/// Updated by the app at startup and when locale changes.
+String _currentAppLocale = 'fr';
+
+void setMapboxPlaceLocale(String locale) {
+  _currentAppLocale = locale;
+}
+
+String get mapboxPlaceLocale => _currentAppLocale;
+
 class MapboxPlace {
   final String id;
   final String placeName;
   final String fullAddress;
+
+  /// Raw display name from backend (unlocalized).
+  final String rawPlaceName;
+
+  /// Raw address from backend (unlocalized).
+  final String? rawAddress;
+
   final String city;
   final String country;
   final IconData categoryIcon;
@@ -15,12 +32,31 @@ class MapboxPlace {
     required this.id,
     required this.placeName,
     required this.fullAddress,
+    required this.rawPlaceName,
+    this.rawAddress,
     required this.categoryIcon,
     this.city = '',
     this.country = '',
     this.latitude,
     this.longitude,
   });
+
+  /// Returns a locale-aware display name.
+  String localizedPlaceName([String? locale]) {
+    return buildLocalizedDisplayName(
+      rawPlaceName,
+      locale: locale ?? _currentAppLocale,
+    );
+  }
+
+  /// Returns a locale-aware full address.
+  String localizedFullAddress([String? locale]) {
+    final raw = rawAddress ?? rawPlaceName;
+    return buildLocalizedDisplayName(
+      raw,
+      locale: locale ?? _currentAppLocale,
+    );
+  }
 
   /// Create from backend geocoding response format
   factory MapboxPlace.fromBackend(Map<String, dynamic> json) {
@@ -64,6 +100,8 @@ class MapboxPlace {
       id: id,
       placeName: simplifiedPlaceName,
       fullAddress: fullAddress,
+      rawPlaceName: displayName,
+      rawAddress: address,
       city: city,
       country: country,
       categoryIcon: categoryIcon,
@@ -124,6 +162,7 @@ class MapboxPlace {
       id: json['id'] as String? ?? '',
       placeName: placeName,
       fullAddress: fullAddress,
+      rawPlaceName: rawPlaceName,
       categoryIcon: _resolveIcon(signals),
       latitude: center != null && center.length >= 2
           ? (center[1] as num).toDouble()

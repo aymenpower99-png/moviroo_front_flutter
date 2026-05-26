@@ -26,9 +26,12 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
   void initState() {
     super.initState();
 
-    // 1. Populate from cache synchronously — no spinner
+    // 1. Populate from cache synchronously — no spinner if we have data
     if (_cachedSessions != null) {
       _sessions = _cachedSessions!;
+    } else {
+      // No cache yet — show loader on first frame
+      _loading = true;
     }
 
     // 2. Always refresh in background
@@ -38,14 +41,28 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
   }
 
   Future<void> _load() async {
+    // Only show a full-screen loader on the very first fetch when we have
+    // nothing to display. If we already have cached sessions, refresh silently
+    // in the background so the user never sees a blank screen.
+    final shouldShowLoader = _cachedSessions == null;
+    if (shouldShowLoader) {
+      setState(() => _loading = true);
+    }
     try {
       final sessions = await _auth.getSessions();
       _cachedSessions = sessions;
       if (mounted) setState(() => _sessions = sessions);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted && shouldShowLoader) {
+        setState(() => _loading = false);
+      }
     }
   }
+
+  /// Clears the in-memory session cache. Call on logout or account switch.
+  static void clearCache() => _cachedSessions = null;
 
   Future<void> _revokeAll() async {
     // Step-up auth: if biometric is enabled, require device biometric first

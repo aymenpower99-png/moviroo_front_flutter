@@ -3,6 +3,9 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth/webauthn_service.dart';
+import '../../../../services/auth/webauthn_platform_channel.dart';
+import '../../../../services/auth/auth_helpers.dart';
+import '../../../../services/auth_service/auth_service.dart';
 
 class PasskeyManagementPage extends StatefulWidget {
   const PasskeyManagementPage({super.key});
@@ -23,12 +26,29 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
   @override
   void initState() {
     super.initState();
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    // 1. Try to populate synchronously from service cache so the first frame
+    //    shows data instead of a spinner.
+    final token = await AuthService().getAccessToken();
+    final userId = token != null ? AuthHelpers.extractUserId(token) : null;
+    if (WebAuthnService.hasCacheFor(userId)) {
+      final cached = await _webauthn.getPasskeys(); // instant — from cache
+      if (mounted) {
+        setState(() => _passkeys = cached);
+      }
+    } else {
+      // No cache yet — show spinner on first frame
+      setState(() => _isBootstrapping = true);
+    }
+
+    // 2. Always refresh in background
     _loadPasskeys();
   }
 
   Future<void> _loadPasskeys() async {
-    // Only show a spinner on the very first load when we have nothing to show.
-    if (_passkeys.isEmpty) setState(() => _isBootstrapping = true);
     try {
       final passkeys = await _webauthn.getPasskeys();
       if (mounted) {
@@ -78,6 +98,11 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
 
     try {
       await _webauthn.deletePasskey(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_t('passkey_removed'))),
+        );
+      }
       _loadPasskeys();
     } catch (e) {
       if (mounted) {
@@ -92,19 +117,22 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
     setState(() => _isBusy = true);
     try {
       await _webauthn.registerPasskey();
-      _loadPasskeys();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(_t('passkey_registered'))),
         );
       }
+      _loadPasskeys();
+    } on PasskeyUserCancelledException catch (_) {
+      // User cancelled — silently dismiss, no message needed
     } catch (e) {
-      setState(() => _isBusy = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${_t('passkey_register_failed')}: $e')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 

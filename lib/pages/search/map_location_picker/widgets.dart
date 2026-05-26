@@ -300,7 +300,7 @@ class PickerBottomSheet extends StatelessWidget {
                         color: AppColors.primaryPurple,
                       ),
                       label: Text(
-                        place.placeName,
+                        place.localizedPlaceName(),
                         style: const TextStyle(fontSize: 12),
                       ),
                       backgroundColor: AppColors.bg(context),

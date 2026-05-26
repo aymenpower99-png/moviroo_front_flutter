@@ -4,11 +4,14 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'webauthn_api_service.dart';
 import 'webauthn_platform_channel.dart';
 import '../auth_service/auth_service.dart';
+import 'auth_helpers.dart';
 
 class WebAuthnService {
   final AuthService _authService = AuthService();
 
   /// In-memory cache so the Passkeys page feels instant on re-entry.
+  /// Scoped by user ID to prevent cross-account leaks.
+  static String? _cacheOwnerId;
   static List<dynamic>? _cachedPasskeys;
 
   /// Register a new passkey for the current user.
@@ -43,6 +46,18 @@ class WebAuthnService {
       deviceName: effectiveDeviceName,
       accessToken: token,
     );
+
+    // Device-level dedup: backend detected an existing passkey for this device
+    final alreadyExists = startResult['alreadyExists'] as bool? ?? false;
+    if (alreadyExists) {
+      return {
+        'success': true,
+        'credentialId': startResult['credentialId'],
+        'deviceName': startResult['deviceName'],
+        'message': startResult['message'] ?? 'This passkey is already registered.',
+      };
+    }
+
     final optionsId = startResult['optionsId'] as String;
     final options = startResult['options'];
 
@@ -88,12 +103,19 @@ class WebAuthnService {
     );
   }
 
-  /// Returns the cached list if available, otherwise fetches from the API.
+  /// Returns the cached list if available (and owned by the current user),
+  /// otherwise fetches from the API.
   Future<List<dynamic>> getPasskeys() async {
-    if (_cachedPasskeys != null) return _cachedPasskeys!;
     final token = await _authService.getAccessToken();
     if (token == null) throw Exception('Not authenticated');
+
+    final userId = AuthHelpers.extractUserId(token);
+    if (userId != null && _cacheOwnerId == userId && _cachedPasskeys != null) {
+      return _cachedPasskeys!;
+    }
+
     final list = await WebAuthnApiService.listPasskeys(token);
+    _cacheOwnerId = userId;
     _cachedPasskeys = list;
     return list;
   }
@@ -109,6 +131,17 @@ class WebAuthnService {
     final token = await _authService.getAccessToken();
     if (token == null) throw Exception('Not authenticated');
     await WebAuthnApiService.renamePasskey(id, deviceName, token);
+    _cachedPasskeys = null;
+  }
+
+  /// True if the service has cached passkeys for [userId].
+  static bool hasCacheFor(String? userId) {
+    return userId != null && _cacheOwnerId == userId && _cachedPasskeys != null;
+  }
+
+  /// Clears the in-memory passkey cache. Call on logout or account switch.
+  static void clearCache() {
+    _cacheOwnerId = null;
     _cachedPasskeys = null;
   }
 }

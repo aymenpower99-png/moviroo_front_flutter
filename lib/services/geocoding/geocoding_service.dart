@@ -5,6 +5,16 @@ import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
 import '../../core/utils/address_utils.dart';
 
+/// Current app locale for address localization.
+/// Updated by the app at startup and when locale changes.
+String _currentAppLocale = 'fr';
+
+void setAddressLocale(String locale) {
+  _currentAppLocale = locale;
+}
+
+String get addressLocale => _currentAppLocale;
+
 class GeocodingPlace {
   final String id;
   final String placeName;
@@ -16,10 +26,18 @@ class GeocodingPlace {
   final String? category;
   final IconData categoryIcon;
 
+  /// Raw display name from backend (unlocalized).
+  final String rawPlaceName;
+
+  /// Raw address from backend (unlocalized).
+  final String? rawAddress;
+
   GeocodingPlace({
     required this.id,
     required this.placeName,
+    required this.rawPlaceName,
     this.address,
+    this.rawAddress,
     required this.latitude,
     required this.longitude,
     this.source,
@@ -39,14 +57,19 @@ class GeocodingPlace {
         (json['longitude'] as num?)?.toDouble() ??
         (json['lon'] as num?)?.toDouble() ??
         0.0;
-    final name = simplifyAddress(
+
+    // Keep raw values for locale-aware display
+    final rawName =
         (json['place_name'] as String?) ??
         (json['display_name'] as String?) ??
         (json['displayName'] as String?) ??
-        '');
-    final addr = (json['address'] as String?) != null
-        ? simplifyAddress(json['address'] as String)
-        : null;
+        '';
+    final rawAddr = json['address'] as String?;
+
+    // Apply basic cleanup (postal codes, country, admin labels)
+    final name = simplifyAddress(rawName);
+    final addr = rawAddr != null ? simplifyAddress(rawAddr) : null;
+
     final placeType = json['place_type'] as String?;
     final category = json['category'] as String?;
 
@@ -56,13 +79,33 @@ class GeocodingPlace {
           json['place_id']?.toString() ??
           '${name}_${lat}_$lon',
       placeName: name,
+      rawPlaceName: rawName,
       address: addr,
+      rawAddress: rawAddr,
       latitude: lat,
       longitude: lon,
       source: json['source'] as String?,
       placeType: placeType,
       category: category,
       categoryIcon: _resolveIcon(category, placeType, json['source'] as String?),
+    );
+  }
+
+  /// Returns a locale-aware display name.
+  /// Uses the current app locale to filter mixed-language segments.
+  String localizedPlaceName([String? locale]) {
+    return buildLocalizedDisplayName(
+      rawPlaceName,
+      locale: locale ?? _currentAppLocale,
+    );
+  }
+
+  /// Returns a locale-aware full address.
+  String localizedFullAddress([String? locale]) {
+    final raw = rawAddress ?? rawPlaceName;
+    return buildLocalizedDisplayName(
+      raw,
+      locale: locale ?? _currentAppLocale,
     );
   }
 
@@ -161,7 +204,9 @@ class GeocodingPlace {
   GeocodingPlace copyWith({
     String? id,
     String? placeName,
+    String? rawPlaceName,
     String? address,
+    String? rawAddress,
     double? latitude,
     double? longitude,
     String? source,
@@ -172,7 +217,9 @@ class GeocodingPlace {
     return GeocodingPlace(
       id: id ?? this.id,
       placeName: placeName ?? this.placeName,
+      rawPlaceName: rawPlaceName ?? this.rawPlaceName,
       address: address ?? this.address,
+      rawAddress: rawAddress ?? this.rawAddress,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       source: source ?? this.source,
@@ -236,6 +283,7 @@ class GeocodingService {
     double latitude,
     double longitude, {
     String? query,
+    String? language,
   }) async {
     try {
       final token = await TokenStorage.getAccess();
@@ -250,6 +298,9 @@ class GeocodingService {
       };
       if (query != null && query.isNotEmpty) {
         queryParams['q'] = query;
+      }
+      if (language != null && language.isNotEmpty) {
+        queryParams['lang'] = language;
       }
 
       final uri = Uri.parse(

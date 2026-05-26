@@ -5,7 +5,7 @@ import '../../../../../theme/app_text_styles.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../services/auth_service/auth_service.dart';
 import 'password/password_page.dart';
-import '2_step_verification/two_step_verification_page.dart';
+import '2_step_verification/otp/two_step_verification_page.dart';
 import 'passkey/passkey_page.dart';
 import '../passkey_management_page.dart';
 import 'sessions/active_sessions_page.dart';

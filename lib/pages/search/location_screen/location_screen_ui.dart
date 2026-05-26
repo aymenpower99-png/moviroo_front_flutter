@@ -229,11 +229,11 @@ class LocationScreenUI extends StatelessWidget {
                   if (showRecent) ...[
                     ...activeRecentList.map((place) => RecentSearchTile(
                           item: RecentSearchItem(
-                            title: place.placeName,
-                            subtitle: place.fullAddress,
+                            title: place.localizedPlaceName(),
+                            subtitle: place.localizedFullAddress(),
                             categoryIcon: Icons.history_rounded,
                           ),
-                          onTap: () => onFillSmartField(place.placeName, place),
+                           onTap: () => onFillSmartField(place.localizedPlaceName(), place),
                         )),
                     if (activeRecentList.isNotEmpty)
                       Align(
@@ -403,20 +403,20 @@ class _SuggestionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    place.placeName,
+                    place.localizedPlaceName(),
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.text(context),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (place.fullAddress.isNotEmpty)
+
+                  // Address
+                  if (place.localizedFullAddress().isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        place.fullAddress,
+                        place.localizedFullAddress(),
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.subtext(context),

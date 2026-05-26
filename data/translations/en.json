@@ -517,7 +517,9 @@
   "remove_passkey_confirm": "This passkey will no longer be available for passwordless sign-in.",
   "passkey_registered": "Passkey registered successfully",
   "passkey_register_failed": "Failed to register passkey",
+  "passkey_removed": "Passkey removed successfully",
   "passkey_remove_failed": "Failed to remove passkey",
   "passkey_rename_failed": "Failed to rename passkey",
+  "authenticator_app_linked_success": "Authenticator app linked successfully",
   "device_name": "Device name"
 }

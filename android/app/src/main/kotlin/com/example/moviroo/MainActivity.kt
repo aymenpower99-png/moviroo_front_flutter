@@ -39,6 +39,12 @@ class MainActivity : FlutterFragmentActivity() {
 
     private fun handleRegister(options: String, result: MethodChannel.Result) {
         Log.d("WebAuthn", "Register options JSON: $options")
+        try {
+            val jsonObj = JSONObject(options)
+            val userId = jsonObj.optJSONObject("user")?.optString("id", "N/A") ?: "N/A"
+            val excludeCount = jsonObj.optJSONArray("excludeCredentials")?.length() ?: 0
+            Log.d("WebAuthn", "user.id=$userId, excludeCredentials count=$excludeCount")
+        } catch (_: Exception) {}
         val request = CreatePublicKeyCredentialRequest(options)
         CoroutineScope(Dispatchers.Main).launch {
             try {

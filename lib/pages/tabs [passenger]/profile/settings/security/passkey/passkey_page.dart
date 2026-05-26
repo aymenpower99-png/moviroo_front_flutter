@@ -44,28 +44,26 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
     try {
       final supported = await _biometric.isSupported();
       final label = await _biometric.availableMethodLabel();
-      final user = await _auth.getCurrentUser();
+      // Force refresh: security settings must never show stale cached state.
+      final user = await _auth.getCurrentUser(forceRefresh: true);
       if (!mounted) return;
 
       final newEnabled = (user?['passkeyEnabled'] as bool?) ?? false;
-      final changed =
-          newEnabled != _alreadyEnabled ||
-          supported != _isSupported ||
-          label != _methodLabel ||
-          _isBootstrapping;
-
-      if (changed) {
-        setState(() {
-          _isSupported = supported;
-          _methodLabel = label;
-          _alreadyEnabled = newEnabled;
-          _isBootstrapping = false;
-        });
-      }
-    } catch (_) {
-      if (mounted && _isBootstrapping) {
-        setState(() => _isBootstrapping = false);
-      }
+      // Always sync state from backend — never trust stale cache alone
+      setState(() {
+        _isSupported = supported;
+        _methodLabel = label;
+        _alreadyEnabled = newEnabled;
+        _isBootstrapping = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      // On failure, still leave bootstrap so UI is usable.
+      // Keep cached _alreadyEnabled but show an error banner.
+      setState(() {
+        _isBootstrapping = false;
+        _errorMessage = 'Could not refresh biometric status. Please try again.';
+      });
     }
   }
 
@@ -88,6 +86,8 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
       return;
     }
     if (!mounted) return;
+    // Invalidate user cache so other screens see the updated passkeyEnabled flag
+    _auth.invalidateUserCache();
     setState(() {
       _isBusy = false;
       _alreadyEnabled = true;
@@ -121,6 +121,8 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
     try {
       await _biometric.disable();
       if (!mounted) return;
+      // Invalidate user cache so other screens see the updated passkeyEnabled flag
+      _auth.invalidateUserCache();
       setState(() {
         _alreadyEnabled = false;
         _isBusy = false;
@@ -183,118 +185,122 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
                     )
                   : Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 8),
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 8),
 
-                          // ── Icon circle ───────────────────────────────
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isDark
-                                  ? const Color(0xFF1C1C22)
-                                  : const Color(0xFFF5F5F7),
-                              border: Border.all(
-                                color: AppColors.primaryPurple,
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primaryPurple.withValues(
-                                    alpha: isDark ? 0.2 : 0.1,
-                                  ),
-                                  blurRadius: 20,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.manage_accounts_rounded,
-                              color: AppColors.primaryPurple,
-                              size: 40,
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // ── Title ─────────────────────────────────────────
-                          Text(
-                            _alreadyEnabled
-                                ? t('biometric_enabled_title')
-                                : t('biometric_enable_title'),
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.pageTitle(
-                              context,
-                            ).copyWith(fontSize: 22, fontWeight: FontWeight.w800),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // ── Subtitle ──────────────────────────────────────
-                          Text(
-                            _isSupported
-                                ? (_alreadyEnabled
-                                      ? t('biometric_enabled_subtitle').replaceAll('{method}', _methodLabel)
-                                      : t('biometric_enable_subtitle'))
-                                : t('biometric_not_supported'),
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.bodySmall(
-                              context,
-                            ).copyWith(height: 1.4),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          if (_errorMessage != null) ...[
+                            // ── Icon circle ───────────────────────────────
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              width: 80,
+                              height: 80,
                               decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.error_outline,
-                                    color: AppColors.error,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      _errorMessage!,
-                                      style: AppTextStyles.bodySmall(
-                                        context,
-                                      ).copyWith(color: AppColors.error),
+                                shape: BoxShape.circle,
+                                color: isDark
+                                    ? const Color(0xFF1C1C22)
+                                    : const Color(0xFFF5F5F7),
+                                border: Border.all(
+                                  color: AppColors.primaryPurple,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primaryPurple.withValues(
+                                      alpha: isDark ? 0.2 : 0.1,
                                     ),
+                                    blurRadius: 20,
+                                    spreadRadius: 1,
                                   ),
                                 ],
                               ),
+                              child: const Icon(
+                                Icons.manage_accounts_rounded,
+                                color: AppColors.primaryPurple,
+                                size: 40,
+                              ),
                             ),
-                            const SizedBox(height: 12),
-                          ],
 
-                          // ── Feature list ──────────────────────────────────
-                          _PasskeyFeature(
-                            icon: Icons.face_rounded,
-                            title: t('passkey_face_unlock'),
-                            subtitle: t('passkey_face_unlock_sub'),
-                          ),
-                          const SizedBox(height: 16),
-                          _PasskeyFeature(
-                            icon: Icons.fingerprint_rounded,
-                            title: t('passkey_fingerprint_unlock'),
-                            subtitle: t('passkey_fingerprint_unlock_sub'),
-                          ),
-                          const SizedBox(height: 16),
-                          _PasskeyFeature(
-                            icon: Icons.pin_rounded,
-                            title: t('passkey_device_pin'),
-                            subtitle: t('passkey_device_pin_sub'),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+
+                            // ── Title ─────────────────────────────────────────
+                            Text(
+                              _alreadyEnabled
+                                  ? t('biometric_enabled_title')
+                                  : t('biometric_enable_title'),
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.pageTitle(
+                                context,
+                              ).copyWith(fontSize: 22, fontWeight: FontWeight.w800),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            // ── Subtitle ──────────────────────────────────────
+                            Text(
+                              _isSupported
+                                  ? (_alreadyEnabled
+                                        ? t('biometric_enabled_subtitle').replaceAll('{method}', _methodLabel)
+                                        : t('biometric_enable_subtitle'))
+                                  : t('biometric_not_supported'),
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.bodySmall(
+                                context,
+                              ).copyWith(height: 1.4),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            if (_errorMessage != null) ...[
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      color: AppColors.error,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        _errorMessage!,
+                                        style: AppTextStyles.bodySmall(
+                                          context,
+                                        ).copyWith(color: AppColors.error),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+
+                            // ── Feature list ──────────────────────────────────
+                            _PasskeyFeature(
+                              icon: Icons.face_rounded,
+                              title: t('passkey_face_unlock'),
+                              subtitle: t('passkey_face_unlock_sub'),
+                            ),
+                            const SizedBox(height: 16),
+                            _PasskeyFeature(
+                              icon: Icons.fingerprint_rounded,
+                              title: t('passkey_fingerprint_unlock'),
+                              subtitle: t('passkey_fingerprint_unlock_sub'),
+                            ),
+                            const SizedBox(height: 16),
+                            _PasskeyFeature(
+                              icon: Icons.pin_rounded,
+                              title: t('passkey_device_pin'),
+                              subtitle: t('passkey_device_pin_sub'),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
                     ),
             ),

@@ -83,10 +83,13 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   void initState() {
     super.initState();
 
-    // 1. Populate from cache synchronously — no spinner
+    // 1. Populate from cache synchronously — no spinner if we have data
     final cached = _api.cachedSavedCards;
     if (cached != null) {
       _cards = cached.map(PaymentCard.fromJson).toList();
+    } else {
+      // No cache yet — show loader on first frame
+      _isLoading = true;
     }
 
     // 2. Always refresh in background
@@ -96,6 +99,13 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   }
 
   Future<void> _refreshCards() async {
+    // Only show a full-screen loader on the very first fetch when we have
+    // nothing to display. If we already have cached cards, refresh silently
+    // in the background so the user never sees a blank screen.
+    final shouldShowLoader = _cards.isEmpty;
+    if (shouldShowLoader) {
+      setState(() => _isLoading = true);
+    }
     try {
       final raw = await _api.getSavedCards();
       if (mounted) {
@@ -103,6 +113,10 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       }
     } catch (_) {
       // silent fail — keep showing cached/empty state
+    } finally {
+      if (mounted && shouldShowLoader) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

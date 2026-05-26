@@ -59,7 +59,7 @@ class LocationScreenLocationHandlers {
     }
 
     if (toFocus.hasFocus) {
-      toController.text = place.placeName;
+      toController.text = place.localizedPlaceName();
       setState(() {
         suggestions.clear();
         setDropoffLat(place.latitude);
@@ -68,7 +68,7 @@ class LocationScreenLocationHandlers {
       await RecentSearchesService.addDropoffRecentSearch(place);
       onMaybeNavigate();
     } else if (fromFocus.hasFocus) {
-      fromController.text = place.placeName;
+      fromController.text = place.localizedPlaceName();
       setState(() {
         suggestions.clear();
         setPickupLat(place.latitude);
@@ -140,7 +140,7 @@ class LocationScreenLocationHandlers {
         language: language,
       );
       if (place != null && state.mounted) {
-        fromController.text = place.placeName;
+        fromController.text = place.localizedPlaceName();
         setState(() {
           setPickupLat(place.latitude);
           setPickupLon(place.longitude);
@@ -238,13 +238,15 @@ class LocationScreenLocationHandlers {
           }
 
           // Update input field with the actual address from reverse geocoding
-          setState(() => target.text = place.fullAddress);
+          setState(() => target.text = place.localizedFullAddress());
 
           // Add to recent searches
           final geocodingPlace = GeocodingPlace(
             id: place.id,
-            placeName: place.placeName,
-            address: place.fullAddress,
+            placeName: place.localizedPlaceName(),
+            rawPlaceName: place.rawPlaceName,
+            address: place.localizedFullAddress(),
+            rawAddress: place.rawAddress,
             latitude: lat,
             longitude: lon,
             source: 'map_picker',

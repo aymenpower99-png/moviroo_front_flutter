@@ -11,13 +11,18 @@ class MapboxService {
       'https://api.mapbox.com/directions/v5/mapbox/driving';
 
   /// Search places using backend unified search endpoint (parallel Mapbox + Nominatim)
-  static Future<List<MapboxPlace>> searchPlaces(String query) async {
+  static Future<List<MapboxPlace>> searchPlaces(String query, {String? language}) async {
     if (query.trim().isEmpty) return [];
 
     try {
+      final params = <String, String>{'q': query};
+      if (language != null && language.isNotEmpty) {
+        params['lang'] = language;
+      }
+
       final url = Uri.parse(
         '${AppConfig.baseUrl}/rides/geocode/search',
-      ).replace(queryParameters: {'q': query});
+      ).replace(queryParameters: params);
 
       final response = await http.get(url);
 

@@ -11,6 +11,9 @@ class BookingApiService {
   static List<Map<String, dynamic>>? _cachedSavedCards;
 
   List<Map<String, dynamic>>? get cachedSavedCards => _cachedSavedCards;
+
+  /// Clears the in-memory saved cards cache. Call on logout or account switch.
+  static void clearCache() => _cachedSavedCards = null;
   /// Create a new ride (booking) with status PENDING.
   /// Returns the ride object if successful (includes id, status, etc.).
   Future<Map<String, dynamic>?> createRide({

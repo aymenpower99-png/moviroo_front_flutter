@@ -495,7 +495,9 @@
   "remove_passkey_confirm": "لن يكون مفتاح المرور هذا متاحًا بعد الآن لتسجيل الدخول بدون كلمة مرور.",
   "passkey_registered": "تم تسجيل مفتاح المرور بنجاح",
   "passkey_register_failed": "فشل تسجيل مفتاح المرور",
+  "passkey_removed": "تم حذف مفتاح المرور بنجاح",
   "passkey_remove_failed": "فشل إزالة مفتاح المرور",
   "passkey_rename_failed": "فشل إعادة تسمية مفتاح المرور",
+  "authenticator_app_linked_success": "تم ربط تطبيق المصادقة بنجاح",
   "device_name": "اسم الجهاز"
 }

@@ -130,11 +130,24 @@ class NotificationService {
       importance: Importance.high,
     );
 
+    const AndroidNotificationChannel supportChannel = AndroidNotificationChannel(
+      'support_messages',
+      'Support Messages',
+      description: 'Support ticket replies and updates',
+      importance: Importance.high,
+    );
+
     await (_localNotifications
             .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin
             >())
         ?.createNotificationChannel(channel);
+
+    await (_localNotifications
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >())
+        ?.createNotificationChannel(supportChannel);
   }
 
   Future<void> _registerToken(String token) async {
@@ -156,24 +169,27 @@ class NotificationService {
     );
 
     final notification = message.notification;
+    final channelId = message.data['channelId']?.toString() ?? 'moviroo_channel';
     if (notification != null) {
       await _localNotifications.show(
         notification.hashCode,
         notification.title,
         notification.body,
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
-            'moviroo_channel',
-            'Moviroo Notifications',
-            channelDescription: 'Moviroo ride notifications',
+            channelId,
+            channelId == 'support_messages' ? 'Support Messages' : 'Moviroo Notifications',
+            channelDescription: channelId == 'support_messages'
+                ? 'Support ticket replies and updates'
+                : 'Moviroo ride notifications',
             importance: Importance.max,
             priority: Priority.high,
             icon: '@mipmap/ic_stat_notification',
-            largeIcon: DrawableResourceAndroidBitmap(
+            largeIcon: const DrawableResourceAndroidBitmap(
               '@mipmap/ic_notification_large',
             ),
           ),
-          iOS: DarwinNotificationDetails(),
+          iOS: const DarwinNotificationDetails(),
         ),
         payload: message.data.toString(),
       );

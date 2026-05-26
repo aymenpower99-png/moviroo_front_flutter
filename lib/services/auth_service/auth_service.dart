@@ -5,6 +5,8 @@ import '../auth/auth_oauth.dart';
 import '../auth/auth_api.dart';
 import '../auth/auth_http.dart';
 import '../auth/security_api.dart';
+import '../auth/webauthn_service.dart';
+import '../ride_api/booking_api_service.dart';
 export '../auth/security_api.dart'
     show TwoFactorMethod, SecurityApiException, twoFactorMethodFromString;
 
@@ -137,6 +139,9 @@ class AuthService {
 
   Future<void> logout() async {
     _cachedUser = null;
+    // Prevent cross-account cache leaks
+    WebAuthnService.clearCache();
+    BookingApiService.clearCache();
     return AuthAPI.logout();
   }
 
@@ -247,6 +252,8 @@ class AuthService {
     );
     await AuthStorage.clearTokens();
     _cachedUser = null;
+    WebAuthnService.clearCache();
+    BookingApiService.clearCache();
   }
 
   // ─── Active Sessions ───────────────────────────────────────────────────────

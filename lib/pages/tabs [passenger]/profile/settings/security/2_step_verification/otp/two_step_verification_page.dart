@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../../../../../../theme/app_colors.dart';
-import '../../../../../../../../../theme/app_text_styles.dart';
-import '../../../../../../../../../l10n/app_localizations.dart';
-import '../../../../../../../../../services/auth_service/auth_service.dart';
-import '../../../../../../../../../services/passkey/passkey_service.dart';
-import 'auth_app_page.dart';
-import 'modals/email_send_modal.dart';
+import '../../../../../../../../../../theme/app_colors.dart';
+import '../../../../../../../../../../theme/app_text_styles.dart';
+import '../../../../../../../../../../l10n/app_localizations.dart';
+import '../../../../../../../../../../services/auth_service/auth_service.dart';
+import '../../../../../../../../../../services/passkey/passkey_service.dart';
+import '../totp/auth_app_page.dart';
+import '../modals/email_send_modal.dart';
 
 class TwoStepVerificationPage extends StatefulWidget {
   const TwoStepVerificationPage({super.key});

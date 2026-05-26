@@ -498,7 +498,9 @@
   "remove_passkey_confirm": "Cette clé d'accès ne sera plus disponible pour la connexion sans mot de passe.",
   "passkey_registered": "Clé d'accès enregistrée avec succès",
   "passkey_register_failed": "Échec de l'enregistrement de la clé d'accès",
+  "passkey_removed": "Clé d'accès supprimée avec succès",
   "passkey_remove_failed": "Échec de la suppression de la clé d'accès",
   "passkey_rename_failed": "Échec du renommage de la clé d'accès",
+  "authenticator_app_linked_success": "Application d'authentification liée avec succès",
   "device_name": "Nom de l'appareil"
 }

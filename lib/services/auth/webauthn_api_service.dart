@@ -7,6 +7,18 @@ import 'auth_storage.dart';
 class WebAuthnApiService {
   static const String baseUrl = AppConfig.baseUrl;
 
+  /// Extract a human-readable message from a backend error response.
+  static String _extractMessage(http.Response response, String fallback) {
+    try {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return (body['message'] as String?) ??
+          (body['error'] as String?) ??
+          fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
   static Future<Map<String, dynamic>> startRegistration({
     String? deviceName,
     String? accessToken,
@@ -24,7 +36,10 @@ class WebAuthnApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
-    throw Exception('Failed to start passkey registration');
+    throw Exception(_extractMessage(
+      response,
+      'Failed to start passkey registration',
+    ));
   }
 
   static Future<Map<String, dynamic>> finishRegistration({
@@ -42,7 +57,10 @@ class WebAuthnApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
-    throw Exception('Failed to finish passkey registration');
+    throw Exception(_extractMessage(
+      response,
+      'Failed to finish passkey registration',
+    ));
   }
 
   static Future<Map<String, dynamic>> startAuthentication({
@@ -58,7 +76,10 @@ class WebAuthnApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
-    throw Exception('Failed to start passkey authentication');
+    throw Exception(_extractMessage(
+      response,
+      'Failed to start passkey authentication',
+    ));
   }
 
   static Future<Map<String, dynamic>> finishAuthentication({
@@ -83,7 +104,10 @@ class WebAuthnApiService {
       }
       return data;
     }
-    throw Exception('Failed to finish passkey authentication');
+    throw Exception(_extractMessage(
+      response,
+      'Failed to finish passkey authentication',
+    ));
   }
 
   static Future<List<dynamic>> listPasskeys(String accessToken) async {
@@ -97,7 +121,7 @@ class WebAuthnApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as List<dynamic>;
     }
-    throw Exception('Failed to list passkeys');
+    throw Exception(_extractMessage(response, 'Failed to list passkeys'));
   }
 
   static Future<void> deletePasskey(String id, String accessToken) async {
@@ -109,7 +133,7 @@ class WebAuthnApiService {
       },
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to delete passkey');
+      throw Exception(_extractMessage(response, 'Failed to delete passkey'));
     }
   }
 
@@ -127,7 +151,7 @@ class WebAuthnApiService {
       body: jsonEncode({'deviceName': deviceName}),
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to rename passkey');
+      throw Exception(_extractMessage(response, 'Failed to rename passkey'));
     }
   }
 }

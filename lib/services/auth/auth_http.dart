@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import 'auth_storage.dart';
@@ -18,7 +20,7 @@ class AuthHTTP {
       throw Exception('Not authenticated');
     }
 
-    final response = await http.get(
+    final response = await _safeRequest(() => http.get(
       Uri.parse('${_getBaseUrl()}$path'),
       headers: {
         'Content-Type': 'application/json',
@@ -27,7 +29,7 @@ class AuthHTTP {
     ).timeout(
       const Duration(seconds: 30),
       onTimeout: () => throw Exception('Request timed out. Check your connection.'),
-    );
+    ));
 
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
@@ -56,7 +58,7 @@ class AuthHTTP {
       throw Exception('Not authenticated');
     }
 
-    final response = await http.post(
+    final response = await _safeRequest(() => http.post(
       Uri.parse('${_getBaseUrl()}$path'),
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +68,7 @@ class AuthHTTP {
     ).timeout(
       const Duration(seconds: 30),
       onTimeout: () => throw Exception('Request timed out. Check your connection.'),
-    );
+    ));
 
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
@@ -94,7 +96,7 @@ class AuthHTTP {
       throw Exception('Not authenticated');
     }
 
-    final response = await http.patch(
+    final response = await _safeRequest(() => http.patch(
       Uri.parse('${_getBaseUrl()}$path'),
       headers: {
         'Content-Type': 'application/json',
@@ -104,7 +106,7 @@ class AuthHTTP {
     ).timeout(
       const Duration(seconds: 30),
       onTimeout: () => throw Exception('Request timed out. Check your connection.'),
-    );
+    ));
 
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
@@ -133,7 +135,7 @@ class AuthHTTP {
       throw Exception('Not authenticated');
     }
 
-    final response = await http.delete(
+    final response = await _safeRequest(() => http.delete(
       Uri.parse('${_getBaseUrl()}$path'),
       headers: {
         'Content-Type': 'application/json',
@@ -144,7 +146,7 @@ class AuthHTTP {
     ).timeout(
       const Duration(seconds: 30),
       onTimeout: () => throw Exception('Request timed out. Check your connection.'),
-    );
+    ));
 
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
@@ -161,7 +163,7 @@ class AuthHTTP {
     final refreshToken = await AuthStorage.getRefreshToken();
     if (refreshToken == null) return null;
 
-    final response = await http.post(
+    final response = await _safeRequest(() => http.post(
       Uri.parse('${_getBaseUrl()}/auth/refresh'),
       headers: {
         'Content-Type': 'application/json',
@@ -170,7 +172,7 @@ class AuthHTTP {
     ).timeout(
       const Duration(seconds: 30),
       onTimeout: () => throw Exception('Request timed out. Check your connection.'),
-    );
+    ));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -184,5 +186,33 @@ class AuthHTTP {
 
   static String _getBaseUrl() {
     return AppConfig.baseUrl;
+  }
+
+  // ─── Transport error handling ──────────────────────────────────────────────
+
+  static Future<T> _safeRequest<T>(Future<T> Function() request) async {
+    try {
+      return await request();
+    } on HandshakeException catch (_) {
+      throw Exception(
+        'Secure connection failed. Please check your network and try again.',
+      );
+    } on CertificateException catch (_) {
+      throw Exception(
+        'Secure connection failed due to an invalid certificate.',
+      );
+    } on SocketException catch (_) {
+      throw Exception(
+        'No internet connection. Please check your network and try again.',
+      );
+    } on http.ClientException catch (_) {
+      throw Exception(
+        'Connection failed. Please check your network and try again.',
+      );
+    } on TimeoutException catch (_) {
+      throw Exception('Request timed out. Check your connection.');
+    } on FormatException catch (_) {
+      throw Exception('Invalid response from server. Please try again later.');
+    }
   }
 }

@@ -92,7 +92,7 @@ class _SuggestionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.placeName,
+                    item.localizedPlaceName(),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -101,7 +101,7 @@ class _SuggestionTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    item.fullAddress,
+                    item.localizedFullAddress(),
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.subtext(context),

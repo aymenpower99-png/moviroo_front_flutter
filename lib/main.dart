@@ -23,6 +23,9 @@ import 'providers/chat_provider.dart';
 import 'providers/membership_provider.dart';
 import 'services/currency/currency_service.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'services/geocoding/geocoding_service.dart' as geocoding_svc;
+import 'services/mapbox/mapbox_place.dart' as mapbox_place;
+import 'core/utils/address_utils.dart' as address_utils;
 
 final themeProvider = ThemeProvider();
 final localeProvider = LocaleProvider();
@@ -88,6 +91,22 @@ class _SmartWayAppState extends State<SmartWayApp> {
     super.initState();
     _initDeepLinks();
     _initNotificationTapHandler();
+    _syncAddressLocale();
+    localeProvider.addListener(_syncAddressLocale);
+  }
+
+  /// Sync the current app locale with address localization utilities.
+  void _syncAddressLocale() {
+    final code = localeProvider.locale.languageCode;
+    geocoding_svc.setAddressLocale(code);
+    mapbox_place.setMapboxPlaceLocale(code);
+  }
+
+  @override
+  void dispose() {
+    localeProvider.removeListener(_syncAddressLocale);
+    _linkSubscription?.cancel();
+    super.dispose();
   }
 
   void _initNotificationTapHandler() {
@@ -138,6 +157,16 @@ class _SmartWayAppState extends State<SmartWayApp> {
             );
           }
           break;
+        case 'SUPPORT_TICKET_REPLY':
+        case 'SUPPORT_TICKET_CREATED':
+          final ticketId = data['ticketId']?.toString() ?? '';
+          if (ticketId.isNotEmpty) {
+            nav.pushNamed(
+              AppRouter.supportChat,
+              arguments: {'ticketId': ticketId},
+            );
+          }
+          break;
         case 'RIDE_CANCELLED':
           nav.pushNamedAndRemoveUntil(
             AppRouter.trajet,
@@ -152,12 +181,6 @@ class _SmartWayAppState extends State<SmartWayApp> {
           );
       }
     };
-  }
-
-  @override
-  void dispose() {
-    _linkSubscription?.cancel();
-    super.dispose();
   }
 
   void _initDeepLinks() async {

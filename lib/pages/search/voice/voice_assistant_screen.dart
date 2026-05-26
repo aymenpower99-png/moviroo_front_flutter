@@ -521,8 +521,8 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
           'dropoffPlace': dropoffPlace,
           'pickupAddress': isCurrentLoc
               ? 'current_location'
-              : (pickupPlace?.placeName ?? _departure ?? ''),
-          'dropoffAddress': dropoffPlace.placeName,
+              : (pickupPlace?.localizedPlaceName() ?? _departure ?? ''),
+          'dropoffAddress': dropoffPlace.localizedPlaceName(),
           'pickupLat': pickupPlace?.latitude,
           'pickupLon': pickupPlace?.longitude,
           'dropoffLat': dropoffPlace.latitude,

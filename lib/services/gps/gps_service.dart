@@ -250,7 +250,9 @@ class GpsService {
       return GeocodingPlace(
         id: 'gps-${DateTime.now().millisecondsSinceEpoch}',
         placeName: 'Current Location',
+        rawPlaceName: 'Current Location',
         address: null,
+        rawAddress: null,
         latitude: position.latitude,
         longitude: position.longitude,
         source: 'gps',

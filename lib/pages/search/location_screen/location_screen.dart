@@ -220,6 +220,7 @@ class _LocationScreenState extends State<LocationScreen>
       final nearby = await GeocodingService().getNearbyPlaces(
         _pickupLat!,
         _pickupLon!,
+        language: Localizations.localeOf(context).languageCode,
       );
 
       if (mounted) {

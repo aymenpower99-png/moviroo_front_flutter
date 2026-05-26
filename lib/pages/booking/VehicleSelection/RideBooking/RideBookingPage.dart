@@ -103,10 +103,9 @@ class _RideBookingPageState extends State<RideBookingPage> with RouteAware {
       if (mounted) {
         setState(() {
           if (_pickupAddress.isEmpty) {
-            _pickupAddress = pickupPlace?.placeName ?? 'Unknown location';
-          }
-          if (_dropoffAddress.isEmpty) {
-            _dropoffAddress = dropoffPlace?.placeName ?? 'Unknown location';
+            _pickupAddress = pickupPlace?.localizedPlaceName() ?? 'Unknown location';
+
+            _dropoffAddress = dropoffPlace?.localizedPlaceName() ?? 'Unknown location';
           }
           _pickupCity = pickupPlace?.city ?? '';
           _pickupCountry = pickupPlace?.country ?? '';

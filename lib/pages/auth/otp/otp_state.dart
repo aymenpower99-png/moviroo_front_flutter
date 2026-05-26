@@ -76,7 +76,8 @@ mixin OtpStateMixin<T extends StatefulWidget> on State<T> {
           code: otp,
         );
         await authService.getCurrentUser(forceRefresh: true);
-        await NotificationService().registerTokenAfterLogin();
+        // Fire-and-forget: FCM registration must never block the login flow
+        NotificationService().registerTokenAfterLogin().catchError((_) {});
         if (mounted) AppRouter.clearAndGo(context, AppRouter.home);
       } else {
         setState(() => errorMessage = t.translate('otp_unknown_purpose'));
