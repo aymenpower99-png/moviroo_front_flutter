@@ -63,15 +63,28 @@ class DeviceInfoService {
 
   Future<String> _getAndroidDeviceName() async {
     final androidInfo = await DeviceInfoPlugin().androidInfo;
-    final brand = androidInfo.brand;
-    final model = androidInfo.model;
-    final product = androidInfo.product;
-    
-    // Try to create a readable device name
-    if (brand != null && model != null) {
+    final brand = androidInfo.brand?.trim();
+    final model = androidInfo.model?.trim();
+    final product = androidInfo.product?.trim();
+    final manufacturer = androidInfo.manufacturer?.trim();
+
+    // Try to create a readable device name with multiple fallbacks
+    if (brand != null &&
+        brand.isNotEmpty &&
+        model != null &&
+        model.isNotEmpty) {
       return '$brand $model';
-    } else if (product != null) {
+    } else if (manufacturer != null &&
+        manufacturer.isNotEmpty &&
+        model != null &&
+        model.isNotEmpty) {
+      return '$manufacturer $model';
+    } else if (product != null && product.isNotEmpty) {
       return product;
+    } else if (model != null && model.isNotEmpty) {
+      return model;
+    } else if (brand != null && brand.isNotEmpty) {
+      return brand;
     } else {
       return 'Android Device';
     }
@@ -92,14 +105,17 @@ class DeviceInfoService {
 
   Future<String> _getIOSDeviceName() async {
     final iosInfo = await DeviceInfoPlugin().iosInfo;
-    final model = iosInfo.model;
-    final name = iosInfo.name;
-    
+    final model = iosInfo.model?.trim();
+    final name = iosInfo.name?.trim();
+    final systemName = iosInfo.systemName?.trim();
+
     // Try to use the device name if available, otherwise use model
-    if (name != null && name.isNotEmpty) {
+    if (name != null && name.isNotEmpty && name != 'iPhone' && name != 'iPad') {
       return name;
-    } else if (model != null) {
+    } else if (model != null && model.isNotEmpty) {
       return model;
+    } else if (systemName != null && systemName.isNotEmpty) {
+      return systemName;
     } else {
       return 'iOS Device';
     }

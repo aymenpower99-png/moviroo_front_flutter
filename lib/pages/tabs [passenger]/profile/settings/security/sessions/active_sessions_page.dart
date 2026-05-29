@@ -76,7 +76,11 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
       if (!challenge.success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(challenge.errorMessage ?? 'Authentication cancelled.')),
+            SnackBar(
+              content: Text(
+                challenge.errorMessage ?? 'Authentication cancelled.',
+              ),
+            ),
           );
         }
         return;
@@ -141,6 +145,13 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
 
   String _deviceLabel(Map<String, dynamic> s) {
     final raw = s['deviceLabel'] as String? ?? 'Unknown';
+    // If device label is Unknown, try to infer from other fields
+    if (raw.toLowerCase() == 'unknown') {
+      final platform = s['platform'] as String?;
+      if (platform != null && platform.isNotEmpty) {
+        return '${platform[0].toUpperCase()}${platform.substring(1)} Device';
+      }
+    }
     return raw[0].toUpperCase() + raw.substring(1);
   }
 
