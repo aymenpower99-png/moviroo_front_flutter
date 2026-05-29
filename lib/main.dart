@@ -112,12 +112,12 @@ class _SmartWayAppState extends State<SmartWayApp> {
   void _initNotificationTapHandler() {
     NotificationService().onNotificationTap = (data) {
       final type = data['type']?.toString() ?? '';
-      final rideId = data['ride_id']?.toString() ?? '';
-      final driverName = data['driver_name']?.toString();
-      final driverId = data['driver_id']?.toString();
-      final vehicleName = data['vehicle_name']?.toString();
-      final vehicleColor = data['vehicle_color']?.toString();
-      final plateNumber = data['plate_number']?.toString();
+      final rideId = data['rideId']?.toString() ?? '';
+      final driverName = data['driverName']?.toString();
+      final driverId = data['driverId']?.toString();
+      final vehicleName = data['vehicleName']?.toString();
+      final vehicleColor = data['vehicleColor']?.toString();
+      final plateNumber = data['plateNumber']?.toString();
 
       debugPrint('🔔 Notification tap — type: $type, rideId: $rideId');
 

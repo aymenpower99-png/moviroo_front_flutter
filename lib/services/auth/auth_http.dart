@@ -7,6 +7,9 @@ import 'auth_storage.dart';
 import 'auth_helpers.dart';
 
 class AuthHTTP {
+  // Prevents concurrent token refreshes (race condition)
+  static Future<Map<String, dynamic>?>? _refreshFuture;
+
   static Future<http.Response> authenticatedGet(String path) async {
     String? accessToken = await AuthStorage.getAccessToken();
 
@@ -20,16 +23,21 @@ class AuthHTTP {
       throw Exception('Not authenticated');
     }
 
-    final response = await _safeRequest(() => http.get(
-      Uri.parse('${_getBaseUrl()}$path'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-    ).timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => throw Exception('Request timed out. Check your connection.'),
-    ));
+    final response = await _safeRequest(
+      () => http
+          .get(
+            Uri.parse('${_getBaseUrl()}$path'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $accessToken',
+            },
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () =>
+                throw Exception('Request timed out. Check your connection.'),
+          ),
+    );
 
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
@@ -58,17 +66,22 @@ class AuthHTTP {
       throw Exception('Not authenticated');
     }
 
-    final response = await _safeRequest(() => http.post(
-      Uri.parse('${_getBaseUrl()}$path'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-      body: jsonEncode(body),
-    ).timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => throw Exception('Request timed out. Check your connection.'),
-    ));
+    final response = await _safeRequest(
+      () => http
+          .post(
+            Uri.parse('${_getBaseUrl()}$path'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $accessToken',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () =>
+                throw Exception('Request timed out. Check your connection.'),
+          ),
+    );
 
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
@@ -96,17 +109,22 @@ class AuthHTTP {
       throw Exception('Not authenticated');
     }
 
-    final response = await _safeRequest(() => http.patch(
-      Uri.parse('${_getBaseUrl()}$path'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-      body: jsonEncode(body),
-    ).timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => throw Exception('Request timed out. Check your connection.'),
-    ));
+    final response = await _safeRequest(
+      () => http
+          .patch(
+            Uri.parse('${_getBaseUrl()}$path'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $accessToken',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () =>
+                throw Exception('Request timed out. Check your connection.'),
+          ),
+    );
 
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
@@ -135,23 +153,32 @@ class AuthHTTP {
       throw Exception('Not authenticated');
     }
 
-    final response = await _safeRequest(() => http.delete(
-      Uri.parse('${_getBaseUrl()}$path'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-        if (extraHeaders != null) ...extraHeaders,
-      },
-      body: body != null ? jsonEncode(body) : null,
-    ).timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => throw Exception('Request timed out. Check your connection.'),
-    ));
+    final response = await _safeRequest(
+      () => http
+          .delete(
+            Uri.parse('${_getBaseUrl()}$path'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $accessToken',
+              if (extraHeaders != null) ...extraHeaders,
+            },
+            body: body != null ? jsonEncode(body) : null,
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () =>
+                throw Exception('Request timed out. Check your connection.'),
+          ),
+    );
 
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
       if (refreshed != null) {
-        return authenticatedDelete(path, body: body, extraHeaders: extraHeaders);
+        return authenticatedDelete(
+          path,
+          body: body,
+          extraHeaders: extraHeaders,
+        );
       }
       throw Exception('Authentication failed');
     }
@@ -159,27 +186,46 @@ class AuthHTTP {
     return response;
   }
 
-  static Future<Map<String, dynamic>?> _refreshTokens() async {
+  static Future<Map<String, dynamic>?> _refreshTokens() {
+    // Deduplicate: if a refresh is already in-flight, reuse it
+    _refreshFuture ??= _doRefresh().whenComplete(() => _refreshFuture = null);
+    return _refreshFuture!;
+  }
+
+  static Future<Map<String, dynamic>?> _doRefresh() async {
     final refreshToken = await AuthStorage.getRefreshToken();
     if (refreshToken == null) return null;
 
-    final response = await _safeRequest(() => http.post(
-      Uri.parse('${_getBaseUrl()}/auth/refresh'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $refreshToken',
-      },
-    ).timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => throw Exception('Request timed out. Check your connection.'),
-    ));
+    try {
+      final response = await _safeRequest(
+        () => http
+            .post(
+              Uri.parse('${_getBaseUrl()}/auth/refresh'),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $refreshToken',
+              },
+            )
+            .timeout(
+              const Duration(seconds: 30),
+              onTimeout: () =>
+                  throw Exception('Request timed out. Check your connection.'),
+            ),
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await AuthStorage.saveTokens(data['accessToken'], data['refreshToken']);
-      return data;
-    } else {
-      await AuthStorage.clearTokens();
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        await AuthStorage.saveTokens(data['accessToken'], data['refreshToken']);
+        return data;
+      } else {
+        // Only clear tokens on auth failure (4xx), not network errors
+        if (response.statusCode == 401 || response.statusCode == 403) {
+          await AuthStorage.clearTokens();
+        }
+        return null;
+      }
+    } catch (_) {
+      // Network error — don't clear tokens, allow retry
       return null;
     }
   }

@@ -15,69 +15,84 @@ class RideCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currency = context.watch<CurrencyService>();
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border(context)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header row ─────────────────────────────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+
+    // For completed and cancelled rides, make the whole card tappable
+    final isPastRide =
+        ride.status == RideStatus.completed ||
+        ride.status == RideStatus.cancelled;
+
+    return GestureDetector(
+      onTap: isPastRide
+          ? () => AppRouter.push(
+              context,
+              AppRouter.rideDetails,
+              args: {'bookingId': ride.rideId},
+            )
+          : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface(context),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border(context)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header row ─────────────────────────────────────
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ride.vehicleType,
+                          style: AppTextStyles.bodyLarge(
+                            context,
+                          ).copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            _IconLabel(
+                              icon: Icons.calendar_today_rounded,
+                              label: ride.date,
+                            ),
+                            const SizedBox(width: 12),
+                            _IconLabel(
+                              icon: Icons.access_time_rounded,
+                              label: ride.time,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        ride.vehicleType,
-                        style: AppTextStyles.bodyLarge(
-                          context,
-                        ).copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          _IconLabel(
-                            icon: Icons.calendar_today_rounded,
-                            label: ride.date,
-                          ),
-                          const SizedBox(width: 12),
-                          _IconLabel(
-                            icon: Icons.access_time_rounded,
-                            label: ride.time,
-                          ),
-                        ],
+                        currency.format(ride.price),
+                        style: AppTextStyles.priceMedium(context).copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryPurple,
+                        ),
                       ),
                     ],
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      currency.format(ride.price),
-                      style: AppTextStyles.priceMedium(context).copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryPurple,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                ],
+              ),
 
-            const SizedBox(height: 16),
-            RideRouteColumn(ride: ride),
-            const SizedBox(height: 16),
-            _ActionButton(ride: ride),
-          ],
+              const SizedBox(height: 16),
+              RideRouteColumn(ride: ride),
+              const SizedBox(height: 16),
+              _ActionButton(ride: ride),
+            ],
+          ),
         ),
       ),
     );
@@ -115,7 +130,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t        = AppLocalizations.of(context).translate;
+    final t = AppLocalizations.of(context).translate;
     final currency = context.watch<CurrencyService>();
 
     // Use backendStatus for granular button visibility decisions
@@ -201,38 +216,7 @@ class _ActionButton extends StatelessWidget {
       // ── SCHEDULED: Scheduled button only ─────────────────────────────
       case 'SCHEDULED':
       case 'SEARCHING_DRIVER':
-        return Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () {},
-                child: Container(
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryPurple.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.primaryPurple.withValues(alpha: 0.45),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(width: 8),
-                      Text(
-                        'Scheduled',
-                        style: AppTextStyles.bodyLarge(context).copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryPurple,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
+        return _ShakeScheduledButton();
 
       // ── ASSIGNED: Scheduled + Chat ─────────────────────────────
       case 'ASSIGNED':
@@ -465,23 +449,27 @@ class _ActionButton extends StatelessWidget {
           // ── Completed ──────────────────────────────────────
           case RideStatus.completed:
             return GestureDetector(
-              onTap: () {},
+              onTap: () => AppRouter.push(
+                context,
+                AppRouter.rideDetails,
+                args: {'bookingId': ride.rideId},
+              ),
               child: Container(
                 height: 46,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryPurple.withValues(alpha: 0.08),
+                  color: Colors.green.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.primaryPurple.withValues(alpha: 0.35),
+                    color: Colors.green.withValues(alpha: 0.45),
                   ),
                 ),
                 child: Center(
                   child: Text(
-                    t('book_again'),
+                    t('completed'),
                     style: AppTextStyles.bodyLarge(context).copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primaryPurple,
+                      color: Colors.green.shade700,
                     ),
                   ),
                 ),
@@ -490,22 +478,29 @@ class _ActionButton extends StatelessWidget {
 
           // ── Cancelled ──────────────────────────────────────────
           case RideStatus.cancelled:
-            return Container(
-              height: 46,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.error.withValues(alpha: 0.45),
-                ),
+            return GestureDetector(
+              onTap: () => AppRouter.push(
+                context,
+                AppRouter.rideDetails,
+                args: {'bookingId': ride.rideId},
               ),
-              child: Center(
-                child: Text(
-                  t('cancelled'),
-                  style: AppTextStyles.bodyLarge(context).copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.error,
+              child: Container(
+                height: 46,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.error.withValues(alpha: 0.45),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    t('cancelled'),
+                    style: AppTextStyles.bodyLarge(context).copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
               ),
@@ -551,5 +546,93 @@ class _ActionButton extends StatelessWidget {
             );
         }
     }
+  }
+}
+
+// ── Shake Scheduled Button ─────────────────────────────────────────────────────
+
+class _ShakeScheduledButton extends StatefulWidget {
+  @override
+  State<_ShakeScheduledButton> createState() => _ShakeScheduledButtonState();
+}
+
+class _ShakeScheduledButtonState extends State<_ShakeScheduledButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _animation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    _controller.forward().then((_) {
+      _controller.reverse();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('This ride is scheduled'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: AnimatedBuilder(
+            animation: _animation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(_animation.value * 5, 0),
+                child: GestureDetector(
+                  onTap: _handleTap,
+                  child: Container(
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryPurple.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primaryPurple.withValues(alpha: 0.45),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(width: 8),
+                        Text(
+                          'Scheduled',
+                          style: AppTextStyles.bodyLarge(context).copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryPurple,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 }

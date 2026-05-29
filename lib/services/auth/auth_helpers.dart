@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 class AuthHelpers {
-  static bool isTokenExpired(String token) {
+  static bool isTokenExpired(String token, {int bufferSeconds = 60}) {
     try {
       final parts = token.split('.');
       if (parts.length != 3) return true;
@@ -11,7 +11,9 @@ class AuthHelpers {
       final payload = jsonDecode(utf8.decode(decoded));
       final exp = payload['exp'];
       if (exp == null) return true;
-      return DateTime.now().millisecondsSinceEpoch / 1000 > exp;
+      // Treat token as expired 60s before actual expiry to avoid races
+      return DateTime.now().millisecondsSinceEpoch / 1000 >
+          (exp - bufferSeconds);
     } catch (e) {
       return true;
     }

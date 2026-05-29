@@ -464,14 +464,22 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
 
       GeocodingPlace? pickupPlace;
       if (pickupQuery != null) {
-        final results = await geocoding.searchPlaces(pickupQuery);
+        final locale = Localizations.localeOf(context).languageCode;
+        final results = await geocoding.searchPlaces(
+          pickupQuery,
+          language: locale,
+        );
         if (results.isNotEmpty) pickupPlace = results.first;
       }
 
       // Geocode dropoff (destination)
       GeocodingPlace? dropoffPlace;
       if (_destination != null && _destination!.isNotEmpty) {
-        final results = await geocoding.searchPlaces(_destination!);
+        final locale = Localizations.localeOf(context).languageCode;
+        final results = await geocoding.searchPlaces(
+          _destination!,
+          language: locale,
+        );
         if (results.isNotEmpty) dropoffPlace = results.first;
       }
 

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
@@ -10,6 +12,11 @@ import 'auth_service/auth_service.dart';
 typedef NotificationTapCallback = void Function(Map<String, dynamic> data);
 
 class NotificationService {
+  // ── Singleton ──────────────────────────────────────────────────────────────
+  static final NotificationService _instance = NotificationService._internal();
+  factory NotificationService() => _instance;
+  NotificationService._internal();
+
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
@@ -49,8 +56,22 @@ class NotificationService {
         _registerToken(newToken);
       });
 
+      // Allow foreground notifications to be presented by the system (iOS + Android)
+      await _messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
       FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
       FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpened);
+
+      // Handle app launched from terminated state via notification tap
+      final initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        debugPrint('🚀 App launched from terminated via notification');
+        _handleMessageOpened(initialMessage);
+      }
 
       _initialized = true;
       debugPrint('✅ Notification service initialized');
@@ -130,24 +151,39 @@ class NotificationService {
       importance: Importance.high,
     );
 
-    const AndroidNotificationChannel supportChannel = AndroidNotificationChannel(
-      'support_messages',
-      'Support Messages',
-      description: 'Support ticket replies and updates',
-      importance: Importance.high,
-    );
+    const AndroidNotificationChannel rideOffersChannel =
+        AndroidNotificationChannel(
+          'ride_offers',
+          'Ride Offers',
+          description: 'Ride offer and ride status notifications',
+          importance: Importance.high,
+        );
 
-    await (_localNotifications
-            .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin
-            >())
-        ?.createNotificationChannel(channel);
+    const AndroidNotificationChannel supportChannel =
+        AndroidNotificationChannel(
+          'support_messages',
+          'Support Messages',
+          description: 'Support ticket replies and updates',
+          importance: Importance.high,
+        );
 
-    await (_localNotifications
-            .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin
-            >())
-        ?.createNotificationChannel(supportChannel);
+    const AndroidNotificationChannel rideUpdatesChannel =
+        AndroidNotificationChannel(
+          'ride_updates',
+          'Ride Updates',
+          description: 'Live updates for your active ride',
+          importance: Importance.high,
+        );
+
+    final androidPlugin = _localNotifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
+    await androidPlugin?.createNotificationChannel(channel);
+    await androidPlugin?.createNotificationChannel(rideOffersChannel);
+    await androidPlugin?.createNotificationChannel(supportChannel);
+    await androidPlugin?.createNotificationChannel(rideUpdatesChannel);
   }
 
   Future<void> _registerToken(String token) async {
@@ -169,7 +205,19 @@ class NotificationService {
     );
 
     final notification = message.notification;
-    final channelId = message.data['channelId']?.toString() ?? 'moviroo_channel';
+    final channelId = message.data['channelId']?.toString() ?? 'ride_offers';
+    final channelName = switch (channelId) {
+      'support_messages' => 'Support Messages',
+      'ride_offers' => 'Ride Offers',
+      'ride_updates' => 'Ride Updates',
+      _ => 'Moviroo Notifications',
+    };
+    final channelDesc = switch (channelId) {
+      'support_messages' => 'Support ticket replies and updates',
+      'ride_offers' => 'Ride offer and ride status notifications',
+      'ride_updates' => 'Live updates for your active ride',
+      _ => 'Moviroo ride notifications',
+    };
     if (notification != null) {
       await _localNotifications.show(
         notification.hashCode,
@@ -178,10 +226,8 @@ class NotificationService {
         NotificationDetails(
           android: AndroidNotificationDetails(
             channelId,
-            channelId == 'support_messages' ? 'Support Messages' : 'Moviroo Notifications',
-            channelDescription: channelId == 'support_messages'
-                ? 'Support ticket replies and updates'
-                : 'Moviroo ride notifications',
+            channelName,
+            channelDescription: channelDesc,
             importance: Importance.max,
             priority: Priority.high,
             icon: '@mipmap/ic_stat_notification',
@@ -191,13 +237,8 @@ class NotificationService {
           ),
           iOS: const DarwinNotificationDetails(),
         ),
-        payload: message.data.toString(),
+        payload: jsonEncode(message.data),
       );
-    }
-
-    // Also propagate data payload to any listeners
-    if (message.data.isNotEmpty) {
-      onNotificationTap?.call(message.data);
     }
   }
 
@@ -209,18 +250,12 @@ class NotificationService {
   }
 
   Map<String, dynamic> _parsePayload(String payload) {
-    // payload is currently the .toString() of a Map, e.g.
-    // {ride_id: abc123, type: DRIVER_ASSIGNED}
-    // We'll do a lightweight parse.
-    final result = <String, dynamic>{};
-    final clean = payload.replaceAll(RegExp(r'^[^{]*\{|}[^}]*$'), '');
-    for (final entry in clean.split(',')) {
-      final parts = entry.split(':');
-      if (parts.length == 2) {
-        result[parts[0].trim()] = parts[1].trim();
-      }
+    try {
+      return jsonDecode(payload) as Map<String, dynamic>;
+    } catch (_) {
+      // Fallback for legacy plain-string payloads
+      return {'type': payload};
     }
-    return result;
   }
 
   Future<String?> getToken() async {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
+import '../auth/auth_http.dart';
 
 /// Service for ride/booking-related API operations.
 /// Talks to the backend `rides` controller (POST /rides, PATCH /rides/:id/confirm, etc.).
@@ -14,6 +15,7 @@ class BookingApiService {
 
   /// Clears the in-memory saved cards cache. Call on logout or account switch.
   static void clearCache() => _cachedSavedCards = null;
+
   /// Create a new ride (booking) with status PENDING.
   /// Returns the ride object if successful (includes id, status, etc.).
   Future<Map<String, dynamic>?> createRide({
@@ -28,6 +30,7 @@ class BookingApiService {
     TimeOfDay? scheduledTime,
     String? couponCode,
     double? discountPercent,
+
     /// ML price + values locked at vehicle selection.
     /// Sent to backend so it reuses them directly without a second ML call.
     double? lockedPrice,
@@ -35,6 +38,7 @@ class BookingApiService {
     double? lockedDistanceKm,
     int? lockedDurationMin,
     double? lockedSurge,
+    int? passengerCount,
   }) async {
     try {
       final token = await TokenStorage.getAccess();
@@ -72,16 +76,13 @@ class BookingApiService {
           'coupon_code': couponCode,
         if (discountPercent != null && discountPercent > 0)
           'discount_percent': discountPercent,
-        if (lockedPrice != null && lockedPrice > 0)
-          'locked_price': lockedPrice,
+        if (lockedPrice != null && lockedPrice > 0) 'locked_price': lockedPrice,
         if (lockedLoyaltyPoints != null)
           'locked_loyalty_points': lockedLoyaltyPoints,
-        if (lockedDistanceKm != null)
-          'locked_distance_km': lockedDistanceKm,
-        if (lockedDurationMin != null)
-          'locked_duration_min': lockedDurationMin,
-        if (lockedSurge != null)
-          'locked_surge': lockedSurge,
+        if (lockedDistanceKm != null) 'locked_distance_km': lockedDistanceKm,
+        if (lockedDurationMin != null) 'locked_duration_min': lockedDurationMin,
+        if (lockedSurge != null) 'locked_surge': lockedSurge,
+        if (passengerCount != null) 'passenger_count': passengerCount,
       };
 
       final response = await http
@@ -103,7 +104,10 @@ class BookingApiService {
 
   /// Confirm a ride (locks price and triggers dispatch).
   /// Backend route: PATCH /rides/:id/confirm
-  Future<Map<String, dynamic>?> confirmRide(String rideId, {String? paymentMethod}) async {
+  Future<Map<String, dynamic>?> confirmRide(
+    String rideId, {
+    String? paymentMethod,
+  }) async {
     try {
       final token = await TokenStorage.getAccess();
       final headers = <String, String>{
@@ -170,15 +174,7 @@ class BookingApiService {
   /// Backend route: GET /rides
   Future<List<Map<String, dynamic>>> getMyRides() async {
     try {
-      final token = await TokenStorage.getAccess();
-      final headers = <String, String>{
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
-
-      final response = await http
-          .get(Uri.parse('${AppConfig.baseUrl}/rides'), headers: headers)
-          .timeout(const Duration(seconds: 15));
+      final response = await AuthHTTP.authenticatedGet('/rides');
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);

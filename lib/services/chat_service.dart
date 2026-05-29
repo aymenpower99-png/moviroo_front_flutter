@@ -145,7 +145,12 @@ class ChatService {
   }
 
   /// Fetch message history via REST.
-  Future<List<ChatMsg>> fetchHistory(String rideId, {int limit = 50}) async {
+  Future<List<ChatMsg>> fetchHistory(
+    String rideId, {
+    int limit = 50,
+    bool translate = false,
+    String? targetLang,
+  }) async {
     try {
       final token = await TokenStorage.getAccess();
       final headers = <String, String>{
@@ -153,13 +158,18 @@ class ChatService {
         if (token != null) 'Authorization': 'Bearer $token',
       };
 
+      final queryParams = <String, String>{'limit': limit.toString()};
+      if (translate && targetLang != null) {
+        queryParams['translate'] = 'true';
+        queryParams['lang'] = targetLang;
+      }
+
+      final uri = Uri.parse(
+        '${AppConfig.baseUrl}/chat/$rideId/messages',
+      ).replace(queryParameters: queryParams);
+
       final res = await http
-          .get(
-            Uri.parse(
-              '${AppConfig.baseUrl}/chat/$rideId/messages?limit=$limit',
-            ),
-            headers: headers,
-          )
+          .get(uri, headers: headers)
           .timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200) {

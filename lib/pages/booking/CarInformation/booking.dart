@@ -93,7 +93,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           lockedLoyaltyPoints: widget.selectedVehicle?.loyaltyPoints,
           lockedDistanceKm: widget.selectedVehicle?.distanceKm,
           lockedDurationMin: widget.selectedVehicle?.durationMin,
-          lockedSurge: widget.selectedVehicle?.surgeMultiplier,
+          passengerCount: widget.passengerCount,
         );
 
         final rideId = ride?['id'] as String?;
@@ -154,7 +154,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           lockedLoyaltyPoints: widget.selectedVehicle?.loyaltyPoints,
           lockedDistanceKm: widget.selectedVehicle?.distanceKm,
           lockedDurationMin: widget.selectedVehicle?.durationMin,
-          lockedSurge: widget.selectedVehicle?.surgeMultiplier,
+          passengerCount: widget.passengerCount,
         );
 
         final rideId = ride?['id'] as String?;
@@ -294,7 +294,6 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                     PriceSummarySection(
                       priceTnd: widget.selectedVehicle?.priceTnd,
                       exactPrice: widget.selectedVehicle?.exactPrice,
-                      surgeMultiplier: widget.selectedVehicle?.surgeMultiplier,
                       loyaltyPoints: widget.selectedVehicle?.loyaltyPoints,
                       appliedDiscountPercent: _appliedDiscountPercent > 0
                           ? _appliedDiscountPercent

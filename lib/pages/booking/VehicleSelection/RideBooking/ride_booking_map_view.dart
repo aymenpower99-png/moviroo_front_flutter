@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
-import 'utils.dart';
 import 'widgets.dart';
 
 /// Full-screen map view for the [RideBookingPage].
@@ -56,12 +55,50 @@ class RideBookingMapView extends StatelessWidget {
     required this.dropoffCountry,
   });
 
+  // Card estimated height: body(46) + triangle(7) + gap(4) = 57dp
+  static const double _cardH = 57.0;
+  static const double _minCardGap = 20.0;
+
+  /// Adjust screen offsets so the two cards never visually collide.
+  /// The card with a lower Y (higher on screen) keeps its position;
+  /// the other is pushed down enough to maintain [_minCardGap].
+  (Offset, Offset) _separatedPositions(Offset a, Offset b) {
+    final aTop = a.dy - _cardH;
+    final bTop = b.dy - _cardH;
+    final aBottom = a.dy;
+    final bBottom = b.dy;
+
+    // Determine which card is higher (smaller top y)
+    if (aTop < bTop) {
+      // a is above b — check if b's card overlaps a's card
+      final overlap = aBottom + _minCardGap - bTop;
+      if (overlap > 0) {
+        return (a, Offset(b.dx, b.dy + overlap));
+      }
+    } else {
+      // b is above a — check if a's card overlaps b's card
+      final overlap = bBottom + _minCardGap - aTop;
+      if (overlap > 0) {
+        return (Offset(a.dx, a.dy + overlap), b);
+      }
+    }
+    return (a, b);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // This widget returns a Stack so it can be embedded directly in the
-    // parent's body Stack via a Positioned.fill — but because we need to
-    // also place the back button and anchored cards as siblings of the
-    // map (not inside the map), we use a Stack here that fills the parent.
+    // Separate cards if they are too close vertically
+    final Offset? adjustedPickup;
+    final Offset? adjustedDropoff;
+    if (pickupScreen != null && dropoffScreen != null) {
+      final (p, d) = _separatedPositions(pickupScreen!, dropoffScreen!);
+      adjustedPickup = p;
+      adjustedDropoff = d;
+    } else {
+      adjustedPickup = pickupScreen;
+      adjustedDropoff = dropoffScreen;
+    }
+
     return Stack(
       children: [
         // ── Mapbox map (full screen) ──────────────────────────────────────
@@ -95,26 +132,28 @@ class RideBookingMapView extends StatelessWidget {
         ),
 
         // ── Pickup location card ──────────────────────────────────────────
-        if (pickupScreen != null)
+        if (adjustedPickup != null)
           AnchoredLocationCard(
-            markerScreen: pickupScreen!,
+            markerScreen: adjustedPickup,
             screenWidth: screenWidth,
             name: isLoadingAddresses && pickupAddress.isEmpty
                 ? 'Loading...'
                 : pickupAddress,
-            subtitle: cityCountry(pickupCity, pickupCountry),
+            subtitle: pickupCity,
+            country: pickupCountry,
             isPickup: true,
           ),
 
         // ── Drop-off location card ────────────────────────────────────────
-        if (dropoffScreen != null)
+        if (adjustedDropoff != null)
           AnchoredLocationCard(
-            markerScreen: dropoffScreen!,
+            markerScreen: adjustedDropoff,
             screenWidth: screenWidth,
             name: isLoadingAddresses && dropoffAddress.isEmpty
                 ? 'Loading...'
                 : dropoffAddress,
-            subtitle: cityCountry(dropoffCity, dropoffCountry),
+            subtitle: dropoffCity,
+            country: dropoffCountry,
             isPickup: false,
           ),
       ],

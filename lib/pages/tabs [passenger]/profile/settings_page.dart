@@ -34,7 +34,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   String get _firstName => _cachedUser?['firstName'] ?? '';
   String get _lastName => _cachedUser?['lastName'] ?? '';
-  String get _phone => _cachedUser?['phone'] ?? '';
 
   String get _fullName {
     final name = '$_firstName $_lastName'.trim();
@@ -74,11 +73,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 16),
                     _TopBar(onBack: () => Navigator.maybePop(context)),
                     const SizedBox(height: 24),
-                    _ProfileHeader(
-                      letter: _avatarLetter,
-                      fullName: _fullName,
-                      phone: _phone,
-                    ),
+                    _ProfileHeader(letter: _avatarLetter, fullName: _fullName),
                     const SizedBox(height: 28),
 
                     // Account
@@ -185,7 +180,6 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
-
 }
 
 // ── Top bar ───────────────────────────────────────────────────────────────────
@@ -248,13 +242,8 @@ class _LoadingDialog extends StatelessWidget {
 class _ProfileHeader extends StatelessWidget {
   final String letter;
   final String fullName;
-  final String phone;
 
-  const _ProfileHeader({
-    required this.letter,
-    required this.fullName,
-    required this.phone,
-  });
+  const _ProfileHeader({required this.letter, required this.fullName});
 
   @override
   Widget build(BuildContext context) {
@@ -288,10 +277,6 @@ class _ProfileHeader extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Text(fullName, style: AppTextStyles.profileName(context)),
-        if (phone.isNotEmpty) ...[
-          const SizedBox(height: 2),
-          Text(phone, style: AppTextStyles.bodySmall(context)),
-        ],
       ],
     );
   }

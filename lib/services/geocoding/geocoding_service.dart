@@ -87,7 +87,11 @@ class GeocodingPlace {
       source: json['source'] as String?,
       placeType: placeType,
       category: category,
-      categoryIcon: _resolveIcon(category, placeType, json['source'] as String?),
+      categoryIcon: _resolveIcon(
+        category,
+        placeType,
+        json['source'] as String?,
+      ),
     );
   }
 
@@ -103,10 +107,7 @@ class GeocodingPlace {
   /// Returns a locale-aware full address.
   String localizedFullAddress([String? locale]) {
     final raw = rawAddress ?? rawPlaceName;
-    return buildLocalizedDisplayName(
-      raw,
-      locale: locale ?? _currentAppLocale,
-    );
+    return buildLocalizedDisplayName(raw, locale: locale ?? _currentAppLocale);
   }
 
   /// Returns true only if this place has valid (non-zero, in-range) coordinates
@@ -126,7 +127,11 @@ class GeocodingPlace {
     return placeName;
   }
 
-  static IconData _resolveIcon(String? category, String? placeType, String? source) {
+  static IconData _resolveIcon(
+    String? category,
+    String? placeType,
+    String? source,
+  ) {
     final signals = <String>[];
     if (category != null && category.isNotEmpty) {
       signals.addAll(category.split(',').map((s) => s.trim().toLowerCase()));
@@ -136,50 +141,168 @@ class GeocodingPlace {
     }
     final combined = signals.join(' ');
 
-    if (_has(combined, ['airport', 'aéroport', 'aeroport', 'aerodrome'])) return Icons.flight;
-    if (_has(combined, ['hotel', 'hôtel', 'lodging', 'motel', 'hostel', 'guesthouse', 'guest_house', 'riad', 'resort', 'auberge', 'pension', 'villa'])) return Icons.hotel;
-    if (_has(combined, ['restaurant', 'eatery', 'diner', 'brasserie', 'rotisserie', 'grill'])) return Icons.restaurant;
-    if (_has(combined, ['cafe', 'café', 'coffee', 'tearoom', 'salon de thé'])) return Icons.coffee;
-    if (_has(combined, ['bakery', 'boulangerie', 'pastry', 'patisserie', 'pâtisserie'])) return Icons.bakery_dining;
-    if (_has(combined, ['bar', 'pub', 'nightclub', 'lounge'])) return Icons.local_bar;
-    if (_has(combined, ['fast_food', 'fastfood', 'fast food', 'burger', 'sandwich', 'pizza'])) return Icons.fastfood;
-    if (_has(combined, ['ice_cream', 'icecream', 'ice cream', 'glace'])) return Icons.icecream;
-    if (_has(combined, ['train', 'station', 'gare', 'railway'])) return Icons.train;
+    if (_has(combined, ['airport', 'aéroport', 'aeroport', 'aerodrome']))
+      return Icons.flight;
+    if (_has(combined, [
+      'hotel',
+      'hôtel',
+      'lodging',
+      'motel',
+      'hostel',
+      'guesthouse',
+      'guest_house',
+      'riad',
+      'resort',
+      'auberge',
+      'pension',
+      'villa',
+    ]))
+      return Icons.hotel;
+    if (_has(combined, [
+      'restaurant',
+      'eatery',
+      'diner',
+      'brasserie',
+      'rotisserie',
+      'grill',
+    ]))
+      return Icons.restaurant;
+    if (_has(combined, ['cafe', 'café', 'coffee', 'tearoom', 'salon de thé']))
+      return Icons.coffee;
+    if (_has(combined, [
+      'bakery',
+      'boulangerie',
+      'pastry',
+      'patisserie',
+      'pâtisserie',
+    ]))
+      return Icons.bakery_dining;
+    if (_has(combined, ['bar', 'pub', 'nightclub', 'lounge']))
+      return Icons.local_bar;
+    if (_has(combined, [
+      'fast_food',
+      'fastfood',
+      'fast food',
+      'burger',
+      'sandwich',
+      'pizza',
+    ]))
+      return Icons.fastfood;
+    if (_has(combined, ['ice_cream', 'icecream', 'ice cream', 'glace']))
+      return Icons.icecream;
+    if (_has(combined, ['train', 'station', 'gare', 'railway']))
+      return Icons.train;
     if (_has(combined, ['metro', 'subway'])) return Icons.subway;
-    if (_has(combined, ['bus', 'autobus', 'gare routière', 'gare routiere'])) return Icons.directions_bus;
+    if (_has(combined, ['bus', 'autobus', 'gare routière', 'gare routiere']))
+      return Icons.directions_bus;
     if (_has(combined, ['taxi', 'louage'])) return Icons.local_taxi;
-    if (_has(combined, ['fuel', 'gas_station', 'petrol', 'station-service', 'essence'])) return Icons.local_gas_station;
+    if (_has(combined, [
+      'fuel',
+      'gas_station',
+      'petrol',
+      'station-service',
+      'essence',
+    ]))
+      return Icons.local_gas_station;
     if (_has(combined, ['parking'])) return Icons.local_parking;
-    if (_has(combined, ['port', 'marina', 'harbour', 'harbor'])) return Icons.directions_boat;
-    if (_has(combined, ['hospital', 'clinic', 'clinique', 'medical', 'doctor', 'médecin', 'hopital', 'hôpital', 'polyclinique'])) return Icons.local_hospital;
-    if (_has(combined, ['pharmacy', 'pharmacie', 'drugstore'])) return Icons.medication;
-    if (_has(combined, ['school', 'école', 'university', 'université', 'college', 'collège', 'lycée', 'lycee', 'kindergarten', 'maternelle', 'institut'])) return Icons.school;
-    if (_has(combined, ['library', 'bibliothèque', 'bibliotheque'])) return Icons.local_library;
-    if (_has(combined, ['mall', 'centre commercial', 'shopping'])) return Icons.shopping_bag;
-    if (_has(combined, ['supermarket', 'supermarché', 'supermarche', 'grocery', 'épicerie', 'epicerie', 'marché', 'marche', 'market'])) return Icons.shopping_cart;
-    if (_has(combined, ['shop', 'store', 'boutique', 'magasin'])) return Icons.storefront;
+    if (_has(combined, ['port', 'marina', 'harbour', 'harbor']))
+      return Icons.directions_boat;
+    if (_has(combined, [
+      'hospital',
+      'clinic',
+      'clinique',
+      'medical',
+      'doctor',
+      'médecin',
+      'hopital',
+      'hôpital',
+      'polyclinique',
+    ]))
+      return Icons.local_hospital;
+    if (_has(combined, ['pharmacy', 'pharmacie', 'drugstore']))
+      return Icons.medication;
+    if (_has(combined, [
+      'school',
+      'école',
+      'university',
+      'université',
+      'college',
+      'collège',
+      'lycée',
+      'lycee',
+      'kindergarten',
+      'maternelle',
+      'institut',
+    ]))
+      return Icons.school;
+    if (_has(combined, ['library', 'bibliothèque', 'bibliotheque']))
+      return Icons.local_library;
+    if (_has(combined, ['mall', 'centre commercial', 'shopping']))
+      return Icons.shopping_bag;
+    if (_has(combined, [
+      'supermarket',
+      'supermarché',
+      'supermarche',
+      'grocery',
+      'épicerie',
+      'epicerie',
+      'marché',
+      'marche',
+      'market',
+    ]))
+      return Icons.shopping_cart;
+    if (_has(combined, ['shop', 'store', 'boutique', 'magasin']))
+      return Icons.storefront;
     if (_has(combined, ['cinema', 'movie', 'film'])) return Icons.movie;
-    if (_has(combined, ['theater', 'theatre', 'théâtre'])) return Icons.theater_comedy;
-    if (_has(combined, ['museum', 'musée', 'musee', 'gallery', 'galerie'])) return Icons.museum;
+    if (_has(combined, ['theater', 'theatre', 'théâtre']))
+      return Icons.theater_comedy;
+    if (_has(combined, ['museum', 'musée', 'musee', 'gallery', 'galerie']))
+      return Icons.museum;
     if (_has(combined, ['stadium', 'stade', 'arena'])) return Icons.stadium;
-    if (_has(combined, ['attraction', 'amusement', 'theme park'])) return Icons.attractions;
+    if (_has(combined, ['attraction', 'amusement', 'theme park']))
+      return Icons.attractions;
     if (_has(combined, ['zoo'])) return Icons.pets;
     if (_has(combined, ['aquarium'])) return Icons.water;
-    if (_has(combined, ['bank', 'banque', 'atm', 'guichet'])) return Icons.account_balance;
-    if (_has(combined, ['post_office', 'poste', 'la poste'])) return Icons.local_post_office;
-    if (_has(combined, ['police', 'commissariat', 'gendarmerie'])) return Icons.local_police;
-    if (_has(combined, ['fire_station', 'pompiers'])) return Icons.local_fire_department;
-    if (_has(combined, ['embassy', 'ambassade', 'consulat', 'consulate', 'government', 'gouvernement', 'municipalité', 'municipalite', 'mairie'])) return Icons.account_balance;
+    if (_has(combined, ['bank', 'banque', 'atm', 'guichet']))
+      return Icons.account_balance;
+    if (_has(combined, ['post_office', 'poste', 'la poste']))
+      return Icons.local_post_office;
+    if (_has(combined, ['police', 'commissariat', 'gendarmerie']))
+      return Icons.local_police;
+    if (_has(combined, ['fire_station', 'pompiers']))
+      return Icons.local_fire_department;
+    if (_has(combined, [
+      'embassy',
+      'ambassade',
+      'consulat',
+      'consulate',
+      'government',
+      'gouvernement',
+      'municipalité',
+      'municipalite',
+      'mairie',
+    ]))
+      return Icons.account_balance;
     if (_has(combined, ['beach', 'plage'])) return Icons.beach_access;
     if (_has(combined, ['park', 'parc', 'jardin', 'garden'])) return Icons.park;
     if (_has(combined, ['camping', 'campground'])) return Icons.terrain;
-    if (_has(combined, ['hiking', 'randonnée', 'randonnee'])) return Icons.hiking;
+    if (_has(combined, ['hiking', 'randonnée', 'randonnee']))
+      return Icons.hiking;
     if (_has(combined, ['golf'])) return Icons.sports_golf;
-    if (_has(combined, ['gym', 'fitness', 'salle de sport'])) return Icons.fitness_center;
+    if (_has(combined, ['gym', 'fitness', 'salle de sport']))
+      return Icons.fitness_center;
     if (_has(combined, ['spa', 'hammam', 'thalasso'])) return Icons.spa;
     if (_has(combined, ['sport'])) return Icons.sports;
-    if (_has(combined, ['mosque', 'mosquée', 'mosquee', 'masjid'])) return Icons.mosque;
-    if (_has(combined, ['church', 'église', 'eglise', 'cathedral', 'cathédrale'])) return Icons.church;
+    if (_has(combined, ['mosque', 'mosquée', 'mosquee', 'masjid']))
+      return Icons.mosque;
+    if (_has(combined, [
+      'church',
+      'église',
+      'eglise',
+      'cathedral',
+      'cathédrale',
+    ]))
+      return Icons.church;
     if (_has(combined, ['synagogue'])) return Icons.synagogue;
     if (_has(combined, ['temple', 'shrine'])) return Icons.temple_buddhist;
 
@@ -231,13 +354,55 @@ class GeocodingPlace {
 }
 
 class GeocodingService {
-  /// Search places using backend parallel search (Mapbox + Nominatim)
+  /// Search places using Google Places Autocomplete with fallback to Mapbox/Nominatim
   Future<List<GeocodingPlace>> searchPlaces(
     String query, {
     double? proximityLat,
     double? proximityLon,
     String? language,
   }) async {
+    // Try Google Places first
+    try {
+      final token = await TokenStorage.getAccess();
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+
+      final params = <String, String>{'q': query};
+      if (language != null && language.isNotEmpty) {
+        params['lang'] = language;
+      }
+
+      final uri = Uri.parse(
+        '${AppConfig.baseUrl}/rides/geocode/google-search',
+      ).replace(queryParameters: params);
+
+      debugPrint('[GeocodingService] 🔍 Trying Google Places for: "$query"');
+
+      final res = await http
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as List;
+        if (json.isNotEmpty) {
+          debugPrint(
+            '[GeocodingService] ✅ Got ${json.length} results from Google',
+          );
+          return json
+              .map((e) => GeocodingPlace.fromJson(e as Map<String, dynamic>))
+              .where((p) => p.hasValidCoordinates)
+              .toList();
+        }
+        debugPrint('[GeocodingService] Google returned empty, trying fallback');
+      }
+    } catch (e) {
+      debugPrint('[GeocodingService] Google failed, trying fallback: $e');
+    }
+
+    // Fallback to Mapbox + Nominatim
+    debugPrint('[GeocodingService] 🔄 Falling back to Mapbox/Nominatim');
     try {
       final token = await TokenStorage.getAccess();
       final headers = <String, String>{
@@ -266,14 +431,16 @@ class GeocodingService {
 
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body) as List;
-        // Filter out places with invalid coordinates (e.g. 0,0 sea fallbacks)
+        debugPrint(
+          '[GeocodingService] ✅ Got ${json.length} results from fallback',
+        );
         return json
             .map((e) => GeocodingPlace.fromJson(e as Map<String, dynamic>))
             .where((p) => p.hasValidCoordinates)
             .toList();
       }
     } catch (e) {
-      debugPrint('Error searching places: $e');
+      debugPrint('[GeocodingService] Fallback also failed: $e');
     }
     return [];
   }
@@ -345,8 +512,9 @@ class GeocodingService {
         params['lang'] = language;
       }
 
-      final uri = Uri.parse('${AppConfig.baseUrl}/rides/geocode/reverse')
-          .replace(queryParameters: params);
+      final uri = Uri.parse(
+        '${AppConfig.baseUrl}/rides/geocode/reverse',
+      ).replace(queryParameters: params);
 
       final res = await http
           .get(uri, headers: headers)

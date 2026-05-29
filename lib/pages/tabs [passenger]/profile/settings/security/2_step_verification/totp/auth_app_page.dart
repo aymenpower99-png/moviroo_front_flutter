@@ -80,9 +80,9 @@ class _AuthAppPageState extends State<AuthAppPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppLocalizations.of(context).translate(
-              'authenticator_app_linked_success',
-            ),
+            AppLocalizations.of(
+              context,
+            ).translate('authenticator_app_linked_success'),
           ),
         ),
       );
@@ -108,7 +108,7 @@ class _AuthAppPageState extends State<AuthAppPage> {
       _errorMessage = null;
     });
     try {
-      await _authService.disableTotp(code);
+      await _authService.disableTotp(code: code);
       if (!mounted) return;
       setState(() {
         _isLoading = false;

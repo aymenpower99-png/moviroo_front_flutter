@@ -12,10 +12,16 @@ class VehiclePricingService {
   static const Duration _cacheTtl = Duration(minutes: 3);
 
   static String _key(
-    double lat1, double lon1, double lat2, double lon2, String? dt, int? pax,
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+    String? dt,
+    int? pax,
   ) {
     // Round to 4 decimal places (~11 m) so minor GPS jitter doesn't bust cache
-    final k = '${lat1.toStringAsFixed(4)},${lon1.toStringAsFixed(4)},'
+    final k =
+        '${lat1.toStringAsFixed(4)},${lon1.toStringAsFixed(4)},'
         '${lat2.toStringAsFixed(4)},${lon2.toStringAsFixed(4)}';
     // Truncate bookingDt to the minute so small time drift doesn't bust cache
     final d = dt != null && dt.length >= 16 ? dt.substring(0, 16) : (dt ?? '');
@@ -33,7 +39,14 @@ class VehiclePricingService {
     String? bookingDt,
     int? passengerCount,
   }) async {
-    final key = _key(pickupLat, pickupLon, dropoffLat, dropoffLon, bookingDt, passengerCount);
+    final key = _key(
+      pickupLat,
+      pickupLon,
+      dropoffLat,
+      dropoffLon,
+      bookingDt,
+      passengerCount,
+    );
 
     // Return cached if still fresh
     final entry = _cache[key];
@@ -50,8 +63,8 @@ class VehiclePricingService {
       };
 
       final queryParams = <String, String>{
-        'pickupLat':  pickupLat.toString(),
-        'pickupLon':  pickupLon.toString(),
+        'pickupLat': pickupLat.toString(),
+        'pickupLon': pickupLon.toString(),
         'dropoffLat': dropoffLat.toString(),
         'dropoffLon': dropoffLon.toString(),
         if (bookingDt != null) 'bookingDt': bookingDt,
@@ -69,11 +82,18 @@ class VehiclePricingService {
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body) as Map<String, dynamic>;
         final response = VehiclePricingResponse.fromJson(json);
+        debugPrint(
+          '[VehiclePricing] Got ${response.vehicleClasses.length} vehicle classes from backend',
+        );
         _cache[key] = _PricingEntry(response);
         return response;
+      } else {
+        debugPrint(
+          '[VehiclePricing] Backend returned status ${res.statusCode}: ${res.body}',
+        );
       }
     } catch (e) {
-      debugPrint('Error fetching vehicle prices: $e');
+      debugPrint('[VehiclePricing] Error fetching vehicle prices: $e');
     }
     return null;
   }
@@ -84,4 +104,3 @@ class _PricingEntry {
   final DateTime fetchTime;
   _PricingEntry(this.response) : fetchTime = DateTime.now();
 }
-

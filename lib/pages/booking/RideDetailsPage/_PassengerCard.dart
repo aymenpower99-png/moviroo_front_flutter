@@ -7,8 +7,15 @@ class PassengerCard extends StatelessWidget {
   final String? passengerName;
   final String? email;
   final String? phone;
+  final double? rating;
 
-  const PassengerCard({super.key, this.passengerName, this.email, this.phone});
+  const PassengerCard({
+    super.key,
+    this.passengerName,
+    this.email,
+    this.phone,
+    this.rating,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +46,7 @@ class PassengerCard extends StatelessWidget {
                 icon: Icons.person_outline_rounded,
                 label: t.translate('main_passenger'),
                 value: passengerName ?? '--',
+                rating: rating,
                 editable: false,
                 isFirst: true,
               ),
@@ -53,7 +61,9 @@ class PassengerCard extends StatelessWidget {
               PassengerRow(
                 icon: Icons.phone_outlined,
                 label: t.translate('phone_number'),
-                value: phone ?? '--',
+                value: phone != null && phone!.startsWith('+216')
+                    ? '+216 ${phone!.substring(4)}'
+                    : (phone ?? '--'),
                 editable: false,
               ),
             ],
@@ -68,6 +78,7 @@ class PassengerRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final double? rating;
   final bool editable;
   final bool isFirst;
 
@@ -76,6 +87,7 @@ class PassengerRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.rating,
     this.editable = false,
     this.isFirst = false,
   });
@@ -108,11 +120,32 @@ class PassengerRow extends StatelessWidget {
                         ).copyWith(color: AppColors.subtext(context)),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        value,
-                        style: AppTextStyles.bodyMedium(
-                          context,
-                        ).copyWith(fontWeight: FontWeight.w700),
+                      Row(
+                        children: [
+                          Text(
+                            value,
+                            style: AppTextStyles.bodyMedium(
+                              context,
+                            ).copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          if (rating != null) ...[
+                            const SizedBox(width: 8),
+                            Row(
+                              children: [
+                                Icon(Icons.star, color: Colors.amber, size: 12),
+                                const SizedBox(width: 2),
+                                Text(
+                                  rating!.toStringAsFixed(1),
+                                  style: AppTextStyles.bodySmall(context)
+                                      .copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.text(context),
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   )

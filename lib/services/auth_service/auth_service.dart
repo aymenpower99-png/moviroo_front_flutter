@@ -202,8 +202,14 @@ class AuthService {
     return result;
   }
 
-  Future<Map<String, dynamic>> disableTotp(String actionToken) async {
-    final result = await SecurityApi.disableTotp(actionToken);
+  Future<Map<String, dynamic>> disableTotp({
+    String? code,
+    String? passkeyToken,
+  }) async {
+    final result = await SecurityApi.disableTotp(
+      code: code,
+      passkeyToken: passkeyToken,
+    );
     _cachedUser = null;
     return result;
   }

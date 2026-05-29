@@ -30,11 +30,10 @@ class _LocationScreenState extends State<LocationScreen>
   int? _selectedRider;
   int _passengerCount = 1;
   final List<GeocodingPlace> _suggestions = [];
-  List<GeocodingPlace> _nearbyPlaces = [];
+  // Nearby places removed
   DateTime _pickedDate = DateTime.now();
   TimeOfDay? _pickedTime;
   bool _isLoadingSuggestions = false;
-  bool _isLoadingNearbyPlaces = false;
   bool _isFetchingLocation = false;
 
   List<GeocodingPlace> _recentSearches = [];
@@ -45,9 +44,6 @@ class _LocationScreenState extends State<LocationScreen>
   double? _pickupLon;
   double? _dropoffLat;
   double? _dropoffLon;
-
-  // Cache key for nearby places to avoid redundant backend calls
-  String? _nearbyPlacesCacheKey;
 
   // Track if either input is focused for border highlight
   bool _isCardFocused = false;
@@ -121,10 +117,6 @@ class _LocationScreenState extends State<LocationScreen>
       if (mounted) {
         if (widget.voiceArgs == null) _fromFocus.requestFocus();
         await _uiHandlers.loadRecentSearches();
-        // If drop-off is already focused and pickup has coords, load nearby
-        if (_toFocus.hasFocus && _pickupLat != null && _pickupLon != null) {
-          _fetchNearbyPlacesIfNeeded();
-        }
       }
     });
 
@@ -182,11 +174,8 @@ class _LocationScreenState extends State<LocationScreen>
 
   void _onToFieldFocusChanged() {
     _uiHandlers.loadRecentSearches();
-    // Fetch nearby places when focus lands on drop-off and pickup is confirmed
-    if (_toFocus.hasFocus && _pickupLat != null && _pickupLon != null) {
-      _fetchNearbyPlacesIfNeeded();
-    }
   }
+
   void _onQueryChanged() {
     final locale = Localizations.localeOf(context).languageCode;
     _uiHandlers.onQueryChanged(
@@ -195,61 +184,20 @@ class _LocationScreenState extends State<LocationScreen>
       proximityLon: _pickupLon,
       language: locale,
     );
-
-    // Keep nearby places refreshed while user is typing drop-off
-    if (_toFocus.hasFocus && _pickupLat != null && _pickupLon != null) {
-      _fetchNearbyPlacesIfNeeded();
-    }
   }
 
-  Future<void> _fetchNearbyPlacesIfNeeded() async {
-    // Fetch nearby places around the confirmed pickup location.
-    // The caller must ensure drop-off is focused and pickup has valid coords.
-    if (_pickupLat == null || _pickupLon == null) return;
-    if (_pickupLat == 0.0 && _pickupLon == 0.0) return;
-    if (_pickupLat!.isNaN || _pickupLon!.isNaN) return;
-
-    // Cache key based on pickup coordinates (rounded to 4 decimals)
-    final cacheKey =
-        '${_pickupLat!.toStringAsFixed(4)},${_pickupLon!.toStringAsFixed(4)}';
-    if (_nearbyPlacesCacheKey == cacheKey && _nearbyPlaces.isNotEmpty) return;
-
-    setState(() => _isLoadingNearbyPlaces = true);
-
-    try {
-      final nearby = await GeocodingService().getNearbyPlaces(
-        _pickupLat!,
-        _pickupLon!,
-        language: Localizations.localeOf(context).languageCode,
-      );
-
-      if (mounted) {
-        setState(() {
-          _nearbyPlaces = nearby;
-          _isLoadingNearbyPlaces = false;
-          _nearbyPlacesCacheKey = cacheKey;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error fetching nearby places: $e');
-      if (mounted) {
-        setState(() => _isLoadingNearbyPlaces = false);
-      }
-    }
-  }
+  // Nearby places functionality removed
 
   void _onSuggestionTap(GeocodingPlace place) async {
     await _locationHandlers.onSuggestionTap(
-      place, _pickupLat, _pickupLon, _dropoffLat, _dropoffLon,
+      place,
+      _pickupLat,
+      _pickupLon,
+      _dropoffLat,
+      _dropoffLon,
     );
-    // After pickup is confirmed and focus moves to drop-off, explicitly
-    // trigger nearby places with a short delay so focus has settled.
-    Future.delayed(const Duration(milliseconds: 200), () {
-      if (mounted && _toFocus.hasFocus && _pickupLat != null) {
-        _fetchNearbyPlacesIfNeeded();
-      }
-    });
   }
+
   void _fillSmartField(String locationName, GeocodingPlace place) =>
       _locationHandlers.fillSmartField(locationName, place);
   void _handleUseCurrentLocation() {
@@ -261,6 +209,7 @@ class _LocationScreenState extends State<LocationScreen>
       language: locale,
     );
   }
+
   void _swapLocations() => _locationHandlers.swapLocations(
     _pickupLat,
     _pickupLon,
@@ -331,11 +280,9 @@ class _LocationScreenState extends State<LocationScreen>
       pickedDate: _pickedDate,
       pickedTime: _pickedTime,
       suggestions: _suggestions,
-      nearbyPlaces: _nearbyPlaces,
       recentSearches: _recentSearches,
       dropoffRecentSearches: _dropoffRecentSearches,
       isLoadingSuggestions: _isLoadingSuggestions,
-      isLoadingNearbyPlaces: _isLoadingNearbyPlaces,
       isFetchingLocation: _isFetchingLocation,
       isCardFocused: _isCardFocused,
       canNavigate: _canNavigate,

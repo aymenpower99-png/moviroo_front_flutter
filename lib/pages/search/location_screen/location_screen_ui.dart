@@ -54,11 +54,11 @@ class LocationScreenUI extends StatelessWidget {
     required this.pickedDate,
     required this.pickedTime,
     required this.suggestions,
-    required this.nearbyPlaces,
+    this.nearbyPlaces = const [],
     required this.recentSearches,
     required this.dropoffRecentSearches,
     required this.isLoadingSuggestions,
-    required this.isLoadingNearbyPlaces,
+    this.isLoadingNearbyPlaces = false,
     required this.isFetchingLocation,
     required this.isCardFocused,
     required this.canNavigate,
@@ -80,7 +80,9 @@ class LocationScreenUI extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDropoffMode = toFocus.hasFocus;
-    final activeRecentList = isDropoffMode ? dropoffRecentSearches : recentSearches;
+    final activeRecentList = isDropoffMode
+        ? dropoffRecentSearches
+        : recentSearches;
 
     // "Select on map" is always available when any field is focused.
     final bool showSelectOnMap = fromFocus.hasFocus || toFocus.hasFocus;
@@ -203,19 +205,29 @@ class LocationScreenUI extends StatelessWidget {
                   // Only renders when drop-off is focused, pickup is confirmed,
                   // and we actually have results. No empty states, no messages.
                   if (showNearbyPlaces && nearbyPlaces.isNotEmpty) ...[
-                    ...nearbyPlaces.map((place) => _SuggestionTile(
-                          place: place,
-                          onTap: () => onSuggestionTap(place),
-                        )),
+                    ...nearbyPlaces.map(
+                      (place) => _SuggestionTile(
+                        place: place,
+                        onTap: () => onSuggestionTap(place),
+                      ),
+                    ),
                     const SizedBox(height: 12),
                   ],
 
-                  // Section: Autocomplete suggestions
+                  // Section: Autocomplete suggestions (skip entries with no display name)
                   if (suggestions.isNotEmpty) ...[
-                    ...suggestions.map((place) => _SuggestionTile(
-                          place: place,
-                          onTap: () => onSuggestionTap(place),
-                        )),
+                    ...suggestions
+                        .where(
+                          (p) =>
+                              p.localizedPlaceName().trim().isNotEmpty &&
+                              p.placeName.trim().isNotEmpty,
+                        )
+                        .map(
+                          (place) => _SuggestionTile(
+                            place: place,
+                            onTap: () => onSuggestionTap(place),
+                          ),
+                        ),
                     const SizedBox(height: 12),
                   ],
 
@@ -227,14 +239,17 @@ class LocationScreenUI extends StatelessWidget {
 
                   // Section: Recent searches
                   if (showRecent) ...[
-                    ...activeRecentList.map((place) => RecentSearchTile(
-                          item: RecentSearchItem(
-                            title: place.localizedPlaceName(),
-                            subtitle: place.localizedFullAddress(),
-                            categoryIcon: Icons.history_rounded,
-                          ),
-                           onTap: () => onFillSmartField(place.localizedPlaceName(), place),
-                        )),
+                    ...activeRecentList.map(
+                      (place) => RecentSearchTile(
+                        item: RecentSearchItem(
+                          title: place.localizedPlaceName(),
+                          subtitle: place.localizedFullAddress(),
+                          categoryIcon: Icons.history_rounded,
+                        ),
+                        onTap: () =>
+                            onFillSmartField(place.localizedPlaceName(), place),
+                      ),
+                    ),
                     if (activeRecentList.isNotEmpty)
                       Align(
                         alignment: Alignment.centerRight,
@@ -253,7 +268,9 @@ class LocationScreenUI extends StatelessWidget {
                             Icon(
                               Icons.search_rounded,
                               size: 48,
-                              color: AppColors.subtext(context).withValues(alpha: 0.5),
+                              color: AppColors.subtext(
+                                context,
+                              ).withValues(alpha: 0.5),
                             ),
                             const SizedBox(height: 12),
                             Text(

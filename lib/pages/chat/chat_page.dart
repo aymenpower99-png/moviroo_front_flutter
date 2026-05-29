@@ -70,9 +70,12 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     // Load history from provider (uses cache if available)
+    final locale = Localizations.localeOf(context).languageCode;
     await chatProvider.fetchMessages(
       widget.rideId,
       currentUserId: _currentUserId,
+      translate: _autoTranslate,
+      targetLang: locale,
     );
 
     if (mounted) {
@@ -176,6 +179,18 @@ class _ChatPageState extends State<ChatPage> {
     _input.clear();
   }
 
+  // ── Refetch messages when translation toggle changes ─────────
+  Future<void> _refetchMessages() async {
+    final chatProvider = context.read<ChatProvider>();
+    final locale = Localizations.localeOf(context).languageCode;
+    await chatProvider.fetchMessages(
+      widget.rideId,
+      currentUserId: _currentUserId,
+      translate: _autoTranslate,
+      targetLang: locale,
+    );
+  }
+
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scroll.hasClients) {
@@ -249,7 +264,10 @@ class _ChatPageState extends State<ChatPage> {
             ),
             TranslationBanner(
               enabled: _autoTranslate,
-              onToggle: (v) => setState(() => _autoTranslate = v),
+              onToggle: (v) async {
+                setState(() => _autoTranslate = v);
+                await _refetchMessages();
+              },
             ),
             Expanded(
               child: Consumer<ChatProvider>(

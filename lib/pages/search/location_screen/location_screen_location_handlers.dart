@@ -129,7 +129,9 @@ class LocationScreenLocationHandlers {
 
     try {
       // Show permission dialog and guide user if needed
-      final hasPermission = await GpsService.showPermissionDialog(state.context);
+      final hasPermission = await GpsService.showPermissionDialog(
+        state.context,
+      );
       if (!hasPermission) {
         setIsFetchingLocation(false);
         return;
@@ -158,7 +160,9 @@ class LocationScreenLocationHandlers {
       if (state.mounted) {
         ScaffoldMessenger.of(state.context).showSnackBar(
           const SnackBar(
-            content: Text('An error occurred while fetching your location. Please try again.'),
+            content: Text(
+              'An error occurred while fetching your location. Please try again.',
+            ),
             duration: Duration(seconds: 3),
           ),
         );
@@ -221,7 +225,12 @@ class LocationScreenLocationHandlers {
 
       if (lat != null && lon != null) {
         // Call reverse geocoding to get the actual address
-        final place = await MapboxService.reverseGeocode(lat, lon);
+        final locale = Localizations.localeOf(state.context).languageCode;
+        final place = await MapboxService.reverseGeocode(
+          lat,
+          lon,
+          language: locale,
+        );
 
         if (place != null && state.mounted) {
           // Update coordinates

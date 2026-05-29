@@ -127,6 +127,11 @@ class BookingCard extends StatelessWidget {
             children: [
               Row(
                 children: [
+                  Icon(
+                    Icons.access_time_rounded,
+                    size: 14,
+                    color: AppColors.subtext(context),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     formatDateTime(),
@@ -139,7 +144,9 @@ class BookingCard extends StatelessWidget {
               _RouteStop(
                 dot: _DotFilledPurple(),
                 label: 'Pick-up',
-                title: pickupAddress != null ? simplifyAddress(pickupAddress!) : '--',
+                title: pickupAddress != null
+                    ? simplifyAddress(pickupAddress!)
+                    : '--',
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 6),
@@ -152,7 +159,9 @@ class BookingCard extends StatelessWidget {
               _RouteStop(
                 dot: _DotOutlinePurple(),
                 label: 'Drop-off',
-                title: dropoffAddress != null ? simplifyAddress(dropoffAddress!) : '--',
+                title: dropoffAddress != null
+                    ? simplifyAddress(dropoffAddress!)
+                    : '--',
               ),
             ],
           ),

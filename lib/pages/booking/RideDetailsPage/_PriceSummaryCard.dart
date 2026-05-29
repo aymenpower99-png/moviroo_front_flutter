@@ -23,7 +23,7 @@ class PriceSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t        = AppLocalizations.of(context);
+    final t = AppLocalizations.of(context);
     final currency = context.watch<CurrencyService>();
     final hasDiscount = discountPercent != null && discountPercent! > 0;
 
@@ -71,9 +71,9 @@ class PriceSummaryCard extends StatelessWidget {
               children: [
                 Text(
                   t.translate('price'),
-                  style: AppTextStyles.bodyMedium(context).copyWith(
-                    color: AppColors.subtext(context),
-                  ),
+                  style: AppTextStyles.bodyMedium(
+                    context,
+                  ).copyWith(color: AppColors.subtext(context)),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -124,18 +124,17 @@ class PriceSummaryCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       t.translate('coupon_applied'),
-                      style: AppTextStyles.bodySmall(context).copyWith(
-                        color: AppColors.subtext(context),
-                      ),
+                      style: AppTextStyles.bodySmall(
+                        context,
+                      ).copyWith(color: AppColors.subtext(context)),
                     ),
                   ],
                 ),
                 Text(
                   '-${formatPrice(originalPrice! - discountedPrice!)}',
-                  style: AppTextStyles.bodyMedium(context).copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green,
-                  ),
+                  style: AppTextStyles.bodyMedium(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w600, color: Colors.green),
                 ),
               ],
             ),
@@ -150,7 +149,7 @@ class PriceSummaryCard extends StatelessWidget {
           if (membershipPoints != null && membershipPoints! > 0) ...[
             _PriceRow(
               label: t.translate('membership_points'),
-              value: '+$membershipPoints pts',
+              value: '$membershipPoints pts',
             ),
             const SizedBox(height: 10),
           ],

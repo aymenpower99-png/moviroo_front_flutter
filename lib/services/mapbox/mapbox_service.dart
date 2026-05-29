@@ -10,10 +10,46 @@ class MapboxService {
   static const String _mapboxDirectionsUrl =
       'https://api.mapbox.com/directions/v5/mapbox/driving';
 
-  /// Search places using backend unified search endpoint (parallel Mapbox + Nominatim)
-  static Future<List<MapboxPlace>> searchPlaces(String query, {String? language}) async {
-    if (query.trim().isEmpty) return [];
+  /// Search places using Google Places Autocomplete with fallback to Mapbox/Nominatim
+  static Future<List<MapboxPlace>> searchPlaces(
+    String query, {
+    String? language,
+  }) async {
+    // Try Google Places first
+    try {
+      final params = <String, String>{'q': query};
+      if (language != null && language.isNotEmpty) {
+        params['lang'] = language;
+      }
 
+      final url = Uri.parse(
+        '${AppConfig.baseUrl}/rides/geocode/google-search',
+      ).replace(queryParameters: params);
+
+      debugPrint('[MapboxService] 🔍 Trying Google Places for: "$query"');
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as List;
+        if (data.isNotEmpty) {
+          debugPrint(
+            '[MapboxService] ✅ Got ${data.length} results from Google',
+          );
+          return data
+              .map(
+                (item) => MapboxPlace.fromBackend(item as Map<String, dynamic>),
+              )
+              .toList();
+        }
+        debugPrint('[MapboxService] Google returned empty, trying fallback');
+      }
+    } catch (e, st) {
+      debugPrint('[MapboxService] Google failed, trying fallback: $e\n$st');
+    }
+
+    // Fallback to Mapbox + Nominatim
+    debugPrint('[MapboxService] 🔄 Falling back to Mapbox/Nominatim');
     try {
       final params = <String, String>{'q': query};
       if (language != null && language.isNotEmpty) {
@@ -28,6 +64,9 @@ class MapboxService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as List;
+        debugPrint(
+          '[MapboxService] ✅ Got ${data.length} results from fallback',
+        );
         return data
             .map(
               (item) => MapboxPlace.fromBackend(item as Map<String, dynamic>),
@@ -60,8 +99,9 @@ class MapboxService {
         params['lang'] = language;
       }
 
-      final url = Uri.parse('${AppConfig.baseUrl}/rides/geocode/reverse')
-          .replace(queryParameters: params);
+      final url = Uri.parse(
+        '${AppConfig.baseUrl}/rides/geocode/reverse',
+      ).replace(queryParameters: params);
 
       final response = await http.get(url);
 

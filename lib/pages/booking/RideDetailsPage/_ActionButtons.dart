@@ -8,6 +8,7 @@ class RideDetailsActionButtons extends StatelessWidget {
   final bool isCancelling;
   final VoidCallback? onPay;
   final VoidCallback? onCancel;
+  final VoidCallback? onDownloadReceipt;
 
   const RideDetailsActionButtons({
     super.key,
@@ -15,19 +16,55 @@ class RideDetailsActionButtons extends StatelessWidget {
     required this.isCancelling,
     this.onPay,
     this.onCancel,
+    this.onDownloadReceipt,
   });
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
 
-    final showPayButton = bookingStatus == 'PENDING' || bookingStatus == 'pendingPayment';
-    final showCancelButton = bookingStatus == 'PENDING' ||
+    final showPayButton =
+        bookingStatus == 'PENDING' || bookingStatus == 'pendingPayment';
+    final showCancelButton =
+        bookingStatus == 'PENDING' ||
         bookingStatus == 'SCHEDULED' ||
         bookingStatus == 'SEARCHING_DRIVER';
+    final showDownloadReceipt = bookingStatus == 'COMPLETED';
 
     return Column(
       children: [
+        if (showDownloadReceipt)
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: onDownloadReceipt,
+              icon: Icon(
+                Icons.download_outlined,
+                size: 20,
+                color: AppColors.primaryPurple,
+              ),
+              label: Text(
+                t.translate('download_receipt'),
+                style: AppTextStyles.bodyLarge(context).copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: AppColors.primaryPurple,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.surface(context),
+                foregroundColor: AppColors.primaryPurple,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: AppColors.border(context)),
+                ),
+              ),
+            ),
+          ),
+        if (showDownloadReceipt) const SizedBox(height: 10),
+
         if (showPayButton)
           SizedBox(
             width: double.infinity,

@@ -129,7 +129,8 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
     } else {
       // Require biometric re-auth to disable email 2FA
       final challenge = await _biometric.challenge(
-        reason: 'Confirm your identity to disable email two-factor authentication.',
+        reason:
+            'Confirm your identity to disable email two-factor authentication.',
         purpose: 'disable-email-2fa',
       );
       if (!challenge.success || challenge.actionToken == null) {
@@ -200,18 +201,28 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
         _errorMessage = null;
       });
       try {
-        // Require biometric re-auth to disable TOTP (P7: purpose-scoped token)
-        final challenge = await _biometric.challenge(
-          reason: 'Confirm your identity to disable the authenticator app.',
-          purpose: 'disable-totp',
-        );
-        if (!challenge.success || challenge.actionToken == null) {
-          _showError(
-            challenge.errorMessage ?? 'Biometric authentication failed.',
+        // Check if biometric is available - if so, use passkey for re-auth
+        // If biometric is not available, disable directly without code
+        final biometricAvailable = await _biometric.isSupported();
+        String? passkeyToken;
+
+        if (biometricAvailable) {
+          final challenge = await _biometric.challenge(
+            reason: 'Confirm your identity to disable the authenticator app.',
+            purpose: 'disable-totp',
           );
-          return;
+          if (!challenge.success || challenge.actionToken == null) {
+            _showError(
+              challenge.errorMessage ?? 'Biometric authentication failed.',
+            );
+            return;
+          }
+          passkeyToken = challenge.actionToken;
         }
-        final result = await _authService.disableTotp(challenge.actionToken!);
+
+        final result = await _authService.disableTotp(
+          passkeyToken: passkeyToken,
+        );
         if (!mounted) return;
         setState(() {
           _authAppEnabled = (result['totpEnabled'] as bool?) ?? false;
@@ -238,9 +249,7 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
       purpose: 'switch-primary-2fa',
     );
     if (!challenge.success || challenge.actionToken == null) {
-      _showError(
-        challenge.errorMessage ?? 'Biometric authentication failed.',
-      );
+      _showError(challenge.errorMessage ?? 'Biometric authentication failed.');
       return;
     }
 

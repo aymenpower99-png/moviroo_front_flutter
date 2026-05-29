@@ -48,6 +48,7 @@ class AnchoredLocationCard extends StatelessWidget {
   final double screenWidth;
   final String name;
   final String subtitle;
+  final String country;
   final bool isPickup;
 
   static const double _cardWidth = 190;
@@ -62,17 +63,21 @@ class AnchoredLocationCard extends StatelessWidget {
     required this.screenWidth,
     required this.name,
     required this.subtitle,
+    this.country = '',
     required this.isPickup,
   });
 
   @override
   Widget build(BuildContext context) {
+    debugPrint(
+      '[AnchoredLocationCard] country="$country" subtitle="$subtitle"',
+    );
     // Clamp card left so it stays on screen
     double left = markerScreen.dx - _cardWidth / 2;
     left = left.clamp(_edgePad, screenWidth - _cardWidth - _edgePad);
 
-    // Estimate total height: body (~46) + triangle (7) + gap (4)
-    const bodyH = 46.0;
+    // Estimate total height: body (~52 for 3 lines) + triangle (7) + gap (4)
+    const bodyH = 52.0;
     const totalH = bodyH + _triangleH + _gap;
     double top = markerScreen.dy - totalH;
     if (top < 4) top = 4;
@@ -108,15 +113,14 @@ class AnchoredLocationCard extends StatelessWidget {
               ],
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Dot indicator (purple for pickup, red-ish for dropoff)
+                // Purple dot indicator
                 Container(
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: isPickup
-                        ? AppColors.primaryPurple
-                        : AppColors.primaryPurple.withValues(alpha: 0.7),
+                    color: AppColors.primaryPurple,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -144,6 +148,17 @@ class AnchoredLocationCard extends StatelessWidget {
                             fontSize: 10,
                             color: AppColors.subtext(context),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      if (country.isNotEmpty) ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          country,
+                          style: AppTextStyles.bodySmall(
+                            context,
+                          ).copyWith(fontSize: 11, color: Colors.grey[500]),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -268,8 +283,8 @@ class ConfirmBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t            = AppLocalizations.of(context);
-    final currency     = context.watch<CurrencyService>();
+    final t = AppLocalizations.of(context);
+    final currency = context.watch<CurrencyService>();
     final displayPrice = car.priceTndRaw > 0
         ? currency.format(car.priceTndRaw)
         : car.price;

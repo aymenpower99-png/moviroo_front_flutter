@@ -6,8 +6,6 @@ import '../../../../../l10n/app_localizations.dart';
 import '../security/security_page.dart';
 import 'currency_page.dart';
 import '../payment/payment_method_page.dart';
-import '../privacy_terms/privacy_policy_page.dart';
-import '../privacy_terms/TermsOfUsePage.dart';
 
 // ── Settings sub page ─────────────────────────────────────────────────────────
 
@@ -69,31 +67,6 @@ class SettingsSubPage extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    // ── Legal ──────────────────────────────────────
-                    _SectionLabel(t('legal')),
-                    const SizedBox(height: 12),
-
-                    _NavTile(
-                      title: t('privacy_policy'),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const PrivacyPolicyPage(),
-                        ),
-                      ),
-                    ),
-                    _NavTile(
-                      title: t('terms_of_use'),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const TermsOfUsePage(),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
                     // ── About ─────────────────────────────────────
                     _SectionLabel(t('about')),
                     const SizedBox(height: 12),
@@ -109,9 +82,9 @@ class SettingsSubPage extends StatelessWidget {
                           trailing: version.isNotEmpty
                               ? Text(
                                   version,
-                                  style: AppTextStyles.settingsItem(context).copyWith(
-                                    color: AppColors.subtext(context),
-                                  ),
+                                  style: AppTextStyles.settingsItem(
+                                    context,
+                                  ).copyWith(color: AppColors.subtext(context)),
                                 )
                               : null,
                           onTap: () {},

@@ -70,6 +70,12 @@ class _RideBookingPageState extends State<RideBookingPage> with RouteAware {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Initialize country with locale-aware fallback (Localizations available here)
+    if (_pickupCountry.isEmpty && _dropoffCountry.isEmpty) {
+      final locale = Localizations.localeOf(context).languageCode;
+      _pickupCountry = _localizedTunisia(locale);
+      _dropoffCountry = _localizedTunisia(locale);
+    }
     final route = ModalRoute.of(context);
     if (route is PageRoute) {
       appRouteObserver.subscribe(this, route);
@@ -92,30 +98,64 @@ class _RideBookingPageState extends State<RideBookingPage> with RouteAware {
     _mapManager?.resumeAnimation();
   }
 
+  /// Returns the localized country name for Tunisia based on the app locale.
+  String _localizedTunisia(String locale) {
+    switch (locale) {
+      case 'ar':
+        return 'تونس';
+      case 'fr':
+        return 'Tunisie';
+      default:
+        return 'Tunisia';
+    }
+  }
+
   Future<void> _loadAddressDetails() async {
     try {
+      final locale = Localizations.localeOf(context).languageCode;
       final results = await Future.wait([
-        MapboxService.reverseGeocode(widget.pickupLat, widget.pickupLon),
-        MapboxService.reverseGeocode(widget.dropoffLat, widget.dropoffLon),
+        MapboxService.reverseGeocode(
+          widget.pickupLat,
+          widget.pickupLon,
+          language: locale,
+        ),
+        MapboxService.reverseGeocode(
+          widget.dropoffLat,
+          widget.dropoffLon,
+          language: locale,
+        ),
       ]);
       final pickupPlace = results[0];
       final dropoffPlace = results[1];
+      final tunisiaFallback = _localizedTunisia(locale);
       if (mounted) {
+        final pCountry = (pickupPlace?.country ?? '').trim();
+        final dCountry = (dropoffPlace?.country ?? '').trim();
+        debugPrint(
+          '[RideBooking] pickup country="$pCountry" city="${pickupPlace?.city}"',
+        );
+        debugPrint(
+          '[RideBooking] dropoff country="$dCountry" city="${dropoffPlace?.city}"',
+        );
         setState(() {
           if (_pickupAddress.isEmpty) {
-            _pickupAddress = pickupPlace?.localizedPlaceName() ?? 'Unknown location';
+            _pickupAddress =
+                pickupPlace?.localizedPlaceName() ?? 'Unknown location';
 
-            _dropoffAddress = dropoffPlace?.localizedPlaceName() ?? 'Unknown location';
+            _dropoffAddress =
+                dropoffPlace?.localizedPlaceName() ?? 'Unknown location';
           }
           _pickupCity = pickupPlace?.city ?? '';
-          _pickupCountry = pickupPlace?.country ?? '';
+          _pickupCountry = pCountry.isEmpty ? tunisiaFallback : pCountry;
           _dropoffCity = dropoffPlace?.city ?? '';
-          _dropoffCountry = dropoffPlace?.country ?? '';
+          _dropoffCountry = dCountry.isEmpty ? tunisiaFallback : dCountry;
           _isLoadingAddresses = false;
         });
       }
     } catch (e) {
       debugPrint('Error loading address details: $e');
+      final locale = Localizations.localeOf(context).languageCode;
+      final tunisiaFallback = _localizedTunisia(locale);
       if (mounted) {
         setState(() {
           if (_pickupAddress.isEmpty) {
@@ -126,6 +166,9 @@ class _RideBookingPageState extends State<RideBookingPage> with RouteAware {
             _dropoffAddress =
                 'Location (${widget.dropoffLat.toStringAsFixed(4)}, ${widget.dropoffLon.toStringAsFixed(4)})';
           }
+          // Ensure country is set even on error
+          _pickupCountry = tunisiaFallback;
+          _dropoffCountry = tunisiaFallback;
           _isLoadingAddresses = false;
         });
       }
