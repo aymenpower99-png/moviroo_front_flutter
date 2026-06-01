@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
+import '../device_info/device_info_service.dart';
 import 'auth_storage.dart';
 
 class WebAuthnApiService {
@@ -85,9 +86,13 @@ class WebAuthnApiService {
   static Future<Map<String, dynamic>> finishAuthentication({
     required Map<String, dynamic> dto,
   }) async {
+    final deviceHeaders = await DeviceInfoService().getDeviceHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/auth/passkeys/authenticate/finish'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        ...deviceHeaders,
+      },
       body: jsonEncode(dto),
     );
     if (response.statusCode == 200) {

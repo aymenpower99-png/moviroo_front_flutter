@@ -501,5 +501,18 @@
   "passkey_remove_failed": "فشل إزالة مفتاح المرور",
   "passkey_rename_failed": "فشل إعادة تسمية مفتاح المرور",
   "authenticator_app_linked_success": "تم ربط تطبيق المصادقة بنجاح",
-  "device_name": "اسم الجهاز"
+  "device_name": "اسم الجهاز",
+  "active_sessions": "الجلسات النشطة",
+  "active_sessions_info": "هذه هي عمليات تسجيل الدخول الأخيرة على حسابك. إذا رأيت جهازًا غير مألوف، قم بتسجيل الخروج من جميع الأجهزة فورًا.",
+  "no_sessions_found": "لم يتم العثور على جلسات.",
+  "sign_out_all_devices": "تسجيل الخروج من جميع الأجهزة",
+  "sign_out_all_confirm_title": "تسجيل الخروج من جميع الأجهزة؟",
+  "sign_out_all_confirm_message": "سيؤدي هذا إلى تسجيل خروجك فورًا من جميع الأجهزة بما في ذلك هذا الجهاز. ستحتاج إلى تسجيل الدخول مرة أخرى.",
+  "sign_out_confirm_title": "تسجيل الخروج؟",
+  "sign_out_confirm_message": "سيتم تسجيل خروجك من هذا الجهاز.",
+  "remove_session": "حذف السجل",
+  "signed_in": "تم تسجيل الدخول في",
+  "last_seen": "آخر نشاط",
+  "signing_out": "جاري تسجيل الخروج…",
+  "confirm": "تأكيد"
 }

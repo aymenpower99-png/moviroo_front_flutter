@@ -504,5 +504,18 @@
   "passkey_remove_failed": "Échec de la suppression de la clé d'accès",
   "passkey_rename_failed": "Échec du renommage de la clé d'accès",
   "authenticator_app_linked_success": "Application d'authentification liée avec succès",
-  "device_name": "Nom de l'appareil"
+  "device_name": "Nom de l'appareil",
+  "active_sessions": "Sessions actives",
+  "active_sessions_info": "Voici les connexions récentes sur votre compte. Si vous voyez un appareil inconnu, déconnectez-vous de tous les appareils immédiatement.",
+  "no_sessions_found": "Aucune session trouvée.",
+  "sign_out_all_devices": "Déconnecter tous les appareils",
+  "sign_out_all_confirm_title": "Déconnecter tous les appareils ?",
+  "sign_out_all_confirm_message": "Cela vous déconnectera immédiatement de tous les appareils, y compris celui-ci. Vous devrez vous reconnecter.",
+  "sign_out_confirm_title": "Se déconnecter ?",
+  "sign_out_confirm_message": "Vous serez déconnecté de cet appareil.",
+  "remove_session": "Supprimer l'enregistrement",
+  "signed_in": "Connecté le",
+  "last_seen": "Dernière activité",
+  "signing_out": "Déconnexion…",
+  "confirm": "Confirmer"
 }

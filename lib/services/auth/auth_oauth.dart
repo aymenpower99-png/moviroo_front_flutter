@@ -28,12 +28,12 @@ class AuthOAuth {
         throw Exception('Failed to get Google ID token');
       }
 
-      final deviceName = await DeviceInfoService().getDeviceName();
+      final deviceHeaders = await DeviceInfoService().getDeviceHeaders();
       final response = await http.post(
         Uri.parse('$baseUrl/auth/google'),
         headers: {
           'Content-Type': 'application/json',
-          'X-Device-Name': deviceName,
+          ...deviceHeaders,
         },
         body: jsonEncode({'idToken': idToken}),
       );

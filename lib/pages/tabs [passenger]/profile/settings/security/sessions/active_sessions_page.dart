@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../../../../l10n/app_localizations.dart';
 import '../../../../../../services/auth_service/auth_service.dart';
 import '../../../../../../services/passkey/passkey_service.dart';
 import '../../../../../../theme/app_colors.dart';
@@ -41,9 +42,6 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
   }
 
   Future<void> _load() async {
-    // Only show a full-screen loader on the very first fetch when we have
-    // nothing to display. If we already have cached sessions, refresh silently
-    // in the background so the user never sees a blank screen.
     final shouldShowLoader = _cachedSessions == null;
     if (shouldShowLoader) {
       setState(() => _loading = true);
@@ -65,6 +63,8 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
   static void clearCache() => _cachedSessions = null;
 
   Future<void> _revokeAll() async {
+    final l10n = AppLocalizations.of(context);
+
     // Step-up auth: if biometric is enabled, require device biometric first
     final cached = _auth.getCachedUser();
     final hasBiometric = (cached?['passkeyEnabled'] as bool?) ?? false;
@@ -90,20 +90,17 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sign out all devices?'),
-        content: const Text(
-          'This will immediately sign you out of all devices including this one. '
-          'You will need to log in again.',
-        ),
+        title: Text(l10n.translate('sign_out_all_confirm_title')),
+        content: Text(l10n.translate('sign_out_all_confirm_message')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.translate('cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Sign out all'),
+            child: Text(l10n.translate('confirm')),
           ),
         ],
       ),
@@ -115,7 +112,6 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
     try {
       await _auth.revokeAllSessions();
       if (!mounted) return;
-      // Tokens cleared — navigate to login screen
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
     } catch (e) {
       setState(() => _revoking = false);
@@ -127,6 +123,29 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
   }
 
   Future<void> _removeSession(String id) async {
+    final l10n = AppLocalizations.of(context);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.translate('sign_out_confirm_title')),
+        content: Text(l10n.translate('sign_out_confirm_message')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(l10n.translate('confirm')),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
     try {
       await _auth.deleteSession(id);
       setState(() => _sessions.removeWhere((s) => s['id'] == id));
@@ -145,7 +164,6 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
 
   String _deviceLabel(Map<String, dynamic> s) {
     final raw = s['deviceLabel'] as String? ?? 'Unknown';
-    // If device label is Unknown, try to infer from other fields
     if (raw.toLowerCase() == 'unknown') {
       final platform = s['platform'] as String?;
       if (platform != null && platform.isNotEmpty) {
@@ -157,20 +175,32 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
 
   IconData _deviceIcon(Map<String, dynamic> s) {
     final label = (s['deviceLabel'] as String? ?? '').toLowerCase();
-    if (label.contains('ios') || label.contains('macos')) {
+    final platform = (s['platform'] as String? ?? '').toLowerCase();
+
+    if (label.contains('ios') ||
+        label.contains('macos') ||
+        platform.contains('ios')) {
       return Icons.phone_iphone;
     }
-    if (label.contains('android')) return Icons.phone_android;
+    if (label.contains('android') || platform.contains('android')) {
+      return Icons.phone_android;
+    }
     if (label.contains('windows') ||
         label.contains('linux') ||
-        label.contains('macos')) {
+        label.contains('macos') ||
+        platform.contains('windows') ||
+        platform.contains('macos') ||
+        platform.contains('linux')) {
       return Icons.computer;
     }
+    if (platform.contains('web')) return Icons.web;
     return Icons.devices;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -181,9 +211,9 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
           color: Colors.black87,
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Active Sessions',
-          style: TextStyle(
+        title: Text(
+          l10n.translate('active_sessions'),
+          style: const TextStyle(
             color: Colors.black87,
             fontWeight: FontWeight.w600,
             fontSize: 16,
@@ -194,8 +224,8 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-          ? _buildError()
-          : _buildContent(),
+              ? _buildError()
+              : _buildContent(),
     );
   }
 
@@ -215,6 +245,8 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
   }
 
   Widget _buildContent() {
+    final l10n = AppLocalizations.of(context);
+
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
@@ -238,8 +270,7 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'These are the recent logins on your account. '
-                    'If you see an unfamiliar device, sign out all devices immediately.',
+                    l10n.translate('active_sessions_info'),
                     style: TextStyle(
                       fontSize: 12.5,
                       color: AppColors.primaryPurple,
@@ -258,7 +289,7 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 40),
                 child: Text(
-                  'No sessions found.',
+                  l10n.translate('no_sessions_found'),
                   style: TextStyle(color: Colors.grey[600]),
                 ),
               ),
@@ -308,7 +339,9 @@ class _ActiveSessionsPageState extends State<ActiveSessionsPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.logout_rounded, size: 18),
-              label: Text(_revoking ? 'Signing out…' : 'Sign out all devices'),
+              label: Text(_revoking
+                  ? l10n.translate('signing_out')
+                  : l10n.translate('sign_out_all_devices')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.red,
                 side: const BorderSide(color: Colors.red),
@@ -347,6 +380,8 @@ class _SessionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -381,11 +416,11 @@ class _SessionTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Signed in: $createdAt',
+                  '${l10n.translate('signed_in')}: $createdAt',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(
-                  'Last seen: $lastSeen',
+                  '${l10n.translate('last_seen')}: $lastSeen',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
@@ -398,7 +433,7 @@ class _SessionTile extends StatelessWidget {
               color: Colors.grey,
             ),
             onPressed: onRemove,
-            tooltip: 'Remove record',
+            tooltip: l10n.translate('remove_session'),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),

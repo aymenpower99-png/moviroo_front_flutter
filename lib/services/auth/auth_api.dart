@@ -30,12 +30,12 @@ class AuthAPI {
     required String email,
     required String password,
   }) async {
-    final deviceName = await DeviceInfoService().getDeviceName();
+    final deviceHeaders = await DeviceInfoService().getDeviceHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: {
         'Content-Type': 'application/json',
-        'X-Device-Name': deviceName,
+        ...deviceHeaders,
       },
       body: jsonEncode({
         'email': email,
@@ -74,12 +74,12 @@ class AuthAPI {
     required String preAuthToken,
     required String code,
   }) async {
-    final deviceName = await DeviceInfoService().getDeviceName();
+    final deviceHeaders = await DeviceInfoService().getDeviceHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login/verify-otp'),
       headers: {
         'Content-Type': 'application/json',
-        'X-Device-Name': deviceName,
+        ...deviceHeaders,
       },
       body: jsonEncode({'preAuthToken': preAuthToken, 'code': code}),
     );

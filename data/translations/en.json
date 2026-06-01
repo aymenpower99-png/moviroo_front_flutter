@@ -523,5 +523,18 @@
   "passkey_remove_failed": "Failed to remove passkey",
   "passkey_rename_failed": "Failed to rename passkey",
   "authenticator_app_linked_success": "Authenticator app linked successfully",
-  "device_name": "Device name"
+  "device_name": "Device name",
+  "active_sessions": "Active Sessions",
+  "active_sessions_info": "These are the recent logins on your account. If you see an unfamiliar device, sign out all devices immediately.",
+  "no_sessions_found": "No sessions found.",
+  "sign_out_all_devices": "Sign out all devices",
+  "sign_out_all_confirm_title": "Sign out all devices?",
+  "sign_out_all_confirm_message": "This will immediately sign you out of all devices including this one. You will need to log in again.",
+  "sign_out_confirm_title": "Sign out?",
+  "sign_out_confirm_message": "You will be signed out of this device.",
+  "remove_session": "Remove record",
+  "signed_in": "Signed in",
+  "last_seen": "Last seen",
+  "signing_out": "Signing out…",
+  "confirm": "Confirm"
 }

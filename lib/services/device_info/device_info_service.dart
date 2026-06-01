@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 /// Service for capturing detailed device information for session tracking.
 class DeviceInfoService {
@@ -47,8 +49,8 @@ class DeviceInfoService {
 
   Future<String> _getWebDeviceName() async {
     final webInfo = await DeviceInfoPlugin().webBrowserInfo;
-    final browserName = webInfo.browserName?.name ?? 'Unknown Browser';
-    final platform = webInfo.platform ?? 'Web';
+    final browserName = webInfo.browserName.name;
+    final platform = webInfo.platform;
     return '$browserName on $platform';
   }
 
@@ -56,34 +58,28 @@ class DeviceInfoService {
     final webInfo = await DeviceInfoPlugin().webBrowserInfo;
     return {
       'platform': 'Web',
-      'device': webInfo.browserName?.name ?? 'Unknown Browser',
+      'device': webInfo.browserName.name,
       'userAgent': webInfo.userAgent ?? 'Unknown',
     };
   }
 
   Future<String> _getAndroidDeviceName() async {
     final androidInfo = await DeviceInfoPlugin().androidInfo;
-    final brand = androidInfo.brand?.trim();
-    final model = androidInfo.model?.trim();
-    final product = androidInfo.product?.trim();
-    final manufacturer = androidInfo.manufacturer?.trim();
+    final brand = androidInfo.brand.trim();
+    final model = androidInfo.model.trim();
+    final product = androidInfo.product.trim();
+    final manufacturer = androidInfo.manufacturer.trim();
 
     // Try to create a readable device name with multiple fallbacks
-    if (brand != null &&
-        brand.isNotEmpty &&
-        model != null &&
-        model.isNotEmpty) {
+    if (brand.isNotEmpty && model.isNotEmpty) {
       return '$brand $model';
-    } else if (manufacturer != null &&
-        manufacturer.isNotEmpty &&
-        model != null &&
-        model.isNotEmpty) {
+    } else if (manufacturer.isNotEmpty && model.isNotEmpty) {
       return '$manufacturer $model';
-    } else if (product != null && product.isNotEmpty) {
+    } else if (product.isNotEmpty) {
       return product;
-    } else if (model != null && model.isNotEmpty) {
+    } else if (model.isNotEmpty) {
       return model;
-    } else if (brand != null && brand.isNotEmpty) {
+    } else if (brand.isNotEmpty) {
       return brand;
     } else {
       return 'Android Device';
@@ -94,27 +90,27 @@ class DeviceInfoService {
     final androidInfo = await DeviceInfoPlugin().androidInfo;
     return {
       'platform': 'Android',
-      'device': androidInfo.model ?? 'Android Device',
-      'brand': androidInfo.brand ?? 'Unknown',
-      'manufacturer': androidInfo.manufacturer ?? 'Unknown',
-      'product': androidInfo.product ?? 'Unknown',
-      'version': androidInfo.version.release ?? 'Unknown',
+      'device': androidInfo.model,
+      'brand': androidInfo.brand,
+      'manufacturer': androidInfo.manufacturer,
+      'product': androidInfo.product,
+      'version': androidInfo.version.release,
       'sdkInt': androidInfo.version.sdkInt.toString(),
     };
   }
 
   Future<String> _getIOSDeviceName() async {
     final iosInfo = await DeviceInfoPlugin().iosInfo;
-    final model = iosInfo.model?.trim();
-    final name = iosInfo.name?.trim();
-    final systemName = iosInfo.systemName?.trim();
+    final model = iosInfo.model.trim();
+    final name = iosInfo.name.trim();
+    final systemName = iosInfo.systemName.trim();
 
     // Try to use the device name if available, otherwise use model
-    if (name != null && name.isNotEmpty && name != 'iPhone' && name != 'iPad') {
+    if (name.isNotEmpty && name != 'iPhone' && name != 'iPad') {
       return name;
-    } else if (model != null && model.isNotEmpty) {
+    } else if (model.isNotEmpty) {
       return model;
-    } else if (systemName != null && systemName.isNotEmpty) {
+    } else if (systemName.isNotEmpty) {
       return systemName;
     } else {
       return 'iOS Device';
@@ -125,12 +121,67 @@ class DeviceInfoService {
     final iosInfo = await DeviceInfoPlugin().iosInfo;
     return {
       'platform': 'iOS',
-      'device': iosInfo.model ?? 'iOS Device',
-      'name': iosInfo.name ?? 'Unknown',
-      'systemName': iosInfo.systemName ?? 'iOS',
-      'systemVersion': iosInfo.systemVersion ?? 'Unknown',
-      'model': iosInfo.model ?? 'Unknown',
+      'device': iosInfo.model,
+      'name': iosInfo.name,
+      'systemName': iosInfo.systemName,
+      'systemVersion': iosInfo.systemVersion,
+      'model': iosInfo.model,
     };
+  }
+
+  /// Get a stable device identifier for session deduplication.
+  /// Android → androidId, iOS → identifierForVendor, Web → persisted UUID.
+  Future<String> getDeviceId() async {
+    try {
+      if (kIsWeb) {
+        return await _getOrCreateWebDeviceId();
+      } else if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        final id = androidInfo.id;
+        if (id.isNotEmpty) return id;
+        return await _fallbackPersistedId();
+      } else if (Platform.isIOS) {
+        final iosInfo = await DeviceInfoPlugin().iosInfo;
+        final id = iosInfo.identifierForVendor;
+        if (id != null && id.isNotEmpty) return id;
+        return await _fallbackPersistedId();
+      } else {
+        return await _fallbackPersistedId();
+      }
+    } catch (e) {
+      debugPrint('Error getting device id: $e');
+      return await _fallbackPersistedId();
+    }
+  }
+
+  /// Return both device name and id in one call for login headers.
+  Future<Map<String, String>> getDeviceHeaders() async {
+    final deviceName = await getDeviceName();
+    final deviceId = await getDeviceId();
+    final platform = getPlatform();
+    return {
+      'X-Device-Name': deviceName,
+      'X-Device-Id': deviceId,
+      'X-Device-Platform': platform,
+    };
+  }
+
+  Future<String> _getOrCreateWebDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString('_moviroo_device_id');
+    if (existing != null && existing.isNotEmpty) return existing;
+    final id = const Uuid().v4();
+    await prefs.setString('_moviroo_device_id', id);
+    return id;
+  }
+
+  Future<String> _fallbackPersistedId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString('_moviroo_device_id');
+    if (existing != null && existing.isNotEmpty) return existing;
+    final id = const Uuid().v4();
+    await prefs.setString('_moviroo_device_id', id);
+    return id;
   }
 
   /// Get a short platform identifier (e.g., 'Android', 'iOS', 'Web')
