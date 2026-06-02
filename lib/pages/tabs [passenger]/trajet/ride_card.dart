@@ -224,23 +224,34 @@ class _ActionButton extends StatelessWidget {
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('This ride is scheduled'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
                 child: Container(
                   height: 46,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryPurple,
+                    color: AppColors.primaryPurple.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.primaryPurple.withValues(alpha: 0.45),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.calendar_today_rounded,
-                        color: Colors.white,
-                        size: 16,
-                      ),
                       const SizedBox(width: 8),
-                      Text('Scheduled', style: AppTextStyles.buttonPrimary),
+                      Text(
+                        'Scheduled',
+                        style: AppTextStyles.bodyLarge(context).copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryPurple,
+                        ),
+                      ),
                     ],
                   ),
                 ),

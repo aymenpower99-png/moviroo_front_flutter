@@ -84,6 +84,32 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   ChatMessage _chatMsgToUI(ChatMsg m) {
+    final locale = Localizations.localeOf(context).languageCode;
+    final bool hasTranslation =
+        m.originalText != null && m.originalText!.isNotEmpty;
+
+    if (hasTranslation) {
+      return ChatMessage(
+        id: m.id,
+        text: m.originalText!,
+        translatedText: m.text,
+        isMe: m.senderId == _currentUserId,
+        time: _formatTime(m.createdAt),
+        isEdited: m.isEdited,
+      );
+    }
+
+    if (m.translations != null && m.translations!.containsKey(locale)) {
+      return ChatMessage(
+        id: m.id,
+        text: m.text,
+        translatedText: m.translations![locale],
+        isMe: m.senderId == _currentUserId,
+        time: _formatTime(m.createdAt),
+        isEdited: m.isEdited,
+      );
+    }
+
     return ChatMessage(
       id: m.id,
       text: m.text,
@@ -320,7 +346,11 @@ class _ChatPageState extends State<ChatPage> {
 
                   return ListView.builder(
                     controller: _scroll,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 16,
+                    ),
                     itemCount: messages.length,
                     itemBuilder: (context, i) {
                       final msg = messages[i];
@@ -422,13 +452,7 @@ class _ChatTopBar extends StatelessWidget {
   });
 
   String get _vehicleInfo {
-    final parts = <String>[];
-    if (vehicleName != null && vehicleName!.isNotEmpty) parts.add(vehicleName!);
-    if (vehicleColor != null && vehicleColor!.isNotEmpty) {
-      parts.add(vehicleColor!);
-    }
-    if (plateNumber != null && plateNumber!.isNotEmpty) parts.add(plateNumber!);
-    return parts.isNotEmpty ? parts.join(' • ') : 'Vehicle info';
+    return vehicleName?.isNotEmpty == true ? vehicleName! : 'Vehicle info';
   }
 
   @override

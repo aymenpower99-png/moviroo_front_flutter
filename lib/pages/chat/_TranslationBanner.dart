@@ -12,8 +12,25 @@ class TranslationBanner extends StatelessWidget {
     required this.onToggle,
   });
 
+  String _languageName(String code) {
+    const names = {
+      'en': 'English',
+      'fr': 'French',
+      'ar': 'Arabic',
+      'es': 'Spanish',
+      'de': 'German',
+      'it': 'Italian',
+      'pt': 'Portuguese',
+      'tr': 'Turkish',
+    };
+    return names[code.toLowerCase()] ?? code.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    final targetLang = _languageName(locale);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -24,7 +41,7 @@ class TranslationBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icône traduction
+          // Translation icon
           Container(
             width: 30, height: 30,
             decoration: BoxDecoration(
@@ -42,7 +59,7 @@ class TranslationBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Auto-translating Arabic',
+                  'Auto-translate',
                   style: AppTextStyles.bodySmall(context).copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
@@ -55,7 +72,7 @@ class TranslationBanner extends StatelessWidget {
                         color: AppColors.subtext(context)),
                     const SizedBox(width: 3),
                     Text(
-                      'to English',
+                      'to $targetLang',
                       style: AppTextStyles.bodySmall(context).copyWith(
                         color: AppColors.subtext(context),
                         fontSize: 11,

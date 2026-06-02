@@ -9,6 +9,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'routing/router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
@@ -60,6 +61,11 @@ void main() async {
   await NotificationService().initialize();
   await RecentSearchesService.clearOldCache();
   await CurrencyService.instance.init();
+
+  // Initialize flutter_downloader for system DownloadManager
+  await FlutterDownloader.initialize(
+    debug: true, // Set to false in production
+  );
 
   // Lock orientation
   await SystemChrome.setPreferredOrientations([
@@ -168,17 +174,11 @@ class _SmartWayAppState extends State<SmartWayApp> {
           }
           break;
         case 'RIDE_CANCELLED':
-          nav.pushNamedAndRemoveUntil(
-            AppRouter.trajet,
-            (route) => false,
-          );
+          nav.pushNamedAndRemoveUntil(AppRouter.trajet, (route) => false);
           break;
         default:
           // Unknown type — fall back to home
-          nav.pushNamedAndRemoveUntil(
-            AppRouter.home,
-            (route) => false,
-          );
+          nav.pushNamedAndRemoveUntil(AppRouter.home, (route) => false);
       }
     };
   }

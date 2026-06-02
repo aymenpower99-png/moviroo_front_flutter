@@ -58,7 +58,7 @@ class ChatProvider with ChangeNotifier {
         _currentUserId = currentUserId;
       }
 
-      _chatsByRideId[rideId] = history.map((m) => _chatMsgToUI(m)).toList();
+      _chatsByRideId[rideId] = history.map((m) => _chatMsgToUI(m, locale: targetLang)).toList();
       _loadingByRideId[rideId] = false;
       notifyListeners();
 
@@ -127,7 +127,38 @@ class ChatProvider with ChangeNotifier {
   }
 
   /// Convert backend ChatMsg to UI ChatMessage
-  ChatMessage _chatMsgToUI(ChatMsg m) {
+  ChatMessage _chatMsgToUI(ChatMsg m, {String? locale}) {
+    // When translation is active, backend returns:
+    //   text = translated version
+    //   original_text = original version
+    // When translation is off, backend returns:
+    //   text = original version
+    //   original_text = null
+    final bool hasTranslation = m.originalText != null && m.originalText!.isNotEmpty;
+
+    if (hasTranslation) {
+      return ChatMessage(
+        id: m.id,
+        text: m.originalText!,         // show original as main text
+        translatedText: m.text,         // show translated as secondary
+        isMe: m.senderId == _currentUserId,
+        time: _formatTime(m.createdAt),
+        isEdited: m.isEdited,
+      );
+    }
+
+    // For real-time WebSocket messages: check if translations map has our locale
+    if (m.translations != null && locale != null && m.translations!.containsKey(locale)) {
+      return ChatMessage(
+        id: m.id,
+        text: m.text,                       // original
+        translatedText: m.translations![locale], // pre-translated from WebSocket
+        isMe: m.senderId == _currentUserId,
+        time: _formatTime(m.createdAt),
+        isEdited: m.isEdited,
+      );
+    }
+
     return ChatMessage(
       id: m.id,
       text: m.text,

@@ -62,6 +62,17 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/purple_400" />
+
+        <!-- FileProvider for flutter_downloader -->
+        <provider
+            android:name="vn.hunghd.flutterdownloader.FileProvider"
+            android:authorities="${applicationId}.flutter_downloader.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/flutter_downloader_provider_paths"/>
+        </provider>
     </application>
 
     <queries>

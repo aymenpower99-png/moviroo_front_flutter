@@ -7,8 +7,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
 import '../../../../providers/booking_provider.dart';
 import '../../../../core/storage/token_storage.dart';
-import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import '_AppBar.dart';
 import '_ActionButtons.dart';
 import '_CancelDialog.dart';
@@ -318,27 +317,33 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
 
     setState(() => _isCancelling = true);
     try {
+      // Get receipt URL with auth token
       final url = await _bookingApi.getReceiptDownloadUrl(bookingId);
       final token = await TokenStorage.getAccess();
 
-      final dio = Dio();
-      final docsDir = await getApplicationDocumentsDirectory();
       final fileName =
           'moviroo-receipt-${bookingId.substring(0, 8).toUpperCase()}.pdf';
-      final savePath = '${docsDir.path}/$fileName';
 
-      await dio.download(
-        url,
-        savePath,
-        options: Options(
-          headers: token != null ? {'Authorization': 'Bearer $token'} : {},
-        ),
+      // Use system DownloadManager - saves to Downloads folder automatically
+      // Add auth token as header
+      final headers = <String, String>{};
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
+      await FlutterDownloader.enqueue(
+        url: url,
+        savedDir: '/storage/emulated/0/Download',
+        fileName: fileName,
+        showNotification: true,
+        openFileFromNotification: true,
+        headers: headers,
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Receipt saved: $fileName'),
+          content: Text('Receipt downloading to Downloads'),
           action: SnackBarAction(label: 'OK', onPressed: () {}),
         ),
       );
@@ -346,7 +351,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Download failed: $e')));
+      ).showSnackBar(SnackBar(content: Text('Failed to download receipt: $e')));
     } finally {
       if (mounted) setState(() => _isCancelling = false);
     }

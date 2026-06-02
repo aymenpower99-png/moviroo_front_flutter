@@ -12,6 +12,8 @@ class ChatMsg {
   final String senderId;
   final String senderRole;
   final String text;
+  final String? originalText;
+  final Map<String, String>? translations;
   final bool isVoice;
   final bool isEdited;
   final DateTime createdAt;
@@ -22,18 +24,28 @@ class ChatMsg {
     required this.senderId,
     required this.senderRole,
     required this.text,
+    this.originalText,
+    this.translations,
     this.isVoice = false,
     this.isEdited = false,
     required this.createdAt,
   });
 
   factory ChatMsg.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic>? transRaw =
+        json['translations'] is Map ? json['translations'] as Map<String, dynamic> : null;
+    final Map<String, String>? translations = transRaw != null
+        ? Map<String, String>.from(transRaw)
+        : null;
+
     return ChatMsg(
       id: json['id'] ?? '',
       rideId: json['ride_id'] ?? '',
       senderId: json['sender_id'] ?? '',
       senderRole: json['sender_role'] ?? 'passenger',
       text: json['text'] ?? '',
+      originalText: json['original_text'] as String?,
+      translations: translations,
       isVoice: json['is_voice'] == true,
       isEdited: json['is_edited'] == true,
       createdAt: json['created_at'] != null

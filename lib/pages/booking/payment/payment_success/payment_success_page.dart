@@ -1,9 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:moviroo/routing/router.dart';
-import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -143,52 +140,33 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
 
     setState(() => _isDownloading = true);
     try {
-      // Request storage permission for Android
-      if (Platform.isAndroid) {
-        final status = await Permission.storage.request();
-        if (!status.isGranted) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Storage permission required to download receipt'),
-            ),
-          );
-          setState(() => _isDownloading = false);
-          return;
-        }
-      }
-
-      // Get the download URL
+      // Get receipt URL with auth token
       final url = await _bookingApi.getReceiptDownloadUrl(bookingId);
       final token = await TokenStorage.getAccess();
 
-      // Download the PDF
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Authorization': 'Bearer $token'},
+      final ref = 'TR-${bookingId.substring(0, 8).toUpperCase()}';
+      final fileName = 'moviroo-receipt-$ref.pdf';
+
+      // Use system DownloadManager - saves to Downloads folder automatically
+      // Add auth token as header
+      final headers = <String, String>{};
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
+      await FlutterDownloader.enqueue(
+        url: url,
+        savedDir: '/storage/emulated/0/Download',
+        fileName: fileName,
+        showNotification: true,
+        openFileFromNotification: true,
+        headers: headers,
       );
 
-      if (response.statusCode != 200) {
-        throw Exception('Failed to download receipt: ${response.statusCode}');
-      }
-
-      // Get downloads directory
-      final directory = Platform.isAndroid
-          ? await getDownloadsDirectory()
-          : await getApplicationDocumentsDirectory();
-
-      if (directory == null) {
-        throw Exception('Could not access downloads directory');
-      }
-
-      final ref = 'TR-${bookingId.substring(0, 8).toUpperCase()}';
-      final file = File('${directory.path}/moviroo-receipt-$ref.pdf');
-      await file.writeAsBytes(response.bodyBytes);
-
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Receipt saved to: ${file.path}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Receipt downloading to Downloads')),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
