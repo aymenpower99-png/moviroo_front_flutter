@@ -1,6 +1,10 @@
 package com.example.moviroo
 
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import androidx.credentials.*
 import androidx.credentials.exceptions.*
@@ -12,16 +16,18 @@ import org.json.JSONObject
 import org.json.JSONArray
 
 class MainActivity : FlutterFragmentActivity() {
-    private val CHANNEL = "com.moviroo/webauthn"
+    private val WEB_AUTHN_CHANNEL = "com.moviroo/webauthn"
+    private val DOWNLOAD_CHANNEL = "com.moviroo/download"
     private lateinit var credentialManager: CredentialManager
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         credentialManager = CredentialManager.create(this)
 
+        // WebAuthn channel
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
-            CHANNEL
+            WEB_AUTHN_CHANNEL
         ).setMethodCallHandler { call, result ->
             when (call.method) {
                 "register" -> {
@@ -34,6 +40,57 @@ class MainActivity : FlutterFragmentActivity() {
                 }
                 else -> result.notImplemented()
             }
+        }
+
+        // Download channel
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            DOWNLOAD_CHANNEL
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "downloadFile" -> {
+                    val url = call.argument<String>("url")
+                    val fileName = call.argument<String>("fileName")
+                    val authHeader = call.argument<String>("authHeader")
+                    if (url != null && fileName != null) {
+                        handleDownload(url, fileName, authHeader, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "url and fileName are required", null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    private fun handleDownload(url: String, fileName: String, authHeader: String?, result: MethodChannel.Result) {
+        try {
+            val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val request = DownloadManager.Request(Uri.parse(url))
+
+            // Set download destination to Downloads folder
+            request.setDestinationInExternalFilesDir(
+                this,
+                Environment.DIRECTORY_DOWNLOADS,
+                fileName
+            )
+
+            // Set title and description for notification
+            request.setTitle("Moviroo Receipt")
+            request.setDescription("Downloading receipt...")
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+
+            // Add authorization header if provided
+            if (authHeader != null) {
+                request.addRequestHeader("Authorization", authHeader)
+            }
+
+            // Enqueue the download
+            val downloadId = downloadManager.enqueue(request)
+            result.success(downloadId)
+        } catch (e: Exception) {
+            Log.e("DownloadManager", "Download failed: ${e.message}", e)
+            result.error("DOWNLOAD_ERROR", e.message, null)
         }
     }
 

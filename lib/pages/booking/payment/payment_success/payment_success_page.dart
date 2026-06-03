@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:moviroo/routing/router.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
+import '../../../../services/download/download_service.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/booking_provider.dart';
 import '../../../../services/currency/currency_service.dart';
@@ -147,20 +147,12 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
       final ref = 'TR-${bookingId.substring(0, 8).toUpperCase()}';
       final fileName = 'moviroo-receipt-$ref.pdf';
 
-      // Use system DownloadManager - saves to Downloads folder automatically
-      // Add auth token as header
-      final headers = <String, String>{};
-      if (token != null) {
-        headers['Authorization'] = 'Bearer $token';
-      }
-
-      await FlutterDownloader.enqueue(
+      // Use Android DownloadManager via platform channel
+      final authHeader = token != null ? 'Bearer $token' : null;
+      await DownloadService.downloadFile(
         url: url,
-        savedDir: '/storage/emulated/0/Download',
         fileName: fileName,
-        showNotification: true,
-        openFileFromNotification: true,
-        headers: headers,
+        authHeader: authHeader,
       );
 
       if (!mounted) return;

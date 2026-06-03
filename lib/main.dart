@@ -9,7 +9,6 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'routing/router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
@@ -63,9 +62,10 @@ void main() async {
   await CurrencyService.instance.init();
 
   // Initialize flutter_downloader for system DownloadManager
-  await FlutterDownloader.initialize(
-    debug: true, // Set to false in production
-  );
+  // Temporarily disabled to debug crash
+  // await FlutterDownloader.initialize(
+  //   debug: true, // Set to false in production
+  // );
 
   // Lock orientation
   await SystemChrome.setPreferredOrientations([

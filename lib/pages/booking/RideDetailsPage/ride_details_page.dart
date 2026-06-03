@@ -7,7 +7,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
 import '../../../../providers/booking_provider.dart';
 import '../../../../core/storage/token_storage.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
+import '../../../../services/download/download_service.dart';
 import '_AppBar.dart';
 import '_ActionButtons.dart';
 import '_CancelDialog.dart';
@@ -324,20 +324,12 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       final fileName =
           'moviroo-receipt-${bookingId.substring(0, 8).toUpperCase()}.pdf';
 
-      // Use system DownloadManager - saves to Downloads folder automatically
-      // Add auth token as header
-      final headers = <String, String>{};
-      if (token != null) {
-        headers['Authorization'] = 'Bearer $token';
-      }
-
-      await FlutterDownloader.enqueue(
+      // Use Android DownloadManager via platform channel
+      final authHeader = token != null ? 'Bearer $token' : null;
+      await DownloadService.downloadFile(
         url: url,
-        savedDir: '/storage/emulated/0/Download',
         fileName: fileName,
-        showNotification: true,
-        openFileFromNotification: true,
-        headers: headers,
+        authHeader: authHeader,
       );
 
       if (!mounted) return;
