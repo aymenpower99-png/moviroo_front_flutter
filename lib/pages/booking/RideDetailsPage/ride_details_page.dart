@@ -8,6 +8,7 @@ import '../../../../services/ride_api/booking_api_service.dart';
 import '../../../../providers/booking_provider.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../services/download/download_service.dart';
+import '../../../../services/driver_profile_cache.dart';
 import '_AppBar.dart';
 import '_ActionButtons.dart';
 import '_CancelDialog.dart';
@@ -68,6 +69,11 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         // Cache the data if not null
         if (data != null) {
           _cache[widget.bookingId!] = data;
+          // Pre-populate driver cache so avatars are instant everywhere
+          final driver = data['driver'] as Map<String, dynamic>?;
+          if (driver != null) {
+            DriverProfileCache.instance.preloadDriverProfile(driver);
+          }
         }
       }
     } catch (e) {
@@ -178,9 +184,25 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     return d?['phone'] as String?;
   }
 
+  String? get _driverId {
+    final d = _bookingData?['driver'] as Map<String, dynamic>?;
+    return d?['id'] as String? ?? d?['userId'] as String?;
+  }
+
   String? get _driverPhoto {
     final d = _bookingData?['driver'] as Map<String, dynamic>?;
-    return d?['photo'] as String?;
+    final fromData =
+        d?['photo'] as String? ??
+        d?['logoUrl'] as String? ??
+        d?['logo_url'] as String?;
+    if (fromData != null && fromData.isNotEmpty) return fromData;
+    // Fallback to cache so avatar is instant even while loading
+    final id = _driverId;
+    if (id != null) {
+      final cached = DriverProfileCache.instance.getLogoUrl(id);
+      if (cached != null && cached.isNotEmpty) return cached;
+    }
+    return null;
   }
 
   String? get _vehiclePlate {
@@ -334,9 +356,10 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Receipt downloading to Downloads'),
-          action: SnackBarAction(label: 'OK', onPressed: () {}),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } catch (e) {

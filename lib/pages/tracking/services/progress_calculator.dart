@@ -18,8 +18,15 @@ class ProgressCalculator {
     // doubles (e.g. 1.0) as ints and `as double?` would silently fail.
     final progress = (locationData['progress'] as num?)?.toDouble();
     final remainingDistanceMeters =
-        (locationData['remainingDistanceMeters'] as num?);
-    final etaMins = (locationData['etaMins'] as num?)?.toInt();
+        (locationData['remainingDistanceMeters'] as num?) ??
+        (locationData['remaining_distance_m'] as num?) ??
+        (locationData['distance_left_m'] as num?) ??
+        (locationData['remaining_meters'] as num?);
+    final etaMins =
+        (locationData['etaMins'] as num?)?.toInt() ??
+        (locationData['driver_eta_min'] as num?)?.toInt() ??
+        (locationData['eta_min'] as num?)?.toInt() ??
+        (locationData['eta'] as num?)?.toInt();
 
     // Convert remaining distance to string for display
     String distanceLeftText = currentState.distanceLeft;

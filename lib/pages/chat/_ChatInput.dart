@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class ChatInputBar extends StatefulWidget {
   final TextEditingController controller;
@@ -38,6 +39,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
       decoration: BoxDecoration(
@@ -65,7 +67,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
                 keyboardType: TextInputType.multiline,
                 textInputAction: TextInputAction.newline,
                 decoration: InputDecoration(
-                  hintText: 'Message',
+                  hintText: t.translate('chat_message_hint'),
                   hintStyle: AppTextStyles.bodySmall(
                     context,
                   ).copyWith(color: AppColors.subtext(context)),

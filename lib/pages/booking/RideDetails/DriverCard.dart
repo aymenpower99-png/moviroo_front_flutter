@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../widgets/driver_avatar.dart';
 
 class DriverCard extends StatelessWidget {
   final String? driverName;
@@ -49,33 +50,13 @@ class DriverCard extends StatelessWidget {
               // Driver photo
               Stack(
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: AppColors.iconBg(context),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: driverPhoto != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.network(
-                              driverPhoto!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  Icons.person,
-                                  color: AppColors.subtext(context),
-                                  size: 28,
-                                );
-                              },
-                            ),
-                          )
-                        : Icon(
-                            Icons.person,
-                            color: AppColors.subtext(context),
-                            size: 28,
-                          ),
+                  DriverAvatar(
+                    name: driverName ?? 'Driver',
+                    photoUrl: driverPhoto,
+                    size: 56,
+                    shape: BoxShape.rectangle,
+                    borderRadius: 14,
+                    backgroundColor: AppColors.iconBg(context),
                   ),
                   Positioned(
                     bottom: -2,

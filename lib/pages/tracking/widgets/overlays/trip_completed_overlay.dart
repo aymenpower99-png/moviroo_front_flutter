@@ -3,6 +3,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../core/utils/address_utils.dart';
 import '../../models/ride_state.dart';
+import '../../../../widgets/driver_avatar.dart';
 
 class TripCompletedOverlay extends StatelessWidget {
   final RideState rideState;
@@ -36,6 +37,7 @@ class TripCompletedOverlay extends StatelessWidget {
               _DriverRatingCard(
                 driverName: rideState.driverName,
                 vehicleName: rideState.vehicleName,
+                driverPhotoUrl: rideState.driverPhotoUrl,
               ),
               const SizedBox(height: 8),
               _RewardsCard(purple: _purple),
@@ -201,9 +203,11 @@ class _TripDetailsRow extends StatelessWidget {
 class _DriverRatingCard extends StatefulWidget {
   final String driverName;
   final String vehicleName;
+  final String? driverPhotoUrl;
   const _DriverRatingCard({
     required this.driverName,
     required this.vehicleName,
+    this.driverPhotoUrl,
   });
 
   @override
@@ -225,21 +229,13 @@ class _DriverRatingCardState extends State<_DriverRatingCard> {
           // Driver info row
           Row(
             children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.iconBg(context),
-                  border: Border.all(
-                    color: _purple.withValues(alpha: 0.35),
-                    width: 2,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.person_rounded,
-                  color: _purple,
-                  size: 26,
+              DriverAvatar(
+                name: widget.driverName,
+                photoUrl: widget.driverPhotoUrl,
+                size: 46,
+                border: Border.all(
+                  color: AppColors.primaryPurple.withValues(alpha: 0.35),
+                  width: 2,
                 ),
               ),
               const SizedBox(width: 12),

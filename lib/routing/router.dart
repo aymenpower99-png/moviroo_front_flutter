@@ -90,6 +90,7 @@ class AppRouter {
         vehicleName: args?['vehicleName'] as String?,
         vehicleColor: args?['vehicleColor'] as String?,
         plateNumber: args?['plateNumber'] as String?,
+        driverPhotoUrl: args?['driverPhotoUrl'] as String?,
       );
     },
     booking: (ctx) {
@@ -177,6 +178,7 @@ class AppRouter {
         pickupAddress: args?['pickupAddress'] as String? ?? 'Pickup',
         dropoffAddress: args?['dropoffAddress'] as String? ?? 'Drop-off',
         driverName: args?['driverName'] as String? ?? 'Driver',
+        driverId: args?['driverId'] as String?,
         vehicleName: args?['vehicleName'] as String? ?? 'Vehicle',
         vehicleColor: args?['vehicleColor'] as String? ?? '',
         plateNumber: args?['plateNumber'] as String? ?? '',

@@ -161,7 +161,6 @@ class Driver3DModelManager {
 
     if (!_driver3DModelReady) {
       await setup(pos);
-      return;
     }
 
     // Throttle to ~30 FPS

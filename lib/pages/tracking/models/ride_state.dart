@@ -33,6 +33,7 @@ class RideState {
   /// Pickup and drop-off addresses shown in the route card.
   final String pickupAddress;
   final String dropoffAddress;
+  final String driverPhotoUrl;
 
   const RideState({
     required this.phase,
@@ -46,6 +47,7 @@ class RideState {
     required this.plateNumber,
     this.pickupAddress = '',
     this.dropoffAddress = '',
+    this.driverPhotoUrl = '',
   });
 
   RideState copyWith({
@@ -60,6 +62,7 @@ class RideState {
     String? plateNumber,
     String? pickupAddress,
     String? dropoffAddress,
+    String? driverPhotoUrl,
   }) {
     return RideState(
       phase: phase ?? this.phase,
@@ -73,6 +76,7 @@ class RideState {
       plateNumber: plateNumber ?? this.plateNumber,
       pickupAddress: pickupAddress ?? this.pickupAddress,
       dropoffAddress: dropoffAddress ?? this.dropoffAddress,
+      driverPhotoUrl: driverPhotoUrl ?? this.driverPhotoUrl,
     );
   }
 }

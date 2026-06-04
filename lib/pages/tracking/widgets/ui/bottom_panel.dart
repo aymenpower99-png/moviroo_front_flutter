@@ -12,6 +12,7 @@ import '../../models/ride_state.dart';
 
 class BottomPanel extends StatefulWidget {
   final RideState rideState;
+  final String? driverId;
   final VoidCallback? onContinue;
   final VoidCallback? onChatTap;
 
@@ -24,6 +25,7 @@ class BottomPanel extends StatefulWidget {
   const BottomPanel({
     super.key,
     required this.rideState,
+    this.driverId,
     this.onContinue,
     this.onChatTap,
     this.pickupLabel = 'Pickup location',
@@ -197,14 +199,28 @@ class _BottomPanelState extends State<BottomPanel>
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                '${widget.rideState.etaMins} min left',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.white : Colors.black,
-                                ),
-                              ),
+                              // ETA — show only when we have a sensible value (>0). Otherwise a subtle placeholder.
+                              (widget.rideState.etaMins > 0)
+                                  ? Text(
+                                      '${widget.rideState.etaMins} min left',
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 120,
+                                      height: 26,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.border(
+                                          context,
+                                        ).withValues(alpha: 0.35),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                    ),
                               const SizedBox(height: 4),
                               Text(
                                 _dynamicStatusLabel(
@@ -221,14 +237,17 @@ class _BottomPanelState extends State<BottomPanel>
                               ),
                             ],
                           ),
-                          Text(
-                            widget.rideState.arrivalTime,
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black,
-                            ),
-                          ),
+                          // Arrival time — only when available
+                          (widget.rideState.arrivalTime.isNotEmpty)
+                              ? Text(
+                                  widget.rideState.arrivalTime,
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : Colors.black,
+                                  ),
+                                )
+                              : const SizedBox(width: 80, height: 24),
                         ],
                       ),
                     ],
@@ -236,6 +255,7 @@ class _BottomPanelState extends State<BottomPanel>
 
                   const SizedBox(height: 20),
 
+                  // Progress bar — hide until we have meaningful progress
                   AnimatedRideProgressBar(
                     phase: widget.rideState.phase,
                     progress: widget.rideState.progress,
@@ -245,9 +265,11 @@ class _BottomPanelState extends State<BottomPanel>
 
                   DriverRow(
                     driverName: widget.rideState.driverName,
+                    driverId: widget.driverId,
                     vehicleName: widget.rideState.vehicleName,
                     plateNumber: widget.rideState.plateNumber,
                     isArrived: _isArrivalOrLater,
+                    driverPhotoUrl: widget.rideState.driverPhotoUrl,
                     onChatTap: widget.onChatTap,
                   ),
 
@@ -313,9 +335,7 @@ class _StageTimeline extends StatelessWidget {
                       height: 2,
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       decoration: BoxDecoration(
-                        color: isCompleted
-                            ? purple
-                            : AppColors.border(context),
+                        color: isCompleted ? purple : AppColors.border(context),
                         borderRadius: BorderRadius.circular(1),
                       ),
                     ),
@@ -335,10 +355,7 @@ class _StageTimeline extends StatelessWidget {
                         pulseController: pulseController,
                         purple: purple,
                       )
-                    : _InactiveDot(
-                        isCompleted: isCompleted,
-                        purple: purple,
-                      );
+                    : _InactiveDot(isCompleted: isCompleted, purple: purple);
               }),
             ),
           ],
@@ -378,10 +395,7 @@ class _ActiveDot extends StatelessWidget {
   final AnimationController pulseController;
   final Color purple;
 
-  const _ActiveDot({
-    required this.pulseController,
-    required this.purple,
-  });
+  const _ActiveDot({required this.pulseController, required this.purple});
 
   @override
   Widget build(BuildContext context) {
@@ -389,15 +403,9 @@ class _ActiveDot extends StatelessWidget {
       animation: pulseController,
       builder: (context, child) {
         final scale = Tween<double>(begin: 1.0, end: 1.25).evaluate(
-          CurvedAnimation(
-            parent: pulseController,
-            curve: Curves.easeInOut,
-          ),
+          CurvedAnimation(parent: pulseController, curve: Curves.easeInOut),
         );
-        return Transform.scale(
-          scale: scale,
-          child: child,
-        );
+        return Transform.scale(scale: scale, child: child);
       },
       child: Container(
         width: 14,
@@ -433,10 +441,7 @@ class _InactiveDot extends StatelessWidget {
   final bool isCompleted;
   final Color purple;
 
-  const _InactiveDot({
-    required this.isCompleted,
-    required this.purple,
-  });
+  const _InactiveDot({required this.isCompleted, required this.purple});
 
   @override
   Widget build(BuildContext context) {
@@ -453,11 +458,7 @@ class _InactiveDot extends StatelessWidget {
       ),
       child: isCompleted
           ? const Center(
-              child: Icon(
-                Icons.check_rounded,
-                color: Colors.white,
-                size: 10,
-              ),
+              child: Icon(Icons.check_rounded, color: Colors.white, size: 10),
             )
           : null,
     );

@@ -10,7 +10,6 @@ import 'settings_widgets.dart';
 import 'edit_profile/personal_data_page.dart';
 import 'notifiaction/notification_page.dart';
 import 'settings/account/settings_sub_page.dart';
-import 'saved_places/saved_places_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -52,7 +51,6 @@ class _SettingsPageState extends State<SettingsPage> {
       t: t,
       onPersonalData: _goToPersonalData,
       onPayments: () {},
-      onSavedPlaces: _goToSavedPlaces,
       onLogout: _handleLogout,
       onNotifications: _goToNotifications,
       onSettings: _goToSettings,
@@ -109,14 +107,6 @@ class _SettingsPageState extends State<SettingsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PersonalDataPage()),
-    );
-  }
-
-  void _goToSavedPlaces() {
-    // ← new method
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const SavedPlacesPage()),
     );
   }
 

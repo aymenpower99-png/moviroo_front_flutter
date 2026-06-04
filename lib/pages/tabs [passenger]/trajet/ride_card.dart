@@ -266,7 +266,8 @@ class _ActionButton extends StatelessWidget {
                 args: {
                   'rideId': ride.rideId,
                   'driverName': ride.driverName,
-                  'driverId': null,
+                  'driverPhotoUrl': ride.driverPhotoUrl,
+                  'driverId': ride.driverId,
                   'vehicleName': ride.vehicleName,
                   'vehicleColor': ride.vehicleColor,
                   'plateNumber': ride.plateNumber,
@@ -312,6 +313,7 @@ class _ActionButton extends StatelessWidget {
                     'pickupAddress': ride.pickup,
                     'dropoffAddress': ride.dropoff,
                     'driverName': ride.driverName ?? 'Driver',
+                    'driverId': ride.driverId,
                     'vehicleName': ride.vehicleName,
                     'vehicleColor': ride.vehicleColor ?? '',
                     'plateNumber': ride.plateNumber ?? '',
@@ -348,7 +350,8 @@ class _ActionButton extends StatelessWidget {
                 args: {
                   'rideId': ride.rideId,
                   'driverName': ride.driverName,
-                  'driverId': null,
+                  'driverPhotoUrl': ride.driverPhotoUrl,
+                  'driverId': ride.driverId,
                   'vehicleName': ride.vehicleName,
                   'vehicleColor': ride.vehicleColor,
                   'plateNumber': ride.plateNumber,
@@ -395,6 +398,8 @@ class _ActionButton extends StatelessWidget {
                         'pickupAddress': ride.pickup,
                         'dropoffAddress': ride.dropoff,
                         'driverName': ride.driverName ?? 'Driver',
+                        'driverId': ride.driverId,
+                        'driverPhotoUrl': ride.driverPhotoUrl ?? '',
                         'vehicleName': ride.vehicleName,
                         'vehicleColor': ride.vehicleColor ?? '',
                         'plateNumber': ride.plateNumber ?? '',
@@ -428,15 +433,26 @@ class _ActionButton extends StatelessWidget {
                 const SizedBox(width: 10),
                 // Chat button
                 GestureDetector(
-                  onTap: () => AppRouter.push(
-                    context,
-                    AppRouter.chat,
-                    args: {
-                      'rideId': ride.rideId,
-                      'driverName': ride.driverName,
-                      'driverId': null,
-                    },
-                  ),
+                onTap: () => AppRouter.push(
+                  context,
+                  AppRouter.trackRide,
+                  args: {
+                    'rideId': ride.rideId ?? '',
+                    'pickupLat': ride.pickupLat ?? 36.8189,
+                    'pickupLon': ride.pickupLon ?? 10.1658,
+                    'dropoffLat': ride.dropoffLat ?? 36.8300,
+                    'dropoffLon': ride.dropoffLon ?? 10.1750,
+                    'pickupAddress': ride.pickup,
+                    'dropoffAddress': ride.dropoff,
+                    'driverName': ride.driverName ?? 'Driver',
+                    'driverId': ride.driverId,
+                    'driverPhotoUrl': ride.driverPhotoUrl ?? '',
+                    'vehicleName': ride.vehicleName,
+                    'vehicleColor': ride.vehicleColor ?? '',
+                    'plateNumber': ride.plateNumber ?? '',
+                    'etaMins': ride.etaMins,
+                  },
+                ),
                   child: Container(
                     width: 46,
                     height: 46,

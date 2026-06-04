@@ -75,10 +75,6 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
     }
   }
 
-  void _handleAttachFiles() {
-    debugPrint('Attach files tapped');
-  }
-
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -159,9 +155,8 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
                     const SizedBox(height: 8),
                     TicketCategorySelector(
                       value: _selectedCategoryKey,
-                      onChanged: (val) => setState(
-                        () => _selectedCategoryKey = val,
-                      ),
+                      onChanged: (val) =>
+                          setState(() => _selectedCategoryKey = val),
                       items: _categoryKeys,
                       labelBuilder: (key) => t.translate(key),
                     ),
@@ -177,54 +172,6 @@ class _SubmitTicketPageState extends State<SubmitTicketPage> {
                       controller: _descriptionController,
                       hintText: t.translate('description_hint'),
                       maxLines: 6,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Attach Files
-                    Text(
-                      t.translate('attach_files'),
-                      style: AppTextStyles.bodyMedium(context),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: _handleAttachFiles,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 16,
-                          horizontal: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface(context),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.border(context),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.attach_file_rounded,
-                              color: AppColors.primaryPurple,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                t.translate('attach_files_hint'),
-                                style: AppTextStyles.bodyMedium(
-                                  context,
-                                ).copyWith(color: AppColors.subtext(context)),
-                              ),
-                            ),
-                            Icon(
-                              Icons.add_circle_outline_rounded,
-                              color: AppColors.primaryPurple,
-                              size: 20,
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
                     const SizedBox(height: 36),
 

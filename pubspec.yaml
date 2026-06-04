@@ -30,6 +30,7 @@ dependencies:
   google_sign_in: ^6.2.1 # Google OAuth
   url_launcher: ^6.3.1 # Phone dialer
   http: ^1.2.0 # HTTP client for API calls
+  cached_network_image: ^3.3.1 # Disk cache for avatars to avoid flicker
   dio: ^5.7.0 # File downloads with auth headers
   share_plus: ^10.0.0 # Share downloaded files
   geolocator: ^12.0.0 # GPS location fetching

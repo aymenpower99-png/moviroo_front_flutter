@@ -26,6 +26,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'services/geocoding/geocoding_service.dart' as geocoding_svc;
 import 'services/mapbox/mapbox_place.dart' as mapbox_place;
 import 'core/utils/address_utils.dart' as address_utils;
+import 'services/driver_profile_cache.dart';
 
 final themeProvider = ThemeProvider();
 final localeProvider = LocaleProvider();
@@ -72,6 +73,9 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  // Pre-load driver profile cache from disk so avatars are instant
+  await DriverProfileCache.instance.init();
 
   runApp(const SmartWayApp());
 }
@@ -124,6 +128,18 @@ class _SmartWayAppState extends State<SmartWayApp> {
       final vehicleName = data['vehicleName']?.toString();
       final vehicleColor = data['vehicleColor']?.toString();
       final plateNumber = data['plateNumber']?.toString();
+      final driverPhotoUrl =
+          data['driverLogoUrl']?.toString() ??
+          data['driverPhotoUrl']?.toString() ??
+          data['driver_logo_url']?.toString();
+
+      // Pre-cache driver photo so avatar renders instantly on next screen
+      if (driverId != null && driverId.isNotEmpty && driverPhotoUrl != null && driverPhotoUrl.isNotEmpty) {
+        DriverProfileCache.instance.set(driverId, {
+          'logoUrl': driverPhotoUrl,
+          'firstName': driverName,
+        });
+      }
 
       debugPrint('🔔 Notification tap — type: $type, rideId: $rideId');
 
@@ -141,6 +157,7 @@ class _SmartWayAppState extends State<SmartWayApp> {
               arguments: {
                 'rideId': rideId,
                 'driverName': driverName ?? 'Driver',
+                'driverPhotoUrl': driverPhotoUrl ?? '',
                 'vehicleName': vehicleName ?? '',
                 'vehicleColor': vehicleColor ?? '',
                 'plateNumber': plateNumber ?? '',
@@ -156,6 +173,7 @@ class _SmartWayAppState extends State<SmartWayApp> {
                 'rideId': rideId,
                 'driverName': driverName ?? 'Driver',
                 'driverId': driverId,
+                'driverPhotoUrl': driverPhotoUrl,
                 'vehicleName': vehicleName ?? '',
                 'vehicleColor': vehicleColor ?? '',
                 'plateNumber': plateNumber ?? '',

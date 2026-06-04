@@ -18,7 +18,9 @@ class RideModel {
   final double? pickupLon;
   final double? dropoffLat;
   final double? dropoffLon;
+  final String? driverId;
   final String? driverName;
+  final String? driverPhotoUrl;
   final String? vehicleColor;
   final String? plateNumber;
   final int? etaMins;
@@ -40,7 +42,9 @@ class RideModel {
     this.pickupLon,
     this.dropoffLat,
     this.dropoffLon,
+    this.driverId,
     this.driverName,
+    this.driverPhotoUrl,
     this.vehicleColor,
     this.plateNumber,
     this.etaMins,
@@ -70,6 +74,13 @@ class RideModel {
 
     final driver = json['driver'] as Map<String, dynamic>?;
     final vehicle = json['vehicle'] as Map<String, dynamic>?;
+    final driverId = driver?['id'] as String? ?? driver?['userId'] as String?;
+    final photoUrl =
+        driver?['logoUrl'] as String? ??
+        driver?['logo_url'] as String? ??
+        driver?['photoUrl'] as String? ??
+        driver?['photo'] as String? ??
+        driver?['avatarUrl'] as String?;
 
     return RideModel(
       vehicleType: className,
@@ -87,9 +98,11 @@ class RideModel {
       pickupLon: _toDouble(json['pickupLon']),
       dropoffLat: _toDouble(json['dropoffLat']),
       dropoffLon: _toDouble(json['dropoffLon']),
+      driverId: driverId,
       driverName: driver != null
           ? '${driver['firstName'] ?? ''} ${driver['lastName'] ?? ''}'.trim()
           : null,
+      driverPhotoUrl: photoUrl,
       vehicleColor: vehicle?['color'] as String?,
       plateNumber: vehicle?['plateNumber'] as String?,
       paymentMethod: (json['paymentMethod'] as String?)?.toUpperCase(),

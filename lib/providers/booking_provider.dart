@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../services/ride_api/booking_api_service.dart';
 import '../pages/tabs [passenger]/trajet/trajet_models.dart';
+import '../services/driver_profile_cache.dart';
 
 class BookingProvider with ChangeNotifier {
   final BookingApiService _api = BookingApiService();
@@ -32,6 +33,12 @@ class BookingProvider with ChangeNotifier {
       debugPrint('📦 [BookingProvider] Fetching rides from API');
       final raw = await _api.getMyRides();
       _rides = raw.map(RideModel.fromJson).toList();
+
+      // Populate driver cache so avatars are instant on every screen
+      for (final ride in raw) {
+        DriverProfileCache.instance.preloadFromRideJson(ride);
+      }
+
       _hasLoaded = true;
       _lastRefresh = DateTime.now();
       _isLoading = false;

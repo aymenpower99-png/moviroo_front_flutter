@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../theme/app_colors.dart';
+import '../../../../widgets/driver_avatar.dart';
 
 /// A bordered modern card showing driver avatar, name, vehicle info, and
 /// action buttons (phone + chat). Matches the pickup/dropoff card style.
@@ -14,17 +15,21 @@ class DriverRow extends StatelessWidget {
   /// When `true` the plate number is highlighted.
   final bool isArrived;
 
+  final String? driverId;
   final VoidCallback? onPhoneTap;
   final VoidCallback? onChatTap;
+  final String? driverPhotoUrl;
 
   const DriverRow({
     super.key,
     required this.driverName,
+    this.driverId,
     required this.vehicleName,
     this.plateNumber,
     this.isArrived = false,
     this.onPhoneTap,
     this.onChatTap,
+    this.driverPhotoUrl,
   });
 
   @override
@@ -38,22 +43,8 @@ class DriverRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ── Left: circular purple icon container ──
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.primaryPurple.withValues(alpha: 0.10),
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.person_rounded,
-                color: AppColors.primaryPurple,
-                size: 22,
-              ),
-            ),
-          ),
+          // ── Left: driver avatar (photo or initials) ──
+          DriverAvatar(name: driverName, driverId: driverId, photoUrl: driverPhotoUrl, size: 44),
           const SizedBox(width: 12),
 
           // ── Center: name + vehicle info ──
@@ -114,8 +105,6 @@ class DriverRow extends StatelessWidget {
     return parts.join(' · ');
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _ActionButton extends StatelessWidget {
   final IconData icon;

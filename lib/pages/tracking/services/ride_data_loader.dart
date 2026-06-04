@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../services/ride_api/booking_api_service.dart';
+import '../../../services/driver_profile_cache.dart';
 
 /// Service for loading ride details from backend.
 class RideDataLoader {
@@ -14,6 +15,7 @@ class RideDataLoader {
   String backendVehicleName = '';
   String backendVehicleColor = '';
   String backendPlateNumber = '';
+  String backendDriverPhotoUrl = '';
 
   // Driver location and progress/ETA from REST (computed by RoutingService)
   double? backendDriverLat;
@@ -45,6 +47,27 @@ class RideDataLoader {
         backendVehicleName = rideDetails['vehicleName'] as String? ?? '';
         backendVehicleColor = rideDetails['vehicleColor'] as String? ?? '';
         backendPlateNumber = rideDetails['plateNumber'] as String? ?? '';
+
+        // Driver photo — prefer driverLogoUrl (from Driver.logoUrl), fallback to other keys if backend differs
+        backendDriverPhotoUrl =
+            (rideDetails['driverLogoUrl'] as String?) ??
+            (rideDetails['driverPhotoUrl'] as String?) ??
+            (rideDetails['driver_logo_url'] as String?) ??
+            (rideDetails['driverLogoUrl'] as String?) ??
+            (rideDetails['driverPhoto'] as String?) ??
+            '';
+
+        // Cache driver profile so avatars are instant on every screen
+        final driverMap = rideDetails['driver'] as Map<String, dynamic>?;
+        if (driverMap != null) {
+          final driverId = driverMap['id'] as String? ?? driverMap['userId'] as String?;
+          if (driverId != null && driverId.isNotEmpty) {
+            DriverProfileCache.instance.set(driverId, {
+              ...driverMap,
+              'logoUrl': backendDriverPhotoUrl,
+            });
+          }
+        }
 
         // Extract driver location and progress/ETA from REST (computed by RoutingService)
         final driverLoc =

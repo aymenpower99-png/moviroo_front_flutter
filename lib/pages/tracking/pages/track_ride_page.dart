@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 import '../../../theme/app_colors.dart';
 import '../widgets/ui/bottom_panel.dart';
-import '../widgets/map/map_btn.dart';
 import '../widgets/overlays/trip_completed_overlay.dart';
 import '../models/ride_state.dart';
 import '../controllers/tracking_map_controller.dart';
@@ -24,6 +23,7 @@ class TrackRidePage extends StatefulWidget {
   final String? pickupAddress;
   final String? dropoffAddress;
   final String? driverName;
+  final String? driverId;
   final String? vehicleName;
   final String? vehicleColor;
   final String? plateNumber;
@@ -39,6 +39,7 @@ class TrackRidePage extends StatefulWidget {
     this.pickupAddress,
     this.dropoffAddress,
     this.driverName,
+    this.driverId,
     this.vehicleName,
     this.vehicleColor,
     this.plateNumber,
@@ -537,7 +538,7 @@ class _TrackRidePageState extends State<TrackRidePage>
               child: Column(
                 children: [
                   // Driver location button
-                  MapBtn(
+                  _WhiteMapBtn(
                     icon: Icons.directions_car,
                     onTap: () {
                       if (_driverPos != null) {
@@ -550,7 +551,7 @@ class _TrackRidePageState extends State<TrackRidePage>
                   ),
                   const SizedBox(height: 12),
                   // Route overview button
-                  MapBtn(
+                  _WhiteMapBtn(
                     icon: Icons.map,
                     onTap: () {
                       _mapController.fitBoundsToPickupAndDropoff(
@@ -566,6 +567,7 @@ class _TrackRidePageState extends State<TrackRidePage>
             // ── Bottom panel ─────────────────────────────────────────────
             BottomPanel(
               rideState: _rideState,
+              driverId: widget.driverId,
               pickupLabel: _pickupAddress,
               dropLabel: _dropoffAddress,
               onContinue: () => Navigator.maybePop(context),

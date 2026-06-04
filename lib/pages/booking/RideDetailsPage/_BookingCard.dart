@@ -279,9 +279,9 @@ class _StatusBadge extends StatelessWidget {
         label = t.translate('in_trip');
         break;
       case 'COMPLETED':
-        bgColor = Colors.grey.withValues(alpha: 0.15);
-        textColor = Colors.grey.shade700;
-        icon = Icons.check_circle_outline;
+        bgColor = Colors.green.withValues(alpha: 0.15);
+        textColor = Colors.green.shade700;
+        icon = Icons.check_circle_rounded;
         label = t.translate('completed');
         break;
       case 'CANCELLED':

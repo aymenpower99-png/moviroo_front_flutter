@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:moviroo/routing/router.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../widgets/driver_avatar.dart';
 
 class EtaSheet extends StatelessWidget {
   final int selectedRoute;
   final String? rideId;
   final String? driverName;
+  final String? driverPhotoUrl;
   final String? vehicleName;
   final String? vehicleColor;
   final String? plateNumber;
@@ -15,6 +17,7 @@ class EtaSheet extends StatelessWidget {
     required this.selectedRoute,
     this.rideId,
     this.driverName,
+    this.driverPhotoUrl,
     this.vehicleName,
     this.vehicleColor,
     this.plateNumber,
@@ -151,6 +154,7 @@ class EtaSheet extends StatelessWidget {
                   child: _DriverRow(
                     rideId: rideId,
                     driverName: driverName,
+                    driverPhotoUrl: driverPhotoUrl,
                     vehicleName: vehicleName,
                     vehicleColor: vehicleColor,
                     plateNumber: plateNumber,
@@ -232,6 +236,7 @@ class EtaSheet extends StatelessWidget {
 class _DriverRow extends StatelessWidget {
   final String? rideId;
   final String? driverName;
+  final String? driverPhotoUrl;
   final String? vehicleName;
   final String? vehicleColor;
   final String? plateNumber;
@@ -239,6 +244,7 @@ class _DriverRow extends StatelessWidget {
   const _DriverRow({
     this.rideId,
     this.driverName,
+    this.driverPhotoUrl,
     this.vehicleName,
     this.vehicleColor,
     this.plateNumber,
@@ -249,24 +255,12 @@ class _DriverRow extends StatelessWidget {
     return Row(
       children: [
         // Avatar
-        CircleAvatar(
-          radius: 26,
+        DriverAvatar(
+          name: driverName ?? 'Driver',
+          photoUrl: driverPhotoUrl,
+          size: 52,
           backgroundColor: const Color(0xFF7C3AED).withValues(alpha: 0.20),
-          backgroundImage: const AssetImage('images/driver_avatar.png'),
-          onBackgroundImageError: (_, _) {},
-          child: ClipOval(
-            child: Image.asset(
-              'images/driver_avatar.png',
-              width: 52,
-              height: 52,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const Icon(
-                Icons.person_rounded,
-                color: Color(0xFF7C3AED),
-                size: 26,
-              ),
-            ),
-          ),
+          textColor: const Color(0xFF7C3AED),
         ),
         const SizedBox(width: 12),
 

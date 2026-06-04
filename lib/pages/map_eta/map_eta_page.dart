@@ -76,6 +76,7 @@ class _MapEtaPageState extends State<MapEtaPage> {
             selectedRoute: _selectedRoute,
             rideId: '', // TODO: Pass actual rideId from parent
             driverName: '', // TODO: Pass actual driverName from parent
+            driverPhotoUrl: '', // TODO: Pass actual driverPhotoUrl from parent
             vehicleName: '', // TODO: Pass actual vehicleName from parent
             vehicleColor: '', // TODO: Pass actual vehicleColor from parent
             plateNumber: '', // TODO: Pass actual plateNumber from parent
