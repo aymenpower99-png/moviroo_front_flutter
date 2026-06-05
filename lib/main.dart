@@ -27,6 +27,7 @@ import 'services/geocoding/geocoding_service.dart' as geocoding_svc;
 import 'services/mapbox/mapbox_place.dart' as mapbox_place;
 import 'core/utils/address_utils.dart' as address_utils;
 import 'services/driver_profile_cache.dart';
+import 'services/ride_tracking_cache.dart';
 
 final themeProvider = ThemeProvider();
 final localeProvider = LocaleProvider();
@@ -74,8 +75,9 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Pre-load driver profile cache from disk so avatars are instant
+  // Pre-load caches from disk so UI is instant on re-entry
   await DriverProfileCache.instance.init();
+  await RideTrackingCache.instance.init();
 
   runApp(const SmartWayApp());
 }

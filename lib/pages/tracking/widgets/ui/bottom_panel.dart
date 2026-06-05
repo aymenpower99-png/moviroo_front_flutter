@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../../theme/app_colors.dart';
 import 'driver_row.dart';
 import '../../components/pickup_drop_row.dart';
@@ -270,6 +271,16 @@ class _BottomPanelState extends State<BottomPanel>
                     plateNumber: widget.rideState.plateNumber,
                     isArrived: _isArrivalOrLater,
                     driverPhotoUrl: widget.rideState.driverPhotoUrl,
+                    onPhoneTap: widget.rideState.driverPhoneNumber.isNotEmpty
+                        ? () async {
+                            final uri = Uri.parse(
+                              'tel:${widget.rideState.driverPhoneNumber}',
+                            );
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri);
+                            }
+                          }
+                        : null,
                     onChatTap: widget.onChatTap,
                   ),
 

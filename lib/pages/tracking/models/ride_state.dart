@@ -13,6 +13,24 @@ enum RidePhase {
   rideEnded,
 }
 
+extension RidePhaseSerialization on RidePhase {
+  String toJson() => name;
+
+  static RidePhase fromJson(String? value) {
+    switch (value) {
+      case 'driverArrived':
+        return RidePhase.driverArrived;
+      case 'rideInProgress':
+        return RidePhase.rideInProgress;
+      case 'rideEnded':
+        return RidePhase.rideEnded;
+      case 'driverOnTheWay':
+      default:
+        return RidePhase.driverOnTheWay;
+    }
+  }
+}
+
 /// Immutable snapshot of everything the Track-Ride screen needs.
 class RideState {
   final RidePhase phase;
@@ -34,6 +52,7 @@ class RideState {
   final String pickupAddress;
   final String dropoffAddress;
   final String driverPhotoUrl;
+  final String driverPhoneNumber;
 
   const RideState({
     required this.phase,
@@ -48,6 +67,7 @@ class RideState {
     this.pickupAddress = '',
     this.dropoffAddress = '',
     this.driverPhotoUrl = '',
+    this.driverPhoneNumber = '',
   });
 
   RideState copyWith({
@@ -63,6 +83,7 @@ class RideState {
     String? pickupAddress,
     String? dropoffAddress,
     String? driverPhotoUrl,
+    String? driverPhoneNumber,
   }) {
     return RideState(
       phase: phase ?? this.phase,
@@ -77,6 +98,43 @@ class RideState {
       pickupAddress: pickupAddress ?? this.pickupAddress,
       dropoffAddress: dropoffAddress ?? this.dropoffAddress,
       driverPhotoUrl: driverPhotoUrl ?? this.driverPhotoUrl,
+      driverPhoneNumber: driverPhoneNumber ?? this.driverPhoneNumber,
+    );
+  }
+
+  // ── JSON serialization (for RideTrackingCache persistence) ─────────────
+
+  Map<String, dynamic> toJson() => {
+    'phase': phase.toJson(),
+    'progress': progress,
+    'etaMins': etaMins,
+    'arrivalTime': arrivalTime,
+    'distanceLeft': distanceLeft,
+    'driverName': driverName,
+    'vehicleName': vehicleName,
+    'vehicleColor': vehicleColor,
+    'plateNumber': plateNumber,
+    'pickupAddress': pickupAddress,
+    'dropoffAddress': dropoffAddress,
+    'driverPhotoUrl': driverPhotoUrl,
+    'driverPhoneNumber': driverPhoneNumber,
+  };
+
+  factory RideState.fromJson(Map<String, dynamic> json) {
+    return RideState(
+      phase: RidePhaseSerialization.fromJson(json['phase'] as String?),
+      progress: (json['progress'] as num?)?.toDouble() ?? 0.0,
+      etaMins: (json['etaMins'] as num?)?.toInt() ?? 0,
+      arrivalTime: json['arrivalTime'] as String? ?? '',
+      distanceLeft: json['distanceLeft'] as String? ?? '',
+      driverName: json['driverName'] as String? ?? '',
+      vehicleName: json['vehicleName'] as String? ?? '',
+      vehicleColor: json['vehicleColor'] as String? ?? '',
+      plateNumber: json['plateNumber'] as String? ?? '',
+      pickupAddress: json['pickupAddress'] as String? ?? '',
+      dropoffAddress: json['dropoffAddress'] as String? ?? '',
+      driverPhotoUrl: json['driverPhotoUrl'] as String? ?? '',
+      driverPhoneNumber: json['driverPhoneNumber'] as String? ?? '',
     );
   }
 }

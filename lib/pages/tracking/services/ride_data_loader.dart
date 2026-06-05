@@ -16,6 +16,7 @@ class RideDataLoader {
   String backendVehicleColor = '';
   String backendPlateNumber = '';
   String backendDriverPhotoUrl = '';
+  String backendDriverPhoneNumber = '';
 
   // Driver location and progress/ETA from REST (computed by RoutingService)
   double? backendDriverLat;
@@ -47,6 +48,8 @@ class RideDataLoader {
         backendVehicleName = rideDetails['vehicleName'] as String? ?? '';
         backendVehicleColor = rideDetails['vehicleColor'] as String? ?? '';
         backendPlateNumber = rideDetails['plateNumber'] as String? ?? '';
+        backendDriverPhoneNumber =
+            rideDetails['driverPhoneNumber'] as String? ?? '';
 
         // Driver photo — prefer driverLogoUrl (from Driver.logoUrl), fallback to other keys if backend differs
         backendDriverPhotoUrl =
@@ -60,12 +63,18 @@ class RideDataLoader {
         // Cache driver profile so avatars are instant on every screen
         final driverMap = rideDetails['driver'] as Map<String, dynamic>?;
         if (driverMap != null) {
-          final driverId = driverMap['id'] as String? ?? driverMap['userId'] as String?;
+          final driverId =
+              driverMap['id'] as String? ?? driverMap['userId'] as String?;
           if (driverId != null && driverId.isNotEmpty) {
             DriverProfileCache.instance.set(driverId, {
               ...driverMap,
               'logoUrl': backendDriverPhotoUrl,
             });
+          }
+          // Fallback: try to get phone from nested driver object
+          if (backendDriverPhoneNumber.isEmpty) {
+            backendDriverPhoneNumber =
+                driverMap['phoneNumber'] as String? ?? '';
           }
         }
 

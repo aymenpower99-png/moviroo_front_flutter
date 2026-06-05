@@ -22,11 +22,14 @@ class ProgressCalculator {
         (locationData['remaining_distance_m'] as num?) ??
         (locationData['distance_left_m'] as num?) ??
         (locationData['remaining_meters'] as num?);
-    final etaMins =
+    final rawEtaMins =
         (locationData['etaMins'] as num?)?.toInt() ??
         (locationData['driver_eta_min'] as num?)?.toInt() ??
         (locationData['eta_min'] as num?)?.toInt() ??
         (locationData['eta'] as num?)?.toInt();
+
+    // Defensive cap: reject absurdly large values (> 3 hours) as bad data.
+    final etaMins = (rawEtaMins != null && rawEtaMins > 180) ? null : rawEtaMins;
 
     // Convert remaining distance to string for display
     String distanceLeftText = currentState.distanceLeft;
