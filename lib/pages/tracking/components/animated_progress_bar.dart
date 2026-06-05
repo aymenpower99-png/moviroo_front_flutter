@@ -42,7 +42,7 @@ class _AnimatedRideProgressBarState extends State<AnimatedRideProgressBar>
 
   // Smooth fill
   late final AnimationController _fillCtrl;
-  late final Animation<double> _fillAnim;
+  late Animation<double> _fillAnim;
   double _fillFrom = 0;
   double _fillTo = 0;
 
@@ -114,6 +114,14 @@ class _AnimatedRideProgressBarState extends State<AnimatedRideProgressBar>
     if (widget.phase != _prevPhase) {
       _applyPhase(widget.phase);
       _prevPhase = widget.phase;
+    } else if (widget.progress != old.progress) {
+      // Same phase, new progress value — smooth animate from current display.
+      _animateFill(
+        from: _currentFill,
+        to: widget.progress,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeInOutCubic,
+      );
     }
   }
 
@@ -176,10 +184,14 @@ class _AnimatedRideProgressBarState extends State<AnimatedRideProgressBar>
     required double from,
     required double to,
     required Duration duration,
+    Curve curve = Curves.easeOut,
   }) {
     _fillFrom = from;
     _fillTo = to;
     _fillCtrl.duration = duration;
+    _fillAnim = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _fillCtrl, curve: curve),
+    );
     _fillCtrl.reset();
     _fillCtrl.forward();
   }
@@ -219,10 +231,7 @@ class _AnimatedRideProgressBarState extends State<AnimatedRideProgressBar>
         _flashAnim,
       ]),
       builder: (_, _) {
-        final fill = _showShimmer
-            ? widget
-                  .progress // live value, no fill animation
-            : _currentFill;
+        final fill = _currentFill;
 
         return Opacity(
           opacity: _fadeAnim.value,

@@ -7,6 +7,8 @@ import '../../../../widgets/driver_avatar.dart';
 class DriverRow extends StatelessWidget {
   final String driverName;
   final String vehicleName;
+  final String vehicleMake;
+  final String vehicleModel;
 
   /// Optional — shown below [vehicleName]. Rendered prominently when
   /// [isArrived] is `true`.
@@ -19,17 +21,21 @@ class DriverRow extends StatelessWidget {
   final VoidCallback? onPhoneTap;
   final VoidCallback? onChatTap;
   final String? driverPhotoUrl;
+  final double driverRating;
 
   const DriverRow({
     super.key,
     required this.driverName,
     this.driverId,
     required this.vehicleName,
+    this.vehicleMake = '',
+    this.vehicleModel = '',
     this.plateNumber,
     this.isArrived = false,
     this.onPhoneTap,
     this.onChatTap,
     this.driverPhotoUrl,
+    this.driverRating = 0.0,
   });
 
   @override
@@ -43,8 +49,56 @@ class DriverRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ── Left: driver avatar (photo or initials) ──
-          DriverAvatar(name: driverName, driverId: driverId, photoUrl: driverPhotoUrl, size: 44),
+          // ── Left: driver avatar with rating badge below ──
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              DriverAvatar(
+                name: driverName,
+                driverId: driverId,
+                photoUrl: driverPhotoUrl,
+                size: 44,
+              ),
+              if (driverRating > 0)
+                Positioned(
+                  bottom: -8,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.amber,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 10,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            driverRating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(width: 12),
 
           // ── Center: name + vehicle info ──
@@ -100,8 +154,18 @@ class DriverRow extends StatelessWidget {
 
   String _buildSubtitle() {
     final parts = <String>[];
-    if (vehicleName.isNotEmpty) parts.add(vehicleName);
-    if (plateNumber != null && plateNumber!.isNotEmpty) parts.add(plateNumber!);
+
+    // Maker Model (space between, no dot)
+    if (vehicleMake.isNotEmpty && vehicleModel.isNotEmpty) {
+      parts.add('$vehicleMake $vehicleModel');
+    } else if (vehicleMake.isNotEmpty) {
+      parts.add(vehicleMake);
+    } else if (vehicleModel.isNotEmpty) {
+      parts.add(vehicleModel);
+    } else if (vehicleName.isNotEmpty) {
+      parts.add(vehicleName);
+    }
+
     return parts.join(' · ');
   }
 }
@@ -121,7 +185,7 @@ class _ActionButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: AppColors.primaryPurple.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
+          shape: BoxShape.circle,
         ),
         child: Center(
           child: Icon(icon, size: 18, color: AppColors.primaryPurple),
@@ -145,7 +209,7 @@ class _PhoneButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: AppColors.primaryPurple.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
+          shape: BoxShape.circle,
         ),
         child: Center(
           child: Image.asset(

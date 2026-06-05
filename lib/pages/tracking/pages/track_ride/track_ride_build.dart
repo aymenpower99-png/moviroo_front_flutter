@@ -91,18 +91,24 @@ mixin _TrackRideBuildMixin
                 onChatTap: () {
                   Navigator.pushNamed(
                     context,
-                    'chat',
+                    '/chat',
                     arguments: {
                       'rideId': widget.rideId,
                       'driverName': rideState.driverName,
+                      'driverId': widget.driverId,
+                      'vehicleName': rideState.vehicleName,
+                      'vehicleMake': rideState.vehicleMake,
+                      'vehicleModel': rideState.vehicleModel,
+                      'vehicleColor': rideState.vehicleColor,
+                      'plateNumber': rideState.plateNumber,
+                      'driverPhotoUrl': rideState.driverPhotoUrl,
                     },
                   );
                 },
               )
             else
-              // Cold start: show a skeleton placeholder so the map stays
-              // visible and the bottom sheet area doesn't collapse.
-              _buildBottomSkeleton(context),
+              // Cold start: show skeleton while waiting for WebSocket data
+              _buildSkeletonSheet(context),
 
             // ── Trip-completed overlay ───────────────────────────────────
             AnimatedSwitcher(
@@ -183,13 +189,8 @@ mixin _TrackRideBuildMixin
     );
   }
 
-  /// Skeleton placeholder for the bottom sheet shown during cold start.
-  /// Mirrors the shape of [BottomPanel] so there is no layout jump when
-  /// real data replaces it.
-  Widget _buildBottomSkeleton(BuildContext context) {
+  Widget _buildSkeletonSheet(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final shimmer = isDark ? Colors.white10 : Colors.black12;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.50,
@@ -198,103 +199,29 @@ mixin _TrackRideBuildMixin
       snap: true,
       snapSizes: const [0.18, 0.50],
       builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface(context),
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(top: BorderSide(color: AppColors.border(context))),
-          ),
-          child: SingleChildScrollView(
-            controller: scrollController,
-            physics: const ClampingScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPadding + 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Drag handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 24),
-                    decoration: BoxDecoration(
-                      color: AppColors.border(context),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                // Shimmer blocks
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 140,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: shimmer,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    Container(
-                      width: 80,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: shimmer,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  width: double.infinity,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: shimmer,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: shimmer,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 120,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              color: shimmer,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            width: 180,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: shimmer,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+        return IgnorePointer(
+          ignoring: true,
+          child: Container(
+            // Panel background lives OUTSIDE the shimmer so only shapes shimmer
+            decoration: BoxDecoration(
+              color: AppColors.surface(context),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              border: Border(top: BorderSide(color: AppColors.border(context))),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.07),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
                 ),
               ],
+            ),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPadding + 16),
+              child: TrackingSkeleton(),
             ),
           ),
         );

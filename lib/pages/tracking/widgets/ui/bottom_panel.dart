@@ -135,6 +135,15 @@ class _BottomPanelState extends State<BottomPanel>
     super.dispose();
   }
 
+  Future<void> _callDriver() async {
+    final phone = widget.rideState.driverPhoneNumber;
+    if (phone.isEmpty) return;
+    final uri = Uri(scheme: 'tel', path: phone);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
@@ -202,8 +211,8 @@ class _BottomPanelState extends State<BottomPanel>
                             children: [
                               // ETA — show only when we have a sensible value (>0). Otherwise a subtle placeholder.
                               (widget.rideState.etaMins > 0)
-                                  ? Text(
-                                      '${widget.rideState.etaMins} min left',
+                                  ? _AnimatedEtaText(
+                                      targetValue: widget.rideState.etaMins,
                                       style: TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,
@@ -268,19 +277,13 @@ class _BottomPanelState extends State<BottomPanel>
                     driverName: widget.rideState.driverName,
                     driverId: widget.driverId,
                     vehicleName: widget.rideState.vehicleName,
+                    vehicleMake: widget.rideState.vehicleMake,
+                    vehicleModel: widget.rideState.vehicleModel,
                     plateNumber: widget.rideState.plateNumber,
                     isArrived: _isArrivalOrLater,
                     driverPhotoUrl: widget.rideState.driverPhotoUrl,
-                    onPhoneTap: widget.rideState.driverPhoneNumber.isNotEmpty
-                        ? () async {
-                            final uri = Uri.parse(
-                              'tel:${widget.rideState.driverPhoneNumber}',
-                            );
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri);
-                            }
-                          }
-                        : null,
+                    driverRating: widget.rideState.driverRating,
+                    onPhoneTap: () => _callDriver(),
                     onChatTap: widget.onChatTap,
                   ),
 
@@ -472,6 +475,76 @@ class _InactiveDot extends StatelessWidget {
               child: Icon(Icons.check_rounded, color: Colors.white, size: 10),
             )
           : null,
+    );
+  }
+}
+
+// ── Animated ETA counter ─────────────────────────────────────────────────────
+/// Animates the "X min left" number from its currently displayed value to
+/// [targetValue] over 500 ms using an ease-in-out curve. If a new target
+/// arrives while an animation is in progress, it re-targets from the current
+/// interpolated value so there is never a jump.
+class _AnimatedEtaText extends StatefulWidget {
+  final int targetValue;
+  final TextStyle style;
+
+  const _AnimatedEtaText({required this.targetValue, required this.style});
+
+  @override
+  State<_AnimatedEtaText> createState() => _AnimatedEtaTextState();
+}
+
+class _AnimatedEtaTextState extends State<_AnimatedEtaText>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late Animation<int> _anim;
+  int _from = 0;
+  int _to = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _from = widget.targetValue;
+    _to = widget.targetValue;
+    _anim = IntTween(
+      begin: _from,
+      end: _to,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedEtaText old) {
+    super.didUpdateWidget(old);
+    if (widget.targetValue != old.targetValue) {
+      // Re-target from whatever value is currently on screen.
+      _from = _anim.value;
+      _to = widget.targetValue;
+      _anim = IntTween(
+        begin: _from,
+        end: _to,
+      ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+      _ctrl.reset();
+      _ctrl.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, child) {
+        return Text('${_anim.value} min left', style: widget.style);
+      },
     );
   }
 }

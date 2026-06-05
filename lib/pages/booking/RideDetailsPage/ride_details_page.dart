@@ -99,21 +99,34 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     final raw = _bookingData?['scheduledAt'] as String?;
     if (raw != null) {
       final parsed = DateTime.tryParse(raw);
-      if (parsed != null)
+      if (parsed != null) {
         return TimeOfDay(hour: parsed.hour, minute: parsed.minute);
+      }
     }
     return null;
   }
 
+  /// For completed rides show the ACTUAL distance driven; otherwise the estimate.
   double? get _distanceKm {
-    final v = _bookingData?['distanceKm'];
+    final isCompleted = _bookingStatus?.toUpperCase() == 'COMPLETED';
+    final key = isCompleted ? 'distanceKmReal' : 'distanceKm';
+    final v = _bookingData?[key];
     if (v is num) return v.toDouble();
+    // Fallback to estimate if real is missing
+    final fallback = _bookingData?['distanceKm'];
+    if (fallback is num) return fallback.toDouble();
     return null;
   }
 
+  /// For completed rides show the ACTUAL duration; otherwise the estimate.
   int? get _durationMin {
-    final v = _bookingData?['durationMin'];
+    final isCompleted = _bookingStatus?.toUpperCase() == 'COMPLETED';
+    final key = isCompleted ? 'durationMinReal' : 'durationMin';
+    final v = _bookingData?[key];
     if (v is num) return v.toInt();
+    // Fallback to estimate if real is missing
+    final fallback = _bookingData?['durationMin'];
+    if (fallback is num) return fallback.toInt();
     return null;
   }
 
@@ -211,8 +224,34 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   }
 
   double? get _driverRating {
-    final v = _bookingData?['driverRating'];
-    if (v is num) return v.toDouble();
+    // Confirmed from logs: driverRating at root level
+    // Handle both String and num types from backend
+    double? parseRating(dynamic value) {
+      if (value == null) return null;
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value);
+      return null;
+    }
+
+    final v =
+        parseRating(_bookingData?['driverRating']) ??
+        parseRating(_bookingData?['rating_average']) ??
+        parseRating(_bookingData?['ratingAverage']) ??
+        parseRating(_bookingData?['averageRating']) ??
+        parseRating(_bookingData?['rating']);
+    if (v != null) return v;
+
+    // Fallback: try nested driver object
+    final driver = _bookingData?['driver'] as Map<String, dynamic>?;
+    if (driver != null) {
+      final driverRating =
+          parseRating(driver['rating_average']) ??
+          parseRating(driver['ratingAverage']) ??
+          parseRating(driver['averageRating']) ??
+          parseRating(driver['rating']);
+      if (driverRating != null) return driverRating;
+    }
+
     return null;
   }
 
@@ -307,6 +346,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
             ),
           );
         } else {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Booking cancelled successfully')),
           );

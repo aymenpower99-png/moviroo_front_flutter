@@ -43,6 +43,8 @@ class RideState {
   final String distanceLeft;
   final String driverName;
   final String vehicleName;
+  final String vehicleMake;
+  final String vehicleModel;
 
   /// e.g. "White", "Black" — shown in the arrival card.
   final String vehicleColor;
@@ -53,6 +55,7 @@ class RideState {
   final String dropoffAddress;
   final String driverPhotoUrl;
   final String driverPhoneNumber;
+  final double driverRating;
 
   const RideState({
     required this.phase,
@@ -62,12 +65,15 @@ class RideState {
     required this.distanceLeft,
     required this.driverName,
     required this.vehicleName,
+    this.vehicleMake = '',
+    this.vehicleModel = '',
     this.vehicleColor = '',
     required this.plateNumber,
     this.pickupAddress = '',
     this.dropoffAddress = '',
     this.driverPhotoUrl = '',
     this.driverPhoneNumber = '',
+    this.driverRating = 0.0,
   });
 
   RideState copyWith({
@@ -78,12 +84,15 @@ class RideState {
     String? distanceLeft,
     String? driverName,
     String? vehicleName,
+    String? vehicleMake,
+    String? vehicleModel,
     String? vehicleColor,
     String? plateNumber,
     String? pickupAddress,
     String? dropoffAddress,
     String? driverPhotoUrl,
     String? driverPhoneNumber,
+    double? driverRating,
   }) {
     return RideState(
       phase: phase ?? this.phase,
@@ -93,12 +102,15 @@ class RideState {
       distanceLeft: distanceLeft ?? this.distanceLeft,
       driverName: driverName ?? this.driverName,
       vehicleName: vehicleName ?? this.vehicleName,
+      vehicleMake: vehicleMake ?? this.vehicleMake,
+      vehicleModel: vehicleModel ?? this.vehicleModel,
       vehicleColor: vehicleColor ?? this.vehicleColor,
       plateNumber: plateNumber ?? this.plateNumber,
       pickupAddress: pickupAddress ?? this.pickupAddress,
       dropoffAddress: dropoffAddress ?? this.dropoffAddress,
       driverPhotoUrl: driverPhotoUrl ?? this.driverPhotoUrl,
       driverPhoneNumber: driverPhoneNumber ?? this.driverPhoneNumber,
+      driverRating: driverRating ?? this.driverRating,
     );
   }
 
@@ -112,12 +124,15 @@ class RideState {
     'distanceLeft': distanceLeft,
     'driverName': driverName,
     'vehicleName': vehicleName,
+    'vehicleMake': vehicleMake,
+    'vehicleModel': vehicleModel,
     'vehicleColor': vehicleColor,
     'plateNumber': plateNumber,
     'pickupAddress': pickupAddress,
     'dropoffAddress': dropoffAddress,
     'driverPhotoUrl': driverPhotoUrl,
     'driverPhoneNumber': driverPhoneNumber,
+    'driverRating': driverRating,
   };
 
   factory RideState.fromJson(Map<String, dynamic> json) {
@@ -129,12 +144,15 @@ class RideState {
       distanceLeft: json['distanceLeft'] as String? ?? '',
       driverName: json['driverName'] as String? ?? '',
       vehicleName: json['vehicleName'] as String? ?? '',
+      vehicleMake: json['vehicleMake'] as String? ?? '',
+      vehicleModel: json['vehicleModel'] as String? ?? '',
       vehicleColor: json['vehicleColor'] as String? ?? '',
       plateNumber: json['plateNumber'] as String? ?? '',
       pickupAddress: json['pickupAddress'] as String? ?? '',
       dropoffAddress: json['dropoffAddress'] as String? ?? '',
       driverPhotoUrl: json['driverPhotoUrl'] as String? ?? '',
       driverPhoneNumber: json['driverPhoneNumber'] as String? ?? '',
+      driverRating: (json['driverRating'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

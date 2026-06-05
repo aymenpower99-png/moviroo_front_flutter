@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'auth_service/auth_service.dart';
 
@@ -24,11 +25,33 @@ class NotificationService {
 
   bool _initialized = false;
   String? _pendingToken; // holds token until login registers it
+  String _currentLanguage = 'en'; // default language
+  Map<String, String> _translations = {};
 
   bool get initialized => _initialized;
 
   /// Called when user taps a notification (foreground / background / terminated).
   NotificationTapCallback? onNotificationTap;
+
+  /// Set the current language and load translations
+  Future<void> setLanguage(String languageCode) async {
+    if (_currentLanguage == languageCode) return;
+
+    _currentLanguage = languageCode;
+    try {
+      final jsonStr = await rootBundle.loadString(
+        'data/translations/$languageCode.json',
+      );
+      final Map<String, dynamic> data = json.decode(jsonStr);
+      _translations = data.map((k, v) => MapEntry(k, v.toString()));
+      debugPrint('🔔 Loaded translations for language: $languageCode');
+    } catch (e) {
+      debugPrint('❌ Failed to load translations for $languageCode: $e');
+    }
+  }
+
+  /// Get localized string for a key
+  String _translate(String key) => _translations[key] ?? key;
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -205,7 +228,29 @@ class NotificationService {
     );
 
     final notification = message.notification;
+    final notificationType = message.data['type']?.toString() ?? '';
     final channelId = message.data['channelId']?.toString() ?? 'ride_offers';
+
+    // Use localized strings if available, otherwise use FCM provided strings
+    String title = notification?.title ?? 'Moviroo';
+    String body = notification?.body ?? '';
+
+    // Map notification type to localized keys
+    if (notificationType.isNotEmpty && _translations.isNotEmpty) {
+      String translationKey = notificationType.toLowerCase();
+
+      // Special handling for RIDE_STATUS_CHANGED with status field
+      if (notificationType == 'RIDE_STATUS_CHANGED') {
+        final status = message.data['status']?.toString() ?? '';
+        if (status.isNotEmpty) {
+          translationKey = 'ride_status_${status.toLowerCase()}';
+        }
+      }
+
+      title = _translate('notif_${translationKey}_title');
+      body = _translate('notif_${translationKey}_body');
+    }
+
     final channelName = switch (channelId) {
       'support_messages' => 'Support Messages',
       'ride_offers' => 'Ride Offers',
@@ -218,11 +263,12 @@ class NotificationService {
       'ride_updates' => 'Live updates for your active ride',
       _ => 'Moviroo ride notifications',
     };
-    if (notification != null) {
+
+    if (notification != null || (title.isNotEmpty && body.isNotEmpty)) {
       await _localNotifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
+        notification?.hashCode ?? DateTime.now().millisecondsSinceEpoch,
+        title,
+        body,
         NotificationDetails(
           android: AndroidNotificationDetails(
             channelId,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import '../../core/storage/token_storage.dart';
@@ -33,10 +34,7 @@ class AuthAPI {
     final deviceHeaders = await DeviceInfoService().getDeviceHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
-      headers: {
-        'Content-Type': 'application/json',
-        ...deviceHeaders,
-      },
+      headers: {'Content-Type': 'application/json', ...deviceHeaders},
       body: jsonEncode({
         'email': email,
         'password': password,
@@ -77,10 +75,7 @@ class AuthAPI {
     final deviceHeaders = await DeviceInfoService().getDeviceHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login/verify-otp'),
-      headers: {
-        'Content-Type': 'application/json',
-        ...deviceHeaders,
-      },
+      headers: {'Content-Type': 'application/json', ...deviceHeaders},
       body: jsonEncode({'preAuthToken': preAuthToken, 'code': code}),
     );
 
@@ -286,5 +281,24 @@ class AuthAPI {
     } catch (_) {
       return null;
     }
+  }
+
+  static Future<void> updateLanguage(String languageCode) async {
+    debugPrint('🌐 [AuthAPI] Updating language to: $languageCode');
+    debugPrint('🌐 [AuthAPI] Calling PATCH /passengers/me');
+
+    final response = await AuthHTTP.authenticatedPatch('/passengers/me', {
+      'language': languageCode,
+    });
+
+    debugPrint('🌐 [AuthAPI] Response status: ${response.statusCode}');
+    debugPrint('🌐 [AuthAPI] Response body: ${response.body}');
+
+    if (response.statusCode != 200) {
+      debugPrint('🌐 [AuthAPI] Failed to update language');
+      throw _parseError(response, 'Failed to update language');
+    }
+
+    debugPrint('🌐 [AuthAPI] Language updated successfully');
   }
 }

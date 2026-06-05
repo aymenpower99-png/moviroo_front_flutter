@@ -14,9 +14,9 @@ mixin _TrackRideLifecycleMixin
         '♻️ WARM START — restoring cached ride state for ${widget.rideId}',
       );
       rideState = cached.rideState;
-      // Show panel immediately with cached data on warm start
-      // WebSocket will smoothly update values when it connects
+      // Cached WebSocket data is immediately ready — show the panel right away.
       isRideDataReady = true;
+      isInitializing = false;
 
       if (cached.driverLat != null && cached.driverLon != null) {
         driverPos = mbx.Point(
@@ -25,7 +25,6 @@ mixin _TrackRideLifecycleMixin
         driverBearing = cached.driverBearing ?? 0.0;
         isDriverLocationReady = true;
         hasFirstDriverFix = true;
-        isInitializing = false;
       }
     } else {
       // Cold start: no valid data yet — BottomPanel will stay hidden.
@@ -102,6 +101,9 @@ mixin _TrackRideLifecycleMixin
     }
 
     // In parallel: fetch ride details from backend.
+    // REST is only used for static metadata (driver name, vehicle, addresses,
+    // phone, photo). Live fields (ETA, progress, arrivalTime) come from WebSocket
+    // or cache; REST stale values are ignored.
     try {
       await loadRideDetails();
     } catch (e) {
@@ -110,12 +112,11 @@ mixin _TrackRideLifecycleMixin
 
     if (!mounted) return;
 
-    // If we had a warm start, the user is already seeing valid data.
-    // Just refresh silently in the background unless the REST response
-    // differs meaningfully from the cache.
+    // Refresh static metadata silently. On warm start this mutates only
+    // driver/vehicle/address fields and preserves cached live WebSocket values.
     initializeRideState();
 
-    // Use REST driver location for immediate first render if available and fresh.
+    // Use REST driver location for an immediate GPS fix if available and fresh.
     final last = dataLoader.backendDriverLastUpdatedAt;
     final hasFreshDriverLoc =
         dataLoader.backendDriverLat != null &&
@@ -131,7 +132,7 @@ mixin _TrackRideLifecycleMixin
         ),
       );
       debugPrint(
-        '🎯 REST INITIAL RENDER — driver location + progress + ETA from RoutingService',
+        '🎯 REST driver location fix — seeding marker while WebSocket connects',
       );
       driverAnimController.setTargetPosition(initialPos, 0.0);
       if (mounted) {
@@ -144,8 +145,8 @@ mixin _TrackRideLifecycleMixin
       }
     }
 
-    // Keep the loading pill until either ride data or driver location is ready.
-    if (mounted && !(isRideDataReady || isDriverLocationReady)) {
+    // Cold start: keep the loading pill until WebSocket delivers live data.
+    if (mounted && !isRideDataReady) {
       setState(() {
         initStatus = 'Waiting for driver location...';
       });

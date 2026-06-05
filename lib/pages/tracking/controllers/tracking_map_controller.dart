@@ -53,13 +53,23 @@ class TrackingMapController {
     await _annotationManager.clearRoute();
   }
 
+  /// Create the 3D driver car layer on the map.
+  /// Call once from [onStyleLoaded] with the cached driver position so the
+  /// car is visible instantly on warm start, before WebSocket connects.
+  Future<void> setupDriverModel(mbx.Point initialPos) async {
+    await _driverModelManager.setupLayer(initialPos);
+  }
+
+  /// Update driver marker position and bearing.
+  /// Fast path: only mutates the GeoJSON source string.
+  /// If the layer isn't ready yet, the position is buffered.
   Future<void> updateDriverMarker(mbx.Point pos, double bearing) async {
     if (_mapController == null) return;
 
     _driverPos = pos;
     _driverBearing = bearing;
 
-    await _driverModelManager.updateDriverMarker(
+    await _driverModelManager.updatePosition(
       pos,
       bearing,
       onDriverMarkerUpdated,

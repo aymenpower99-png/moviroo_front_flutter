@@ -19,6 +19,8 @@ class ChatPage extends StatefulWidget {
   final String? driverName;
   final String? driverId;
   final String? vehicleName;
+  final String? vehicleMake;
+  final String? vehicleModel;
   final String? vehicleColor;
   final String? plateNumber;
   final String? driverPhotoUrl;
@@ -29,6 +31,8 @@ class ChatPage extends StatefulWidget {
     this.driverName,
     this.driverId,
     this.vehicleName,
+    this.vehicleMake,
+    this.vehicleModel,
     this.vehicleColor,
     this.plateNumber,
     this.driverPhotoUrl,
@@ -63,7 +67,11 @@ class _ChatPageState extends State<ChatPage> {
         ? fromArgs
         : (fromCache ?? '');
     _driverPhotoUrl = chosen.isNotEmpty ? _absoluteUrl(chosen) : '';
-    _vehicleLabel = _formatVehicleLabel(widget.vehicleName);
+    _vehicleLabel = _formatVehicleLabel(
+      widget.vehicleName,
+      make: widget.vehicleMake,
+      model: widget.vehicleModel,
+    );
     if (_hydratedOnce.contains(widget.rideId)) {
       _hydrated = true;
     } else {

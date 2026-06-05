@@ -16,6 +16,7 @@ import '../services/ride_connection_service.dart';
 import '../services/ride_phase_manager.dart';
 import '../services/progress_calculator.dart';
 import '../../../services/ride_tracking_cache.dart';
+import '../widgets/skeleton/tracking_skeleton.dart';
 
 // Part mixins - these share the class definition and imports from this file
 part 'track_ride/track_ride_state.dart';

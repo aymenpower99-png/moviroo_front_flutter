@@ -41,10 +41,6 @@ mixin _TrackRideStateMixin on State<TrackRidePage> {
   /// Gates the 3D car marker.
   bool isDriverLocationReady = false;
 
-  /// True when we've received at least one live WebSocket update with ETA/progress.
-  /// Used to distinguish cached data from live data and prevent showing stale values.
-  bool hasLiveWebSocketData = false;
-
   // ── Pulse animation (arrival) ────────────────────────────────────────────
   late AnimationController pulseAnim;
 
@@ -93,94 +89,92 @@ mixin _TrackRideStateMixin on State<TrackRidePage> {
   /// returned non-null values.  Preserves cached ETA / progress when the REST
   /// response is empty or fails, preventing a "good → broken" regression.
   void initializeRideState() {
-    // ── Freshness gating for REST driver location ──
-    final last = dataLoader.backendDriverLastUpdatedAt;
-    final hasFreshDriverLoc =
-        dataLoader.backendDriverLat != null &&
-        dataLoader.backendDriverLon != null &&
-        last != null &&
-        DateTime.now().difference(last).inSeconds <= 60;
-
-    // ── ETA ──
-    final int? backendEta = dataLoader.backendEtaMins;
-    final int newEta = (hasFreshDriverLoc && backendEta != null)
-        ? (backendEta > 180 ? 0 : backendEta)
-        : (isRideDataReady ? rideState.etaMins : 0);
-
-    // ── Progress ──
-    final double newProgress =
-        (hasFreshDriverLoc && dataLoader.backendProgress != null)
-        ? dataLoader.backendProgress!.clamp(0.0, 1.0)
-        : (isRideDataReady ? rideState.progress : 0.0);
-
-    // ── Distance left ──
-    String newDistanceLeft = isRideDataReady ? rideState.distanceLeft : '';
-    if (hasFreshDriverLoc &&
-        dataLoader.backendRemainingDistanceMeters != null) {
-      final meters = dataLoader.backendRemainingDistanceMeters!;
-      newDistanceLeft = meters >= 1000
-          ? '${(meters / 1000).toStringAsFixed(1)} km'
-          : '${meters.toInt()} m';
-    }
-
-    // ── Arrival time ──
-    final String newArrivalTime = newEta > 0
-        ? phaseManager.calcArrivalTime(newEta)
-        : rideState.arrivalTime;
+    // ── Warm start guard ──
+    // If we already have cached live data (warm start), REST must NOT override
+    // ETA, progress, arrivalTime, or distanceLeft. Those fields come from the
+    // last WebSocket message and are more accurate than REST stale estimates.
+    // REST is only used here for static metadata (driver name, vehicle, addresses,
+    // phone, photo) that rarely change mid-ride.
+    final isWarmStart = isRideDataReady;
 
     // ── Static fields (driver/vehicle/addresses) ──
-    // These change rarely; prefer backend when available, else widget args,
-    // else keep cached values on warm start.
     final newDriverName = dataLoader.backendDriverName.isNotEmpty
         ? dataLoader.backendDriverName
-        : (widget.driverName ?? (isRideDataReady ? rideState.driverName : ''));
+        : (widget.driverName ?? (isWarmStart ? rideState.driverName : ''));
     final newVehicleName = dataLoader.backendVehicleName.isNotEmpty
         ? dataLoader.backendVehicleName
-        : (widget.vehicleName ??
-              (isRideDataReady ? rideState.vehicleName : ''));
+        : (widget.vehicleName ?? (isWarmStart ? rideState.vehicleName : ''));
+    final newVehicleMake = dataLoader.backendVehicleMake.isNotEmpty
+        ? dataLoader.backendVehicleMake
+        : (isWarmStart ? rideState.vehicleMake : '');
+    final newVehicleModel = dataLoader.backendVehicleModel.isNotEmpty
+        ? dataLoader.backendVehicleModel
+        : (isWarmStart ? rideState.vehicleModel : '');
     final newVehicleColor = dataLoader.backendVehicleColor.isNotEmpty
         ? dataLoader.backendVehicleColor
-        : (widget.vehicleColor ??
-              (isRideDataReady ? rideState.vehicleColor : ''));
+        : (widget.vehicleColor ?? (isWarmStart ? rideState.vehicleColor : ''));
     final newPlateNumber = dataLoader.backendPlateNumber.isNotEmpty
         ? dataLoader.backendPlateNumber
-        : (widget.plateNumber ??
-              (isRideDataReady ? rideState.plateNumber : ''));
+        : (widget.plateNumber ?? (isWarmStart ? rideState.plateNumber : ''));
     final newPickupAddress = dataLoader.backendPickupAddress.isNotEmpty
         ? dataLoader.backendPickupAddress
         : (widget.pickupAddress ??
-              (isRideDataReady ? rideState.pickupAddress : ''));
+              (isWarmStart ? rideState.pickupAddress : ''));
     final newDropoffAddress = dataLoader.backendDropoffAddress.isNotEmpty
         ? dataLoader.backendDropoffAddress
         : (widget.dropoffAddress ??
-              (isRideDataReady ? rideState.dropoffAddress : ''));
+              (isWarmStart ? rideState.dropoffAddress : ''));
 
     final newDriverPhoneNumber = dataLoader.backendDriverPhoneNumber.isNotEmpty
         ? dataLoader.backendDriverPhoneNumber
-        : (isRideDataReady ? rideState.driverPhoneNumber : '');
+        : (isWarmStart ? rideState.driverPhoneNumber : '');
 
+    // Driver rating from REST (0.0 means backend didn't provide one).
+    final newDriverRating = dataLoader.backendDriverRating > 0
+        ? dataLoader.backendDriverRating
+        : (isWarmStart ? rideState.driverRating : 0.0);
+
+    if (isWarmStart) {
+      // Warm start: mutate only static metadata, preserve live WebSocket values.
+      rideState = rideState.copyWith(
+        driverName: newDriverName,
+        vehicleName: newVehicleName,
+        vehicleMake: newVehicleMake,
+        vehicleModel: newVehicleModel,
+        vehicleColor: newVehicleColor,
+        plateNumber: newPlateNumber,
+        pickupAddress: newPickupAddress,
+        dropoffAddress: newDropoffAddress,
+        driverPhotoUrl: dataLoader.backendDriverPhotoUrl.isNotEmpty
+            ? dataLoader.backendDriverPhotoUrl
+            : rideState.driverPhotoUrl,
+        driverPhoneNumber: newDriverPhoneNumber,
+        driverRating: newDriverRating,
+      );
+      return;
+    }
+
+    // ── Cold start ──
+    // No cached live data yet. Build a fresh RideState with empty live fields.
+    // The UI will stay in skeleton mode until the first WebSocket update arrives.
     rideState = RideState(
       phase: RidePhase.driverOnTheWay,
-      progress: newProgress,
-      etaMins: newEta,
-      arrivalTime: newArrivalTime,
-      distanceLeft: newDistanceLeft,
+      progress: 0.0,
+      etaMins: 0,
+      arrivalTime: '',
+      distanceLeft: '',
       driverName: newDriverName,
       vehicleName: newVehicleName,
+      vehicleMake: newVehicleMake,
+      vehicleModel: newVehicleModel,
       vehicleColor: newVehicleColor,
       plateNumber: newPlateNumber,
       pickupAddress: newPickupAddress,
       dropoffAddress: newDropoffAddress,
       driverPhotoUrl: dataLoader.backendDriverPhotoUrl,
       driverPhoneNumber: newDriverPhoneNumber,
+      driverRating: newDriverRating,
     );
-
-    // ── Readiness: only flip true when we have live WebSocket data ─────────────
-    // Don't show panel based on REST data - wait for WebSocket to prevent fake data flash
-    if (hasLiveWebSocketData) {
-      isRideDataReady = true;
-      _writeCache();
-    }
   }
 
   // ── Persist current snapshot to cache ────────────────────────────────────

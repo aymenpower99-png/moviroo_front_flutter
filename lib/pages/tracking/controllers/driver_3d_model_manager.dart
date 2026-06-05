@@ -4,10 +4,22 @@ import 'package:flutter/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 
 /// Manager for 3D driver car model on the map.
+///
+/// **Lifecycle contract:**
+/// 1. Call [setupLayer] once after the map style is loaded, passing the
+///    cached driver position. This creates the layer + source synchronously.
+/// 2. Call [updatePosition] repeatedly on every animation tick or WebSocket
+///    update. It only mutates the GeoJSON source — fast and lightweight.
+/// 3. Never call [updatePosition] before [setupLayer]; it will buffer the
+///    position and apply it immediately when the layer becomes ready.
 class Driver3DModelManager {
   mbx.MapboxMap? _mapController;
   bool _driver3DModelReady = false;
   double _currentZoom = 13.0;
+
+  // Position received before the layer was ready — applied immediately on setup.
+  mbx.Point? _pendingPosition;
+  double _pendingBearing = 0;
 
   // 3D model setup synchronization (prevents duplicate layers)
   Future<void>? _setupFuture;
@@ -33,11 +45,18 @@ class Driver3DModelManager {
     }
   }
 
-  /// Check if 3D model is ready.
+  /// Check if 3D model layer exists.
   bool get isReady => _driver3DModelReady;
 
-  /// Set up the 3D car model source + layer (call once after first location).
-  Future<void> setup(mbx.Point initialPos) {
+  /// Create the 3D car model layer + source **once**.
+  ///
+  /// Call this from [onStyleLoaded] with the **cached** driver position so
+  /// the car is visible instantly on warm start, before any WebSocket
+  /// message arrives.
+  ///
+  /// Returns a [Future] that completes when the native layer is created.
+  /// Safe to call multiple times — second and later calls are no-ops.
+  Future<void> setupLayer(mbx.Point initialPos) {
     if (_mapController == null || _driver3DModelReady) return Future.value();
     return _setupFuture ??= _doSetup(initialPos);
   }
@@ -46,16 +65,13 @@ class Driver3DModelManager {
     debugPrint('🚗 [3D] Setting up 3D driver model layer...');
 
     try {
-      // Clean up any existing layer/source
+      // Clean up any existing layer/source — best-effort remove without
+      // expensive async exists checks (~20-30ms saved per call).
       try {
-        if (await _mapController!.style.styleLayerExists(
-          'driver-model-layer',
-        )) {
-          await _mapController!.style.removeStyleLayer('driver-model-layer');
-        }
-        if (await _mapController!.style.styleSourceExists('driver-source')) {
-          await _mapController!.style.removeStyleSource('driver-source');
-        }
+        await _mapController!.style.removeStyleLayer('driver-model-layer');
+      } catch (_) {}
+      try {
+        await _mapController!.style.removeStyleSource('driver-source');
       } catch (_) {}
 
       // Register the 3D model
@@ -63,6 +79,10 @@ class Driver3DModelManager {
         'driver-car',
         'asset://flutter_assets/images/3d/car.glb',
       );
+
+      // Determine the initial position: if a pending update arrived before
+      // the layer was ready, use it (it's newer than the cached value).
+      final pos = _pendingPosition ?? initialPos;
 
       // Add GeoJSON source with driver position
       final geoJson = jsonEncode({
@@ -73,8 +93,8 @@ class Driver3DModelManager {
             'geometry': {
               'type': 'Point',
               'coordinates': [
-                initialPos.coordinates.lng.toDouble(),
-                initialPos.coordinates.lat.toDouble(),
+                pos.coordinates.lng.toDouble(),
+                pos.coordinates.lat.toDouble(),
               ],
             },
             'properties': {},
@@ -107,6 +127,16 @@ class Driver3DModelManager {
 
       _driver3DModelReady = true;
       debugPrint('🚗 [3D] Setup COMPLETE');
+
+      // If we buffered a newer position while the layer was being created,
+      // apply it now so the car doesn't sit on the cached position.
+      if (_pendingPosition != null) {
+        final pending = _pendingPosition!;
+        final pendingB = _pendingBearing;
+        _pendingPosition = null;
+        _pendingBearing = 0;
+        await _applyPosition(pending, pendingB);
+      }
     } catch (e) {
       debugPrint('🚗 [3D] ERROR: $e');
       _driver3DModelReady = false;
@@ -119,22 +149,11 @@ class Driver3DModelManager {
   Future<void> _updateModelScale() async {
     if (!_driver3DModelReady || _mapController == null) return;
 
-    // Exponential scaling: base scale at zoom 18, doubles per zoom level decrease
-    // Zoom 18 (street): 4.0 (small)
-    // Zoom 17: 8.0
-    // Zoom 16: 16.0
-    // Zoom 15: 32.0
-    // Zoom 14: 64.0
-    // Zoom 13: 128.0
-    // Zoom 12: 256.0
-    // Zoom 10: 1024.0 → clamped to 800.0
-    // Zoom 5: 8192.0 → clamped to 800.0 (very visible at world view)
     const baseScale = 4.0; // Scale at zoom 18 (street level)
     const baseZoom = 18.0;
     const minScale = 1.0;
     const maxScale = 800.0;
 
-    // Scale doubles when zoom decreases by 1 level
     final scale = (baseScale * math.pow(2.0, baseZoom - _currentZoom)).clamp(
       minScale,
       maxScale,
@@ -152,18 +171,32 @@ class Driver3DModelManager {
   }
 
   /// Update driver marker position and bearing.
-  Future<void> updateDriverMarker(
+  ///
+  /// **Fast path:** only mutates the GeoJSON source string. Never triggers
+  /// [setupLayer]. If the layer is not ready yet, the position is buffered
+  /// and applied as soon as the layer is created.
+  Future<void> updatePosition(
     mbx.Point pos,
     double bearing,
     Function(mbx.Point, double)? onDriverMarkerUpdated,
   ) async {
     if (_mapController == null) return;
 
+    // Buffer updates that arrive before the layer is ready.
+    // On cold start onStyleLoaded() skipped setup because driverPos was null.
+    // We must trigger creation now so the car actually appears.
     if (!_driver3DModelReady) {
-      await setup(pos);
+      _pendingPosition = pos;
+      _pendingBearing = bearing;
+      // Still notify the callback so state updates (driverPos, bearing) happen
+      onDriverMarkerUpdated?.call(pos, bearing);
+      // Kick off layer creation. If the style isn't ready yet this will
+      // fail gracefully, reset _setupFuture, and onStyleLoaded() will retry.
+      setupLayer(pos);
+      return;
     }
 
-    // Throttle to ~30 FPS
+    // Throttle to ~60 FPS cap
     final now = DateTime.now().millisecondsSinceEpoch;
     if (now - _lastNativeUpdateMs < _minNativeUpdateIntervalMs) {
       onDriverMarkerUpdated?.call(pos, bearing);
@@ -171,6 +204,12 @@ class Driver3DModelManager {
     }
     _lastNativeUpdateMs = now;
 
+    await _applyPosition(pos, bearing);
+    onDriverMarkerUpdated?.call(pos, bearing);
+  }
+
+  /// Internal: apply position to the native layer.
+  Future<void> _applyPosition(mbx.Point pos, double bearing) async {
     try {
       final newGeoJson = jsonEncode({
         'type': 'FeatureCollection',
@@ -204,7 +243,5 @@ class Driver3DModelManager {
     } catch (e) {
       debugPrint('🚗 [3D] ERROR updating: $e');
     }
-
-    onDriverMarkerUpdated?.call(pos, bearing);
   }
 }

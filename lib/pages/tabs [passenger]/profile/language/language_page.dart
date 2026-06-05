@@ -3,6 +3,8 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../main.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../services/auth/auth_api.dart';
+import '../../../../services/notification_service.dart';
 
 class LanguagePage extends StatefulWidget {
   const LanguagePage({super.key});
@@ -13,6 +15,7 @@ class LanguagePage extends StatefulWidget {
 
 class _LanguagePageState extends State<LanguagePage> {
   late String _selectedLanguage;
+  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -20,10 +23,48 @@ class _LanguagePageState extends State<LanguagePage> {
     _selectedLanguage = localeProvider.locale.languageCode;
   }
 
-  void _selectLanguage(String languageCode) {
-    setState(() => _selectedLanguage = languageCode);
-    localeProvider.setLocaleByCode(languageCode);
-    Navigator.pop(context, languageCode);
+  Future<void> _selectLanguage(String languageCode) async {
+    if (_isUpdating) return;
+
+    setState(() {
+      _selectedLanguage = languageCode;
+      _isUpdating = true;
+    });
+
+    try {
+      // Update local locale immediately for better UX
+      localeProvider.setLocaleByCode(languageCode);
+
+      // Update notification service language
+      await NotificationService().setLanguage(languageCode);
+
+      // Sync to backend
+      await AuthAPI.updateLanguage(languageCode);
+
+      // Success - navigate back
+      if (mounted) {
+        Navigator.pop(context, languageCode);
+      }
+    } catch (e) {
+      // Revert local change on error
+      localeProvider.setLocaleByCode(localeProvider.locale.languageCode);
+      setState(() {
+        _selectedLanguage = localeProvider.locale.languageCode;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update language. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdating = false);
+      }
+    }
   }
 
   @override

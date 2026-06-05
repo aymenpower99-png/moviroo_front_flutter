@@ -111,14 +111,41 @@ class _TripSummaryCardState extends State<TripSummaryCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.rideState.driverName,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.text(context),
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        widget.rideState.driverName,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.text(context),
+                        ),
+                      ),
+                      if (widget.rideState.driverRating > 0) ...[
+                        const SizedBox(width: 8),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 14,
+                              color: Colors.amber,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              widget.rideState.driverRating.toStringAsFixed(1),
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.subtext(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(

@@ -46,9 +46,6 @@ mixin _TrackRideCallbacksMixin on State<TrackRidePage>, _TrackRideStateMixin {
           rideState,
           locationData,
         );
-        // Mark that we have live WebSocket data
-        hasLiveWebSocketData = true;
-        // Panel is now ready with live data
         isRideDataReady = true;
       });
       _writeCache();
@@ -71,7 +68,6 @@ mixin _TrackRideCallbacksMixin on State<TrackRidePage>, _TrackRideStateMixin {
       }
     });
     mapController.updateDriverMarker(pos, bearing);
-    _writeCache();
 
     // First location fix: center camera on driver so user sees them immediately.
     if (isFirstFix) {
@@ -186,16 +182,16 @@ mixin _TrackRideCallbacksMixin on State<TrackRidePage>, _TrackRideStateMixin {
       mbx.GesturesSettings(pitchEnabled: false),
     );
 
-    /* ── Retry driver marker if we already have a position ───────────────
-       The REST response or an early WebSocket update may have arrived
-       before the style finished loading.  setup() failed silently at that
-       point because the style surface wasn't ready.  Now that the style
-       IS ready, re-attempt the marker so the car appears immediately. ── */
+    /* ── Create driver car layer from cached position ────────────────────
+       On warm start driverPos is restored from cache.  We create the 3D
+       model layer NOW (while the style is ready) so the car is visible
+       instantly, before WebSocket connects.  updateDriverMarker() later
+       only mutates the GeoJSON source — fast and lightweight. ── */
     if (driverPos != null) {
       debugPrint(
-        '🗺️ Style ready — retrying driver marker from cached position',
+        '🗺️ Style ready — creating driver model layer from cached position',
       );
-      mapController.updateDriverMarker(driverPos!, driverBearing);
+      await mapController.setupDriverModel(driverPos!);
     }
 
     debugPrint('🗺️ Mapbox controls disabled, pitch gesture disabled');
