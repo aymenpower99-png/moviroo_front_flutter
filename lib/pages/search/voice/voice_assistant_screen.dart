@@ -125,10 +125,31 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
   // ─────────────────────────────────────────────────────────
   // TTS
   // ─────────────────────────────────────────────────────────
+  // Locales arabes essayés dans l'ordre avant le fallback anglais.
+  static const List<String> _arabicLocales = [
+    'ar-SA',
+    'ar-EG',
+    'ar-MA',
+    'ar-TN',
+  ];
+
   Future<void> _initTts() async {
     await _tts.setVolume(1.0);
     await _tts.setSpeechRate(0.5);
     await _tts.setPitch(1.0);
+
+    // Log des langues installées pour diagnostiquer la disponibilité arabe.
+    try {
+      final languages = await _tts.getLanguages;
+      voiceLog('TTS', 'Available languages: $languages');
+      for (final locale in _arabicLocales) {
+        final available = await _tts.isLanguageAvailable(locale);
+        voiceLog('TTS', 'isLanguageAvailable($locale) = $available');
+      }
+    } catch (e) {
+      voiceLog('TTS', 'Could not query available languages: $e');
+    }
+
     _tts.setCompletionHandler(() {
       if (_phase == VoicePhase.question) {
         voiceLog('TTS', 'Speech finished → starting answer recording');
@@ -140,14 +161,41 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
   }
 
   Future<void> _speak(String text, String lang) async {
-    final locale = switch (lang) {
-      'ar' => 'ar-SA',
-      'en' => 'en-US',
-      _ => 'fr-FR',
-    };
+    // L'arabe nécessite un traitement spécial : on essaie plusieurs locales
+    // car la disponibilité dépend des voix installées sur l'appareil.
+    // L'anglais (en-US) et le français (fr-FR par défaut) restent inchangés.
+    final String locale;
+    if (lang == 'ar') {
+      locale = await _resolveArabicLocale();
+    } else {
+      locale = switch (lang) {
+        'en' => 'en-US',
+        _ => 'fr-FR',
+      };
+    }
     voiceLog('TTS', 'speak  lang=$locale  →  "$text"');
     await _tts.setLanguage(locale);
     await _tts.speak(text);
+  }
+
+  // Renvoie la première locale arabe disponible, sinon repli sur l'anglais.
+  Future<String> _resolveArabicLocale() async {
+    for (final locale in _arabicLocales) {
+      try {
+        final available = await _tts.isLanguageAvailable(locale);
+        if (available == true) {
+          voiceLog('TTS', 'Arabic locale resolved → $locale');
+          return locale;
+        }
+      } catch (e) {
+        voiceLog('TTS', 'isLanguageAvailable($locale) failed: $e');
+      }
+    }
+    voiceLog(
+      'TTS',
+      'WARNING: no Arabic locale available, falling back to en-US',
+    );
+    return 'en-US';
   }
 
   // ─────────────────────────────────────────────────────────
