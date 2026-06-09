@@ -75,7 +75,11 @@ Widget buildCenter(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 280, minHeight: 240, maxHeight: 280),
+        constraints: const BoxConstraints(
+          maxWidth: 280,
+          minHeight: 240,
+          maxHeight: 280,
+        ),
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -140,10 +144,6 @@ Widget buildCenter(
         confirmationText: confirmationText,
         searchQuery: searchQuery,
       ),
-      if (transcript.isNotEmpty) ...[
-        const SizedBox(height: 12),
-        buildYouSaidCard(context, transcript: transcript),
-      ],
     ],
   );
 }
@@ -222,11 +222,10 @@ Widget buildWaveform({
         return AnimatedBuilder(
           animation: waveCtrl,
           builder: (_, __) {
-            final h = bars[i] *
+            final h =
+                bars[i] *
                 (0.5 +
-                    0.5 *
-                        (waveCtrl.value * (i % 2 == 0 ? 1.0 : -1.0))
-                            .abs());
+                    0.5 * (waveCtrl.value * (i % 2 == 0 ? 1.0 : -1.0)).abs());
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               width: 3,
@@ -265,14 +264,8 @@ Widget buildMessageBubble(
 }) {
   final (String text, Color highlight) = switch (phase) {
     VoicePhase.idle => ('"Welcome! Where is your next destination?"', kPurple),
-    VoicePhase.recording => (
-      'Recording... ${elapsed.inSeconds}s',
-      Colors.redAccent,
-    ),
-    VoicePhase.waitAnswer => (
-      '🎙 Listening... tap mic when done (${elapsed.inSeconds}s)',
-      kPurple,
-    ),
+    VoicePhase.recording => ('Recording...', Colors.redAccent),
+    VoicePhase.waitAnswer => ('🎙 Listening... tap mic when done', kPurple),
     VoicePhase.uploading => ('Processing your voice...', kPurpleGlow),
     VoicePhase.question => (statusMsg, kPurple),
     VoicePhase.result => (
@@ -304,10 +297,7 @@ Widget buildMessageBubble(
                 TextSpan(text: '"Welcome! '),
                 TextSpan(
                   text: 'Where is your next destination?',
-                  style: TextStyle(
-                    color: kPurple,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(color: kPurple, fontWeight: FontWeight.w600),
                 ),
                 TextSpan(text: '"'),
               ],
@@ -321,9 +311,7 @@ Widget buildMessageBubble(
                 height: 1.5,
                 color: voiceText(context),
               ),
-              children: [
-                TextSpan(text: text),
-              ],
+              children: [TextSpan(text: text)],
             ),
           ),
   );
@@ -431,10 +419,7 @@ Widget buildResultRows(
   ),
 );
 
-Widget buildYouSaidCard(
-  BuildContext context, {
-  required String transcript,
-}) =>
+Widget buildYouSaidCard(BuildContext context, {required String transcript}) =>
     Container(
       margin: const EdgeInsets.symmetric(horizontal: 32),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

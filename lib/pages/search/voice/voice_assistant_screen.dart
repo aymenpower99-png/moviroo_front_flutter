@@ -129,6 +129,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     await _tts.setVolume(1.0);
     await _tts.setSpeechRate(0.5);
     await _tts.setPitch(1.0);
+
     _tts.setCompletionHandler(() {
       if (_phase == VoicePhase.question) {
         voiceLog('TTS', 'Speech finished → starting answer recording');
@@ -140,12 +141,38 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
   }
 
   Future<void> _speak(String text, String lang) async {
-    final locale = switch (lang) {
-      'ar' => 'ar-SA',
-      'en' => 'en-US',
-      _ => 'fr-FR',
-    };
-    voiceLog('TTS', 'speak  lang=$locale  →  "$text"');
+    String locale;
+
+    if (lang == 'ar') {
+      // Try different Arabic locales in order of preference
+      final arabicLocales = ['ar-SA', 'ar-EG', 'ar-MA', 'ar-TN', 'ar'];
+      locale = arabicLocales.first;
+
+      // Try each locale until one works
+      for (final arabicLocale in arabicLocales) {
+        try {
+          await _tts.setLanguage(arabicLocale);
+          locale = arabicLocale;
+          voiceLog('TTS', 'speak lang=$locale → "$text"');
+          await _tts.speak(text);
+          return;
+        } catch (e) {
+          voiceLog('TTS', 'Failed to set language $arabicLocale: $e');
+          continue;
+        }
+      }
+
+      // If all Arabic locales failed, fallback to English
+      voiceLog('TTS', 'No Arabic locale worked, falling back to English');
+      locale = 'en-US';
+    } else {
+      locale = switch (lang) {
+        'en' => 'en-US',
+        _ => 'fr-FR',
+      };
+    }
+
+    voiceLog('TTS', 'speak lang=$locale → "$text"');
     await _tts.setLanguage(locale);
     await _tts.speak(text);
   }
