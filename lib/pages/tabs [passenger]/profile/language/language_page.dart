@@ -32,22 +32,24 @@ class _LanguagePageState extends State<LanguagePage> {
     });
 
     try {
-      // Update local locale immediately for better UX
-      localeProvider.setLocaleByCode(languageCode);
+      // Sync to backend first
+      await AuthAPI.updateLanguage(languageCode);
 
       // Update notification service language
       await NotificationService().setLanguage(languageCode);
 
-      // Sync to backend
-      await AuthAPI.updateLanguage(languageCode);
+      // Update local locale
+      localeProvider.setLocaleByCode(languageCode);
 
-      // Success - navigate back
-      if (mounted) {
-        Navigator.pop(context, languageCode);
-      }
+      // Navigate back after the current frame completes
+      // This prevents the black screen issue during locale change
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.pop(context, languageCode);
+        }
+      });
     } catch (e) {
       // Revert local change on error
-      localeProvider.setLocaleByCode(localeProvider.locale.languageCode);
       setState(() {
         _selectedLanguage = localeProvider.locale.languageCode;
       });

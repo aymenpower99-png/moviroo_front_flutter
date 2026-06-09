@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../services/help_center_service.dart';
+import '../../../../main.dart';
 import 'help_center_models.dart';
 import 'help_article_page.dart';
 
@@ -15,12 +16,13 @@ class HelpAllArticlesPage extends StatefulWidget {
 }
 
 class _HelpAllArticlesPageState extends State<HelpAllArticlesPage> {
-  final _service = HelpCenterService();
+  late HelpCenterService _service;
   late Future<List<HelpArticle>> _future;
 
   @override
   void initState() {
     super.initState();
+    _service = HelpCenterService(lang: localeProvider.locale.languageCode);
     _future = _service.fetchAllArticles();
   }
 
@@ -50,10 +52,9 @@ class _HelpAllArticlesPageState extends State<HelpAllArticlesPage> {
         ),
         title: Text(
           'All Articles',
-          style: AppTextStyles.pageTitle(context).copyWith(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.pageTitle(
+            context,
+          ).copyWith(fontSize: 18, fontWeight: FontWeight.w700),
         ),
       ),
       body: FutureBuilder<List<HelpArticle>>(
@@ -68,7 +69,9 @@ class _HelpAllArticlesPageState extends State<HelpAllArticlesPage> {
             );
           }
 
-          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          if (snapshot.hasError ||
+              !snapshot.hasData ||
+              snapshot.data!.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -111,10 +114,9 @@ class _HelpAllArticlesPageState extends State<HelpAllArticlesPage> {
                       Expanded(
                         child: Text(
                           article.question,
-                          style: AppTextStyles.bodyMedium(context).copyWith(
-                            fontWeight: FontWeight.w500,
-                            height: 1.4,
-                          ),
+                          style: AppTextStyles.bodyMedium(
+                            context,
+                          ).copyWith(fontWeight: FontWeight.w500, height: 1.4),
                         ),
                       ),
                       const SizedBox(width: 12),

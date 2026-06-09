@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../services/support_service.dart';
@@ -68,11 +69,16 @@ class _SupportChatPageState extends State<SupportChatPage> {
   void _renderFromCache(Map<String, dynamic> cached) {
     try {
       final currentUserId = _currentUserId ?? '';
-      final ticket =
-          SupportTicket.fromJson(cached['ticket'] as Map<String, dynamic>);
+      final ticket = SupportTicket.fromJson(
+        cached['ticket'] as Map<String, dynamic>,
+      );
       final messages = (cached['messages'] as List<dynamic>)
-          .map((e) =>
-              TicketMessage.fromJson(e as Map<String, dynamic>, currentUserId))
+          .map(
+            (e) => TicketMessage.fromJson(
+              e as Map<String, dynamic>,
+              currentUserId,
+            ),
+          )
           .toList();
 
       if (mounted) {
@@ -93,8 +99,7 @@ class _SupportChatPageState extends State<SupportChatPage> {
       final data = await _supportService.getTicket(widget.ticketId);
       final loadedTicket = data['ticket'] as SupportTicket;
       final loadedMessages = data['messages'] as List<TicketMessage>;
-      print(
-          '[SupportChatPage] Loaded ${loadedMessages.length} messages');
+      print('[SupportChatPage] Loaded ${loadedMessages.length} messages');
 
       // ── Find latest admin message timestamp ──────────────────────────────
       DateTime? freshLastAdminMsgAt;
@@ -117,16 +122,20 @@ class _SupportChatPageState extends State<SupportChatPage> {
         await TicketReadReceiptHelper.setUnreadCleared(widget.ticketId, false);
       }
       await TicketReadReceiptHelper.setLastAdminMessageAt(
-          widget.ticketId, freshLastAdminMsgAt);
+        widget.ticketId,
+        freshLastAdminMsgAt,
+      );
 
       // ── Persist full ticket+messages to cache ────────────────────────────
-      await ChatCacheHelper.save(
-          widget.ticketId, loadedTicket, loadedMessages);
+      await ChatCacheHelper.save(widget.ticketId, loadedTicket, loadedMessages);
 
       // ── Compute unread divider position ──────────────────────────────────
-      final lastRead = await TicketReadReceiptHelper.getLastRead(widget.ticketId);
-      final unreadCleared =
-          await TicketReadReceiptHelper.isUnreadCleared(widget.ticketId);
+      final lastRead = await TicketReadReceiptHelper.getLastRead(
+        widget.ticketId,
+      );
+      final unreadCleared = await TicketReadReceiptHelper.isUnreadCleared(
+        widget.ticketId,
+      );
 
       int? firstUnreadIndex;
       if (!unreadCleared &&
@@ -156,9 +165,9 @@ class _SupportChatPageState extends State<SupportChatPage> {
       if (mounted) {
         setState(() => _isLoading = false);
         if (_messages.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load ticket: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to load ticket: $e')));
         }
       }
     }
@@ -191,9 +200,9 @@ class _SupportChatPageState extends State<SupportChatPage> {
       await _loadTicket();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send message: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
       }
     } finally {
       if (mounted) {
@@ -234,9 +243,9 @@ class _SupportChatPageState extends State<SupportChatPage> {
       await _loadTicket();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to edit: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to edit: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSavingEdit = false);
@@ -247,17 +256,21 @@ class _SupportChatPageState extends State<SupportChatPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete message?'),
-        content: const Text('This action cannot be undone.'),
+        title: Text(
+          AppLocalizations.of(context).translate('delete_message_title'),
+        ),
+        content: Text(
+          AppLocalizations.of(context).translate('action_cannot_undone'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).translate('cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).translate('delete')),
           ),
         ],
       ),
@@ -275,17 +288,16 @@ class _SupportChatPageState extends State<SupportChatPage> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
       }
     }
   }
 
   void _showMessageOptions(TicketMessage message) {
     if (_isResolved) return;
-    final isMine =
-        _currentUserId != null && message.senderId == _currentUserId;
+    final isMine = _currentUserId != null && message.senderId == _currentUserId;
     if (!isMine) return;
 
     showModalBottomSheet(
@@ -310,9 +322,8 @@ class _SupportChatPageState extends State<SupportChatPage> {
                 ),
               ),
               ListTile(
-                leading:
-                    const Icon(Icons.edit, color: AppColors.primaryPurple),
-                title: const Text('Edit'),
+                leading: const Icon(Icons.edit, color: AppColors.primaryPurple),
+                title: Text(AppLocalizations.of(context).translate('edit')),
                 onTap: () {
                   Navigator.pop(ctx);
                   _startEdit(message);
@@ -320,7 +331,7 @@ class _SupportChatPageState extends State<SupportChatPage> {
               ),
               ListTile(
                 leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('Delete'),
+                title: Text(AppLocalizations.of(context).translate('delete')),
                 onTap: () {
                   Navigator.pop(ctx);
                   _confirmDelete(message);
@@ -357,13 +368,23 @@ class _SupportChatPageState extends State<SupportChatPage> {
     final yesterday = today.subtract(const Duration(days: 1));
 
     if (messageDate == today) {
-      return 'Today';
+      return AppLocalizations.of(context).translate('today');
     } else if (messageDate == yesterday) {
-      return 'Yesterday';
+      return AppLocalizations.of(context).translate('yesterday');
     } else {
       final months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December',
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
       ];
       return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
     }
@@ -383,7 +404,10 @@ class _SupportChatPageState extends State<SupportChatPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Support', style: AppTextStyles.bodyMedium(context)),
+            Text(
+              AppLocalizations.of(context).translate('support_title'),
+              style: AppTextStyles.bodyMedium(context),
+            ),
             Text(
               widget.subject,
               style: AppTextStyles.bodySmall(
@@ -401,125 +425,99 @@ class _SupportChatPageState extends State<SupportChatPage> {
             child: _isLoading && _messages.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : _messages.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No messages yet',
-                          style: AppTextStyles.bodyMedium(
-                            context,
-                          ).copyWith(color: AppColors.subtext(context)),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, index) {
-                          final message = _messages[index];
+                ? Center(
+                    child: Text(
+                      AppLocalizations.of(context).translate('no_messages_yet'),
+                      style: AppTextStyles.bodyMedium(
+                        context,
+                      ).copyWith(color: AppColors.subtext(context)),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final message = _messages[index];
 
-                          // Date separator logic
-                          bool showDateSeparator = false;
-                          String dateLabel = '';
+                      // Date separator logic
+                      bool showDateSeparator = false;
+                      String dateLabel = '';
 
-                          if (index == 0) {
-                            showDateSeparator = true;
-                            dateLabel = _formatDateLabel(message.createdAt);
-                          } else {
-                            final prevMsg = _messages[index - 1];
-                            final currentDate = DateTime(
-                              message.createdAt.year,
-                              message.createdAt.month,
-                              message.createdAt.day,
-                            );
-                            final prevDate = DateTime(
-                              prevMsg.createdAt.year,
-                              prevMsg.createdAt.month,
-                              prevMsg.createdAt.day,
-                            );
-                            if (currentDate != prevDate) {
-                              showDateSeparator = true;
-                              dateLabel =
-                                  _formatDateLabel(message.createdAt);
-                            }
-                          }
+                      if (index == 0) {
+                        showDateSeparator = true;
+                        dateLabel = _formatDateLabel(message.createdAt);
+                      } else {
+                        final prevMsg = _messages[index - 1];
+                        final currentDate = DateTime(
+                          message.createdAt.year,
+                          message.createdAt.month,
+                          message.createdAt.day,
+                        );
+                        final prevDate = DateTime(
+                          prevMsg.createdAt.year,
+                          prevMsg.createdAt.month,
+                          prevMsg.createdAt.day,
+                        );
+                        if (currentDate != prevDate) {
+                          showDateSeparator = true;
+                          dateLabel = _formatDateLabel(message.createdAt);
+                        }
+                      }
 
-                          final isEditing = _editingMessageId == message.id;
-                          final showUnreadDivider =
-                              _firstUnreadIndex == index;
+                      final isEditing = _editingMessageId == message.id;
+                      final showUnreadDivider = _firstUnreadIndex == index;
 
-                          return Column(
-                            children: [
-                              if (showDateSeparator)
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  child: Center(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surface(context),
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: AppColors.border(context),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        dateLabel,
-                                        style: AppTextStyles.bodySmall(context)
-                                            .copyWith(
-                                          color: AppColors.subtext(context),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              if (showUnreadDivider) const _UnreadDivider(),
-                              if (isEditing)
-                                _EditBubble(
-                                  controller: _editController,
-                                  isSaving: _isSavingEdit,
-                                  onSave: () => _saveEdit(message.id),
-                                  onCancel: _cancelEdit,
-                                )
-                              else
-                                _MessageBubble(
-                                  message: message,
-                                  time: _formatTime(message.createdAt),
-                                  currentUserId: _currentUserId,
-                                  onLongPress: () =>
-                                      _showMessageOptions(message),
-                                  edited: message.updatedAt != null,
-                                ),
-                            ],
-                          );
-                        },
-                      ),
+                      return Column(
+                        children: [
+                          if (showDateSeparator)
+                            _DateSeparator(label: dateLabel),
+                          if (showUnreadDivider) const _UnreadDivider(),
+                          if (isEditing)
+                            _EditBubble(
+                              controller: _editController,
+                              isSaving: _isSavingEdit,
+                              onSave: () => _saveEdit(message.id),
+                              onCancel: _cancelEdit,
+                            )
+                          else
+                            _MessageBubble(
+                              message: message,
+                              time: _formatTime(message.createdAt),
+                              currentUserId: _currentUserId,
+                              onLongPress: () => _showMessageOptions(message),
+                              edited: message.updatedAt != null,
+                            ),
+                        ],
+                      );
+                    },
+                  ),
           ),
           if (_isResolved)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
                 color: AppColors.surface(context),
-                border:
-                    Border(top: BorderSide(color: AppColors.border(context))),
+                border: Border(
+                  top: BorderSide(color: AppColors.border(context)),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lock_outline,
-                      size: 18, color: AppColors.subtext(context)),
+                  Icon(
+                    Icons.lock_outline,
+                    size: 18,
+                    color: AppColors.subtext(context),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'This ticket is closed. You can still read the conversation history.',
-                      style: AppTextStyles.bodySmall(context).copyWith(
-                        color: AppColors.subtext(context),
-                      ),
+                      AppLocalizations.of(
+                        context,
+                      ).translate('ticket_closed_msg'),
+                      style: AppTextStyles.bodySmall(
+                        context,
+                      ).copyWith(color: AppColors.subtext(context)),
                     ),
                   ),
                 ],
@@ -555,7 +553,7 @@ class _UnreadDivider extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
-              'Unread messages',
+              AppLocalizations.of(context).translate('unread_messages'),
               style: AppTextStyles.bodySmall(context).copyWith(
                 color: AppColors.primaryPurple,
                 fontWeight: FontWeight.w600,
@@ -592,8 +590,7 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFromMe =
-        currentUserId != null && message.senderId == currentUserId;
+    final isFromMe = currentUserId != null && message.senderId == currentUserId;
 
     return Align(
       alignment: isFromMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -601,8 +598,7 @@ class _MessageBubble extends StatelessWidget {
         onLongPress: onLongPress,
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           constraints: const BoxConstraints(maxWidth: 280),
           decoration: BoxDecoration(
             color: isFromMe
@@ -619,8 +615,7 @@ class _MessageBubble extends StatelessWidget {
               Text(
                 message.body,
                 style: AppTextStyles.bodyMedium(context).copyWith(
-                  color:
-                      isFromMe ? Colors.white : AppColors.text(context),
+                  color: isFromMe ? Colors.white : AppColors.text(context),
                 ),
               ),
               const SizedBox(height: 4),
@@ -639,7 +634,7 @@ class _MessageBubble extends StatelessWidget {
                   if (edited) ...[
                     const SizedBox(width: 6),
                     Text(
-                      'edited',
+                      AppLocalizations.of(context).translate('edited'),
                       style: AppTextStyles.bodySmall(context).copyWith(
                         color: isFromMe
                             ? Colors.white.withValues(alpha: 0.6)
@@ -678,12 +673,15 @@ class _EditBubble extends StatelessWidget {
       alignment: Alignment.centerRight,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
         constraints: const BoxConstraints(maxWidth: 280),
         decoration: BoxDecoration(
           color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primaryPurple),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.primaryPurple.withValues(alpha: 0.5),
+            width: 1,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -692,57 +690,90 @@ class _EditBubble extends StatelessWidget {
               controller: controller,
               maxLines: null,
               decoration: InputDecoration(
-                hintText: 'Edit message...',
-                hintStyle: AppTextStyles.bodyMedium(context)
-                    .copyWith(color: AppColors.subtext(context)),
+                hintText: AppLocalizations.of(
+                  context,
+                ).translate('edit_message_hint'),
+                hintStyle: AppTextStyles.bodyMedium(
+                  context,
+                ).copyWith(color: AppColors.subtext(context)),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
-              style: AppTextStyles.bodyMedium(context)
-                  .copyWith(color: AppColors.text(context)),
+              style: AppTextStyles.bodyMedium(
+                context,
+              ).copyWith(color: AppColors.text(context)),
               autofocus: true,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => onSave(),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton(
-                  onPressed: onCancel,
-                  style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
+                GestureDetector(
+                  onTap: onCancel,
                   child: Text(
-                    'Cancel',
-                    style: AppTextStyles.bodySmall(context)
-                        .copyWith(color: AppColors.subtext(context)),
+                    AppLocalizations.of(context).translate('cancel'),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.subtext(context),
+                      fontFamily: 'Inter',
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: isSaving ? null : onSave,
-                  style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: isSaving ? null : onSave,
                   child: Text(
-                    'Save',
-                    style: AppTextStyles.bodySmall(context).copyWith(
-                      color: AppColors.primaryPurple,
-                      fontWeight: FontWeight.w600,
+                    AppLocalizations.of(context).translate('save'),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: isSaving
+                          ? AppColors.primaryPurple.withValues(alpha: 0.4)
+                          : AppColors.primaryPurple,
+                      fontFamily: 'Inter',
                     ),
                   ),
                 ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Date separator (small card/chip style) ─────────────────────────────────
+class _DateSeparator extends StatelessWidget {
+  final String label;
+  const _DateSeparator({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.bg(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border(context)),
+          ),
+          child: Text(
+            label,
+            style: AppTextStyles.bodySmall(context).copyWith(
+              fontSize: 11,
+              color: AppColors.subtext(context),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ),
     );
@@ -774,7 +805,9 @@ class _MessageInputBar extends StatelessWidget {
             child: TextField(
               controller: controller,
               decoration: InputDecoration(
-                hintText: 'Type a message...',
+                hintText: AppLocalizations.of(
+                  context,
+                ).translate('type_message_hint'),
                 hintStyle: AppTextStyles.bodyMedium(
                   context,
                 ).copyWith(color: AppColors.subtext(context)),

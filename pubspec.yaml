@@ -69,12 +69,8 @@ flutter_launcher_icons:
 
 flutter_native_splash:
   color: "#FFFFFF"
-  image: images/ls.png
+  image: images/logo_centered.png
   fullscreen: true
-
-  android_12:
-    color: "#FFFFFF"
-    image: images/ls.png
 
 flutter:
   uses-material-design: true
@@ -89,8 +85,10 @@ flutter:
     - images/img.png
     - images/lsnn.png
     - images/logob.png
+    - images/logo_centered.png
     - images/splash.json
     - images/J.json
+    - images/splash_screen.png
     - images/appanim.mp4
     - images/complete.gif
     - images/map_preview.png

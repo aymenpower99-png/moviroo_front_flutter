@@ -16,20 +16,31 @@ class HelpCenterService {
 
   static List<HelpArticle>? _cachedArticles;
   static DateTime? _cacheTime;
+  static String? _cachedLang;
   static const Duration _cacheTtl = Duration(minutes: 5);
+
+  /// Clear cache when language changes
+  static void clearCache() {
+    _cachedArticles = null;
+    _cacheTime = null;
+    _cachedLang = null;
+  }
 
   /// Synchronously returns the 6 categories from cache (null if cache is cold).
   /// Use this in initState to skip the loading spinner on re-entry.
   static List<HelpCategory>? get cachedCategories {
     if (_cachedArticles == null) return null;
     return _fixedCategories
-        .map((def) => HelpCategory(
-              id: def.key,
-              name: def.label,
-              icon: iconForCategory(def.key),
-              articleCount:
-                  _cachedArticles!.where((a) => a.categoryId == def.key).length,
-            ))
+        .map(
+          (def) => HelpCategory(
+            id: def.key,
+            name: def.label,
+            icon: iconForCategory(def.key),
+            articleCount: _cachedArticles!
+                .where((a) => a.categoryId == def.key)
+                .length,
+          ),
+        )
         .toList();
   }
 
@@ -39,28 +50,35 @@ class HelpCenterService {
     return _cachedArticles!.where((a) => a.categoryId == categoryId).toList();
   }
 
-  // ── Static category definitions ───────────────────────────────────────────
-
+  // ── Static category definitions with translations ─────────────────────────────
   static const List<_CategoryDef> _fixedCategories = [
-    _CategoryDef(key: 'account',   label: 'Account'),
-    _CategoryDef(key: 'payments',  label: 'Payments'),
-    _CategoryDef(key: 'trips',     label: 'Trips'),
-    _CategoryDef(key: 'safety',    label: 'Safety'),
+    _CategoryDef(key: 'account', label: 'Account'),
+    _CategoryDef(key: 'payments', label: 'Payments'),
+    _CategoryDef(key: 'trips', label: 'Trips'),
+    _CategoryDef(key: 'safety', label: 'Safety'),
     _CategoryDef(key: 'technical', label: 'Technical Issues'),
-    _CategoryDef(key: 'other',     label: 'Other'),
+    _CategoryDef(key: 'other', label: 'Other'),
   ];
 
   // ── Public API ────────────────────────────────────────────────────────────
 
   Future<List<HelpCategory>> fetchCategories() async {
-    final counts = await _fetchCountsPerCategory();
+    final articles = await _fetchAllFromBackend();
+    final categoryMap = <String, int>{};
+
+    for (final a in articles) {
+      categoryMap[a.categoryId] = (categoryMap[a.categoryId] ?? 0) + 1;
+    }
+
     return _fixedCategories
-        .map((def) => HelpCategory(
-              id: def.key,
-              name: def.label,
-              icon: iconForCategory(def.key),
-              articleCount: counts[def.key] ?? 0,
-            ))
+        .map(
+          (def) => HelpCategory(
+            id: def.key,
+            name: def.label,
+            icon: iconForCategory(def.key),
+            articleCount: categoryMap[def.key] ?? 0,
+          ),
+        )
         .toList();
   }
 
@@ -77,34 +95,33 @@ class HelpCenterService {
 
   static IconData iconForCategory(String key) {
     switch (key) {
-      case 'account':   return Icons.manage_accounts_rounded;
-      case 'payments':  return Icons.credit_card_rounded;
-      case 'trips':     return Icons.location_on_rounded;
-      case 'safety':    return Icons.health_and_safety_rounded;
-      case 'technical': return Icons.build_rounded;
+      case 'account':
+        return Icons.manage_accounts_rounded;
+      case 'payments':
+        return Icons.credit_card_rounded;
+      case 'trips':
+        return Icons.location_on_rounded;
+      case 'safety':
+        return Icons.health_and_safety_rounded;
+      case 'technical':
+        return Icons.build_rounded;
       case 'other':
-      default:          return Icons.grid_view_rounded;
+      default:
+        return Icons.grid_view_rounded;
     }
   }
 
-  // ── Private ───────────────────────────────────────────────────────────────
-
-  Future<Map<String, int>> _fetchCountsPerCategory() async {
-    try {
-      final articles = await _fetchAllFromBackend();
-      final counts = <String, int>{};
-      for (final a in articles) {
-        counts[a.categoryId] = (counts[a.categoryId] ?? 0) + 1;
-      }
-      return counts;
-    } catch (e) {
-      debugPrint('HelpCenterService._fetchCountsPerCategory error: $e');
-      return {};
-    }
-  }
+  // -- Private ---------------------------------------------------------------
 
   /// Returns cached articles instantly if fresh; otherwise fetches from API.
   Future<List<HelpArticle>> _fetchAllFromBackend() async {
+    // Clear cache if language changed
+    if (_cachedLang != lang) {
+      _cachedArticles = null;
+      _cacheTime = null;
+      _cachedLang = lang;
+    }
+
     // Return cache if still fresh
     if (_cachedArticles != null &&
         _cacheTime != null &&
@@ -120,21 +137,20 @@ class HelpCenterService {
             .map((j) => HelpArticle.fromJson(j as Map<String, dynamic>))
             .toList();
         _cacheTime = DateTime.now();
+        _cachedLang = lang;
         return _cachedArticles!;
       }
     } catch (e) {
       debugPrint('HelpCenterService._fetchAllFromBackend error: $e');
     }
-    return _cachedArticles ?? [];   // return stale cache on error rather than []
+    return _cachedArticles ?? []; // return stale cache on error rather than []
   }
 }
 
-// ── Internal helper ───────────────────────────────────────────────────────────
+// -- Internal helper -----------------------------------------------------------
 
 class _CategoryDef {
   final String key;
   final String label;
   const _CategoryDef({required this.key, required this.label});
 }
-
-

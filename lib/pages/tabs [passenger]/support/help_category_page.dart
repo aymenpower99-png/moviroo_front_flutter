@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../services/help_center_service.dart';
+import '../../../../main.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'help_center_models.dart';
 import 'help_article_page.dart';
 
@@ -18,15 +20,18 @@ class HelpCategoryPage extends StatefulWidget {
 }
 
 class _HelpCategoryPageState extends State<HelpCategoryPage> {
-  final _service = HelpCenterService();
+  late HelpCenterService _service;
   List<HelpArticle>? _articles;
   bool _loading = false;
 
   @override
   void initState() {
     super.initState();
+    _service = HelpCenterService(lang: localeProvider.locale.languageCode);
     // Use cache if warm → instant render, no spinner
-    final cached = HelpCenterService.cachedArticlesByCategory(widget.category.id);
+    final cached = HelpCenterService.cachedArticlesByCategory(
+      widget.category.id,
+    );
     if (cached != null) {
       _articles = cached;
       // Silently refresh in background
@@ -39,8 +44,14 @@ class _HelpCategoryPageState extends State<HelpCategoryPage> {
 
   Future<void> _fetch() async {
     try {
-      final articles = await _service.fetchArticlesByCategory(widget.category.id);
-      if (mounted) setState(() { _articles = articles; _loading = false; });
+      final articles = await _service.fetchArticlesByCategory(
+        widget.category.id,
+      );
+      if (mounted)
+        setState(() {
+          _articles = articles;
+          _loading = false;
+        });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
@@ -48,7 +59,9 @@ class _HelpCategoryPageState extends State<HelpCategoryPage> {
 
   Future<void> _refresh() async {
     try {
-      final articles = await _service.fetchArticlesByCategory(widget.category.id);
+      final articles = await _service.fetchArticlesByCategory(
+        widget.category.id,
+      );
       if (mounted) setState(() => _articles = articles);
     } catch (_) {}
   }
@@ -95,11 +108,12 @@ class _HelpCategoryPageState extends State<HelpCategoryPage> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                widget.category.name,
-                style: AppTextStyles.pageTitle(context).copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
+                AppLocalizations.of(
+                  context,
+                ).translate('hc_cat_${widget.category.id}'),
+                style: AppTextStyles.pageTitle(
+                  context,
+                ).copyWith(fontSize: 18, fontWeight: FontWeight.w700),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -114,63 +128,63 @@ class _HelpCategoryPageState extends State<HelpCategoryPage> {
               ),
             )
           : (_articles == null || _articles!.isEmpty)
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Text(
-                      'No articles available yet.',
-                      style: AppTextStyles.bodyMedium(context),
-                      textAlign: TextAlign.center,
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text(
+                  'No articles available yet.',
+                  style: AppTextStyles.bodyMedium(context),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: _articles!.length,
+              separatorBuilder: (_, __) => Divider(
+                height: 1,
+                color: AppColors.border(context),
+                indent: 20,
+                endIndent: 20,
+              ),
+              itemBuilder: (context, i) {
+                final article = _articles![i];
+                return InkWell(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => HelpArticlePage(article: article),
                     ),
                   ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: _articles!.length,
-                  separatorBuilder: (_, __) => Divider(
-                    height: 1,
-                    color: AppColors.border(context),
-                    indent: 20,
-                    endIndent: 20,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 18,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            article.question,
+                            style: AppTextStyles.bodyMedium(context).copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppColors.subtext(context),
+                          size: 22,
+                        ),
+                      ],
+                    ),
                   ),
-                  itemBuilder: (context, i) {
-                    final article = _articles![i];
-                    return InkWell(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => HelpArticlePage(article: article),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 18,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                article.question,
-                                style: AppTextStyles.bodyMedium(context).copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              color: AppColors.subtext(context),
-                              size: 22,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                );
+              },
+            ),
     );
   }
 }

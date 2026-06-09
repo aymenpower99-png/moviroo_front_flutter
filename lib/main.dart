@@ -112,6 +112,8 @@ class _SmartWayAppState extends State<SmartWayApp> {
     final code = localeProvider.locale.languageCode;
     geocoding_svc.setAddressLocale(code);
     mapbox_place.setMapboxPlaceLocale(code);
+    // Keep notification service translations in sync with app locale
+    NotificationService().setLanguage(code);
   }
 
   @override
@@ -136,7 +138,10 @@ class _SmartWayAppState extends State<SmartWayApp> {
           data['driver_logo_url']?.toString();
 
       // Pre-cache driver photo so avatar renders instantly on next screen
-      if (driverId != null && driverId.isNotEmpty && driverPhotoUrl != null && driverPhotoUrl.isNotEmpty) {
+      if (driverId != null &&
+          driverId.isNotEmpty &&
+          driverPhotoUrl != null &&
+          driverPhotoUrl.isNotEmpty) {
         DriverProfileCache.instance.set(driverId, {
           'logoUrl': driverPhotoUrl,
           'firstName': driverName,

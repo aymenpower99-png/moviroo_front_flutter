@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/tab_bar.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/support_service.dart';
-import '../../../../services/support_websocket_service.dart';
 import '../../../../services/help_center_service.dart';
 import '../../../../routing/router.dart';
+import '../../../../main.dart';
 import 'help_center_models.dart';
 import 'help_center_widgets.dart';
 import 'help_category_page.dart';
@@ -26,31 +27,37 @@ class SupportPage extends StatefulWidget {
 class _SupportPageState extends State<SupportPage> {
   int _tabIndex = 3;
   final SupportService _supportService = SupportService();
-  final SupportWebSocketService _wsService = SupportWebSocketService();
-  final HelpCenterService _helpCenterService = HelpCenterService();
+  late HelpCenterService _helpCenterService;
   List<SupportTicket> _tickets = [];
   bool _isLoadingTickets = false;
   bool _hasLoadedTickets = false;
-  int _unreadCount = 0;
+  Timer? _pollTimer;
 
   // ── Help Center categories ─────────────────────────────────────────────────
   List<HelpCategory>? _categories;
   bool _loadingCategories = false;
 
+  int get _unreadCount => _tickets.where((t) => t.hasUnread).length;
+
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _supportService.dispose();
     super.dispose();
   }
 
   void _showMessagesModal() {
-    setState(() => _unreadCount = 0);
-    // Trigger a silent background refresh for the parent state,
-    // but the modal will load from cache instantly and refresh itself.
+    // Mark all tickets as read on backend — badge clears immediately
+    _supportService.markAllAsRead();
+    setState(() {
+      for (final t in _tickets) {
+        if (t.hasUnread) {
+          // Optimistic local update so badge clears instantly
+          t.hasUnread = false;
+        }
+      }
+    });
     _loadTickets();
-    print(
-      '[SupportPage] Opening messages modal with ${_tickets.length} tickets',
-    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -58,9 +65,6 @@ class _SupportPageState extends State<SupportPage> {
       builder: (context) => MessagesModal(
         initialTickets: _tickets,
         onTicketTap: (ticket) {
-          print(
-            '[SupportPage] Ticket tapped, navigating to chat - ticketId: ${ticket.id}',
-          );
           Navigator.pop(context);
           AppRouter.push(
             context,
@@ -73,7 +77,6 @@ class _SupportPageState extends State<SupportPage> {
   }
 
   Future<void> _loadTickets() async {
-    // Cache-first: load from in-memory cache instantly if available
     final cached = SupportService.cachedTickets;
     if (cached != null && cached.isNotEmpty && _tickets.isEmpty) {
       setState(() {
@@ -81,20 +84,25 @@ class _SupportPageState extends State<SupportPage> {
       });
     }
 
-    // Silently refresh from API in background
     try {
-      print('[SupportPage] Loading tickets...');
       final tickets = await _supportService.listTickets();
-      print('[SupportPage] Loaded ${tickets.length} tickets');
       if (mounted) {
         setState(() {
           _tickets = tickets;
           _isLoadingTickets = false;
           _hasLoadedTickets = true;
         });
+        // Debug: log ticket data for badge troubleshooting
+        for (final t in tickets) {
+          print(
+            '[SupportPage] ticket=${t.id} status=${t.status} '
+            'hasUnread=${t.hasUnread} '
+            'updatedAt=${t.updatedAt.toIso8601String()} '
+            'unreadCount=$_unreadCount',
+          );
+        }
       }
     } catch (e) {
-      print('[SupportPage] Error loading tickets: $e');
       if (mounted) {
         setState(() {
           _isLoadingTickets = false;
@@ -107,20 +115,26 @@ class _SupportPageState extends State<SupportPage> {
   @override
   void initState() {
     super.initState();
-    // Tickets are loaded only when MessagesModal is first opened
-    // (see _showMessagesModal). No automatic background polling.
-    _connectWebSocket();
+    _helpCenterService = HelpCenterService(
+      lang: localeProvider.locale.languageCode,
+    );
 
-    // Use cache if warm → instant render, no spinner
     final cached = HelpCenterService.cachedCategories;
     if (cached != null) {
       _categories = cached;
-      // Silently refresh in background so counts stay up-to-date
       _refreshCategories();
     } else {
       _loadingCategories = true;
       _fetchCategories();
     }
+
+    // Load tickets immediately so badge shows on first visit
+    _loadTickets();
+
+    // Poll tickets every 15s to detect new admin replies (replaces WebSocket)
+    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted) _loadTickets();
+    });
   }
 
   Future<void> _fetchCategories() async {
@@ -142,15 +156,6 @@ class _SupportPageState extends State<SupportPage> {
       final categories = await _helpCenterService.fetchCategories();
       if (mounted) setState(() => _categories = categories);
     } catch (_) {}
-  }
-
-  Future<void> _connectWebSocket() async {
-    await _wsService.connect();
-    _wsService.onUnreadCountChanged = (count) {
-      if (mounted) {
-        setState(() => _unreadCount += count);
-      }
-    };
   }
 
   Future<void> _callSupport() async {
@@ -201,6 +206,7 @@ class _SupportPageState extends State<SupportPage> {
                         GestureDetector(
                           onTap: _showMessagesModal,
                           child: Stack(
+                            clipBehavior: Clip.none,
                             children: [
                               Container(
                                 width: 40,
@@ -223,8 +229,8 @@ class _SupportPageState extends State<SupportPage> {
                               ),
                               if (_unreadCount > 0)
                                 Positioned(
-                                  right: 0,
-                                  top: 0,
+                                  right: -4,
+                                  top: -4,
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: const BoxDecoration(
@@ -232,15 +238,16 @@ class _SupportPageState extends State<SupportPage> {
                                       shape: BoxShape.circle,
                                     ),
                                     constraints: const BoxConstraints(
-                                      minWidth: 16,
-                                      minHeight: 16,
+                                      minWidth: 18,
+                                      minHeight: 18,
                                     ),
                                     child: Text(
-                                      _unreadCount > 9 ? '9+' : '$_unreadCount',
+                                      '${_unreadCount > 9 ? '9+' : _unreadCount}',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 10,
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight: FontWeight.w700,
+                                        fontFamily: 'Inter',
                                       ),
                                       textAlign: TextAlign.center,
                                     ),

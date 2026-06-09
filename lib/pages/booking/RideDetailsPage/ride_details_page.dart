@@ -161,6 +161,10 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   }
 
   String? get _passengerName {
+    // Prefer the snapshot stored at booking time (survives account deletion)
+    final snapshot = _bookingData?['passengerName'] as String?;
+    if (snapshot != null && snapshot.isNotEmpty) return snapshot;
+    // Fallback to live passenger object
     final p = _bookingData?['passenger'] as Map<String, dynamic>?;
     if (p != null) {
       final first = p['firstName'] as String? ?? '';
@@ -177,6 +181,10 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   }
 
   String? get _passengerPhone {
+    // Prefer the snapshot stored at booking time
+    final snapshot = _bookingData?['passengerPhone'] as String?;
+    if (snapshot != null && snapshot.isNotEmpty) return snapshot;
+    // Fallback to live passenger object
     final p = _bookingData?['passenger'] as Map<String, dynamic>?;
     return p?['phone'] as String?;
   }

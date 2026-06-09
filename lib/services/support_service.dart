@@ -61,7 +61,7 @@ class SupportTicket {
   final DateTime updatedAt;
   final String? lastMessage;
   final DateTime? lastMessageAt;
-  final bool hasUnread;
+  bool hasUnread;
 
   SupportTicket({
     required this.id,
@@ -87,18 +87,22 @@ class SupportTicket {
         (e) => e.value == json['category'],
         orElse: () => SupportTicketCategory.other,
       ),
-      rideId: json['ride_id'],
+      rideId: json['rideId'] ?? json['ride_id'],
       createdAt: DateTime.parse(
-        json['created_at'] ?? DateTime.now().toIso8601String(),
+        json['createdAt'] ??
+            json['created_at'] ??
+            DateTime.now().toIso8601String(),
       ),
       updatedAt: DateTime.parse(
-        json['updated_at'] ?? DateTime.now().toIso8601String(),
+        json['updatedAt'] ??
+            json['updated_at'] ??
+            DateTime.now().toIso8601String(),
       ),
-      lastMessage: json['last_message'],
-      lastMessageAt: json['last_message_at'] != null
-          ? DateTime.parse(json['last_message_at'])
+      lastMessage: json['lastMessage'] ?? json['last_message'],
+      lastMessageAt: (json['lastMessageAt'] ?? json['last_message_at']) != null
+          ? DateTime.parse(json['lastMessageAt'] ?? json['last_message_at'])
           : null,
-      hasUnread: json['has_unread'] ?? false,
+      hasUnread: json['hasUnread'] ?? json['has_unread'] ?? false,
     );
   }
 }
@@ -147,11 +151,15 @@ class TicketMessage {
       senderId: senderId,
       ticketId: json['ticketId'] ?? json['ticket_id'] ?? '',
       createdAt: DateTime.parse(
-        json['createdAt'] ?? json['created_at'] ?? DateTime.now().toIso8601String(),
+        json['createdAt'] ??
+            json['created_at'] ??
+            DateTime.now().toIso8601String(),
       ),
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'])
-          : (json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null),
+          : (json['updated_at'] != null
+                ? DateTime.parse(json['updated_at'])
+                : null),
       isFromAdmin: isFromAdmin,
     );
   }
@@ -322,7 +330,9 @@ class SupportService {
       final headers = await _getHeaders();
       final response = await _client
           .patch(
-            Uri.parse('${AppConfig.baseUrl}/support/tickets/$ticketId/messages/$messageId'),
+            Uri.parse(
+              '${AppConfig.baseUrl}/support/tickets/$ticketId/messages/$messageId',
+            ),
             headers: headers,
             body: jsonEncode({'body': body}),
           )
@@ -349,7 +359,9 @@ class SupportService {
       final headers = await _getHeaders();
       final response = await _client
           .delete(
-            Uri.parse('${AppConfig.baseUrl}/support/tickets/$ticketId/messages/$messageId'),
+            Uri.parse(
+              '${AppConfig.baseUrl}/support/tickets/$ticketId/messages/$messageId',
+            ),
             headers: headers,
           )
           .timeout(const Duration(seconds: 15));
@@ -360,6 +372,19 @@ class SupportService {
     } catch (e) {
       throw Exception('Failed to delete message: $e');
     }
+  }
+
+  /// Mark all user tickets as read (clears badge)
+  Future<void> markAllAsRead() async {
+    try {
+      final headers = await _getHeaders();
+      await _client
+          .patch(
+            Uri.parse('${AppConfig.baseUrl}/support/tickets/read-all'),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {}
   }
 
   void dispose() {

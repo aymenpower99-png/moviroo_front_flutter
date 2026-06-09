@@ -55,23 +55,21 @@ class HelpCategoryCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            // Category name
+            // Category name - use translation key
             Text(
-              category.name,
-              style: AppTextStyles.bodyLarge(context).copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
+              t('hc_cat_${category.id}'),
+              style: AppTextStyles.bodyLarge(
+                context,
+              ).copyWith(fontWeight: FontWeight.w700, fontSize: 14),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             // Dynamic article count
             Text(
-              t('articles_count').replaceAll(
-                '{count}',
-                category.articleCount.toString(),
-              ),
+              t(
+                'articles_count',
+              ).replaceAll('{count}', category.articleCount.toString()),
               style: AppTextStyles.bodySmall(context).copyWith(fontSize: 11),
             ),
           ],

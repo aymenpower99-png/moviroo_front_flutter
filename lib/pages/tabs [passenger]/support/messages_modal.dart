@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../services/support_service.dart';
-import '../../../../services/ticket_read_receipt_helper.dart';
 
 class MessagesModal extends StatefulWidget {
   final List<SupportTicket> initialTickets;
@@ -21,27 +22,24 @@ class MessagesModal extends StatefulWidget {
 class _MessagesModalState extends State<MessagesModal> {
   final SupportService _supportService = SupportService();
   List<SupportTicket> _tickets = [];
-  Map<String, bool> _unreadMap = {};
   bool _isRefreshing = false;
+  Timer? _ticker;
 
   @override
   void initState() {
     super.initState();
     _tickets = List.from(widget.initialTickets);
-    _computeUnreadMap();
     _loadTickets();
+    // Rebuild periodically so relative timestamps update (same as driver app)
+    _ticker = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
-  Future<void> _computeUnreadMap() async {
-    final map = <String, bool>{};
-    for (final t in _tickets) {
-      final lastAdminMsgAt =
-          await TicketReadReceiptHelper.getLastAdminMessageAt(t.id) ??
-              t.lastMessageAt;
-      final unread = await TicketReadReceiptHelper.hasUnread(t.id, lastAdminMsgAt);
-      map[t.id] = unread;
-    }
-    if (mounted) setState(() => _unreadMap = map);
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadTickets() async {
@@ -53,7 +51,6 @@ class _MessagesModalState extends State<MessagesModal> {
           _tickets = fresh;
           _isRefreshing = false;
         });
-        _computeUnreadMap();
       }
     } catch (_) {
       if (mounted) setState(() => _isRefreshing = false);
@@ -61,9 +58,6 @@ class _MessagesModalState extends State<MessagesModal> {
   }
 
   void _handleTap(SupportTicket ticket) {
-    // Remove dot immediately in-memory
-    setState(() => _unreadMap[ticket.id] = false);
-    TicketReadReceiptHelper.markAsRead(ticket.id);
     widget.onTicketTap(ticket);
   }
 
@@ -80,7 +74,7 @@ class _MessagesModalState extends State<MessagesModal> {
           // Handle bar
           Container(
             margin: const EdgeInsets.only(top: 12),
-            width: 40,
+            width: 36,
             height: 4,
             decoration: BoxDecoration(
               color: AppColors.border(context),
@@ -94,10 +88,10 @@ class _MessagesModalState extends State<MessagesModal> {
               children: [
                 Expanded(
                   child: Text(
-                    'Messages',
+                    AppLocalizations.of(context).translate('messages'),
                     style: AppTextStyles.pageTitle(
                       context,
-                    ).copyWith(fontSize: 20),
+                    ).copyWith(fontSize: 20, fontWeight: FontWeight.w700),
                   ),
                 ),
                 if (_isRefreshing)
@@ -112,26 +106,56 @@ class _MessagesModalState extends State<MessagesModal> {
               ],
             ),
           ),
-          const Divider(height: 1),
+          Divider(
+            height: 1,
+            color: AppColors.border(context).withValues(alpha: 0.5),
+          ),
           // Content
           Expanded(
             child: _tickets.isEmpty
                 ? Center(
-                    child: Text(
-                      'No messages yet',
-                      style: AppTextStyles.bodyMedium(
-                        context,
-                      ).copyWith(color: AppColors.subtext(context)),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryPurple.withValues(
+                              alpha: 0.08,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.forum_outlined,
+                            color: AppColors.primaryPurple.withValues(
+                              alpha: 0.5,
+                            ),
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          AppLocalizations.of(
+                            context,
+                          ).translate('no_messages_yet'),
+                          style: AppTextStyles.bodyMedium(context).copyWith(
+                            color: AppColors.subtext(context),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                     itemCount: _tickets.length,
                     itemBuilder: (context, index) {
                       final ticket = _tickets[index];
+                      final unread = ticket.hasUnread;
                       return _TicketThreadItem(
                         ticket: ticket,
-                        showDot: _unreadMap[ticket.id] ?? false,
+                        unread: unread,
                         onTap: () => _handleTap(ticket),
                       );
                     },
@@ -145,64 +169,92 @@ class _MessagesModalState extends State<MessagesModal> {
 
 class _TicketThreadItem extends StatelessWidget {
   final SupportTicket ticket;
-  final bool showDot;
+  final bool unread;
   final VoidCallback onTap;
 
   const _TicketThreadItem({
     required this.ticket,
-    required this.showDot,
+    required this.unread,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          color: AppColors.bg(context),
-          borderRadius: BorderRadius.circular(12),
+          color: unread
+              ? AppColors.primaryPurple.withValues(alpha: isDark ? 0.12 : 0.05)
+              : AppColors.bg(context),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: unread
+                ? AppColors.primaryPurple.withValues(alpha: 0.2)
+                : AppColors.border(context).withValues(alpha: 0.5),
+            width: 1,
+          ),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Unread dot indicator — left edge
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 7,
+              height: 7,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                color: unread ? AppColors.primaryPurple : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+            ),
             // Icon
             Container(
-              width: 44,
-              height: 44,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: AppColors.primaryPurple.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(11),
               ),
               child: Icon(
                 Icons.support_agent_rounded,
                 color: AppColors.primaryPurple,
-                size: 22,
+                size: 21,
               ),
             ),
-            const SizedBox(width: 12),
-            // Content
+            const SizedBox(width: 11),
+            // Subject + preview
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    ticket.subject,
-                    style: AppTextStyles.bodyLarge(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.w600),
+                    AppLocalizations.of(context).translate('customer_support'),
+                    style: AppTextStyles.bodyLarge(context).copyWith(
+                      fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
+                      color: unread
+                          ? AppColors.text(context)
+                          : AppColors.text(context).withValues(alpha: 0.85),
+                      fontSize: 14,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     ticket.lastMessage ?? ticket.description,
                     style: AppTextStyles.bodySmall(context).copyWith(
-                      color: AppColors.subtext(context),
-                      fontWeight: showDot
-                          ? FontWeight.w600
-                          : FontWeight.normal,
+                      color: unread
+                          ? AppColors.text(context).withValues(alpha: 0.65)
+                          : AppColors.subtext(context),
+                      fontWeight: unread ? FontWeight.w500 : FontWeight.w400,
+                      fontSize: 12.5,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -210,17 +262,7 @@ class _TicketThreadItem extends StatelessWidget {
                 ],
               ),
             ),
-            // Unread dot
-            if (showDot)
-              Container(
-                width: 10,
-                height: 10,
-                margin: const EdgeInsets.only(left: 8),
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryPurple,
-                  shape: BoxShape.circle,
-                ),
-              ),
+            const SizedBox(width: 8),
           ],
         ),
       ),

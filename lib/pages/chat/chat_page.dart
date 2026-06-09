@@ -583,42 +583,7 @@ class _ChatPageState extends State<ChatPage> {
                                 return Column(
                                   children: [
                                     if (showDateSep && dateLabel.isNotEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 12,
-                                        ),
-                                        child: Center(
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.surface(context),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              border: Border.all(
-                                                color: AppColors.border(
-                                                  context,
-                                                ),
-                                              ),
-                                            ),
-                                            child: Text(
-                                              dateLabel,
-                                              style:
-                                                  AppTextStyles.bodySmall(
-                                                    context,
-                                                  ).copyWith(
-                                                    color: AppColors.subtext(
-                                                      context,
-                                                    ),
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                                      _DateSeparator(label: dateLabel),
                                     ChatBubble(
                                       message: msg,
                                       showTranslation: _autoTranslate,
@@ -648,6 +613,48 @@ class _ChatPageState extends State<ChatPage> {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Date separator (divider style: line — label — line) ─────────────────────
+class _DateSeparator extends StatelessWidget {
+  final String label;
+  const _DateSeparator({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        children: [
+          // Left line
+          Expanded(
+            child: Container(
+              height: 1,
+              color: AppColors.border(context),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Label
+          Text(
+            label,
+            style: AppTextStyles.bodySmall(context).copyWith(
+              fontSize: 12,
+              color: AppColors.subtext(context),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Right line
+          Expanded(
+            child: Container(
+              height: 1,
+              color: AppColors.border(context),
+            ),
+          ),
+        ],
       ),
     );
   }

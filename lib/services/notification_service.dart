@@ -248,7 +248,15 @@ class NotificationService {
       }
 
       title = _translate('notif_${translationKey}_title');
-      body = _translate('notif_${translationKey}_body');
+
+      // For chat/reply types, keep the actual message text as body
+      // (the FCM body contains the real reply content from the sender)
+      if (notificationType == 'SUPPORT_TICKET_REPLY' ||
+          notificationType == 'CHAT_MESSAGE') {
+        // body already set from FCM notification above — keep it
+      } else {
+        body = _translate('notif_${translationKey}_body');
+      }
     }
 
     final channelName = switch (channelId) {

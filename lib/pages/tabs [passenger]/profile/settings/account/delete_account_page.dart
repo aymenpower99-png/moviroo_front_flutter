@@ -35,6 +35,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   bool _has2fa = false;
   bool _hasBiometric = false;
   bool _biometricDeviceSupported = false;
+  bool _isGoogleUser = false;
 
   String? _errorMessage;
 
@@ -47,6 +48,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
     if (cached != null) {
       _hasBiometric = (cached['passkeyEnabled'] as bool?) ?? false;
       _has2fa = (cached['email2faEnabled'] as bool?) ?? false;
+      _isGoogleUser = (cached['provider'] as String?) == 'google';
     } else {
       _isBootstrapping = true;
     }
@@ -72,10 +74,12 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
 
       final newHasBiometric = (user?['passkeyEnabled'] as bool?) ?? false;
       final newHas2fa = (user?['email2faEnabled'] as bool?) ?? false;
+      final newIsGoogle = (user?['provider'] as String?) == 'google';
       final changed =
           newHasBiometric != _hasBiometric ||
           supported != _biometricDeviceSupported ||
           newHas2fa != _has2fa ||
+          newIsGoogle != _isGoogleUser ||
           _isBootstrapping;
 
       if (changed) {
@@ -83,6 +87,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           _hasBiometric = newHasBiometric;
           _biometricDeviceSupported = supported;
           _has2fa = newHas2fa;
+          _isGoogleUser = newIsGoogle;
           _isBootstrapping = false;
         });
       }
@@ -119,6 +124,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   }
 
   Future<void> _confirmDelete() async {
+    // ── All users: show confirmation dialog before deleting ──
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -167,19 +173,10 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
     });
 
     try {
-      switch (_method) {
-        case _ReAuthMethod.password:
-          await _auth.deleteAccount(password: _passwordCtrl.text);
-          break;
-
-        case _ReAuthMethod.emailOtp:
-          if (_otpCtrl.text.length != 6) {
-            throw Exception('Enter the 6-digit code sent to your email.');
-          }
-          await _auth.deleteAccount(otp: _otpCtrl.text);
-          break;
-
-        case _ReAuthMethod.biometric:
+      // ── Google user: no password needed ────────────────────────────────────
+      if (_isGoogleUser) {
+        if (_hasBiometric && _biometricDeviceSupported) {
+          // Biometric enabled → challenge first
           final challenge = await _biometric.challenge(
             reason: 'Confirm your identity to delete your account.',
             purpose: 'delete-account',
@@ -190,7 +187,37 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
             );
           }
           await _auth.deleteAccount(passkeyToken: challenge.actionToken);
-          break;
+        } else {
+          // No biometric → delete directly
+          await _auth.deleteAccount();
+        }
+      } else {
+        // ── Normal user: re-auth via selected method ───────────────────────────
+        switch (_method) {
+          case _ReAuthMethod.password:
+            await _auth.deleteAccount(password: _passwordCtrl.text);
+            break;
+
+          case _ReAuthMethod.emailOtp:
+            if (_otpCtrl.text.length != 6) {
+              throw Exception('Enter the 6-digit code sent to your email.');
+            }
+            await _auth.deleteAccount(otp: _otpCtrl.text);
+            break;
+
+          case _ReAuthMethod.biometric:
+            final challenge = await _biometric.challenge(
+              reason: 'Confirm your identity to delete your account.',
+              purpose: 'delete-account',
+            );
+            if (!challenge.success || challenge.actionToken == null) {
+              throw Exception(
+                challenge.errorMessage ?? 'Biometric authentication cancelled.',
+              );
+            }
+            await _auth.deleteAccount(passkeyToken: challenge.actionToken);
+            break;
+        }
       }
 
       if (!mounted) return;
@@ -210,6 +237,8 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
 
   bool get _canSubmit {
     if (_isBusy) return false;
+    // Google users can always submit (no password needed)
+    if (_isGoogleUser) return true;
     switch (_method) {
       case _ReAuthMethod.password:
         return _passwordCtrl.text.isNotEmpty;
@@ -248,60 +277,87 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                       const SizedBox(height: 8),
                       _WarningBanner(),
                       const SizedBox(height: 24),
-                      Text(
-                        'VERIFY YOUR IDENTITY',
-                        style: AppTextStyles.sectionLabel(context),
-                      ),
-                      const SizedBox(height: 12),
-                      _MethodTile(
-                        icon: Icons.lock_outline_rounded,
-                        title: 'Password',
-                        subtitle: 'Enter your current password',
-                        selected: _method == _ReAuthMethod.password,
-                        onTap: () => setState(() {
-                          _method = _ReAuthMethod.password;
-                          _errorMessage = null;
-                        }),
-                      ),
-                      if (_has2fa) ...[
-                        const SizedBox(height: 10),
+                      // ── Google user: no password needed ─────────────────────────────────────
+                      if (_isGoogleUser) ...[
+                        Text(
+                          'Google Account',
+                          style: AppTextStyles.sectionLabel(context),
+                        ),
+                        const SizedBox(height: 12),
                         _MethodTile(
-                          icon: Icons.mail_outline_rounded,
-                          title: 'Email verification code',
-                          subtitle: 'We will send a 6-digit code to your email',
-                          selected: _method == _ReAuthMethod.emailOtp,
+                          icon: Icons.account_circle_outlined,
+                          title: 'Google Sign-In',
+                          subtitle: 'Your account is linked to Google. '
+                              'No password is required.',
+                          selected: true,
+                          onTap: () {},
+                        ),
+                        if (_hasBiometric && _biometricDeviceSupported) ...[
+                          const SizedBox(height: 10),
+                          _MethodTile(
+                            icon: Icons.fingerprint_rounded,
+                            title: 'Biometric Authentication',
+                            subtitle: 'You will be prompted to verify before deletion.',
+                            selected: true,
+                            onTap: () {},
+                          ),
+                        ],
+                      ] else ...[
+                        Text(
+                          'VERIFY YOUR IDENTITY',
+                          style: AppTextStyles.sectionLabel(context),
+                        ),
+                        const SizedBox(height: 12),
+                        _MethodTile(
+                          icon: Icons.lock_outline_rounded,
+                          title: 'Password',
+                          subtitle: 'Enter your current password',
+                          selected: _method == _ReAuthMethod.password,
                           onTap: () => setState(() {
-                            _method = _ReAuthMethod.emailOtp;
+                            _method = _ReAuthMethod.password;
                             _errorMessage = null;
                           }),
                         ),
-                      ],
-                      if (_hasBiometric && _biometricDeviceSupported) ...[
-                        const SizedBox(height: 10),
-                        _MethodTile(
-                          icon: Icons.fingerprint_rounded,
-                          title: 'Biometric Authentication',
-                          subtitle: 'Use Face ID, Fingerprint, or device PIN',
-                          selected: _method == _ReAuthMethod.biometric,
-                          onTap: () => setState(() {
-                            _method = _ReAuthMethod.biometric;
-                            _errorMessage = null;
-                          }),
+                        if (_has2fa) ...[
+                          const SizedBox(height: 10),
+                          _MethodTile(
+                            icon: Icons.mail_outline_rounded,
+                            title: 'Email verification code',
+                            subtitle: 'We will send a 6-digit code to your email',
+                            selected: _method == _ReAuthMethod.emailOtp,
+                            onTap: () => setState(() {
+                              _method = _ReAuthMethod.emailOtp;
+                              _errorMessage = null;
+                            }),
+                          ),
+                        ],
+                        if (_hasBiometric && _biometricDeviceSupported) ...[
+                          const SizedBox(height: 10),
+                          _MethodTile(
+                            icon: Icons.fingerprint_rounded,
+                            title: 'Biometric Authentication',
+                            subtitle: 'Use Face ID, Fingerprint, or device PIN',
+                            selected: _method == _ReAuthMethod.biometric,
+                            onTap: () => setState(() {
+                              _method = _ReAuthMethod.biometric;
+                              _errorMessage = null;
+                            }),
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        _MethodInput(
+                          method: _method,
+                          passwordCtrl: _passwordCtrl,
+                          otpCtrl: _otpCtrl,
+                          obscure: _obscure,
+                          onToggleObscure: () =>
+                              setState(() => _obscure = !_obscure),
+                          otpSent: _otpSent,
+                          isBusy: _isBusy,
+                          onSendOtp: _requestOtp,
+                          onChanged: () => setState(() {}),
                         ),
                       ],
-                      const SizedBox(height: 20),
-                      _MethodInput(
-                        method: _method,
-                        passwordCtrl: _passwordCtrl,
-                        otpCtrl: _otpCtrl,
-                        obscure: _obscure,
-                        onToggleObscure: () =>
-                            setState(() => _obscure = !_obscure),
-                        otpSent: _otpSent,
-                        isBusy: _isBusy,
-                        onSendOtp: _requestOtp,
-                        onChanged: () => setState(() {}),
-                      ),
                       if (_errorMessage != null) ...[
                         const SizedBox(height: 16),
                         Container(

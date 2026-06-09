@@ -34,15 +34,11 @@ class _SplashPageState extends State<SplashPage> {
     FlutterNativeSplash.remove();
 
     // Run both in parallel; Future.wait ensures session is set before we handle fallback
-    final results = await Future.wait([
-      _tryLoadVideo(),
-      _checkSession(),
-    ]);
+    final results = await Future.wait([_tryLoadVideo(), _checkSession()]);
 
-    // If video failed (returns false), navigate now — session is guaranteed set
-    if (!(results[0] as bool)) {
-      _goNext();
-    }
+    // Wait 2 seconds for splash to display, then navigate regardless of video
+    await Future.delayed(const Duration(seconds: 2));
+    _goNext();
   }
 
   // 🎥 VIDEO — returns true if video loaded, false on failure

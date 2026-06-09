@@ -15,6 +15,20 @@ class HelpCategory {
     required this.articleCount,
   });
 
+  HelpCategory copyWith({
+    String? id,
+    String? name,
+    IconData? icon,
+    int? articleCount,
+  }) {
+    return HelpCategory(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      icon: icon ?? this.icon,
+      articleCount: articleCount ?? this.articleCount,
+    );
+  }
+
   factory HelpCategory.fromJson(Map<String, dynamic> json, IconData icon) {
     return HelpCategory(
       id: (json['key'] ?? json['id'] ?? '') as String,
@@ -50,13 +64,15 @@ class ArticleStep {
 class HelpArticle {
   final String id;
   final String categoryId;
-  final String question;   // = title from backend
-  final String answer;     // = description (intro text) from backend
+  final String categoryLabel; // translated category name from backend
+  final String question; // = title from backend (translated)
+  final String answer; // = description (intro text) from backend (translated)
   final List<ArticleStep> steps;
 
   const HelpArticle({
     required this.id,
     required this.categoryId,
+    required this.categoryLabel,
     required this.question,
     required this.answer,
     this.steps = const [],
@@ -67,13 +83,14 @@ class HelpArticle {
     return HelpArticle(
       id: (json['id'] ?? '') as String,
       categoryId: (json['categoryKey'] ?? '') as String,
+      categoryLabel: (json['categoryLabel'] ?? '') as String,
       question: (json['title'] ?? '') as String,
       answer: (json['description'] ?? '') as String,
-      steps: rawSteps
-          .map((s) => ArticleStep.fromJson(s as Map<String, dynamic>))
-          .toList()
-        ..sort((a, b) => a.order.compareTo(b.order)),
+      steps:
+          rawSteps
+              .map((s) => ArticleStep.fromJson(s as Map<String, dynamic>))
+              .toList()
+            ..sort((a, b) => a.order.compareTo(b.order)),
     );
   }
 }
-
