@@ -139,11 +139,14 @@ class _LocationScreenState extends State<LocationScreen>
     final dropoffAddr = args['dropoffAddress'] as String?;
 
     if (useCurrentLoc || pickupAddr == 'current_location') {
-      // Show a human-readable label and auto-resolve GPS coordinates
-      _fromController.text = 'My Current Location';
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _handleUseCurrentLocation();
-      });
+      // Show actual address if available, otherwise generic label
+      if (pickupAddr != null &&
+          pickupAddr.isNotEmpty &&
+          pickupAddr != 'current_location') {
+        _fromController.text = pickupAddr;
+      } else {
+        _fromController.text = 'My Current Location';
+      }
     } else if (pickupAddr != null && pickupAddr.isNotEmpty) {
       _fromController.text = pickupAddr;
     }
@@ -152,6 +155,7 @@ class _LocationScreenState extends State<LocationScreen>
       _toController.text = dropoffAddr;
     }
 
+    // ── Coordinates: voice assistant now pre-fetches GPS for current location ──
     final pLat = args['pickupLat'] as double?;
     final pLon = args['pickupLon'] as double?;
     final dLat = args['dropoffLat'] as double?;
@@ -161,8 +165,21 @@ class _LocationScreenState extends State<LocationScreen>
     if (dLat != null) _dropoffLat = dLat;
     if (dLon != null) _dropoffLon = dLon;
 
-    if (args['date'] is DateTime) _pickedDate = args['date'] as DateTime;
-    if (args['time'] is TimeOfDay) _pickedTime = args['time'] as TimeOfDay;
+    // ── Date & Time ──
+    if (args['date'] is DateTime) {
+      _pickedDate = args['date'] as DateTime;
+    }
+    if (args['time'] is TimeOfDay) {
+      _pickedTime = args['time'] as TimeOfDay;
+    }
+
+    // ── If current location was used but coords are somehow still null,
+    //    fall back to GPS fetch (should not happen with the fix, but safety net) ──
+    if (useCurrentLoc && (_pickupLat == null || _pickupLon == null)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _handleUseCurrentLocation();
+      });
+    }
   }
 
   void _updateCardFocus() => _uiHandlers.updateCardFocus();

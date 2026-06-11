@@ -187,6 +187,7 @@ class LocationScreenUI extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: DateTimeRow(
                 initialDate: pickedDate,
+                initialTime: pickedTime,
                 onDateChanged: onDateChanged,
                 onTimeChanged: onTimeChanged,
               ),

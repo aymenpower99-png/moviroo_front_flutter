@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
 import '../../../services/geocoding/geocoding_service.dart';
+import '../../../services/gps/gps_service.dart';
 import 'voice_modules/voice_constants.dart';
 import 'voice_modules/voice_logger.dart';
 import 'voice_modules/voice_api_service.dart';
@@ -47,6 +48,9 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
   String? _currentField; // champ attendu pour la prochaine réponse
   String? _confirmationText;
   String? _searchQuery;
+
+  // ── Loading / confirm ─────────────────────────────────────
+  bool _isLoading = false;
 
   // ── Timer / recording ─────────────────────────────────────
   Duration _elapsed = Duration.zero;
@@ -470,48 +474,303 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
   }
 
   // ─────────────────────────────────────────────────────────
+  // Disambiguation: show bottom sheet when multiple results
+  // ─────────────────────────────────────────────────────────
+  Future<GeocodingPlace?> _showDisambiguationSheet(
+    String query,
+    List<GeocodingPlace> results,
+  ) async {
+    if (results.isEmpty) return null;
+    if (results.length == 1) return results.first;
+
+    return await showModalBottomSheet<GeocodingPlace>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: voiceBg(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom +
+                MediaQuery.of(ctx).padding.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: voiceSubtext(context).withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Text(
+                  'Select the correct location for "$query"',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: voiceText(context),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Scrollable list — prevents overflow and keeps within bounds
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ...results.take(5).map((place) => Container(
+                        color: voiceBg(context),
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.location_on_rounded,
+                            color: kPurple,
+                          ),
+                          title: Text(
+                            place.localizedPlaceName().isNotEmpty
+                                ? place.localizedPlaceName()
+                                : place.rawPlaceName,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: voiceText(context),
+                            ),
+                          ),
+                          subtitle: place.address != null &&
+                                  place.address!.isNotEmpty
+                              ? Text(
+                                  place.address!,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: voiceSubtext(context),
+                                  ),
+                                )
+                              : null,
+                          onTap: () => Navigator.pop(ctx, place),
+                        ),
+                      )),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────
   // Confirm → geocode → navigate to search with pre-filled data
   // ─────────────────────────────────────────────────────────
   bool _isConfirming = false;
 
+  /// Parse a natural-language date string (e.g. "tomorrow", "demain",
+  /// "15 juin", "2026-06-15") into a DateTime.
+  DateTime? _parseVoiceDate(String raw) {
+    final s = raw.trim().toLowerCase();
+    final now = DateTime.now();
+
+    // Relative keywords
+    if (s.contains('demain') || s.contains('tomorrow')) {
+      return DateTime(now.year, now.month, now.day + 1);
+    }
+    if (s.contains('aujourd') || s.contains('today')) {
+      return DateTime(now.year, now.month, now.day);
+    }
+    if (s.contains('après-demain') || s.contains('après demain') ||
+        s.contains('after tomorrow')) {
+      return DateTime(now.year, now.month, now.day + 2);
+    }
+
+    // ISO / numeric attempts
+    try {
+      return DateTime.parse(s);
+    } catch (_) {}
+
+    // Try common French patterns: "15/06/2026", "15-06-2026", "15 juin 2026"
+    final frPattern = RegExp(r'(\d{1,2})\s*[-/\s]\s*(\d{1,2}|\w+)\s*[-/\s]\s*(\d{4})');
+    final frMatch = frPattern.firstMatch(s);
+    if (frMatch != null) {
+      try {
+        final d = int.parse(frMatch.group(1)!);
+        final y = int.parse(frMatch.group(3)!);
+        final mStr = frMatch.group(2)!;
+        int m;
+        if (RegExp(r'^\d+$').hasMatch(mStr)) {
+          m = int.parse(mStr);
+        } else {
+          const months = {
+            'janvier': 1, 'février': 2, 'fevrier': 2, 'mars': 3,
+            'avril': 4, 'mai': 5, 'juin': 6, 'juillet': 7,
+            'août': 8, 'aout': 8, 'septembre': 9, 'octobre': 10,
+            'novembre': 11, 'décembre': 12, 'decembre': 12,
+            'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+            'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+          };
+          m = months[mStr] ?? 1;
+        }
+        return DateTime(y, m, d);
+      } catch (_) {}
+    }
+
+    return null;
+  }
+
+  /// Parse a natural-language time string (e.g. "15h30", "3:30 PM",
+  /// "15:00", "15h") into a TimeOfDay.
+  TimeOfDay? _parseVoiceTime(String raw) {
+    final s = raw.trim().toLowerCase().replaceAll('h', ':');
+
+    // Handle "3:30 PM" / "3:30 pm" / "3 PM"
+    bool isPm = s.contains('pm') || s.contains('soir') || s.contains('après-midi');
+    bool isAm = s.contains('am') || s.contains('matin') || s.contains('du matin');
+    final clean = s.replaceAll(RegExp(r'[^\d:]'), '');
+    final parts = clean.split(':');
+
+    if (parts.isEmpty || parts[0].isEmpty) return null;
+    try {
+      int hour = int.parse(parts[0]);
+      int minute = parts.length > 1 && parts[1].isNotEmpty
+          ? int.parse(parts[1])
+          : 0;
+
+      if (isPm && hour < 12) hour += 12;
+      if (isAm && hour == 12) hour = 0;
+
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+      return TimeOfDay(hour: hour, minute: minute);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _onConfirmBooking() async {
-    if (_isConfirming) return;
-    setState(() => _isConfirming = true);
+    if (_isConfirming || _isLoading) return;
+    setState(() {
+      _isConfirming = true;
+      _isLoading = true;
+    });
 
     try {
       final geocoding = GeocodingService();
+      final locale = Localizations.localeOf(context).languageCode;
 
-      // Geocode pickup (departure)
-      final pickupQuery =
-          (_departure != null &&
-              _departure!.isNotEmpty &&
-              _departure != 'current_location')
-          ? _departure!
-          : null;
+      // ── 1. Resolve pickup (departure) ──────────────────────
+      final isCurrentLoc =
+          _departure == null ||
+          _departure!.isEmpty ||
+          _departure == 'current_location';
 
       GeocodingPlace? pickupPlace;
-      if (pickupQuery != null) {
-        final locale = Localizations.localeOf(context).languageCode;
+      double? pickupLat;
+      double? pickupLon;
+      String? pickupAddress;
+
+      if (isCurrentLoc) {
+        // Pre-fetch GPS coordinates BEFORE navigating
+        final pos = await GpsService.getAccuratePosition();
+        if (!mounted) return;
+        if (pos == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not get your current location. Please check GPS.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+        pickupLat = pos.latitude;
+        pickupLon = pos.longitude;
+
+        // Try to reverse-geocode the current location for a human-readable name
+        try {
+          final revResults = await geocoding.searchPlaces(
+            '${pos.latitude},${pos.longitude}',
+            language: locale,
+          );
+          if (revResults.isNotEmpty) {
+            final placeName = revResults.first.localizedPlaceName();
+            if (placeName.isNotEmpty) {
+              pickupAddress = placeName;
+              voiceLog('GPS', 'Current location address: $pickupAddress');
+            } else {
+              pickupAddress = 'current_location';
+            }
+          } else {
+            pickupAddress = 'current_location';
+          }
+        } catch (e) {
+          voiceLog('GPS', 'Reverse geocoding failed: $e');
+          pickupAddress = 'current_location';
+        }
+      } else {
+        // Geocode explicit pickup address — use disambiguation for ambiguous results
         final results = await geocoding.searchPlaces(
-          pickupQuery,
+          _departure!,
           language: locale,
         );
-        if (results.isNotEmpty) pickupPlace = results.first;
+        if (!mounted) return;
+        if (results.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not find pickup location. Please try again.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+        // If multiple results, let user pick the correct one
+        pickupPlace = results.length > 1
+            ? await _showDisambiguationSheet(_departure!, results)
+            : results.first;
+        if (!mounted) return;
+        if (pickupPlace == null || !pickupPlace.hasValidCoordinates) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not find pickup location. Please try again.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+        pickupLat = pickupPlace.latitude;
+        pickupLon = pickupPlace.longitude;
+        pickupAddress = pickupPlace.localizedPlaceName().isNotEmpty
+            ? pickupPlace.localizedPlaceName()
+            : (_departure ?? '');
       }
 
-      // Geocode dropoff (destination)
-      GeocodingPlace? dropoffPlace;
-      if (_destination != null && _destination!.isNotEmpty) {
-        final locale = Localizations.localeOf(context).languageCode;
-        final results = await geocoding.searchPlaces(
-          _destination!,
-          language: locale,
-        );
-        if (results.isNotEmpty) dropoffPlace = results.first;
-      }
-
+      // ── 3. Geocode dropoff with disambiguation ─────────────
+      final dropoffResults = await geocoding.searchPlaces(
+        _destination!,
+        language: locale,
+      );
       if (!mounted) return;
-
+      if (dropoffResults.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not find destination. Please try again.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+      GeocodingPlace? dropoffPlace = dropoffResults.length > 1
+          ? await _showDisambiguationSheet(_destination!, dropoffResults)
+          : dropoffResults.first;
+      if (!mounted) return;
       if (dropoffPlace == null || !dropoffPlace.hasValidCoordinates) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -522,47 +781,51 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
         return;
       }
 
-      // Parse date/time from voice result
+      // ── 4. Parse date/time ─────────────────────────────────
       DateTime? pickedDate;
       TimeOfDay? pickedTime;
       if (_date != null && _date!.isNotEmpty) {
-        try {
-          pickedDate = DateTime.parse(_date!);
-        } catch (_) {}
+        pickedDate = _parseVoiceDate(_date!);
       }
       if (_time != null && _time!.isNotEmpty) {
-        try {
-          final parts = _time!.split(':');
-          if (parts.length >= 2) {
-            pickedTime = TimeOfDay(
-              hour: int.parse(parts[0]),
-              minute: int.parse(parts[1]),
-            );
-          }
-        } catch (_) {}
+        pickedTime = _parseVoiceTime(_time!);
       }
 
-      // Navigate to LocationScreen with pre-filled voice results
-      final isCurrentLoc =
-          _departure == null ||
-          _departure!.isEmpty ||
-          _departure == 'current_location';
+      // If the AI didn't provide a date, default to today
+      pickedDate ??= DateTime.now();
 
+      // Validate: we must have a time to proceed
+      if (pickedTime == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please specify a time for the trip.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+
+      // Fallback: if the geocoded name is empty, use the raw AI string
+      final dropoffName = dropoffPlace.localizedPlaceName().isNotEmpty
+          ? dropoffPlace.localizedPlaceName()
+          : (_destination ?? '');
+
+      voiceLog('NAVIGATE', 'pickup=$pickupLat,$pickupLon  dropoff=${dropoffPlace.latitude},${dropoffPlace.longitude}  date=$pickedDate  time=$pickedTime');
+
+      // ── 5. Navigate with REAL coordinates ──────────────────
       Navigator.pushReplacementNamed(
         context,
         '/nextdestinationsearch',
         arguments: {
           'pickupPlace': pickupPlace,
           'dropoffPlace': dropoffPlace,
-          'pickupAddress': isCurrentLoc
-              ? 'current_location'
-              : (pickupPlace?.localizedPlaceName() ?? _departure ?? ''),
-          'dropoffAddress': dropoffPlace.localizedPlaceName(),
-          'pickupLat': pickupPlace?.latitude,
-          'pickupLon': pickupPlace?.longitude,
+          'pickupAddress': pickupAddress,
+          'dropoffAddress': dropoffName,
+          'pickupLat': pickupLat,
+          'pickupLon': pickupLon,
           'dropoffLat': dropoffPlace.latitude,
           'dropoffLon': dropoffPlace.longitude,
-          'date': pickedDate ?? DateTime.now(),
+          'date': pickedDate,
           'time': pickedTime,
           'useCurrentLocation': isCurrentLoc,
         },
@@ -578,7 +841,12 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
         );
       }
     } finally {
-      if (mounted) setState(() => _isConfirming = false);
+      if (mounted) {
+        setState(() {
+          _isConfirming = false;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -605,51 +873,80 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     return Scaffold(
       backgroundColor: voiceBg(context),
       resizeToAvoidBottomInset: false,
-      body: SafeArea(
-        child: Column(
-          children: [
-            buildTopBar(
-              context,
-              onBackPressed: () => Navigator.maybePop(context),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    buildCenter(
-                      context,
-                      phase: _phase,
-                      pulseAnim: _pulseAnim,
-                      ring1Anim: _ring1Anim,
-                      ring2Anim: _ring2Anim,
-                      ring3Anim: _ring3Anim,
-                      waveCtrl: _waveCtrl,
-                      onMicTap: _onMicTap,
-                      elapsed: _elapsed,
-                      statusMsg: _statusMsg,
-                      transcript: _transcript,
-                      confirmationText: _confirmationText,
-                      searchQuery: _searchQuery,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                buildTopBar(
+                  context,
+                  onBackPressed: () => Navigator.maybePop(context),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        buildCenter(
+                          context,
+                          phase: _phase,
+                          pulseAnim: _pulseAnim,
+                          ring1Anim: _ring1Anim,
+                          ring2Anim: _ring2Anim,
+                          ring3Anim: _ring3Anim,
+                          waveCtrl: _waveCtrl,
+                          onMicTap: _onMicTap,
+                          elapsed: _elapsed,
+                          statusMsg: _statusMsg,
+                          transcript: _transcript,
+                          confirmationText: _confirmationText,
+                          searchQuery: _searchQuery,
+                        ),
+                        buildBottomArea(
+                          context,
+                          phase: _phase,
+                          onReset: _reset,
+                          onConfirm: _phase == VoicePhase.result && !_isConfirming
+                              ? _onConfirmBooking
+                              : null,
+                          departure: _departure,
+                          destination: _destination,
+                          date: _date,
+                          time: _time,
+                        ),
+                      ],
                     ),
-                    buildBottomArea(
-                      context,
-                      phase: _phase,
-                      onReset: _reset,
-                      onConfirm: _phase == VoicePhase.result && !_isConfirming
-                          ? _onConfirmBooking
-                          : null,
-                      departure: _departure,
-                      destination: _destination,
-                      date: _date,
-                      time: _time,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Loading overlay while geocoding / disambiguating
+          if (_isLoading)
+            Container(
+              color: voiceBg(context).withValues(alpha: 0.85),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(
+                      color: kPurple,
+                      strokeWidth: 3,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Searching for locations...',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: voiceText(context),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

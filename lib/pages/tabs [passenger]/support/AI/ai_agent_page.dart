@@ -52,7 +52,7 @@ class _AiAgentPageState extends State<AiAgentPage>
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
   bool _showChat = false; // false = home screen, true = chat screen
-  String? _lastTicketId;
+  int? _selectedMessageIndex;
 
   // ── Animation ────────────────────────────────────────────────
   late final AnimationController _fadeController;
@@ -109,8 +109,6 @@ class _AiAgentPageState extends State<AiAgentPage>
       final res = await _api.chat(text);
       if (!mounted) return;
 
-      if (res.ticketId != null) _lastTicketId = res.ticketId;
-
       setState(() {
         _isTyping = false;
         _messages.add(ChatMessage(
@@ -157,23 +155,6 @@ class _AiAgentPageState extends State<AiAgentPage>
     }
   }
 
-  Future<void> _handleFeedback(int rating) async {
-    try {
-      await _api.submitFeedback(
-        rating: rating,
-        ticketId: _lastTicketId,
-        helpful: rating >= 4,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Thank you for your feedback! ⭐'),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ));
-    } catch (_) {}
-  }
-
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -184,72 +165,6 @@ class _AiAgentPageState extends State<AiAgentPage>
         );
       }
     });
-  }
-
-  void _showFeedbackDialog() {
-    int selected = 0;
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setS) => AlertDialog(
-          backgroundColor: AppColors.surface(context),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(
-            'Rate this conversation',
-            style: AppTextStyles.bodyLarge(context)
-                .copyWith(fontWeight: FontWeight.w600),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('How helpful was the support?',
-                  style: AppTextStyles.bodySmall(context)),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  5,
-                  (i) => GestureDetector(
-                    onTap: () => setS(() => selected = i + 1),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(
-                        i < selected ? Icons.star_rounded : Icons.star_outline_rounded,
-                        color: Colors.amber,
-                        size: 38,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancel',
-                  style: AppTextStyles.bodySmall(context)
-                      .copyWith(color: AppColors.subtext(context))),
-            ),
-            ElevatedButton(
-              onPressed: selected > 0
-                  ? () {
-                      Navigator.pop(ctx);
-                      _handleFeedback(selected);
-                    }
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryPurple,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Submit'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   // ── Build ─────────────────────────────────────────────────────
@@ -358,22 +273,7 @@ class _AiAgentPageState extends State<AiAgentPage>
               ],
             ),
           ),
-          // Feedback button — only in chat mode
-          if (_showChat)
-            GestureDetector(
-              onTap: _showFeedbackDialog,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.surface(context),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.border(context)),
-                ),
-                child: Icon(Icons.star_outline_rounded,
-                    size: 20, color: AppColors.text(context)),
-              ),
-            ),
+
         ],
       ),
     );
@@ -407,13 +307,14 @@ class _AiAgentPageState extends State<AiAgentPage>
       itemCount: _messages.length + (_isTyping ? 1 : 0),
       itemBuilder: (_, i) {
         if (i == _messages.length) return _buildTypingBubble();
-        return _buildMessageItem(_messages[i]);
+        return _buildMessageItem(_messages[i], i);
       },
     );
   }
 
-  Widget _buildMessageItem(ChatMessage msg) {
+  Widget _buildMessageItem(ChatMessage msg, int index) {
     final isUser = msg.sender == MessageSender.user;
+    final isSelected = _selectedMessageIndex == index;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -426,7 +327,7 @@ class _AiAgentPageState extends State<AiAgentPage>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (!isUser) ...[_buildBotAvatar(), const SizedBox(width: 8)],
-              Flexible(child: _buildBubble(msg)),
+              Flexible(child: _buildBubble(msg, index, isSelected)),
             ],
           ),
 
@@ -459,30 +360,38 @@ class _AiAgentPageState extends State<AiAgentPage>
             color: Colors.white, size: 18),
       );
 
-  Widget _buildBubble(ChatMessage msg) {
+  Widget _buildBubble(ChatMessage msg, int index, bool isSelected) {
     final isUser = msg.sender == MessageSender.user;
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 280),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-      decoration: BoxDecoration(
-        gradient: isUser ? AppColors.purpleGradient : null,
-        color: isUser ? null : AppColors.surface(context),
-        borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(16),
-          topRight: const Radius.circular(16),
-          bottomLeft: Radius.circular(isUser ? 16 : 4),
-          bottomRight: Radius.circular(isUser ? 4 : 16),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedMessageIndex = isSelected ? null : index;
+        });
+      },
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 280),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        decoration: BoxDecoration(
+          gradient: isUser ? AppColors.purpleGradient : null,
+          color: isUser ? null : AppColors.surface(context),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isUser ? 16 : 4),
+            bottomRight: Radius.circular(isUser ? 4 : 16),
+          ),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryPurple : AppColors.border(context),
+            width: isSelected ? 2 : 1,
+          ),
         ),
-        border: isUser
-            ? null
-            : Border.all(color: AppColors.border(context), width: 1),
-      ),
-      child: Text(
-        msg.text,
-        style: AppTextStyles.bodyMedium(context).copyWith(
-          color: isUser ? Colors.white : AppColors.text(context),
-          height: 1.45,
-          fontSize: 14,
+        child: Text(
+          msg.text,
+          style: AppTextStyles.bodyMedium(context).copyWith(
+            color: isUser ? Colors.white : AppColors.text(context),
+            height: 1.45,
+            fontSize: 14,
+          ),
         ),
       ),
     );

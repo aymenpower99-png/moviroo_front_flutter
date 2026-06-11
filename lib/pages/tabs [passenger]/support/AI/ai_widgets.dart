@@ -157,24 +157,24 @@ class AiActionCards extends StatelessWidget {
 
     final cards = [
       _ActionCard(
-        icon: Icons.credit_card_outlined,
-        title: t('ai_card_price_title'),
-        query: t('ai_card_price_query'),
+        icon: Icons.local_taxi_outlined,
+        title: t('ai_card_book_title'),
+        query: t('ai_card_book_query'),
       ),
       _ActionCard(
-        icon: Icons.schedule_outlined,
-        title: t('ai_card_traffic_title'),
-        query: t('ai_card_traffic_query'),
+        icon: Icons.phone_outlined,
+        title: t('ai_card_contact_title'),
+        query: t('ai_card_contact_query'),
       ),
       _ActionCard(
-        icon: Icons.directions_car_outlined,
-        title: t('ai_card_compare_title'),
-        query: t('ai_card_compare_query'),
+        icon: Icons.payment_outlined,
+        title: t('ai_card_payment_title'),
+        query: t('ai_card_payment_query'),
       ),
       _ActionCard(
-        icon: Icons.translate_outlined,
-        title: t('ai_card_translate_title'),
-        query: t('ai_card_translate_query'),
+        icon: Icons.local_offer_outlined,
+        title: t('ai_card_discount_title'),
+        query: t('ai_card_discount_query'),
       ),
     ];
 
@@ -258,7 +258,7 @@ class AiActionCards extends StatelessWidget {
 // INPUT SECTION WIDGET
 // ═══════════════════════════════════════════════════════════════════════════
 
-class AiInputSection extends StatelessWidget {
+class AiInputSection extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final VoidCallback onSend;
@@ -269,6 +269,31 @@ class AiInputSection extends StatelessWidget {
     required this.focusNode,
     required this.onSend,
   });
+
+  @override
+  State<AiInputSection> createState() => _AiInputSectionState();
+}
+
+class _AiInputSectionState extends State<AiInputSection> {
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    setState(() {
+      _isFocused = widget.focusNode.hasFocus;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -294,10 +319,14 @@ class AiInputSection extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surface(context),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _isFocused ? AppColors.primaryPurple : AppColors.border(context),
+                  width: _isFocused ? 2 : 1,
+                ),
               ),
               child: TextField(
-                controller: controller,
-                focusNode: focusNode,
+                controller: widget.controller,
+                focusNode: widget.focusNode,
                 style: AppTextStyles.bodyMedium(context),
                 cursorColor: AppColors.text(context),
                 decoration: InputDecoration(
@@ -312,7 +341,7 @@ class AiInputSection extends StatelessWidget {
                 ),
                 maxLines: null,
                 textInputAction: TextInputAction.send,
-                onSubmitted: (_) => onSend(),
+                onSubmitted: (_) => widget.onSend(),
               ),
             ),
           ),
@@ -321,7 +350,7 @@ class AiInputSection extends StatelessWidget {
 
           // Send button
           InkWell(
-            onTap: onSend,
+            onTap: widget.onSend,
             borderRadius: BorderRadius.circular(12),
             child: Container(
               width: 48,

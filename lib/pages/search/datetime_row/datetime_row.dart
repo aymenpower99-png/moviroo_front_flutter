@@ -6,12 +6,14 @@ import 'utils.dart';
 
 class DateTimeRow extends StatefulWidget {
   final DateTime? initialDate;
+  final TimeOfDay? initialTime;
   final void Function(DateTime)? onDateChanged;
   final void Function(TimeOfDay)? onTimeChanged;
 
   const DateTimeRow({
     super.key,
     this.initialDate,
+    this.initialTime,
     this.onDateChanged,
     this.onTimeChanged,
   });
@@ -28,10 +30,14 @@ class _DateTimeRowState extends State<DateTimeRow> {
   void initState() {
     super.initState();
     _pickedDate = widget.initialDate ?? DateTime.now();
-    _pickedTime = defaultTimeForDate(_pickedDate);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.onTimeChanged?.call(_pickedTime);
-    });
+    _pickedTime = widget.initialTime ?? defaultTimeForDate(_pickedDate);
+    // Only notify parent if we generated a default time ourselves.
+    // If the parent explicitly passed initialTime, don't overwrite it.
+    if (widget.initialTime == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onTimeChanged?.call(_pickedTime);
+      });
+    }
   }
 
   String _dateLabel(AppLocalizations t) => formatDate(_pickedDate, t);
