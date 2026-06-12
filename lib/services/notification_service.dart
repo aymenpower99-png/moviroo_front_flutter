@@ -198,6 +198,14 @@ class NotificationService {
           importance: Importance.high,
         );
 
+    const AndroidNotificationChannel membershipRewardsChannel =
+        AndroidNotificationChannel(
+          'membership_rewards',
+          'Membership Rewards',
+          description: 'Rewards and promo codes from membership levels',
+          importance: Importance.high,
+        );
+
     final androidPlugin = _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -207,6 +215,7 @@ class NotificationService {
     await androidPlugin?.createNotificationChannel(rideOffersChannel);
     await androidPlugin?.createNotificationChannel(supportChannel);
     await androidPlugin?.createNotificationChannel(rideUpdatesChannel);
+    await androidPlugin?.createNotificationChannel(membershipRewardsChannel);
   }
 
   Future<void> _registerToken(String token) async {
@@ -263,12 +272,14 @@ class NotificationService {
       'support_messages' => 'Support Messages',
       'ride_offers' => 'Ride Offers',
       'ride_updates' => 'Ride Updates',
+      'membership_rewards' => 'Membership Rewards',
       _ => 'Moviroo Notifications',
     };
     final channelDesc = switch (channelId) {
       'support_messages' => 'Support ticket replies and updates',
       'ride_offers' => 'Ride offer and ride status notifications',
       'ride_updates' => 'Live updates for your active ride',
+      'membership_rewards' => 'Rewards and promo codes from membership levels',
       _ => 'Moviroo ride notifications',
     };
 

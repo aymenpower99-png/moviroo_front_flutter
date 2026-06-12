@@ -71,6 +71,16 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
         promoCode: info.activeCouponCodes[levelId],
       );
     });
+    // Restore "My Rewards" from active coupon codes so they survive page refresh
+    _myRewards.clear();
+    for (final entry in info.activeCouponCodes.entries) {
+      final levelId = entry.key;
+      final promoCode = entry.value;
+      final tierIndex = _tiers.indexWhere((t) => t.id == levelId);
+      if (tierIndex != -1) {
+        _myRewards.add(ClaimedReward(tier: _tiers[tierIndex], promoCode: promoCode));
+      }
+    }
     _loading = false;
   }
 
