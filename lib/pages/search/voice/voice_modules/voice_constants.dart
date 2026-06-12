@@ -4,8 +4,10 @@ import '../../../../theme/app_colors.dart';
 // ─────────────────────────────────────────────────────────────
 // CONFIG
 // ─────────────────────────────────────────────────────────────
-const String kBackendUrl =
-    'https://important-satisfy-sternness.ngrok-free.dev/api/voice';
+// Voice backend URL — points to NestJS backend, not the ML engine directly.
+// The backend forwards requests to the ML engine (Render) with auth + timeout.
+import 'package:moviroo/core/config/app_config.dart';
+const String kBackendUrl = '${AppConfig.baseUrl}/voice';
 
 // ─────────────────────────────────────────────────────────────
 // Theme-aware helpers (call inside build / with context)

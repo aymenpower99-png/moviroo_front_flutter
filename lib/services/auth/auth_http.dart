@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import 'auth_storage.dart';
 import 'auth_helpers.dart';
+import 'blocked_account_handler.dart';
+import '../auth_service/auth_service.dart';
 
 class AuthHTTP {
   // Prevents concurrent token refreshes (race condition)
@@ -38,6 +40,8 @@ class AuthHTTP {
                 throw Exception('Request timed out. Check your connection.'),
           ),
     );
+
+    _checkBlocked(response);
 
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
@@ -83,6 +87,8 @@ class AuthHTTP {
           ),
     );
 
+    _checkBlocked(response);
+
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
       if (refreshed != null) {
@@ -125,6 +131,8 @@ class AuthHTTP {
                 throw Exception('Request timed out. Check your connection.'),
           ),
     );
+
+    _checkBlocked(response);
 
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
@@ -171,6 +179,8 @@ class AuthHTTP {
           ),
     );
 
+    _checkBlocked(response);
+
     if (response.statusCode == 401) {
       final refreshed = await _refreshTokens();
       if (refreshed != null) {
@@ -184,6 +194,26 @@ class AuthHTTP {
     }
 
     return response;
+  }
+
+  // ─── Blocked account check ───────────────────────────────────────────────
+
+  static void _checkBlocked(http.Response response) {
+    if (response.statusCode == 403) {
+      try {
+        final body = jsonDecode(response.body);
+        final msg = (body['message'] ?? '').toString().toLowerCase();
+        if (msg.contains('blocked')) {
+          AuthStorage.clearTokens();
+          AuthService.setBlocked(true);
+          throw BlockedAccountException(
+            'Your account has been blocked. Please contact support.',
+          );
+        }
+      } on FormatException catch (_) {
+        // Not JSON — ignore
+      }
+    }
   }
 
   static Future<Map<String, dynamic>?> _refreshTokens() {

@@ -531,7 +531,7 @@ class _AnimatedDotState extends State<_AnimatedDot>
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: _anim,
-        builder: (_, __) => Container(
+        builder: (context, child) => Container(
           margin: const EdgeInsets.symmetric(horizontal: 3),
           width: 7,
           height: 7,

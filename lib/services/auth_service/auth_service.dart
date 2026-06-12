@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../auth/auth_storage.dart';
 import '../auth/auth_helpers.dart';
@@ -6,6 +8,7 @@ import '../auth/auth_api.dart';
 import '../auth/auth_http.dart';
 import '../auth/security_api.dart';
 import '../auth/webauthn_service.dart';
+import '../auth/blocked_account_handler.dart';
 import '../ride_api/booking_api_service.dart';
 export '../auth/security_api.dart'
     show TwoFactorMethod, SecurityApiException, twoFactorMethodFromString;
@@ -13,6 +16,13 @@ export '../auth/security_api.dart'
 class AuthService {
   // ─── User Data Cache ──────────────────────────────────────────────────────
   static Map<String, dynamic>? _cachedUser;
+
+  // ─── Global blocked flag ────────────────────────────────────────────────────
+  static final ValueNotifier<bool> isBlocked = ValueNotifier(false);
+
+  static void setBlocked(bool blocked) {
+    isBlocked.value = blocked;
+  }
 
   void invalidateUserCache() => _cachedUser = null;
 
@@ -138,6 +148,8 @@ class AuthService {
   // ─── Logout ─────────────────────────────────────────────────────────────────
 
   Future<void> logout() async {
+    stopAccountStatusCheck();
+    setBlocked(false);
     _cachedUser = null;
     // Prevent cross-account cache leaks
     WebAuthnService.clearCache();
@@ -274,4 +286,32 @@ class AuthService {
 
   Future<void> deleteSession(String sessionId) =>
       SecurityApi.deleteSession(sessionId);
+
+  // ─── Account Status Polling ───────────────────────────────────────────────
+
+  static Timer? _statusTimer;
+
+  void startAccountStatusCheck() {
+    _statusTimer?.cancel();
+    _statusTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
+      try {
+        final status = await AuthAPI.getAccountStatus();
+        if (status != null && status['status'] == 'blocked') {
+          AuthStorage.clearTokens();
+          setBlocked(true);
+          stopAccountStatusCheck();
+        }
+      } on BlockedAccountException {
+        setBlocked(true);
+        stopAccountStatusCheck();
+      } catch (_) {
+        // Ignore network errors
+      }
+    });
+  }
+
+  void stopAccountStatusCheck() {
+    _statusTimer?.cancel();
+    _statusTimer = null;
+  }
 }

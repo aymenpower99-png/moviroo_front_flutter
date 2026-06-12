@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:moviroo/pages/search/voice/constants.dart';
 import 'package:moviroo/pages/search/voice/voice_modules/voice_logger.dart';
+import 'package:moviroo/services/auth/auth_storage.dart';
 
 // ─────────────────────────────────────────────────────────────
 // API Service
@@ -53,6 +54,12 @@ class ApiService {
     final request = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', filePath));
 
+    // Attach JWT token for authenticated voice endpoints
+    final token = await AuthStorage.getAccessToken();
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+
     final streamed = await request.send().timeout(const Duration(seconds: 120));
     final body = await streamed.stream.bytesToString();
 
@@ -68,6 +75,6 @@ class ApiService {
     try {
       err = json.decode(body);
     } catch (_) {}
-    throw Exception(err['detail'] ?? 'Server error ${streamed.statusCode}');
+    throw Exception(err['detail'] ?? err['message'] ?? 'Server error ${streamed.statusCode}');
   }
 }

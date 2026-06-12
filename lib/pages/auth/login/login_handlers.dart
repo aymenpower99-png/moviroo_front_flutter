@@ -68,6 +68,9 @@ Future<void> handleLogin({
     // Register FCM token now that user is authenticated
     await NotificationService().registerTokenAfterLogin();
 
+    AuthService.setBlocked(false);
+    authService.startAccountStatusCheck();
+
     if (context.mounted) {
       AppRouter.clearAndGo(context, AppRouter.home);
     }
@@ -118,6 +121,9 @@ Future<void> handleGoogleSignIn({
 
       // Register FCM token now that user is authenticated
       await NotificationService().registerTokenAfterLogin();
+
+      AuthService.setBlocked(false);
+      authService.startAccountStatusCheck();
 
       if (context.mounted) {
         AppRouter.clearAndGo(context, AppRouter.home);

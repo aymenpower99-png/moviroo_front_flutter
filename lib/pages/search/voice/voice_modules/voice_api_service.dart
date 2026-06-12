@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'voice_constants.dart';
 import 'voice_logger.dart';
+import '../../../../services/auth/auth_storage.dart';
 
 class VoiceApiService {
   static Future<Map<String, dynamic>> transcribe(String filePath) async {
@@ -65,8 +66,9 @@ class VoiceApiService {
     String filePath,
   ) async {
     final file = File(filePath);
-    if (!await file.exists())
+    if (!await file.exists()) {
       throw Exception('Audio file not found: $filePath');
+    }
 
     final request = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', filePath));
@@ -81,8 +83,9 @@ class VoiceApiService {
     Map<String, String> fields,
   ) async {
     final file = File(filePath);
-    if (!await file.exists())
+    if (!await file.exists()) {
       throw Exception('Audio file not found: $filePath');
+    }
 
     final request = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', filePath))
@@ -95,6 +98,12 @@ class VoiceApiService {
     http.MultipartRequest request,
     Uri uri,
   ) async {
+    // Attach JWT token for authenticated voice endpoints
+    final token = await AuthStorage.getAccessToken();
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+
     final streamed = await request.send().timeout(const Duration(seconds: 120));
     final body = await streamed.stream.bytesToString();
 
@@ -109,6 +118,6 @@ class VoiceApiService {
     try {
       err = json.decode(body);
     } catch (_) {}
-    throw Exception(err['detail'] ?? 'Server error ${streamed.statusCode}');
+    throw Exception(err['detail'] ?? err['message'] ?? 'Server error ${streamed.statusCode}');
   }
 }

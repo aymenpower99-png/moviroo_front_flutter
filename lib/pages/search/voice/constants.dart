@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 // ─────────────────────────────────────────────────────────────
 // CONFIG
 // ─────────────────────────────────────────────────────────────
-const String kBackendUrl =
-    'https://important-satisfy-sternness.ngrok-free.dev/api/voice';
+// Voice backend URL — points to NestJS backend, not the ML engine directly.
+import 'package:moviroo/core/config/app_config.dart';
+const String kBackendUrl = '${AppConfig.baseUrl}/voice';
 
 // ─────────────────────────────────────────────────────────────
 // Colors

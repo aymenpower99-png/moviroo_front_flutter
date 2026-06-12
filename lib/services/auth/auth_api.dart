@@ -7,6 +7,7 @@ import '../device_info/device_info_service.dart';
 import 'auth_storage.dart';
 import 'auth_oauth.dart';
 import 'auth_http.dart';
+import 'blocked_account_handler.dart';
 
 class AuthAPI {
   static const String baseUrl = AppConfig.baseUrl;
@@ -278,6 +279,23 @@ class AuthAPI {
         return jsonDecode(response.body);
       }
       return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> getAccountStatus() async {
+    final isLoggedIn = await AuthStorage.isLoggedIn();
+    if (!isLoggedIn) return null;
+
+    try {
+      final response = await AuthHTTP.authenticatedGet('/auth/me/status');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
+    } on BlockedAccountException {
+      rethrow;
     } catch (_) {
       return null;
     }

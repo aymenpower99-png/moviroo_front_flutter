@@ -77,6 +77,8 @@ class _SplashPageState extends State<SplashPage> {
     if (_sessionOk) {
       // User was already logged in — register FCM token
       await NotificationService().registerTokenAfterLogin();
+      AuthService.setBlocked(false);
+      _authService.startAccountStatusCheck();
       if (mounted) AppRouter.clearAndGo(context, AppRouter.home);
     } else {
       if (mounted) AppRouter.clearAndGo(context, AppRouter.login);
