@@ -117,7 +117,7 @@ class _TierCardState extends State<TierCard>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis),
                           const SizedBox(height: 3),
-                          Text('${tier.pointsRequired} pts',
+                          Text('${tier.pointsRequired}',
                               style: AppTextStyles.bodySmall(context)),
                         ],
                       ),

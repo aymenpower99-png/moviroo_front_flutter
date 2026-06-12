@@ -5,6 +5,7 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../providers/booking_provider.dart';
+import '../../../../routing/router.dart';
 import 'trajet_models.dart';
 import 'trajet_tab_bar.dart';
 import 'ride_card.dart';
@@ -17,7 +18,8 @@ class TrajetPage extends StatefulWidget {
   State<TrajetPage> createState() => _TrajetPageState();
 }
 
-class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
+class _TrajetPageState extends State<TrajetPage>
+    with WidgetsBindingObserver, RouteAware {
   int _tabIndex = 1;
   RideTab _rideTab = RideTab.upcoming;
 
@@ -31,10 +33,32 @@ class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
     });
   }
 
+  void _onTabChanged(RideTab tab) {
+    setState(() => _rideTab = tab);
+    // Fast refresh when switching tabs
+    context.read<BookingProvider>().refreshRides();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<dynamic>) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
   @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  // Called when this page becomes visible again (e.g. switching tabs)
+  @override
+  void didPopNext() {
+    context.read<BookingProvider>().refreshRides();
   }
 
   @override
@@ -86,7 +110,7 @@ class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
                   const SizedBox(height: 20),
                   RideTabBar(
                     selected: _rideTab,
-                    onTap: (tab) => setState(() => _rideTab = tab),
+                    onTap: _onTabChanged,
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -97,6 +121,7 @@ class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
             Expanded(
               child: Consumer<BookingProvider>(
                 builder: (context, bookingProvider, child) {
+                  // Full-page spinner on every load/refresh
                   if (bookingProvider.isLoading) {
                     return const Center(
                       child: CircularProgressIndicator(
@@ -152,12 +177,12 @@ class _TrajetPageState extends State<TrajetPage> with WidgetsBindingObserver {
               ),
             ),
 
-            AppTabBar(
-              currentIndex: _tabIndex,
-              onTap: (i) => setState(() => _tabIndex = i),
-            ),
           ],
         ),
+      ),
+      bottomNavigationBar: AppTabBar(
+        currentIndex: _tabIndex,
+        onTap: (i) => setState(() => _tabIndex = i),
       ),
     );
   }

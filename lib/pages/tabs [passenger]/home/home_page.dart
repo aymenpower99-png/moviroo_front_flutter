@@ -13,6 +13,7 @@ import 'recent_ride_card.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth_service/auth_service.dart';
 import '../../../../services/ride_api/booking_api_service.dart';
+import '../../../../routing/router.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,7 +22,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with RouteAware {
   int _tabIndex = 0;
 
   // ── User name ──────────────────────────────────────────────────────────────
@@ -55,6 +56,27 @@ class _HomePageState extends State<HomePage> {
     final cached = _authService.getCachedUser();
     _userName = cached?['firstName'] as String?;
 
+    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<dynamic>) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  // Called when this page becomes visible again (e.g. switching tabs)
+  @override
+  void didPopNext() {
     _loadData();
   }
 
@@ -302,12 +324,12 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            AppTabBar(
-              currentIndex: _tabIndex,
-              onTap: (i) => setState(() => _tabIndex = i),
-            ),
           ],
         ),
+      ),
+      bottomNavigationBar: AppTabBar(
+        currentIndex: _tabIndex,
+        onTap: (i) => setState(() => _tabIndex = i),
       ),
     );
   }

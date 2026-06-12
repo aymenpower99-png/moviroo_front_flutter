@@ -32,6 +32,7 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _loadPreferences() async {
+    setState(() => _isLoading = true);
     try {
       final response = await _authService.authenticatedGet(
         '/passengers/me/notifications',
@@ -46,6 +47,8 @@ class _NotificationPageState extends State<NotificationPage> {
       }
     } catch (_) {
       // silent fail — keep showing current toggle values
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

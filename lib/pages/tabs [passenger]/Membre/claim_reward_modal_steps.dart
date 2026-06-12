@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'membership_tier.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -138,6 +139,7 @@ class ClaimLoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
@@ -152,7 +154,7 @@ class ClaimLoadingView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text('Processing…', style: AppTextStyles.bodySmall(context)),
+          Text(t('processing'), style: AppTextStyles.bodySmall(context)),
         ],
       ),
     );
@@ -183,6 +185,7 @@ class ClaimRevealedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -198,7 +201,7 @@ class ClaimRevealedView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Reward Claimed!',
+          t('reward_claimed'),
           style: AppTextStyles.bodyLarge(context)
               .copyWith(fontSize: 18, fontWeight: FontWeight.w700),
           textAlign: TextAlign.center,
@@ -209,7 +212,7 @@ class ClaimRevealedView extends StatelessWidget {
             textAlign: TextAlign.center),
         const SizedBox(height: 20),
 
-        Text('Your Code', style: AppTextStyles.bodySmall(context)),
+        Text(t('your_code'), style: AppTextStyles.bodySmall(context)),
         const SizedBox(height: 8),
 
         // ── Promo code tile ──────────────────────────────────
@@ -265,7 +268,7 @@ class ClaimRevealedView extends StatelessWidget {
               elevation: 0,
             ),
             child: Text(
-              copied ? 'Copied!' : 'Copy Code',
+              copied ? t('copied') : t('tap_to_copy'),
               style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
@@ -286,9 +289,9 @@ class ClaimRevealedView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10)),
               elevation: 0,
             ),
-            child: const Text(
-              'Done',
-              style: TextStyle(
+            child: Text(
+              t('done'),
+              style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w600),

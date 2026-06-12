@@ -325,9 +325,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    t.translate('send_recovery_link'),
-                                    style: AppTextStyles.buttonPrimary,
+                                  Flexible(
+                                    child: Text(
+                                      t.translate('send_recovery_link'),
+                                      style: AppTextStyles.buttonPrimary,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
                                   ),
                                   const SizedBox(width: 10),
                                   const Icon(
@@ -343,13 +347,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     const SizedBox(height: 32),
 
                     // ── Sign In link ──────────────────────────────
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           t.translate('remembered_password'),
                           style: AppTextStyles.bodyMedium(context),
                         ),
+                        const SizedBox(width: 4),
                         GestureDetector(
                           onTap: () =>
                               Navigator.pushReplacementNamed(context, '/login'),

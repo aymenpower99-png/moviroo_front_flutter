@@ -100,7 +100,7 @@ class _SecurityPageState extends State<SecurityPage> {
 
                           // ── Biometric Authentication (all users) ────────────────────
                           _SecurityNavTile(
-                            title: 'Biometric Authentication',
+                            title: t('biometric_authentication'),
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(

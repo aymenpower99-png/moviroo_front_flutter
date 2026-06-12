@@ -8,7 +8,11 @@ class RideTabBar extends StatelessWidget {
   final RideTab selected;
   final ValueChanged<RideTab> onTap;
 
-  const RideTabBar({super.key, required this.selected, required this.onTap});
+  const RideTabBar({
+    super.key,
+    required this.selected,
+    required this.onTap,
+  });
 
   String _labelKey(RideTab tab) {
     switch (tab) {

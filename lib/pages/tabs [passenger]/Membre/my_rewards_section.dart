@@ -114,7 +114,7 @@ class _MyRewardsSectionState extends State<MyRewardsSection> {
                           ),
                           const SizedBox(height: 1),
                           Text(
-                            copied ? 'Copied!' : 'Tap to copy',
+                            copied ? t('copied') : t('tap_to_copy'),
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 10,

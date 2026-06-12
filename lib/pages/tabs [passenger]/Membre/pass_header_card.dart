@@ -147,14 +147,6 @@ class PassHeaderCard extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          // ✅ Small hint below bar: X pts to next level
-          Text(
-            pointsToNext != null
-                ? '$pointsToNext ${t('pass_pts_to_next')}'
-                : t('pass_top_level'),
-            style: AppTextStyles.bodySmall(context),
-          ),
-
           const SizedBox(height: 4),
         ],
       ),

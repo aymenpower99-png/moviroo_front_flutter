@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'membership_tier.dart';
 
 
@@ -150,6 +151,7 @@ class _TierProgressBlockState extends State<TierProgressBlock>
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
     final missing =
         (widget.tier.pointsRequired - widget.userPoints).clamp(0, 99999);
 
@@ -159,10 +161,10 @@ class _TierProgressBlockState extends State<TierProgressBlock>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('${widget.userPoints} pts',
+            Text('${widget.userPoints} ${t('pts_needed').split(' ').last}',
                 style: AppTextStyles.bodySmall(context)
                     .copyWith(fontWeight: FontWeight.w600)),
-            Text('${widget.tier.pointsRequired} pts',
+            Text('${widget.tier.pointsRequired} ${t('pts_needed').split(' ').last}',
                 style: AppTextStyles.bodySmall(context)),
           ],
         ),
@@ -188,7 +190,7 @@ class _TierProgressBlockState extends State<TierProgressBlock>
             Icon(Icons.lock_outline_rounded,
                 size: 13, color: AppColors.subtext(context)),
             const SizedBox(width: 5),
-            Text('$missing pts needed',
+            Text('$missing ${t('pts_needed')}',
                 style: AppTextStyles.bodySmall(context)),
           ],
         ),
@@ -210,14 +212,15 @@ class TierUnlockButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: onTap,
         icon: const Icon(Icons.lock_open_rounded, size: 16),
-        label: const Text(
-          'Unlock Reward',
-          style: TextStyle(
+        label: Text(
+          t('unlock_reward'),
+          style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w600),
@@ -268,12 +271,13 @@ class _TierClaimedCodeBlockState extends State<TierClaimedCodeBlock> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context).translate;
     final accent = AppColors.primaryPurple;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Your Code', style: AppTextStyles.bodySmall(context)),
+        Text(t('your_code'), style: AppTextStyles.bodySmall(context)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: _copy,

@@ -5,6 +5,7 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/membership/membership_service.dart';
 import '../../../../providers/membership_provider.dart';
+import '../../../../routing/router.dart';
 import '../../widgets/tab_bar.dart';
 import 'membership_tier.dart';
 import 'pass_header_card.dart';
@@ -19,7 +20,8 @@ class MembrePassScreen extends StatefulWidget {
   State<MembrePassScreen> createState() => _MembrePassScreenState();
 }
 
-class _MembrePassScreenState extends State<MembrePassScreen> {
+class _MembrePassScreenState extends State<MembrePassScreen>
+    with RouteAware {
   // ── API state ─────────────────────────────────────────────
   MembershipInfo? _membershipInfo;
   bool _loading = false; // ← never default to true
@@ -44,13 +46,34 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
     // Pre-populate from provider cache synchronously — avoids first-frame spinner
     final provider = context.read<MembershipProvider>();
     if (provider.hasLoaded && provider.info != null) {
-      _populateFromInfo(provider.info!);   // sets fields + _loading = false
+      _populateFromInfo(provider.info!); // sets fields + _loading = false
     }
 
-    // Always schedule a background load/refresh (silent if already cached)
+    // Always schedule a background load/refresh (force API call every time)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadFromProvider();
+      _loadFromProvider(force: true, silent: true);
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<dynamic>) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  // Called when this page becomes visible again (e.g. switching tabs)
+  @override
+  void didPopNext() {
+    _loadFromProvider(force: true, silent: true);
   }
 
   /// Sets state fields directly — safe to call from initState (no setState).
@@ -84,7 +107,7 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
     _loading = false;
   }
 
-  Future<void> _loadFromProvider({bool force = false}) async {
+  Future<void> _loadFromProvider({bool force = false, bool silent = false}) async {
     final provider = context.read<MembershipProvider>();
 
     // Use cached data immediately if available and not forcing refresh
@@ -93,17 +116,29 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
       return;
     }
 
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    // Silent mode: show cached data immediately, refresh in background
+    if (silent && provider.hasLoaded && provider.info != null) {
+      _applyInfo(provider.info!); // show cached immediately
+    } else if (silent) {
+      // No cached data but silent mode — show spinner on first load
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    } else if (!silent) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
 
-    await provider.loadMembership(force: force);
+    await provider.loadMembership(force: true);
 
     if (!mounted) return;
 
     final info = provider.info;
     if (info == null) {
+      if (silent) return; // don't show error on silent refresh
       setState(() {
         _error = provider.error ?? 'Unknown error';
         _loading = false;
@@ -138,8 +173,8 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
       _claimStates[index] = TierClaimState(claimed: true, promoCode: promoCode);
       _myRewards.insert(0, ClaimedReward(tier: tier, promoCode: promoCode));
     });
-    // Force refresh so points/level in header update
-    await _loadFromProvider(force: true);
+    // Silent refresh so points/level in header update without blocking
+    await _loadFromProvider(force: true, silent: true);
   }
 
   @override
@@ -151,70 +186,75 @@ class _MembrePassScreenState extends State<MembrePassScreen> {
       bottomNavigationBar: const AppTabBar(currentIndex: 2),
       body: SafeArea(
         bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            // ── Page title ───────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-                child: Text(
-                  t('membership_title'),
-                  style: AppTextStyles.pageTitle(context).copyWith(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
+        child: RefreshIndicator(
+          onRefresh: () => _loadFromProvider(force: true),
+          color: const Color(0xFFA855F7),
+          backgroundColor: AppColors.surface(context),
+          child: CustomScrollView(
+            slivers: [
+              // ── Page title ───────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                  child: Text(
+                    t('membership_title'),
+                    style: AppTextStyles.pageTitle(context).copyWith(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            // ── Body ─────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-                child: _loading
-                    ? const SizedBox(
-                        height: 300,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFFA855F7),
-                          ),
-                        ),
-                      )
-                    : _error != null
-                        ? SizedBox(
-                            height: 300,
-                            child: Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.cloud_off_rounded,
-                                      size: 48,
-                                      color: AppColors.subtext(context)),
-                                  const SizedBox(height: 12),
-                                   Text(
-                                    _error!,
-                                    style: AppTextStyles.bodySmall(context),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  TextButton(
-                                   onPressed: () => _loadFromProvider(force: true),
-                                    child: Text(
-                                      t('retry'),
-                                      style: const TextStyle(
-                                          color: Color(0xFFA855F7)),
-                                    ),
-                                  ),
-                                ],
-                              ),
+              // ── Body ─────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+                  child: _loading
+                      ? const SizedBox(
+                          height: 300,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFFA855F7),
                             ),
-                          )
-                        : _membershipInfo != null
-                            ? _buildContent(t)
-                            : const SizedBox.shrink(),
+                          ),
+                        )
+                      : _error != null
+                          ? SizedBox(
+                              height: 300,
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.cloud_off_rounded,
+                                        size: 48,
+                                        color: AppColors.subtext(context)),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _error!,
+                                      style: AppTextStyles.bodySmall(context),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    TextButton(
+                                      onPressed: () => _loadFromProvider(force: true),
+                                      child: Text(
+                                        t('retry'),
+                                        style: const TextStyle(
+                                            color: Color(0xFFA855F7)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : _membershipInfo != null
+                              ? _buildContent(t)
+                              : const SizedBox.shrink(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -202,6 +202,10 @@ class _SmartWayAppState extends State<SmartWayApp> {
         case 'RIDE_CANCELLED':
           nav.pushNamedAndRemoveUntil(AppRouter.trajet, (route) => false);
           break;
+        case 'MEMBERSHIP_UPGRADED':
+        case 'COUPON_REWARD':
+          nav.pushNamed(AppRouter.membre);
+          break;
         default:
           // Unknown type — fall back to home
           nav.pushNamedAndRemoveUntil(AppRouter.home, (route) => false);

@@ -129,13 +129,12 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
     } else {
       // Require biometric re-auth to disable email 2FA
       final challenge = await _biometric.challenge(
-        reason:
-            'Confirm your identity to disable email two-factor authentication.',
+        reason: AppLocalizations.of(context).translate('confirm_identity_disable_email_2fa'),
         purpose: 'disable-email-2fa',
       );
       if (!challenge.success || challenge.actionToken == null) {
         _showError(
-          challenge.errorMessage ?? 'Biometric authentication failed.',
+          challenge.errorMessage ?? AppLocalizations.of(context).translate('biometric_auth_failed'),
         );
         return;
       }
@@ -208,12 +207,12 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
 
         if (biometricAvailable) {
           final challenge = await _biometric.challenge(
-            reason: 'Confirm your identity to disable the authenticator app.',
+            reason: AppLocalizations.of(context).translate('confirm_identity_disable_authenticator'),
             purpose: 'disable-totp',
           );
           if (!challenge.success || challenge.actionToken == null) {
             _showError(
-              challenge.errorMessage ?? 'Biometric authentication failed.',
+              challenge.errorMessage ?? AppLocalizations.of(context).translate('biometric_auth_failed'),
             );
             return;
           }
@@ -245,11 +244,11 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
 
     // Require biometric re-auth before switching primary 2FA method
     final challenge = await _biometric.challenge(
-      reason: 'Confirm your identity to change your primary two-factor method.',
+      reason: AppLocalizations.of(context).translate('confirm_identity_change_primary_2fa'),
       purpose: 'switch-primary-2fa',
     );
     if (!challenge.success || challenge.actionToken == null) {
-      _showError(challenge.errorMessage ?? 'Biometric authentication failed.');
+      _showError(challenge.errorMessage ?? AppLocalizations.of(context).translate('biometric_auth_failed'));
       return;
     }
 
@@ -272,11 +271,11 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
       barrierDismissible: false,
       builder: (_) => _VerifyCodeDialog(
         title: verifyAgainst == TwoFactorMethod.email
-            ? 'Enter email code'
-            : 'Enter authenticator code',
+            ? AppLocalizations.of(context).translate('enter_email_code')
+            : AppLocalizations.of(context).translate('enter_authenticator_code'),
         subtitle: verifyAgainst == TwoFactorMethod.email
-            ? 'We sent a 6-digit code to your email.'
-            : 'Open your authenticator app and enter the current 6-digit code.',
+            ? AppLocalizations.of(context).translate('we_sent_6_digit_code')
+            : AppLocalizations.of(context).translate('open_authenticator_enter_current_code'),
       ),
     );
     if (code == null || code.length != 6 || !mounted) return;
@@ -359,7 +358,7 @@ class _TwoStepVerificationPageState extends State<TwoStepVerificationPage> {
                       _VerificationMethodTile(
                         icon: Icons.phonelink_lock_rounded,
                         title: t('Authenticator App'),
-                        subtitle: t('Use an authenticator app for 2FA'),
+                        subtitle: t('use_authenticator_app_for_2fa'),
                         enabled: _authAppEnabled,
                         busy: _busyTotp,
                         isPrimary: _primary == TwoFactorMethod.totp,
@@ -530,9 +529,9 @@ class _VerificationMethodTile extends StatelessWidget {
                               ),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
-                              'PRIMARY',
-                              style: TextStyle(
+                            child:                             Text(
+                              AppLocalizations.of(context).translate('primary').toUpperCase(),
+                              style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.primaryPurple,
@@ -577,7 +576,7 @@ class _VerificationMethodTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'Make primary',
+                    AppLocalizations.of(context).translate('make_primary'),
                     style: AppTextStyles.bodySmall(context).copyWith(
                       color: AppColors.primaryPurple,
                       fontWeight: FontWeight.w600,
@@ -674,7 +673,7 @@ class _VerifyCodeDialogState extends State<_VerifyCodeDialog> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Cancel',
+                        AppLocalizations.of(context).translate('Cancel'),
                         style: AppTextStyles.bodyLarge(context),
                       ),
                     ),
@@ -700,7 +699,7 @@ class _VerifyCodeDialogState extends State<_VerifyCodeDialog> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Verify',
+                        AppLocalizations.of(context).translate('verify'),
                         style: AppTextStyles.buttonPrimary.copyWith(
                           color: _controller.text.length == 6
                               ? Colors.white

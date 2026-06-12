@@ -59,7 +59,7 @@ class _ConfirmUnlinkDialogState extends State<ConfirmUnlinkDialog> {
             ),
             const SizedBox(height: 8),
             Text(
-              t('Enter the 6-digit code from your authenticator app to confirm removal.'),
+              t('enter_6digit_code_confirm_removal'),
               style: AppTextStyles.bodySmall(context),
             ),
             const SizedBox(height: 20),

@@ -273,6 +273,7 @@ class NotificationService {
       'ride_offers' => 'Ride Offers',
       'ride_updates' => 'Ride Updates',
       'membership_rewards' => 'Membership Rewards',
+      'membership' => 'Membership Rewards',
       _ => 'Moviroo Notifications',
     };
     final channelDesc = switch (channelId) {
@@ -280,6 +281,7 @@ class NotificationService {
       'ride_offers' => 'Ride offer and ride status notifications',
       'ride_updates' => 'Live updates for your active ride',
       'membership_rewards' => 'Rewards and promo codes from membership levels',
+      'membership' => 'Rewards and promo codes from membership levels',
       _ => 'Moviroo ride notifications',
     };
 

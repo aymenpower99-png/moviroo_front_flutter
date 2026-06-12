@@ -63,8 +63,9 @@ class _PromoBannerState extends State<PromoBanner> {
 
     // Dynamic headline using the first tier's threshold
     final points = _firstTierPoints;
-    final dynamicHeadline =
-        'Your first discount\nstarts at $points pts';
+    final dynamicHeadline = t
+        .translate('promo_headline_dynamic')
+        .replaceFirst('{points}', '$points');
 
     return _buildCard(
       context,

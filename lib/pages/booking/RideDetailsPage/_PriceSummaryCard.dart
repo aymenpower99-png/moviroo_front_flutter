@@ -149,7 +149,7 @@ class PriceSummaryCard extends StatelessWidget {
           if (membershipPoints != null && membershipPoints! > 0) ...[
             _PriceRow(
               label: t.translate('membership_points'),
-              value: '$membershipPoints pts',
+              value: '$membershipPoints ${t.translate('pts')}',
             ),
             const SizedBox(height: 10),
           ],

@@ -24,13 +24,11 @@ class SupportPage extends StatefulWidget {
   State<SupportPage> createState() => _SupportPageState();
 }
 
-class _SupportPageState extends State<SupportPage> {
+class _SupportPageState extends State<SupportPage> with RouteAware {
   int _tabIndex = 3;
   final SupportService _supportService = SupportService();
   late HelpCenterService _helpCenterService;
   List<SupportTicket> _tickets = [];
-  bool _isLoadingTickets = false;
-  bool _hasLoadedTickets = false;
   Timer? _pollTimer;
 
   // ── Help Center categories ─────────────────────────────────────────────────
@@ -38,13 +36,6 @@ class _SupportPageState extends State<SupportPage> {
   bool _loadingCategories = false;
 
   int get _unreadCount => _tickets.where((t) => t.hasUnread).length;
-
-  @override
-  void dispose() {
-    _pollTimer?.cancel();
-    _supportService.dispose();
-    super.dispose();
-  }
 
   void _showMessagesModal() {
     // Mark all tickets as read on backend — badge clears immediately
@@ -89,26 +80,10 @@ class _SupportPageState extends State<SupportPage> {
       if (mounted) {
         setState(() {
           _tickets = tickets;
-          _isLoadingTickets = false;
-          _hasLoadedTickets = true;
         });
-        // Debug: log ticket data for badge troubleshooting
-        for (final t in tickets) {
-          print(
-            '[SupportPage] ticket=${t.id} status=${t.status} '
-            'hasUnread=${t.hasUnread} '
-            'updatedAt=${t.updatedAt.toIso8601String()} '
-            'unreadCount=$_unreadCount',
-          );
-        }
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingTickets = false;
-          _hasLoadedTickets = true;
-        });
-      }
+      // silent fail — keep existing cached tickets visible
     }
   }
 
@@ -119,17 +94,19 @@ class _SupportPageState extends State<SupportPage> {
       lang: localeProvider.locale.languageCode,
     );
 
-    final cached = HelpCenterService.cachedCategories;
-    if (cached != null) {
-      _categories = cached;
-      _refreshCategories();
-    } else {
-      _loadingCategories = true;
-      _fetchCategories();
+    // Show cached data immediately — no blocking
+    final cachedCategories = HelpCenterService.cachedCategories;
+    if (cachedCategories != null) {
+      _categories = cachedCategories;
     }
 
     // Load tickets immediately so badge shows on first visit
     _loadTickets();
+
+    // Background refresh for categories and tickets
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshCategories();
+    });
 
     // Poll tickets every 15s to detect new admin replies (replaces WebSocket)
     _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) {
@@ -137,25 +114,40 @@ class _SupportPageState extends State<SupportPage> {
     });
   }
 
-  Future<void> _fetchCategories() async {
-    try {
-      final categories = await _helpCenterService.fetchCategories();
-      if (mounted) {
-        setState(() {
-          _categories = categories;
-          _loadingCategories = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _loadingCategories = false);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<dynamic>) {
+      appRouteObserver.subscribe(this, route);
     }
   }
 
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    _pollTimer?.cancel();
+    _supportService.dispose();
+    super.dispose();
+  }
+
+  // Called when this page becomes visible again (e.g. switching tabs)
+  @override
+  void didPopNext() {
+    _loadTickets();
+    _refreshCategories();
+  }
+
   Future<void> _refreshCategories() async {
+    setState(() => _loadingCategories = true);
     try {
       final categories = await _helpCenterService.fetchCategories();
       if (mounted) setState(() => _categories = categories);
-    } catch (_) {}
+    } catch (_) {
+      // silent fail — keep existing cached categories visible
+    } finally {
+      if (mounted) setState(() => _loadingCategories = false);
+    }
   }
 
   Future<void> _callSupport() async {

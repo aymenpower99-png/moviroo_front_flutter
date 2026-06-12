@@ -21,6 +21,12 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+
+  final _firstNameFocus = FocusNode();
+  final _lastNameFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _phoneFocus = FocusNode();
+
   final AuthService _authService = AuthService();
 
   @override
@@ -43,6 +49,10 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _firstNameFocus.dispose();
+    _lastNameFocus.dispose();
+    _emailFocus.dispose();
+    _phoneFocus.dispose();
     super.dispose();
   }
 
@@ -52,18 +62,18 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     final phone = _phoneController.text.trim();
 
     if (firstName.isEmpty || lastName.isEmpty) {
-      setState(() => _errorMessage = 'Please fill in your name');
+      setState(() => _errorMessage = AppLocalizations.of(context).translate('error_fill_name'));
       return;
     }
 
     if (phone.isEmpty) {
-      setState(() => _errorMessage = 'Phone number is required');
+      setState(() => _errorMessage = AppLocalizations.of(context).translate('error_phone_required'));
       return;
     }
 
     // Validate Tunisia phone: 8 digits
     if (phone.length != 8 || !RegExp(r'^\d{8}$').hasMatch(phone)) {
-      setState(() => _errorMessage = 'Enter a valid 8-digit Tunisian number');
+      setState(() => _errorMessage = AppLocalizations.of(context).translate('error_phone_invalid'));
       return;
     }
 
@@ -98,35 +108,37 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     required IconData prefixIcon,
     bool readOnly = false,
     Widget? prefix,
+    FocusNode? focusNode,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isFocused = focusNode?.hasFocus ?? false;
     return InputDecoration(
       hintText: hint,
       hintStyle: AppTextStyles.bodyMedium(
         context,
       ).copyWith(color: AppColors.subtext(context)),
-      prefixIcon:
-          prefix ?? Icon(prefixIcon, color: AppColors.text(context), size: 20),
+      prefixIcon: prefix ??
+          Icon(
+            prefixIcon,
+            color: isFocused ? AppColors.primaryPurple : AppColors.text(context),
+            size: 20,
+          ),
       filled: true,
       fillColor: readOnly
           ? (isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF0F0F4))
           : AppColors.surface(context),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: isDark
-            ? BorderSide.none
-            : BorderSide(color: AppColors.border(context)),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.border(context)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: isDark
-            ? BorderSide.none
-            : BorderSide(color: AppColors.border(context)),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.border(context)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-          color: isDark ? AppColors.bg(context) : const Color(0xFFD1D5DB),
+          color: AppColors.primaryPurple,
           width: 1.5,
         ),
       ),
@@ -184,12 +196,15 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
         const SizedBox(height: 8),
         TextField(
           controller: _firstNameController,
+          focusNode: _firstNameFocus,
           cursorColor: AppColors.subtext(context),
           style: AppTextStyles.bodyMedium(context),
+          onTap: () => setState(() {}),
           decoration: _fieldDecoration(
             context,
             hint: t.translate('first_name'),
             prefixIcon: Icons.person_outline,
+            focusNode: _firstNameFocus,
           ),
           onChanged: (_) => setState(() {}),
         ),
@@ -201,12 +216,15 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
         const SizedBox(height: 8),
         TextField(
           controller: _lastNameController,
+          focusNode: _lastNameFocus,
           cursorColor: AppColors.subtext(context),
           style: AppTextStyles.bodyMedium(context),
+          onTap: () => setState(() {}),
           decoration: _fieldDecoration(
             context,
             hint: t.translate('last_name'),
             prefixIcon: Icons.person_outline,
+            focusNode: _lastNameFocus,
           ),
         ),
       ],
@@ -240,16 +258,19 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _emailController,
+                      focusNode: _emailFocus,
                       readOnly: true,
                       cursorColor: AppColors.subtext(context),
                       style: AppTextStyles.bodyMedium(
                         context,
                       ).copyWith(color: AppColors.subtext(context)),
+                      onTap: () => setState(() {}),
                       decoration: _fieldDecoration(
                         context,
                         hint: t.translate('hint_email'),
                         prefixIcon: Icons.email_outlined,
                         readOnly: true,
+                        focusNode: _emailFocus,
                       ),
                     ),
 
@@ -260,17 +281,20 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _phoneController,
+                      focusNode: _phoneFocus,
                       keyboardType: TextInputType.phone,
                       cursorColor: AppColors.subtext(context),
                       style: AppTextStyles.bodyMedium(context),
+                      onTap: () => setState(() {}),
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(8),
                       ],
                       decoration: _fieldDecoration(
                         context,
-                        hint: '12 345 678',
+                        hint: t.translate('hint_phone_tunisia'),
                         prefixIcon: Icons.phone_outlined,
+                        focusNode: _phoneFocus,
                         prefix: Padding(
                           padding: const EdgeInsets.only(left: 12),
                           child: Row(
