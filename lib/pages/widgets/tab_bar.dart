@@ -63,15 +63,21 @@ class AppTabBar extends StatelessWidget {
 
     final t = AppLocalizations.of(context).translate;
 
-    return Container(
-      height: 72,
-      decoration: BoxDecoration(
-        color: bgColor,
-        border: Border(
-          top: BorderSide(color: topBorder, width: 1),
+    return SafeArea(
+      top: false,
+      left: false,
+      right: false,
+      bottom: true,
+      minimum: EdgeInsets.zero,
+      child: Container(
+        height: 72,
+        decoration: BoxDecoration(
+          color: bgColor,
+          border: Border(
+            top: BorderSide(color: topBorder, width: 1),
+          ),
         ),
-      ),
-      child: Row(
+        child: Row(
         children: List.generate(_iconsOutline.length, (i) {
           final selected = i == currentIndex;
 
@@ -129,6 +135,7 @@ class AppTabBar extends StatelessWidget {
           );
         }),
       ),
+    ),
     );
   }
 }

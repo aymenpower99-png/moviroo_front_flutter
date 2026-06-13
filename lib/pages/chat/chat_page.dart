@@ -46,19 +46,14 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    // Resolve photo synchronously from widget args OR cache so first frame is correct.
-    final fromArgs = widget.driverPhotoUrl;
-    final fromCache = DriverProfileCache.instance.getLogoUrl(
-      widget.driverId ?? '',
-    );
-    final chosen = (fromArgs != null && fromArgs.isNotEmpty)
-        ? fromArgs
-        : (fromCache ?? '');
-    _driverPhotoUrl = chosen.isNotEmpty ? _absoluteUrl(chosen) : '';
+    // Always re-fetch driver profile on every open — do NOT rely on stale
+    // widget args or cached values. The driver may have deleted their photo.
+    _driverPhotoUrl = null;
 
     if (_hydratedOnce.contains(widget.rideId)) {
       _hydrated = true;
       _initChat(); // background init only
+      _fetchDriverProfile(); // background re-fetch
     } else {
       _startHydrationGate();
     }
@@ -142,9 +137,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _fetchDriverProfile() async {
-    // Only fetch if we don't already have a photo URL.
-    if (_driverPhotoUrl != null && _driverPhotoUrl!.isNotEmpty) return;
-
     try {
       final api = BookingApiService();
       final details = await api.getRideDetails(widget.rideId);
@@ -177,6 +169,16 @@ class _ChatPageState extends State<ChatPage> {
           );
           debugPrint(
             '🟢 [PassengerChat] Driver photo cached for ${widget.driverId}: $_driverPhotoUrl',
+          );
+        }
+      } else {
+        // Driver has no custom photo — clear the stale cached value so the
+        // initials avatar is shown instead.
+        _driverPhotoUrl = null;
+        if (widget.driverId != null && widget.driverId!.isNotEmpty) {
+          DriverProfileCache.instance.clear(widget.driverId!);
+          debugPrint(
+            '🟡 [PassengerChat] Driver photo cleared for ${widget.driverId} — no custom photo',
           );
         }
       }
@@ -398,7 +400,7 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             _ChatTopBar(
               driverName: widget.driverName,
-              driverPhotoUrl: _driverPhotoUrl ?? widget.driverPhotoUrl,
+              driverPhotoUrl: _driverPhotoUrl,
               driverId: widget.driverId,
             ),
             TranslationBanner(

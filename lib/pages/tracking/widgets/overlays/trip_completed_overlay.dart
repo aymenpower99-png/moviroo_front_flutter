@@ -2,21 +2,69 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../core/utils/address_utils.dart';
+import '../../../../core/widgets/app_toast.dart';
 import '../../models/ride_state.dart';
 import '../../../../widgets/driver_avatar.dart';
+import '../../../../services/trip_rating_service.dart';
 
-class TripCompletedOverlay extends StatelessWidget {
+const _purple = AppColors.primaryPurple;
+const _green = Color(0xFF16A34A);
+
+class TripCompletedOverlay extends StatefulWidget {
   final RideState rideState;
+  final double? durationMin;
+  final double? distanceKm;
+  final String rideId;
   final VoidCallback onContinue;
 
   const TripCompletedOverlay({
     super.key,
     required this.rideState,
+    this.durationMin,
+    this.distanceKm,
+    required this.rideId,
     required this.onContinue,
   });
 
-  static const _purple = AppColors.primaryPurple;
-  static const _green = Color(0xFF16A34A);
+  @override
+  State<TripCompletedOverlay> createState() => _TripCompletedOverlayState();
+}
+
+class _TripCompletedOverlayState extends State<TripCompletedOverlay> {
+  int _rating = 0;
+  bool _submitting = false;
+
+  static const _gold = Color(0xFFFFB800);
+
+  Future<void> _submitRating() async {
+    if (_rating == 0) {
+      AppToast.error(
+        context,
+        AppLocalizations.of(context).translate('rating_select_first'),
+      );
+      return;
+    }
+    setState(() => _submitting = true);
+    try {
+      await TripRatingService.submitRating(widget.rideId, _rating);
+      if (mounted) {
+        AppToast.success(
+          context,
+          AppLocalizations.of(context).translate('rating_submitted'),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.error(
+          context,
+          AppLocalizations.of(context).translate('rating_failed'),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+    widget.onContinue();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,22 +76,91 @@ class TripCompletedOverlay extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _Header(green: _green),
+              const _Header(green: _green),
               const SizedBox(height: 10),
-              _TripRouteCard(rideState: rideState),
+              _TripRouteCard(rideState: widget.rideState),
               const SizedBox(height: 8),
-              _TripDetailsRow(rideState: rideState),
-              const SizedBox(height: 8),
-              _DriverRatingCard(
-                driverName: rideState.driverName,
-                vehicleName: rideState.vehicleName,
-                driverPhotoUrl: rideState.driverPhotoUrl,
+              _TripDetailsRow(
+                durationMin: widget.durationMin,
+                distanceKm: widget.distanceKm,
+                distanceLeft: widget.rideState.distanceLeft,
               ),
               const SizedBox(height: 8),
-              _RewardsCard(purple: _purple),
-              const SizedBox(height: 16),
-              _ActionsSection(purple: _purple, onContinue: onContinue),
+              // Driver info + rating stars (no buttons inside)
+              _DriverRatingCard(
+                driverName: widget.rideState.driverName,
+                vehicleName: widget.rideState.vehicleName,
+                driverPhotoUrl: widget.rideState.driverPhotoUrl,
+                rating: _rating,
+                onRatingChanged: (r) => setState(() => _rating = r),
+              ),
               const SizedBox(height: 8),
+              const _RewardsCard(purple: _purple),
+              const SizedBox(height: 16),
+
+              // ── Action buttons ──────────────────────────────────
+              // Submit Rating — filled purple
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _submitting ? null : _submitRating,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _purple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    side: const BorderSide(color: _purple, width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: _submitting
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          AppLocalizations.of(context)
+                              .translate('submit_rating'),
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Skip — outlined purple
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: widget.onContinue,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _purple,
+                    side: const BorderSide(color: _purple, width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context).translate('skip'),
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -164,23 +281,33 @@ class _TripRouteCard extends StatelessWidget {
 // ─── Trip details chips (duration + distance) ─────────────────────────────────
 
 class _TripDetailsRow extends StatelessWidget {
-  final RideState rideState;
-  const _TripDetailsRow({required this.rideState});
+  final double? durationMin;
+  final double? distanceKm;
+  final String distanceLeft;
+
+  const _TripDetailsRow({
+    this.durationMin,
+    this.distanceKm,
+    required this.distanceLeft,
+  });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     const purple = AppColors.primaryPurple;
-    final distance = rideState.distanceLeft.isNotEmpty
-        ? rideState.distanceLeft
-        : '—';
+
+    final durationText = _formatDuration(durationMin);
+    final distanceText = distanceKm != null && distanceKm! > 0
+        ? _formatDistance(distanceKm!)
+        : (distanceLeft.isNotEmpty ? distanceLeft : '—');
+
     return Row(
       children: [
         Expanded(
           child: _Chip(
             icon: Icons.timer_outlined,
             label: l10n.translate('duration'),
-            value: '27 min',
+            value: durationText,
             color: purple,
           ),
         ),
@@ -189,34 +316,57 @@ class _TripDetailsRow extends StatelessWidget {
           child: _Chip(
             icon: Icons.route_rounded,
             label: l10n.translate('distance'),
-            value: distance,
+            value: distanceText,
             color: purple,
           ),
         ),
       ],
     );
   }
+
+  String _formatDuration(double? minutes) {
+    if (minutes == null || minutes <= 0) {
+      return '—';
+    }
+    if (minutes >= 60) {
+      final h = minutes ~/ 60;
+      final m = (minutes % 60).round();
+      if (m > 0) return '${h}h ${m}min';
+      return '${h}h';
+    }
+    if (minutes < 1) {
+      final seconds = (minutes * 60).round();
+      return '${seconds}s';
+    }
+    return '${minutes.round()} min';
+  }
+
+  String _formatDistance(double km) {
+    if (km < 1) {
+      final meters = (km * 1000).round();
+      return '${meters} m';
+    }
+    return '${km.toStringAsFixed(1)} km';
+  }
 }
 
-// ─── Driver + Rating card (combined) ─────────────────────────────────────────
+// ─── Driver + Rating card (stars only, no buttons) ─────────────────────────
 
-class _DriverRatingCard extends StatefulWidget {
+class _DriverRatingCard extends StatelessWidget {
   final String driverName;
   final String vehicleName;
   final String? driverPhotoUrl;
+  final int rating;
+  final ValueChanged<int> onRatingChanged;
+
   const _DriverRatingCard({
     required this.driverName,
     required this.vehicleName,
     this.driverPhotoUrl,
+    required this.rating,
+    required this.onRatingChanged,
   });
 
-  @override
-  State<_DriverRatingCard> createState() => _DriverRatingCardState();
-}
-
-class _DriverRatingCardState extends State<_DriverRatingCard> {
-  int _rating = 0;
-  static const _purple = AppColors.primaryPurple;
   static const _gold = Color(0xFFFFB800);
 
   @override
@@ -230,8 +380,8 @@ class _DriverRatingCardState extends State<_DriverRatingCard> {
           Row(
             children: [
               DriverAvatar(
-                name: widget.driverName,
-                photoUrl: widget.driverPhotoUrl,
+                name: driverName,
+                photoUrl: driverPhotoUrl,
                 size: 46,
                 border: Border.all(
                   color: AppColors.primaryPurple.withValues(alpha: 0.35),
@@ -247,9 +397,7 @@ class _DriverRatingCardState extends State<_DriverRatingCard> {
                       children: [
                         Expanded(
                           child: Text(
-                            widget.driverName.isNotEmpty
-                                ? widget.driverName
-                                : 'Driver',
+                            driverName.isNotEmpty ? driverName : 'Driver',
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 14,
@@ -276,9 +424,7 @@ class _DriverRatingCardState extends State<_DriverRatingCard> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      widget.vehicleName.isNotEmpty
-                          ? widget.vehicleName
-                          : 'Vehicle',
+                      vehicleName.isNotEmpty ? vehicleName : 'Vehicle',
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
@@ -312,7 +458,7 @@ class _DriverRatingCardState extends State<_DriverRatingCard> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(5, (i) {
               return GestureDetector(
-                onTap: () => setState(() => _rating = i + 1),
+                onTap: () => onRatingChanged(i + 1),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: AnimatedSwitcher(
@@ -320,11 +466,11 @@ class _DriverRatingCardState extends State<_DriverRatingCard> {
                     transitionBuilder: (child, anim) =>
                         ScaleTransition(scale: anim, child: child),
                     child: Icon(
-                      key: ValueKey(i < _rating),
-                      i < _rating
+                      key: ValueKey(i < rating),
+                      i < rating
                           ? Icons.star_rounded
                           : Icons.star_outline_rounded,
-                      color: i < _rating ? _gold : const Color(0xFFD1D5DB),
+                      color: i < rating ? _gold : const Color(0xFFD1D5DB),
                       size: 34,
                     ),
                   ),
@@ -417,97 +563,8 @@ class _RewardsCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 4),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              l10n
-                  .translate('pct_to_moviroo_max')
-                  .replaceAll('{pct}', '${(progress * 100).toInt()}'),
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 10,
-                color: AppColors.subtext(context),
-              ),
-            ),
-          ),
         ],
       ),
-    );
-  }
-}
-
-// ─── Actions ──────────────────────────────────────────────────────────────────
-
-class _ActionsSection extends StatelessWidget {
-  final Color purple;
-  final VoidCallback onContinue;
-  const _ActionsSection({required this.purple, required this.onContinue});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: onContinue,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: purple,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: Text(
-              l10n.translate('submit_rating'),
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          height: 46,
-          child: OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              foregroundColor: purple,
-              side: BorderSide(color: purple),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ImageIcon(
-                  const AssetImage('images/icons/warning.png'),
-                  size: 18,
-                  color: purple,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.translate('report_a_problem'),
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -540,8 +597,6 @@ class _Card extends StatelessWidget {
 }
 
 // ─── Route stop row ───────────────────────────────────────────────────────────
-
-// --- Route stop row ---
 
 class _RouteStop extends StatelessWidget {
   final String label;

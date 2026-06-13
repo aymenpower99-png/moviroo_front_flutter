@@ -141,6 +141,9 @@ mixin _TrackRideCallbacksMixin on State<TrackRidePage>, _TrackRideStateMixin {
           phase: RidePhase.rideEnded,
           progress: 1.0,
         );
+        // Store real trip metrics from backend (not estimates)
+        tripDurationMin = (data['duration_min_real'] as num?)?.toDouble();
+        tripDistanceKm = (data['distance_km_real'] as num?)?.toDouble();
       });
       // Trip is over — clear the tracking cache so the next ride starts fresh.
       RideTrackingCache.instance.remove(widget.rideId);

@@ -133,6 +133,9 @@ mixin _TrackRideBuildMixin
                   ? TripCompletedOverlay(
                       key: const ValueKey('trip_completed'),
                       rideState: rideState,
+                      durationMin: tripDurationMin,
+                      distanceKm: tripDistanceKm,
+                      rideId: widget.rideId,
                       onContinue: () => Navigator.maybePop(context),
                     )
                   : const SizedBox.shrink(key: ValueKey('empty')),

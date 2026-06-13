@@ -41,6 +41,10 @@ mixin _TrackRideStateMixin on State<TrackRidePage> {
   /// Gates the 3D car marker.
   bool isDriverLocationReady = false;
 
+  // ── Real trip metrics (from backend on completion) ────────────────────────
+  double? tripDurationMin;
+  double? tripDistanceKm;
+
   // ── Pulse animation (arrival) ────────────────────────────────────────────
   late AnimationController pulseAnim;
 

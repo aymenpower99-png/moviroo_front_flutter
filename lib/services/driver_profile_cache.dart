@@ -136,8 +136,15 @@ class DriverProfileCache {
     });
   }
 
+  /// Clear a single driver entry.
+  void clear(String driverId) {
+    if (driverId.isEmpty) return;
+    _memory.remove(driverId);
+    _persist();
+  }
+
   /// Clear everything (useful on logout).
-  Future<void> clear() async {
+  Future<void> clearAll() async {
     _memory.clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefsKey);
