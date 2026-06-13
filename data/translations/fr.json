@@ -346,6 +346,7 @@
   "error_fill_name": "Veuillez remplir votre nom",
   "error_phone_required": "Le numéro de téléphone est obligatoire",
   "error_phone_invalid": "Entrez un numéro tunisien valide de 8 chiffres",
+  "error_phone_exists": "Ce numéro de téléphone est déjà enregistré",
   "hint_phone_tunisia": "12 345 678",
   "label_first_name": "PRÉNOM",
   "label_last_name": "NOM",

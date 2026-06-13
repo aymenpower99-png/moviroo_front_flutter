@@ -169,6 +169,16 @@ class _ChatPageState extends State<ChatPage> {
       final resolved = rootUrl ?? nestedUrl;
       if (resolved != null && resolved.isNotEmpty) {
         _driverPhotoUrl = _absoluteUrl(resolved);
+        // Persist the resolved photo URL so it survives page disposal/recreation.
+        if (widget.driverId != null && widget.driverId!.isNotEmpty) {
+          DriverProfileCache.instance.set(
+            widget.driverId!,
+            {'logoUrl': _driverPhotoUrl},
+          );
+          debugPrint(
+            '🟢 [PassengerChat] Driver photo cached for ${widget.driverId}: $_driverPhotoUrl',
+          );
+        }
       }
     } catch (e) {
       // Non-fatal — keep whatever we already have

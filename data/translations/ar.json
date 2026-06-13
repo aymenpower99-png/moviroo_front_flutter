@@ -347,6 +347,7 @@
   "error_fill_name": "يرجى ملء اسمك",
   "error_phone_required": "رقم الهاتف مطلوب",
   "error_phone_invalid": "أدخل رقمًا تونسيًا صالحًا مكوّنًا من 8 أرقام",
+  "error_phone_exists": "هذا الرقم مسجل بالفعل",
   "hint_phone_tunisia": "12 345 678",
   "label_first_name": "الاسم الأول",
   "label_last_name": "اسم العائلة",

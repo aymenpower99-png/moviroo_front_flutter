@@ -26,6 +26,11 @@ class PassengerTrackingSocket {
   void Function()? onRideStarted;
   void Function(Map<String, dynamic> data)? onRideCompleted;
 
+  // Last known coordinates for progress-only updates (backend may send ETA
+  // without lat/lng when the 5% step threshold suppresses the full payload).
+  double? _lastLat;
+  double? _lastLng;
+
   Future<void> connect(String rideId) async {
     if (_socket != null) {
       debugPrint('🔌 WebSocket already connected');
@@ -86,8 +91,26 @@ class PassengerTrackingSocket {
       if (data is Map) {
         final lat = (data['latitude'] as num?)?.toDouble();
         final lng = (data['longitude'] as num?)?.toDouble();
-        if (lat != null && lng != null) {
+        final hasCoords = lat != null && lng != null;
+        final hasEta = data['etaMins'] != null;
+        final hasProgress = hasEta || data['progress'] != null;
+
+        if (hasCoords) {
+          _lastLat = lat;
+          _lastLng = lng;
           onLocationUpdate?.call(lat, lng, Map<String, dynamic>.from(data));
+        } else if (hasEta) {
+          // ETA-only update (no coordinates): backend 5% step threshold may
+          // suppress lat/lng.  Forward the ETA directly so the UI updates
+          // without waiting for the next full GPS broadcast.
+          onDriverEnroute?.call((data['etaMins'] as num).toInt());
+        } else if (hasProgress && _lastLat != null && _lastLng != null) {
+          // Progress-only update: forward the data using last known coordinates.
+          onLocationUpdate?.call(
+            _lastLat!,
+            _lastLng!,
+            Map<String, dynamic>.from(data),
+          );
         }
       }
     });
@@ -99,6 +122,8 @@ class PassengerTrackingSocket {
         final lat = (data['latitude'] as num?)?.toDouble();
         final lng = (data['longitude'] as num?)?.toDouble();
         if (lat != null && lng != null) {
+          _lastLat = lat;
+          _lastLng = lng;
           onLocationUpdate?.call(lat, lng, Map<String, dynamic>.from(data));
         }
       }

@@ -13,6 +13,12 @@ class ProgressCalculator {
     RideState currentState,
     Map<String, dynamic> locationData,
   ) {
+    // Ignore progress updates once the driver has arrived — the UI is in
+    // "arrived" mode and should not flip back to showing ETA / progress.
+    if (currentState.phase == RidePhase.driverArrived) {
+      return currentState;
+    }
+
     // Extract progress data from WebSocket payload.
     // Use `as num?` then `.toDouble()` because JSON serialises whole-number
     // doubles (e.g. 1.0) as ints and `as double?` would silently fail.

@@ -92,8 +92,12 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       );
       if (mounted) AppRouter.clearAndGo(context, AppRouter.home);
     } catch (e) {
-      setState(() =>
-          _errorMessage = e.toString().replaceAll('Exception: ', ''));
+      final raw = e.toString().replaceAll('Exception: ', '');
+      final friendly = raw.toLowerCase().contains('phone') &&
+              raw.toLowerCase().contains('already')
+          ? t.translate('error_phone_exists')
+          : raw;
+      setState(() => _errorMessage = friendly);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
