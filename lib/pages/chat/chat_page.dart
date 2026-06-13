@@ -18,11 +18,6 @@ class ChatPage extends StatefulWidget {
   final String rideId;
   final String? driverName;
   final String? driverId;
-  final String? vehicleName;
-  final String? vehicleMake;
-  final String? vehicleModel;
-  final String? vehicleColor;
-  final String? plateNumber;
   final String? driverPhotoUrl;
 
   const ChatPage({
@@ -30,11 +25,6 @@ class ChatPage extends StatefulWidget {
     required this.rideId,
     this.driverName,
     this.driverId,
-    this.vehicleName,
-    this.vehicleMake,
-    this.vehicleModel,
-    this.vehicleColor,
-    this.plateNumber,
     this.driverPhotoUrl,
   });
 
@@ -49,10 +39,8 @@ class _ChatPageState extends State<ChatPage> {
   final ChatService _chatService = ChatService();
   String? _currentUserId;
   String? _driverPhotoUrl; // resolved photo URL
-  String? _vehicleLabel; // formatted vehicle label
 
   static final Set<String> _hydratedOnce = <String>{};
-  bool _hydrating = false;
   bool _hydrated = false;
 
   @override
@@ -67,22 +55,13 @@ class _ChatPageState extends State<ChatPage> {
         ? fromArgs
         : (fromCache ?? '');
     _driverPhotoUrl = chosen.isNotEmpty ? _absoluteUrl(chosen) : '';
-    _vehicleLabel = _formatVehicleLabel(
-      widget.vehicleName,
-      make: widget.vehicleMake,
-      model: widget.vehicleModel,
-    );
+
     if (_hydratedOnce.contains(widget.rideId)) {
       _hydrated = true;
+      _initChat(); // background init only
     } else {
       _startHydrationGate();
     }
-    _initChat();
-    // Only hit the API if we still have nothing (silent background refresh).
-    if (_driverPhotoUrl == null || _driverPhotoUrl!.isEmpty) {
-      _ensureDriverPhoto();
-    }
-    _ensureVehicleLabel();
   }
 
   String _absoluteUrl(String raw) {
@@ -132,9 +111,14 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _startHydrationGate() {
-    _hydrating = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      Future<void> precacheTask = Future.value();
+      // 1. Fetch driver profile from API (blocking)
+      await _fetchDriverProfile();
+
+      // 2. Initialize chat (messages + WebSocket)
+      await _initChat();
+
+      // 3. Precache driver photo if available
       final url = _driverPhotoUrl;
       if (url != null && url.isNotEmpty) {
         try {
@@ -145,68 +129,22 @@ class _ChatPageState extends State<ChatPage> {
           ).timeout(const Duration(seconds: 2), onTimeout: () {});
         } catch (_) {}
       }
-      await Future.any([
-        precacheTask,
-        Future.delayed(const Duration(milliseconds: 1300)),
-      ]);
+
+      // 4. Minimum display time so the spinner doesn't flash too fast
+      await Future.delayed(const Duration(milliseconds: 600));
+
       if (!mounted) return;
       setState(() {
         _hydrated = true;
-        _hydrating = false;
         _hydratedOnce.add(widget.rideId);
       });
     });
   }
 
-  Future<void> _ensureVehicleLabel() async {
-    try {
-      final api = BookingApiService();
-      final details = await api.getRideDetails(widget.rideId);
-      if (details == null || !mounted) return;
-      final make =
-          (details['vehicleMake'] as String?) ??
-          (details['vehicle_make'] as String?);
-      final model =
-          (details['vehicleModel'] as String?) ??
-          (details['vehicle_model'] as String?);
-      final improved = _formatVehicleLabel(
-        widget.vehicleName,
-        make: make,
-        model: model,
-      );
-      if (improved != null &&
-          improved.isNotEmpty &&
-          improved != _vehicleLabel) {
-        setState(() => _vehicleLabel = improved);
-      }
-    } catch (_) {}
-  }
+  Future<void> _fetchDriverProfile() async {
+    // Only fetch if we don't already have a photo URL.
+    if (_driverPhotoUrl != null && _driverPhotoUrl!.isNotEmpty) return;
 
-  String? _formatVehicleLabel(
-    String? vehicleName, {
-    String? make,
-    String? model,
-  }) {
-    String? mke = make?.trim();
-    String? mdl = model?.trim();
-    if (mke != null && mke.isNotEmpty && mdl != null && mdl.isNotEmpty) {
-      return _titleCase(mke) + ' ' + _normalizeModel(mdl);
-    }
-    if (vehicleName == null || vehicleName.trim().isEmpty) return null;
-    return vehicleName.trim();
-  }
-
-  String _titleCase(String s) {
-    if (s.isEmpty) return s;
-    return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
-  }
-
-  String _normalizeModel(String s) => s.trim();
-
-  Future<void> _ensureDriverPhoto() async {
-    // Silent background refresh only.
-    // The photo URL is already resolved synchronously in initState from cache/widget.
-    // We only call setState if the API returns a *different* URL than what we already show.
     try {
       final api = BookingApiService();
       final details = await api.getRideDetails(widget.rideId);
@@ -230,16 +168,11 @@ class _ChatPageState extends State<ChatPage> {
 
       final resolved = rootUrl ?? nestedUrl;
       if (resolved != null && resolved.isNotEmpty) {
-        final abs = _absoluteUrl(resolved);
-        // Only update if we actually got something new.
-        // If the same URL is already showing, calling setState would force
-        // CachedNetworkImage to rebuild and potentially re-fade.
-        if (abs != _driverPhotoUrl && mounted) {
-          setState(() => _driverPhotoUrl = abs);
-        }
+        _driverPhotoUrl = _absoluteUrl(resolved);
       }
     } catch (e) {
       // Non-fatal — keep whatever we already have
+      debugPrint('⚠️ [PassengerChat] Failed to fetch driver profile: $e');
     }
   }
 
@@ -437,180 +370,177 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Loading state: only a centered spinner, nothing else
+    if (!_hydrated) {
+      return Scaffold(
+        backgroundColor: AppColors.bg(context),
+        body: const SafeArea(
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    // Hydrated state: full chat UI
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            Column(
-              children: [
-                _ChatTopBar(
-                  driverName: widget.driverName,
-                  vehicleName: _vehicleLabel ?? widget.vehicleName,
-                  vehicleColor: widget.vehicleColor,
-                  plateNumber: widget.plateNumber,
-                  driverPhotoUrl: _driverPhotoUrl ?? widget.driverPhotoUrl,
-                  driverId: widget.driverId,
-                ),
-                TranslationBanner(
-                  enabled: _autoTranslate,
-                  onToggle: (v) async {
-                    setState(() => _autoTranslate = v);
-                    await _refetchMessages();
-                  },
-                ),
-                Expanded(
-                  child: Consumer<ChatProvider>(
-                    builder: (context, chatProvider, child) {
-                      final isLoading = chatProvider.isLoading(widget.rideId);
-                      final messages = chatProvider.getMessages(widget.rideId);
-                      final error = chatProvider.getError(widget.rideId);
+            _ChatTopBar(
+              driverName: widget.driverName,
+              driverPhotoUrl: _driverPhotoUrl ?? widget.driverPhotoUrl,
+              driverId: widget.driverId,
+            ),
+            TranslationBanner(
+              enabled: _autoTranslate,
+              onToggle: (v) async {
+                setState(() => _autoTranslate = v);
+                await _refetchMessages();
+              },
+            ),
+            Expanded(
+              child: Consumer<ChatProvider>(
+                builder: (context, chatProvider, child) {
+                  final isLoading = chatProvider.isLoading(widget.rideId);
+                  final messages = chatProvider.getMessages(widget.rideId);
+                  final error = chatProvider.getError(widget.rideId);
 
-                      if (isLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
+                  if (isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                      if (error != null) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Error loading messages',
-                                style: AppTextStyles.bodyMedium(context),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                error,
-                                style: AppTextStyles.bodySmall(
-                                  context,
-                                ).copyWith(color: AppColors.subtext(context)),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () =>
-                                    chatProvider.fetchMessages(widget.rideId),
-                                child: const Text('Retry'),
-                              ),
-                            ],
+                  if (error != null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Error loading messages',
+                            style: AppTextStyles.bodyMedium(context),
                           ),
-                        );
-                      }
-
-                      if (messages.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'No messages',
+                          const SizedBox(height: 8),
+                          Text(
+                            error,
                             style: AppTextStyles.bodySmall(
                               context,
                             ).copyWith(color: AppColors.subtext(context)),
                           ),
-                        );
-                      }
-
-                      final firstDateLabel = messages.first.createdAt != null
-                          ? _formatDateLabel(messages.first.createdAt!)
-                          : '';
-
-                      return Column(
-                        children: [
-                          // Date chip right below the banner (always visible)
-                          if (firstDateLabel.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              child: Center(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.surface(context),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: AppColors.border(context),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    firstDateLabel,
-                                    style: AppTextStyles.bodySmall(context)
-                                        .copyWith(
-                                          color: AppColors.subtext(context),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          const SizedBox(height: 4),
-                          Expanded(
-                            child: ListView.builder(
-                              controller: _scroll,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              itemCount: messages.length,
-                              itemBuilder: (context, i) {
-                                final msg = messages[i];
-
-                                // Inline date separators when day changes
-                                bool showDateSep = false;
-                                String dateLabel = '';
-                                if (i > 0) {
-                                  final prevMsg = messages[i - 1];
-                                  if (msg.createdAt != null &&
-                                      prevMsg.createdAt != null) {
-                                    final currDate = DateTime(
-                                      msg.createdAt!.year,
-                                      msg.createdAt!.month,
-                                      msg.createdAt!.day,
-                                    );
-                                    final prevDate = DateTime(
-                                      prevMsg.createdAt!.year,
-                                      prevMsg.createdAt!.month,
-                                      prevMsg.createdAt!.day,
-                                    );
-                                    if (currDate != prevDate) {
-                                      showDateSep = true;
-                                      dateLabel = _formatDateLabel(
-                                        msg.createdAt!,
-                                      );
-                                    }
-                                  }
-                                }
-
-                                return Column(
-                                  children: [
-                                    if (showDateSep && dateLabel.isNotEmpty)
-                                      _DateSeparator(label: dateLabel),
-                                    ChatBubble(
-                                      message: msg,
-                                      showTranslation: _autoTranslate,
-                                      onDelete: () => _deleteMessage(msg.id),
-                                      onEdit: (newText) =>
-                                          _editMessage(msg.id, newText),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () =>
+                                chatProvider.fetchMessages(widget.rideId),
+                            child: const Text('Retry'),
                           ),
                         ],
-                      );
-                    },
-                  ),
-                ),
-                ChatInputBar(controller: _input, onSend: _sendMessage),
-              ],
-            ),
-            if (!_hydrated)
-              Positioned.fill(
-                child: Container(
-                  color: AppColors.bg(context),
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
+                      ),
+                    );
+                  }
+
+                  if (messages.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No messages',
+                        style: AppTextStyles.bodySmall(
+                          context,
+                        ).copyWith(color: AppColors.subtext(context)),
+                      ),
+                    );
+                  }
+
+                  final firstDateLabel = messages.first.createdAt != null
+                      ? _formatDateLabel(messages.first.createdAt!)
+                      : '';
+
+                  return Column(
+                    children: [
+                      // Date chip right below the banner (always visible)
+                      if (firstDateLabel.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface(context),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.border(context),
+                                ),
+                              ),
+                              child: Text(
+                                firstDateLabel,
+                                style: AppTextStyles.bodySmall(context)
+                                    .copyWith(
+                                      color: AppColors.subtext(context),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      Expanded(
+                        child: ListView.builder(
+                          controller: _scroll,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                          ),
+                          itemCount: messages.length,
+                          itemBuilder: (context, i) {
+                            final msg = messages[i];
+
+                            // Inline date separators when day changes
+                            bool showDateSep = false;
+                            String dateLabel = '';
+                            if (i > 0) {
+                              final prevMsg = messages[i - 1];
+                              if (msg.createdAt != null &&
+                                  prevMsg.createdAt != null) {
+                                final currDate = DateTime(
+                                  msg.createdAt!.year,
+                                  msg.createdAt!.month,
+                                  msg.createdAt!.day,
+                                );
+                                final prevDate = DateTime(
+                                  prevMsg.createdAt!.year,
+                                  prevMsg.createdAt!.month,
+                                  prevMsg.createdAt!.day,
+                                );
+                                if (currDate != prevDate) {
+                                  showDateSep = true;
+                                  dateLabel = _formatDateLabel(
+                                    msg.createdAt!,
+                                  );
+                                }
+                              }
+                            }
+
+                            return Column(
+                              children: [
+                                if (showDateSep && dateLabel.isNotEmpty)
+                                  _DateSeparator(label: dateLabel),
+                                ChatBubble(
+                                  message: msg,
+                                  showTranslation: _autoTranslate,
+                                  onDelete: () => _deleteMessage(msg.id),
+                                  onEdit: (newText) =>
+                                      _editMessage(msg.id, newText),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
+            ),
+            ChatInputBar(controller: _input, onSend: _sendMessage),
           ],
         ),
       ),
@@ -662,24 +592,14 @@ class _DateSeparator extends StatelessWidget {
 
 class _ChatTopBar extends StatelessWidget {
   final String? driverName;
-  final String? vehicleName;
-  final String? vehicleColor;
-  final String? plateNumber;
   final String? driverPhotoUrl;
   final String? driverId;
 
   const _ChatTopBar({
     this.driverName,
-    this.vehicleName,
-    this.vehicleColor,
-    this.plateNumber,
     this.driverPhotoUrl,
     this.driverId,
   });
-
-  String get _vehicleInfo {
-    return vehicleName?.isNotEmpty == true ? vehicleName! : 'Vehicle info';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -699,22 +619,11 @@ class _ChatTopBar extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  driverName ?? 'Driver',
-                  style: AppTextStyles.bodyMedium(
-                    context,
-                  ).copyWith(fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  _vehicleInfo,
-                  style: AppTextStyles.bodySmall(
-                    context,
-                  ).copyWith(color: AppColors.subtext(context)),
-                ),
-              ],
+            child: Text(
+              driverName ?? 'Driver',
+              style: AppTextStyles.bodyMedium(
+                context,
+              ).copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],

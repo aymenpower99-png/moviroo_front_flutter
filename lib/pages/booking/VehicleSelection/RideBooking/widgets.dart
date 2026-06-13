@@ -51,6 +51,12 @@ class AnchoredLocationCard extends StatelessWidget {
   final String country;
   final bool isPickup;
 
+  /// Height of the marker above the anchor point.
+  /// For a marker anchored at BOTTOM this is the full marker height.
+  /// For a marker anchored at CENTER this is roughly half the marker height.
+  /// Set to 0 to keep the card anchored at the original screen point (current pickup behavior).
+  final double markerHeight;
+
   static const double _cardWidth = 190;
   static const double _triangleW = 14;
   static const double _triangleH = 7;
@@ -65,6 +71,7 @@ class AnchoredLocationCard extends StatelessWidget {
     required this.subtitle,
     this.country = '',
     required this.isPickup,
+    this.markerHeight = 0,
   });
 
   @override
@@ -79,7 +86,9 @@ class AnchoredLocationCard extends StatelessWidget {
     // Estimate total height: body (~52 for 3 lines) + triangle (7) + gap (4)
     const bodyH = 52.0;
     const totalH = bodyH + _triangleH + _gap;
-    double top = markerScreen.dy - totalH;
+    // Offset the card upward by the marker height so the card sits completely
+    // above the marker instead of overlapping it.
+    double top = markerScreen.dy - markerHeight - totalH;
     if (top < 4) top = 4;
 
     // Triangle offset: how far the marker center is from card left edge

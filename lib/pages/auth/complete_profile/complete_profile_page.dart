@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth_service/auth_service.dart';
 import '../../../../routing/router.dart';
+import 'widgets/complete_profile_top_bar.dart';
+import 'widgets/complete_profile_name_fields.dart';
+import 'widgets/complete_profile_email_field.dart';
+import 'widgets/complete_profile_phone_field.dart';
+import 'widgets/complete_profile_error_banner.dart';
+import 'widgets/complete_profile_save_button.dart';
 
 class CompleteProfilePage extends StatefulWidget {
   const CompleteProfilePage({super.key});
@@ -18,14 +22,14 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
   String? _errorMessage;
 
   final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
+  final _lastNameController  = TextEditingController();
+  final _emailController     = TextEditingController();
+  final _phoneController     = TextEditingController();
 
   final _firstNameFocus = FocusNode();
-  final _lastNameFocus = FocusNode();
-  final _emailFocus = FocusNode();
-  final _phoneFocus = FocusNode();
+  final _lastNameFocus  = FocusNode();
+  final _emailFocus     = FocusNode();
+  final _phoneFocus     = FocusNode();
 
   final AuthService _authService = AuthService();
 
@@ -36,9 +40,9 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args != null) {
-        _emailController.text = args['email'] ?? '';
+        _emailController.text     = args['email']     ?? '';
         _firstNameController.text = args['firstName'] ?? '';
-        _lastNameController.text = args['lastName'] ?? '';
+        _lastNameController.text  = args['lastName']  ?? '';
       }
     });
   }
@@ -57,178 +61,42 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
   }
 
   Future<void> _handleSave() async {
+    final t         = AppLocalizations.of(context);
     final firstName = _firstNameController.text.trim();
-    final lastName = _lastNameController.text.trim();
-    final phone = _phoneController.text.trim();
+    final lastName  = _lastNameController.text.trim();
+    final phone     = _phoneController.text.trim();
 
     if (firstName.isEmpty || lastName.isEmpty) {
-      setState(() => _errorMessage = AppLocalizations.of(context).translate('error_fill_name'));
+      setState(() => _errorMessage = t.translate('error_fill_name'));
       return;
     }
-
     if (phone.isEmpty) {
-      setState(() => _errorMessage = AppLocalizations.of(context).translate('error_phone_required'));
+      setState(() => _errorMessage = t.translate('error_phone_required'));
       return;
     }
-
-    // Validate Tunisia phone: 8 digits
     if (phone.length != 8 || !RegExp(r'^\d{8}$').hasMatch(phone)) {
-      setState(() => _errorMessage = AppLocalizations.of(context).translate('error_phone_invalid'));
+      setState(() => _errorMessage = t.translate('error_phone_invalid'));
       return;
     }
 
     setState(() {
-      _isLoading = true;
+      _isLoading    = true;
       _errorMessage = null;
     });
 
     try {
       await _authService.updateProfile(
         firstName: firstName,
-        lastName: lastName,
-        phone: '+216$phone',
+        lastName:  lastName,
+        phone:     '+216$phone',
       );
-      if (mounted) {
-        AppRouter.clearAndGo(context, AppRouter.home);
-      }
+      if (mounted) AppRouter.clearAndGo(context, AppRouter.home);
     } catch (e) {
-      setState(
-        () => _errorMessage = e.toString().replaceAll('Exception: ', ''),
-      );
+      setState(() =>
+          _errorMessage = e.toString().replaceAll('Exception: ', ''));
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  InputDecoration _fieldDecoration(
-    BuildContext context, {
-    required String hint,
-    required IconData prefixIcon,
-    bool readOnly = false,
-    Widget? prefix,
-    FocusNode? focusNode,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isFocused = focusNode?.hasFocus ?? false;
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: AppTextStyles.bodyMedium(
-        context,
-      ).copyWith(color: AppColors.subtext(context)),
-      prefixIcon: prefix ??
-          Icon(
-            prefixIcon,
-            color: isFocused ? AppColors.primaryPurple : AppColors.text(context),
-            size: 20,
-          ),
-      filled: true,
-      fillColor: readOnly
-          ? (isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF0F0F4))
-          : AppColors.surface(context),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.border(context)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.border(context)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: AppColors.primaryPurple,
-          width: 1.5,
-        ),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    );
-  }
-
-  Widget _label(BuildContext context, String text) => Align(
-    alignment: Alignment.centerLeft,
-    child: Text(text, style: AppTextStyles.sectionLabel(context)),
-  );
-
-  Widget _buildTopBar(BuildContext context, AppLocalizations t) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => AppRouter.clearAndGo(context, AppRouter.login),
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.surface(context),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border(context)),
-              ),
-              child: Icon(
-                Icons.chevron_left_rounded,
-                color: AppColors.text(context),
-                size: 24,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              t.translate('complete_profile'),
-              textAlign: TextAlign.center,
-              style: AppTextStyles.sectionLabel(
-                context,
-              ).copyWith(color: AppColors.text(context)),
-            ),
-          ),
-          const SizedBox(width: 38),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNameFields(BuildContext context, AppLocalizations t) {
-    return Column(
-      children: [
-        // ── First Name ────────────────────────────────
-        _label(context, t.translate('first_name')),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _firstNameController,
-          focusNode: _firstNameFocus,
-          cursorColor: AppColors.subtext(context),
-          style: AppTextStyles.bodyMedium(context),
-          onTap: () => setState(() {}),
-          decoration: _fieldDecoration(
-            context,
-            hint: t.translate('first_name'),
-            prefixIcon: Icons.person_outline,
-            focusNode: _firstNameFocus,
-          ),
-          onChanged: (_) => setState(() {}),
-        ),
-
-        const SizedBox(height: 16),
-
-        // ── Last Name ─────────────────────────────────
-        _label(context, t.translate('last_name')),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _lastNameController,
-          focusNode: _lastNameFocus,
-          cursorColor: AppColors.subtext(context),
-          style: AppTextStyles.bodyMedium(context),
-          onTap: () => setState(() {}),
-          decoration: _fieldDecoration(
-            context,
-            hint: t.translate('last_name'),
-            prefixIcon: Icons.person_outline,
-            focusNode: _lastNameFocus,
-          ),
-        ),
-      ],
-    );
   }
 
   @override
@@ -240,7 +108,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildTopBar(context, t),
+            CompleteProfileTopBar(t: t),
 
             Expanded(
               child: SingleChildScrollView(
@@ -248,153 +116,44 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 60),
-
                     const SizedBox(height: 32),
 
-                    _buildNameFields(context, t),
-
-                    const SizedBox(height: 16),
-                    _label(context, t.translate('label_email_address')),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _emailController,
-                      focusNode: _emailFocus,
-                      readOnly: true,
-                      cursorColor: AppColors.subtext(context),
-                      style: AppTextStyles.bodyMedium(
-                        context,
-                      ).copyWith(color: AppColors.subtext(context)),
-                      onTap: () => setState(() {}),
-                      decoration: _fieldDecoration(
-                        context,
-                        hint: t.translate('hint_email'),
-                        prefixIcon: Icons.email_outlined,
-                        readOnly: true,
-                        focusNode: _emailFocus,
-                      ),
+                    CompleteProfileNameFields(
+                      t:                   t,
+                      firstNameController: _firstNameController,
+                      lastNameController:  _lastNameController,
+                      firstNameFocus:      _firstNameFocus,
+                      lastNameFocus:       _lastNameFocus,
+                      onChanged:           () => setState(() {}),
                     ),
 
                     const SizedBox(height: 16),
 
-                    // ── Phone Number (Tunisia only) ───────────────
-                    _label(context, t.translate('phone_number')),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _phoneController,
-                      focusNode: _phoneFocus,
-                      keyboardType: TextInputType.phone,
-                      cursorColor: AppColors.subtext(context),
-                      style: AppTextStyles.bodyMedium(context),
-                      onTap: () => setState(() {}),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(8),
-                      ],
-                      decoration: _fieldDecoration(
-                        context,
-                        hint: t.translate('hint_phone_tunisia'),
-                        prefixIcon: Icons.phone_outlined,
-                        focusNode: _phoneFocus,
-                        prefix: Padding(
-                          padding: const EdgeInsets.only(left: 12),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: Image.asset(
-                                  'images/flags/tunisia.png',
-                                  width: 24,
-                                  height: 16,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '+216',
-                                style: AppTextStyles.bodyMedium(
-                                  context,
-                                ).copyWith(fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                width: 1,
-                                height: 24,
-                                color: AppColors.border(context),
-                              ),
-                              const SizedBox(width: 8),
-                            ],
-                          ),
-                        ),
-                      ),
+                    CompleteProfileEmailField(
+                      t:               t,
+                      emailController: _emailController,
+                      emailFocus:      _emailFocus,
+                      onTap:           () => setState(() {}),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    CompleteProfilePhoneField(
+                      t:               t,
+                      phoneController: _phoneController,
+                      phoneFocus:      _phoneFocus,
+                      onTap:           () => setState(() {}),
                     ),
 
                     const SizedBox(height: 28),
 
-                    // ── Error Message ──────────────────────────────
                     if (_errorMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.red.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: Colors.red,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _errorMessage!,
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      CompleteProfileErrorBanner(message: _errorMessage!),
 
-                    // ── Save Button ────────────────────────────────
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleSave,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryPurple,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: _isLoading
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                            : Text(
-                                t.translate('save_continue'),
-                                style: AppTextStyles.buttonPrimary,
-                              ),
-                      ),
+                    CompleteProfileSaveButton(
+                      t:         t,
+                      isLoading: _isLoading,
+                      onPressed: _handleSave,
                     ),
 
                     const SizedBox(height: 32),

@@ -594,6 +594,7 @@
   "edited": "modifié",
   "customer_support": "Support Client",
   "biometric_authentication": "Authentification biométrique",
+  "two_factor_authentication": "Authentification à deux facteurs",
   "use_authenticator_app_for_2fa": "Utiliser une application d'authentification pour la 2FA",
   "primary": "PRINCIPAL",
   "make_primary": "Définir comme principal",

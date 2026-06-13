@@ -312,10 +312,6 @@ class _DriverRow extends StatelessWidget {
             args: {
               'rideId': rideId,
               'driverName': driverName,
-              'driverId': null,
-              'vehicleName': vehicleName,
-              'vehicleColor': vehicleColor,
-              'plateNumber': plateNumber,
             },
           ),
           child: Container(

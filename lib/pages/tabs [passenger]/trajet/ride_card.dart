@@ -268,9 +268,6 @@ class _ActionButton extends StatelessWidget {
                   'driverName': ride.driverName,
                   'driverPhotoUrl': ride.driverPhotoUrl,
                   'driverId': ride.driverId,
-                  'vehicleName': ride.vehicleName,
-                  'vehicleColor': ride.vehicleColor,
-                  'plateNumber': ride.plateNumber,
                 },
               ),
               child: Container(
@@ -352,9 +349,6 @@ class _ActionButton extends StatelessWidget {
                   'driverName': ride.driverName,
                   'driverPhotoUrl': ride.driverPhotoUrl,
                   'driverId': ride.driverId,
-                  'vehicleName': ride.vehicleName,
-                  'vehicleColor': ride.vehicleColor,
-                  'plateNumber': ride.plateNumber,
                 },
               ),
               child: Container(

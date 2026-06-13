@@ -87,11 +87,15 @@ class RideBookingMapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Separate cards if they are too close vertically
+    // Separate cards if they are too close vertically.
+    // The drop-off card is lifted 80 px so it floats completely above the
+    // drop-off marker (80×80 canvas, BOTTOM anchor).
     final Offset? adjustedPickup;
     final Offset? adjustedDropoff;
     if (pickupScreen != null && dropoffScreen != null) {
-      final (p, d) = _separatedPositions(pickupScreen!, dropoffScreen!);
+      final dropoff = dropoffScreen!;
+      final dropoffLifted = Offset(dropoff.dx, dropoff.dy - 80);
+      final (p, d) = _separatedPositions(pickupScreen!, dropoffLifted);
       adjustedPickup = p;
       adjustedDropoff = d;
     } else {

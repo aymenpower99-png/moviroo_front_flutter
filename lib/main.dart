@@ -173,7 +173,7 @@ class _SmartWayAppState extends State<SmartWayApp> {
             );
           }
           break;
-        case 'CHAT_MESSAGE':
+         case 'CHAT_MESSAGE':
           if (rideId.isNotEmpty) {
             nav.pushNamed(
               AppRouter.chat,
@@ -182,9 +182,6 @@ class _SmartWayAppState extends State<SmartWayApp> {
                 'driverName': driverName ?? 'Driver',
                 'driverId': driverId,
                 'driverPhotoUrl': driverPhotoUrl,
-                'vehicleName': vehicleName ?? '',
-                'vehicleColor': vehicleColor ?? '',
-                'plateNumber': plateNumber ?? '',
               },
             );
           }

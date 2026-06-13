@@ -277,8 +277,10 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                       const SizedBox(height: 8),
                       _WarningBanner(),
                       const SizedBox(height: 24),
-                      // ── Google user: no password needed ─────────────────────────────────────
-                      if (_isGoogleUser) ...[
+                      // ── Google user with no security method: simple confirmation only ──
+                      if (_isGoogleUser && !_hasBiometric) ...[
+                        const SizedBox(height: 8),
+                      ] else if (_isGoogleUser) ...[
                         Text(
                           'Google Account',
                           style: AppTextStyles.sectionLabel(context),

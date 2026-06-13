@@ -126,9 +126,14 @@ class _PasskeyManagementPageState extends State<PasskeyManagementPage> {
     } on PasskeyUserCancelledException catch (_) {
       // User cancelled — silently dismiss, no message needed
     } catch (e) {
+      final raw = e.toString();
+      String msg = '${_t('passkey_register_failed')}: $e';
+      if (raw.contains('already have a passkey') || raw.contains('BadRequestException')) {
+        msg = 'You already have a passkey. Remove it first to add a new one.';
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_t('passkey_register_failed')}: $e')),
+          SnackBar(content: Text(msg)),
         );
       }
     } finally {

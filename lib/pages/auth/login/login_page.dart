@@ -4,6 +4,7 @@ import '../../../../theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth_service/auth_service.dart';
 import '../../../../services/auth/webauthn_service.dart';
+import '../../../../services/auth/webauthn_platform_channel.dart';
 import '../../../../routing/router.dart';
 import 'login_handlers.dart';
 import 'login_widgets.dart';
@@ -83,9 +84,24 @@ class _LoginPageState extends State<LoginPage> {
       if (result['accessToken'] != null) {
         AppRouter.clearAndGo(context, AppRouter.home);
       }
+    } on PasskeyUserCancelledException catch (_) {
+      if (mounted) {
+        setState(() => _errorMessage = 'Cancelled');
+      }
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = e.toString().replaceFirst('Exception: ', ''));
+        final raw = e.toString().replaceFirst('Exception: ', '');
+        String msg = raw;
+        // Backend returns specific error codes for stale / revoked passkeys
+        if (raw.contains('PASSKEY_NOT_FOUND') || raw.contains('Unknown credential')) {
+          msg = 'Your passkey was removed. Please create a new one in Settings > Security > Passkeys.';
+        } else if (raw.contains('PASSKEY_REVOKED')) {
+          msg = 'This passkey is no longer active. Please create a new one in Settings > Security > Passkeys.';
+        } else if (raw.contains('PASSKEY') || raw.contains('passkey')) {
+          // Generic passkey error — keep backend message but strip code prefix
+          msg = raw.replaceAll(RegExp(r'PASSKEY_\w+:\s*'), '');
+        }
+        setState(() => _errorMessage = msg);
       }
     } finally {
       if (mounted) setState(() => _isPasskeyLoading = false);

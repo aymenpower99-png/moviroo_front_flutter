@@ -591,6 +591,7 @@
   "edited": "معدّل",
   "customer_support": "دعم العملاء",
   "biometric_authentication": "المصادقة البيومترية",
+  "two_factor_authentication": "المصادقة الثنائية",
   "use_authenticator_app_for_2fa": "استخدم تطبيق مصادقة للتحقق بخطوتين",
   "primary": "رئيسي",
   "make_primary": "تعيين كرئيسي",
