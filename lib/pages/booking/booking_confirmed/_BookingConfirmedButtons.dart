@@ -56,7 +56,7 @@ class BookingConfirmedButtons extends StatelessWidget {
                 )
               // ── Check Booking ──────────────────────────────────────
               : ElevatedButton(
-                  onPressed: () => AppRouter.push(context, AppRouter.trajet),
+                  onPressed: () => AppRouter.clearAndGo(context, AppRouter.trajet),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryPurple,
                     foregroundColor: Colors.white,

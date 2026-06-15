@@ -81,7 +81,10 @@ mixin _TrackRideBuildMixin
               ),
 
             // ── Bottom panel ─────────────────────────────────────────────
-            if (isRideDataReady)
+            // BUG FIX: Hide bottom panel when ride is completed so the
+            // buggy TripSummaryCard (which shows distanceLeft/arrivalTime)
+            // is not visible behind the completion overlay.
+            if (isRideDataReady && rideState.phase != RidePhase.rideEnded)
               BottomPanel(
                 rideState: rideState,
                 driverId: widget.driverId,
@@ -106,7 +109,7 @@ mixin _TrackRideBuildMixin
                   );
                 },
               )
-            else
+            else if (!isRideDataReady)
               // Cold start: show skeleton while waiting for WebSocket data
               _buildSkeletonSheet(context),
 

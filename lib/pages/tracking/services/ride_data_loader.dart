@@ -29,6 +29,13 @@ class RideDataLoader {
   int? backendEtaMins;
   int? backendRemainingDistanceMeters;
 
+  // Real trip metrics from REST (for completed rides where WebSocket was missed)
+  double? backendDurationMinReal;
+  double? backendDistanceKmReal;
+
+  // Ride status from REST (to detect already-completed rides on cold start)
+  String backendStatus = '';
+
   /// Load ride details from backend API.
   Future<void> loadRideDetails(String rideId) async {
     try {
@@ -205,8 +212,17 @@ class RideDataLoader {
         backendRemainingDistanceMeters =
             (rideDetails['remainingDistanceMeters'] as num?)?.toInt();
 
+        // Real metrics for completed rides (fallback when WebSocket was missed)
+        backendDurationMinReal =
+            (rideDetails['durationMinReal'] as num?)?.toDouble();
+        backendDistanceKmReal =
+            (rideDetails['distanceKmReal'] as num?)?.toDouble();
+        backendStatus = rideDetails['status'] as String? ?? '';
+
         debugPrint(
-          '📊 Progress from REST: $backendProgress, ETA: $backendEtaMins mins',
+          '📊 Progress from REST: $backendProgress, ETA: $backendEtaMins mins, '
+          'realDuration: $backendDurationMinReal min, realDistance: $backendDistanceKmReal km, '
+          'status: $backendStatus',
         );
       } else {
         debugPrint('⚠️ REST response is null');

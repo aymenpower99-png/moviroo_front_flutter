@@ -296,10 +296,13 @@ class _TripDetailsRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     const purple = AppColors.primaryPurple;
 
+    // BUG FIX: Do NOT fall back to distanceLeft (remaining distance) when
+    // real distance is missing. distanceLeft is the last GPS "to destination"
+    // value (e.g. "200 m"), not the actual trip distance. Show '—' instead.
     final durationText = _formatDuration(durationMin);
     final distanceText = distanceKm != null && distanceKm! > 0
         ? _formatDistance(distanceKm!)
-        : (distanceLeft.isNotEmpty ? distanceLeft : '—');
+        : '—';
 
     return Row(
       children: [

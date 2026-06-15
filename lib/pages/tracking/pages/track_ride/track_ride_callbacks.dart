@@ -142,8 +142,11 @@ mixin _TrackRideCallbacksMixin on State<TrackRidePage>, _TrackRideStateMixin {
           progress: 1.0,
         );
         // Store real trip metrics from backend (not estimates)
-        tripDurationMin = (data['duration_min_real'] as num?)?.toDouble();
-        tripDistanceKm = (data['distance_km_real'] as num?)?.toDouble();
+        // Support both snake_case (WebSocket) and camelCase (REST) keys.
+        tripDurationMin = (data['duration_min_real'] as num?)?.toDouble() ??
+            (data['durationMinReal'] as num?)?.toDouble();
+        tripDistanceKm = (data['distance_km_real'] as num?)?.toDouble() ??
+            (data['distanceKmReal'] as num?)?.toDouble();
       });
       // Trip is over — clear the tracking cache so the next ride starts fresh.
       RideTrackingCache.instance.remove(widget.rideId);

@@ -48,9 +48,15 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   Future<void> _loadBookingData() async {
     if (widget.bookingId == null) return;
 
-    // Check cache first
+    // Check cache first — but skip it for completed rides if the cached data
+    // is missing the real metrics (durationMinReal / distanceKmReal).
+    // This prevents showing the booking estimate instead of the actual duration.
     final cached = _cache[widget.bookingId];
-    if (cached != null) {
+    final cachedStatus = (cached?['status'] as String?)?.toUpperCase();
+    final hasRealMetrics = cached != null &&
+        (cached['durationMinReal'] is num || cached['distanceKmReal'] is num);
+    if (cached != null &&
+        (cachedStatus != 'COMPLETED' || hasRealMetrics)) {
       setState(() {
         _bookingData = cached;
         _isLoading = false;

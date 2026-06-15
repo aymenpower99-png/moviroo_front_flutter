@@ -161,9 +161,15 @@ mixin _TrackRideStateMixin on State<TrackRidePage> {
     // ── Cold start ──
     // No cached live data yet. Build a fresh RideState with empty live fields.
     // The UI will stay in skeleton mode until the first WebSocket update arrives.
+    // EXCEPTION: if the ride is already completed, set the phase to rideEnded
+    // so the completion overlay is shown immediately, and seed real metrics
+    // from REST so the user sees the actual duration/distance even if the
+    // WebSocket event was already fired while the app was in the background.
+    final isAlreadyCompleted =
+        dataLoader.backendStatus.toUpperCase() == 'COMPLETED';
     rideState = RideState(
-      phase: RidePhase.driverOnTheWay,
-      progress: 0.0,
+      phase: isAlreadyCompleted ? RidePhase.rideEnded : RidePhase.driverOnTheWay,
+      progress: isAlreadyCompleted ? 1.0 : 0.0,
       etaMins: 0,
       arrivalTime: '',
       distanceLeft: '',
@@ -179,6 +185,14 @@ mixin _TrackRideStateMixin on State<TrackRidePage> {
       driverPhoneNumber: newDriverPhoneNumber,
       driverRating: newDriverRating,
     );
+
+    // Seed real metrics from REST for completed rides (WebSocket may have been missed)
+    if (isAlreadyCompleted) {
+      tripDurationMin = dataLoader.backendDurationMinReal;
+      tripDistanceKm = dataLoader.backendDistanceKmReal;
+      isRideDataReady = true;
+      isInitializing = false;
+    }
   }
 
   // ── Persist current snapshot to cache ────────────────────────────────────

@@ -273,7 +273,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () => AppRouter.push(context, AppRouter.trajet),
+                    onPressed: () => AppRouter.clearAndGo(context, AppRouter.trajet),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryPurple,
                       foregroundColor: Colors.white,
