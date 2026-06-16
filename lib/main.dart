@@ -156,9 +156,8 @@ class _SmartWayAppState extends State<SmartWayApp> {
 
       switch (type) {
         case 'DRIVER_ASSIGNED':
-        case 'DRIVER_ARRIVED':
-        case 'RIDE_STARTED':
-        case 'RIDE_COMPLETED':
+        case 'RIDE_STATUS_CHANGED':
+        case 'RIDE_ACCEPTED':
           if (rideId.isNotEmpty) {
             nav.pushNamed(
               AppRouter.trackRide,
@@ -169,11 +168,12 @@ class _SmartWayAppState extends State<SmartWayApp> {
                 'vehicleName': vehicleName ?? '',
                 'vehicleColor': vehicleColor ?? '',
                 'plateNumber': plateNumber ?? '',
+                'driverId': driverId ?? '',
               },
             );
           }
           break;
-         case 'CHAT_MESSAGE':
+        case 'CHAT_MESSAGE':
           if (rideId.isNotEmpty) {
             nav.pushNamed(
               AppRouter.chat,
@@ -197,6 +197,9 @@ class _SmartWayAppState extends State<SmartWayApp> {
           }
           break;
         case 'RIDE_CANCELLED':
+        case 'RIDE_CANCELLED_BY_DRIVER':
+        case 'RIDE_CANCELLED_BY_PASSENGER':
+        case 'RIDE_CANCELLED_BY_ADMIN':
           nav.pushNamedAndRemoveUntil(AppRouter.trajet, (route) => false);
           break;
         case 'MEMBERSHIP_UPGRADED':

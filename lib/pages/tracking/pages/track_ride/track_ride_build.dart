@@ -8,13 +8,23 @@ mixin _TrackRideBuildMixin
   Widget buildPage(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        backgroundColor: AppColors.bg(context),
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
+    final isRideEnded = rideState.phase == RidePhase.rideEnded;
+
+    return PopScope(
+      canPop: !isRideEnded,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && isRideEnded) {
+          // Ride is over — back button must go to home, not back to tracking
+          AppRouter.clearAndGo(context, AppRouter.home);
+        }
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        child: Scaffold(
+          backgroundColor: AppColors.bg(context),
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
             // ── Mapbox Map ──────────────────────────────────────────────
             Positioned.fill(
               child: mbx.MapWidget(
@@ -139,14 +149,15 @@ mixin _TrackRideBuildMixin
                       durationMin: tripDurationMin,
                       distanceKm: tripDistanceKm,
                       rideId: widget.rideId,
-                      onContinue: () => Navigator.maybePop(context),
+                      onContinue: () => AppRouter.clearAndGo(context, AppRouter.home),
                     )
                   : const SizedBox.shrink(key: ValueKey('empty')),
             ),
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildLoadingPill(BuildContext context) {

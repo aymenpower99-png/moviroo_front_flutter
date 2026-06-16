@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 import '../../../theme/app_colors.dart';
+import '../../../routing/router.dart';
 import '../widgets/ui/bottom_panel.dart';
 import '../widgets/overlays/trip_completed_overlay.dart';
 import '../models/ride_state.dart';
