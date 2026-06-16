@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth_service/auth_service.dart';
+import '../../../../services/notification_service.dart';
 import '../../../../routing/router.dart';
 import 'widgets/complete_profile_top_bar.dart';
 import 'widgets/complete_profile_name_fields.dart';
@@ -90,6 +91,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
         lastName:  lastName,
         phone:     '+216$phone',
       );
+      await NotificationService().registerTokenAfterLogin();
       if (mounted) AppRouter.clearAndGo(context, AppRouter.home);
     } catch (e) {
       final raw = e.toString().replaceAll('Exception: ', '');

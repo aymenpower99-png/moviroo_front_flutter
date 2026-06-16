@@ -114,6 +114,12 @@ class NotificationService {
     }
   }
 
+  /// Call this on logout to prevent cross-account token contamination.
+  void clearPendingToken() {
+    _pendingToken = null;
+    debugPrint('🔔 Pending FCM token cleared');
+  }
+
   Future<void> _requestPermission() async {
     if (Platform.isIOS) {
       final settings = await _messaging.requestPermission(

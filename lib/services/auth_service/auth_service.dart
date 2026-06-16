@@ -10,6 +10,7 @@ import '../auth/security_api.dart';
 import '../auth/webauthn_service.dart';
 import '../auth/blocked_account_handler.dart';
 import '../ride_api/booking_api_service.dart';
+import '../notification_service.dart';
 export '../auth/security_api.dart'
     show TwoFactorMethod, SecurityApiException, twoFactorMethodFromString;
 
@@ -154,6 +155,7 @@ class AuthService {
     // Prevent cross-account cache leaks
     WebAuthnService.clearCache();
     BookingApiService.clearCache();
+    NotificationService().clearPendingToken();
     return AuthAPI.logout();
   }
 

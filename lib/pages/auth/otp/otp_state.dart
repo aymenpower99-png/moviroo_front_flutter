@@ -65,6 +65,7 @@ mixin OtpStateMixin<T extends StatefulWidget> on State<T> {
           return;
         }
         await authService.verifyEmail(userId: userId!, code: otp);
+        await NotificationService().registerTokenAfterLogin();
         if (mounted) AppRouter.clearAndGo(context, AppRouter.home);
       } else if (purpose == 'login-otp' || purpose == 'login-totp') {
         if (preAuthToken == null || preAuthToken!.isEmpty) {

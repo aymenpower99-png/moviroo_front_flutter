@@ -5,6 +5,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../services/auth_service/auth_service.dart';
 import '../../../../services/auth/webauthn_service.dart';
 import '../../../../services/auth/webauthn_platform_channel.dart';
+import '../../../../services/notification_service.dart';
 import '../../../../routing/router.dart';
 import 'login_handlers.dart';
 import 'login_widgets.dart';
@@ -82,6 +83,8 @@ class _LoginPageState extends State<LoginPage> {
       );
       if (!mounted) return;
       if (result['accessToken'] != null) {
+        await _authService.getCurrentUser(forceRefresh: true);
+        await NotificationService().registerTokenAfterLogin();
         AppRouter.clearAndGo(context, AppRouter.home);
       }
     } on PasskeyUserCancelledException catch (_) {
