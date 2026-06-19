@@ -8,6 +8,7 @@ import 'package:record/record.dart';
 
 import '../../../services/geocoding/geocoding_service.dart';
 import '../../../services/gps/gps_service.dart';
+import '../../../l10n/app_localizations.dart';
 import 'voice_modules/voice_constants.dart';
 import 'voice_modules/voice_logger.dart';
 import 'voice_modules/voice_api_service.dart';
@@ -35,7 +36,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
 
   // ── State ─────────────────────────────────────────────────
   VoicePhase _phase = VoicePhase.idle;
-  String _statusMsg = 'Tap to speak';
+  String _statusMsg = ''; // set in didChangeDependencies
   String _transcript = '';
   String _language = 'fr'; // toujours initialisé à 'fr'
 
@@ -74,6 +75,14 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     voiceLog('INIT', 'VoiceAssistantScreen mounted — backend: $kBackendUrl');
     _initAnimations();
     _initTts();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_statusMsg.isEmpty) {
+      _statusMsg = AppLocalizations.of(context).translate('voice_tap_to_speak');
+    }
   }
 
   void _initAnimations() {
@@ -187,7 +196,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
   Future<bool> _checkPermission() async {
     final status = await Permission.microphone.request();
     if (status.isGranted) return true;
-    _setError('Microphone permission denied.');
+    _setError(AppLocalizations.of(context).translate('voice_mic_permission_denied'));
     return false;
   }
 
@@ -233,7 +242,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
 
     setState(() {
       _phase = isAnswer ? VoicePhase.waitAnswer : VoicePhase.recording;
-      _statusMsg = isAnswer ? 'LISTENING...' : 'SAYING...';
+      _statusMsg = AppLocalizations.of(context).translate(isAnswer ? 'voice_listening' : 'voice_saying');
       // Reset contexte SEULEMENT pour un nouvel enregistrement initial
       if (!isAnswer) {
         _transcript = '';
@@ -255,7 +264,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     _timer?.cancel();
     final path = await _recorder.stop();
     if (path == null || path.isEmpty) {
-      _setError('Recording failed.');
+      _setError(AppLocalizations.of(context).translate('voice_recording_failed'));
       return;
     }
 
@@ -263,7 +272,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     voiceLog('REC', 'Initial recording stopped → $path');
     setState(() {
       _phase = VoicePhase.uploading;
-      _statusMsg = 'PROCESSING...';
+      _statusMsg = AppLocalizations.of(context).translate('voice_processing');
     });
 
     try {
@@ -279,7 +288,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     _timer?.cancel();
     final path = await _recorder.stop();
     if (path == null || path.isEmpty) {
-      _setError('Answer not recorded.');
+      _setError(AppLocalizations.of(context).translate('voice_answer_not_recorded'));
       return;
     }
     _audioPath = path;
@@ -303,7 +312,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
 
     setState(() {
       _phase = VoicePhase.uploading;
-      _statusMsg = 'PROCESSING...';
+      _statusMsg = AppLocalizations.of(context).translate('voice_processing');
     });
 
     try {
@@ -458,7 +467,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     _timer?.cancel();
     setState(() {
       _phase = VoicePhase.idle;
-      _statusMsg = 'Tap to speak';
+      _statusMsg = AppLocalizations.of(context).translate('voice_tap_to_speak');
       _transcript = '';
       _language = 'fr';
       _destination = null;
@@ -512,8 +521,8 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
               // Title
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Text(
-                  'Select the correct location for "$query"',
+                child:                 Text(
+                  '${AppLocalizations.of(context).translate('voice_select_location')} "$query"',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -835,7 +844,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('${AppLocalizations.of(context).translate('voice_error_prefix')} ${e.toString()}'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -935,7 +944,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Searching for locations...',
+                      AppLocalizations.of(context).translate('voice_searching_locations'),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

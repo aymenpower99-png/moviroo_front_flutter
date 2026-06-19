@@ -54,6 +54,11 @@ class _NotificationPageState extends State<NotificationPage> {
 
   Future<void> _updatePref({bool? push, bool? email}) async {
     if (_isSaving) return;
+
+    // Capture previous values before attempting API call
+    final previousPush = _pushEnabled;
+    final previousEmail = _emailEnabled;
+
     setState(() => _isSaving = true);
     try {
       final body = <String, dynamic>{};
@@ -65,10 +70,10 @@ class _NotificationPageState extends State<NotificationPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      // Revert on error
+      // Revert to the actual previous values on error
       setState(() {
-        if (push != null) _pushEnabled = !push;
-        if (email != null) _emailEnabled = !email;
+        if (push != null) _pushEnabled = previousPush;
+        if (email != null) _emailEnabled = previousEmail;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),

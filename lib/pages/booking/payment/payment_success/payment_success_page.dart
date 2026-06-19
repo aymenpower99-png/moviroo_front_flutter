@@ -234,7 +234,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
                 // ── Title ──────────────────────────────────────
                 Text(
                   isCash
-                      ? 'Booking Confirmed'
+                      ? t.translate('booking_confirmed')
                       : t.translate('payment_successful'),
                   style: AppTextStyles.bodyLarge(context).copyWith(
                     fontWeight: FontWeight.w800,
@@ -247,7 +247,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
                 // ── Subtitle ───────────────────────────────────
                 Text(
                   isCash
-                      ? 'Your ride has been booked successfully. A driver will be assigned shortly.'
+                      ? t.translate('booking_success_cash_subtitle')
                       : t.translate('payment_successful_subtitle'),
                   textAlign: TextAlign.center,
                   style: AppTextStyles.bodyMedium(
@@ -286,7 +286,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
                       ),
                     ),
                     child: Text(
-                      'View Bookings',
+                      t.translate('view_bookings'),
                       style: AppTextStyles.bodyLarge(context).copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,

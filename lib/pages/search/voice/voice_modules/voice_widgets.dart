@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import 'voice_constants.dart';
 
 // ─────────────────────────────────────────────────────────────
@@ -18,7 +19,7 @@ Widget buildTopBar(BuildContext context, {VoidCallback? onBackPressed}) =>
             onTap: onBackPressed,
           ),
           Text(
-            'AI TRAVEL ASSISTANT',
+            AppLocalizations.of(context).translate('voice_assistant_title'),
             style: TextStyle(
               color: voiceText(context),
               fontSize: 13,
@@ -126,7 +127,7 @@ Widget buildCenter(
       buildWaveform(phase: phase, waveCtrl: waveCtrl),
       const SizedBox(height: 14),
       Text(
-        phaseLabel(phase),
+        phaseLabel(context, phase),
         style: const TextStyle(
           color: kPurple,
           fontSize: 11,
@@ -242,11 +243,11 @@ Widget buildWaveform({
   );
 }
 
-String phaseLabel(VoicePhase phase) => switch (phase) {
-  VoicePhase.recording => 'SAYING...',
-  VoicePhase.waitAnswer => 'LISTENING...',
-  VoicePhase.uploading => 'PROCESSING...',
-  VoicePhase.question => 'SAYING...',
+String phaseLabel(BuildContext context, VoicePhase phase) => switch (phase) {
+  VoicePhase.recording => AppLocalizations.of(context).translate('voice_saying'),
+  VoicePhase.waitAnswer => AppLocalizations.of(context).translate('voice_listening'),
+  VoicePhase.uploading => AppLocalizations.of(context).translate('voice_processing'),
+  VoicePhase.question => AppLocalizations.of(context).translate('voice_saying'),
   VoicePhase.result => 'CONFIRMED',
   VoicePhase.search => 'RESULT',
   VoicePhase.error => 'ERROR',
@@ -262,14 +263,15 @@ Widget buildMessageBubble(
   required String? confirmationText,
   required String? searchQuery,
 }) {
+  String t(String key) => AppLocalizations.of(context).translate(key);
   final (String text, Color highlight) = switch (phase) {
-    VoicePhase.idle => ('"Welcome! Where is your next destination?"', kPurple),
-    VoicePhase.recording => ('Recording...', Colors.redAccent),
-    VoicePhase.waitAnswer => ('🎙 Listening... tap mic when done', kPurple),
-    VoicePhase.uploading => ('Processing your voice...', kPurpleGlow),
+    VoicePhase.idle => ('"${t('voice_welcome_prompt')}"', kPurple),
+    VoicePhase.recording => (t('voice_recording'), Colors.redAccent),
+    VoicePhase.waitAnswer => ('🎙 ${t('voice_listening_tap_done')}', kPurple),
+    VoicePhase.uploading => (t('voice_processing_voice'), kPurpleGlow),
     VoicePhase.question => (statusMsg, kPurple),
     VoicePhase.result => (
-      confirmationText ?? 'Booking confirmed!',
+      confirmationText ?? t('voice_booking_confirmed'),
       Colors.greenAccent,
     ),
     VoicePhase.search => (searchQuery ?? transcript, Colors.blueAccent),
@@ -293,13 +295,13 @@ Widget buildMessageBubble(
                 height: 1.5,
                 color: voiceText(context),
               ),
-              children: const [
-                TextSpan(text: '"Welcome! '),
+              children: [
+                const TextSpan(text: '"'),
                 TextSpan(
-                  text: 'Where is your next destination?',
-                  style: TextStyle(color: kPurple, fontWeight: FontWeight.w600),
+                  text: t('voice_welcome_prompt'),
+                  style: const TextStyle(color: kPurple, fontWeight: FontWeight.w600),
                 ),
-                TextSpan(text: '"'),
+                const TextSpan(text: '"'),
               ],
             ),
           )
@@ -355,8 +357,8 @@ Widget buildBottomArea(
                 ),
                 elevation: 0,
               ),
-              child: const Text(
-                'Confirm Booking',
+              child: Text(
+                AppLocalizations.of(context).translate('voice_confirm_booking'),
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
             ),
@@ -392,32 +394,35 @@ Widget buildResultRows(
   required String? destination,
   required String? date,
   required String? time,
-}) => Container(
-  margin: const EdgeInsets.symmetric(horizontal: 24),
-  padding: const EdgeInsets.all(16),
-  decoration: BoxDecoration(
-    color: voiceSurface(context),
-    borderRadius: BorderRadius.circular(16),
-    border: Border.all(color: kPurple.withOpacity(0.15)),
-  ),
-  child: Column(
-    children: [
-      buildResultRow(
-        context,
-        'From',
-        (departure == null ||
-                departure.isEmpty ||
-                departure == 'current_location')
-            ? 'My Current Location'
-            : departure,
-        Icons.trip_origin_rounded,
-      ),
-      buildResultRow(context, 'To', destination, Icons.location_on_rounded),
-      buildResultRow(context, 'Date', date, Icons.calendar_today_rounded),
-      buildResultRow(context, 'Time', time, Icons.schedule_rounded),
-    ],
-  ),
-);
+}) {
+  final t = AppLocalizations.of(context).translate;
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 24),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: voiceSurface(context),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: kPurple.withOpacity(0.15)),
+    ),
+    child: Column(
+      children: [
+        buildResultRow(
+          context,
+          t('voice_from'),
+          (departure == null ||
+                  departure.isEmpty ||
+                  departure == 'current_location')
+              ? t('voice_current_location')
+              : departure,
+          Icons.trip_origin_rounded,
+        ),
+        buildResultRow(context, t('voice_to'), destination, Icons.location_on_rounded),
+        buildResultRow(context, t('voice_date'), date, Icons.calendar_today_rounded),
+        buildResultRow(context, t('voice_time'), time, Icons.schedule_rounded),
+      ],
+    ),
+  );
+}
 
 Widget buildYouSaidCard(BuildContext context, {required String transcript}) =>
     Container(
@@ -432,7 +437,7 @@ Widget buildYouSaidCard(BuildContext context, {required String transcript}) =>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'YOU SAID',
+            AppLocalizations.of(context).translate('voice_you_said'),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,

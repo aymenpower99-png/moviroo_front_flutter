@@ -23,13 +23,13 @@ class BookingConfirmedHeader extends StatelessWidget {
         ? Icons.payment_rounded
         : Icons.local_taxi_rounded;
     final String title = isPendingCard
-        ? 'Complete Your Payment'
+        ? t.translate('booking_complete_payment_title')
         : t.translate('booking_confirmed');
     final String subtitle = isPendingCard
-        ? 'Your ride is confirmed. Tap "Pay Now" to complete payment and get your driver assigned.'
+        ? t.translate('booking_complete_payment_subtitle')
         : isCash
-            ? 'Your driver is being assigned. You will pay in cash upon arrival.'
-            : 'Your driver is being assigned. Your card has been charged.';
+            ? t.translate('booking_driver_assigning_cash')
+            : t.translate('booking_driver_assigning_card');
 
     return Column(
       children: [
